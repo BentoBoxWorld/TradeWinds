@@ -15,9 +15,15 @@ import org.eclipse.jdt.annotation.Nullable;
 import world.bentobox.bentobox.api.addons.GameModeAddon;
 import world.bentobox.bentobox.api.commands.admin.DefaultAdminCommand;
 import world.bentobox.bentobox.api.commands.island.DefaultPlayerCommand;
+import world.bentobox.bentobox.api.commands.island.IslandInfoCommand;
+import world.bentobox.bentobox.api.commands.island.IslandLanguageCommand;
 import world.bentobox.bentobox.api.configuration.Config;
 import world.bentobox.bentobox.api.configuration.WorldSettings;
 import world.bentobox.bentobox.lists.Flags;
+import world.bentobox.tradewinds.commands.AdminIslandsCommand;
+import world.bentobox.tradewinds.commands.AdminTpIslandCommand;
+import world.bentobox.tradewinds.commands.TWSpawnCommand;
+import world.bentobox.tradewinds.listeners.IntersticePortalListener;
 import world.bentobox.tradewinds.galaxy.GalaxyConfig;
 import world.bentobox.tradewinds.galaxy.GalaxyEngine;
 import world.bentobox.tradewinds.generator.ChunkGeneratorWorld;
@@ -65,9 +71,28 @@ public class TradeWinds extends GameModeAddon {
         this.biomeProvider = new TradeWindsBiomeProvider(this);
         // Chunk generator
         chunkGenerator = settings.isUseOwnGenerator() ? null : new ChunkGeneratorWorld(this);
-        // Register commands
-        playerCommand = new DefaultPlayerCommand(this) {};
-        adminCommand = new DefaultAdminCommand(this) {};
+        // Register commands. TradeWinds players own no island until Stage 7, so
+        // the default create/reset/team/home commands are deliberately absent:
+        // player islands are purchased, never free.
+        playerCommand = new DefaultPlayerCommand(this) {
+            @Override
+            public void setup() {
+                setDescription("tradewinds.commands.help.description");
+                setOnlyPlayer(true);
+                setPermission("island");
+                new TWSpawnCommand(this);
+                new IslandInfoCommand(this);
+                new IslandLanguageCommand(this);
+            }
+        };
+        adminCommand = new DefaultAdminCommand(this) {
+            @Override
+            public void setup() {
+                super.setup();
+                new AdminIslandsCommand(this);
+                new AdminTpIslandCommand(this);
+            }
+        };
     }
 
     private boolean loadSettings() {
@@ -95,6 +120,12 @@ public class TradeWinds extends GameModeAddon {
         Flags.ENTER_EXIT_MESSAGES.setDefaultSetting(islandWorld, true);
         // Register trading islands lazily as their center chunks first load
         registerListener(new GalaxyIslandRegistrar(this));
+        // Seal both worlds against portals - the interstice is warp-failure-only
+        registerListener(new IntersticePortalListener(this));
+        // Deterministic ocean spawn on the sea surface at the galaxy origin
+        if (islandWorld != null) {
+            islandWorld.setSpawnLocation(0, getSettings().getSeaHeight() + 1, 0);
+        }
     }
 
     @Override

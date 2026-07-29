@@ -3,6 +3,32 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## Playtest round 1 fixes (2026-07-29)
+
+Ben's first in-game pass (see TESTING.md) found three failures; all fixed:
+
+1. **`/tw` → "There is no spawn in this gamemode".** Core `IslandSpawnCommand`
+   needs a spawn *island*, which nothing creates. Replaced with
+   `TWSpawnCommand` (DelayedTeleportCommand straight to the world spawn on the
+   sea surface; `World#setSpawnLocation(0, seaHeight+1, 0)` set in onEnable).
+   Deliberately did NOT create a BentoBox spawn island at origin: a
+   range-1000 island at 0,0 can overlap a starter island's range (worst-case
+   jittered center is ~1768 from origin) and would fail grid registration.
+2. **`/tw create` gave free bedrock islands.** The default player command set
+   is wrong for TradeWinds - players buy islands at Stage 7. Player command
+   setup now registers only `spawn`, `info`, `language`. Lifecycle test locks
+   this in (create/reset must be absent).
+3. **Nether portal reached the interstice.** `create-and-link-portals: false`
+   only stops BentoBox's own linking; Multiverse handled the portal anyway.
+   `IntersticePortalListener` now cancels PortalCreateEvent, PlayerPortalEvent
+   and EntityPortalEvent touching either TradeWinds world at LOWEST priority.
+4. **"No islands found" was not a bug but a discoverability gap** - islands
+   register lazily on center-chunk load and nobody had traveled 3.5k blocks
+   out. Added `/twadmin islands` (nearest 10 via pure galaxy query, works
+   pre-generation) and `/twadmin tpisland <n>` (chunk-loading teleport).
+
+46 tests green after fixes.
+
 ## Stage 1 — Seeded galaxy (2026-07-29) — CODE COMPLETE, awaiting in-game test
 
 **Done:**

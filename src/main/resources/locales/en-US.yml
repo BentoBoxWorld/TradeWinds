@@ -10,10 +10,22 @@ tradewinds:
       overworld: "the open ocean"
       interstice: "the interstice"
   commands:
+    help:
+      description: "TradeWinds trading command"
+    spawn:
+      description: "teleport to the ocean spawn"
     admin:
       help:
         description: "admin command for TradeWinds"
-    help:
-      description: "TradeWinds trading command"
+      islands:
+        description: "list the nearest trading islands"
+        none: "&c No trading islands found - is the galaxy density 0?"
+        header: "&b Nearest trading islands (use &e/twadmin tpisland <#>&b to visit):"
+        entry: "&e [index]. &f[name] &7- [type], [band] &7at &f[x], [z] &7([distance] blocks)"
+      tpisland:
+        description: "teleport to a trading island from the islands list"
+        parameters: "[number]"
+        unknown: "&c No island with that number - run /twadmin islands first."
+        teleported: "&b Arrived at [name]."
   spawn:
     teleported: "&b You set sail on the open ocean."

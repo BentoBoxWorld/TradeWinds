@@ -138,6 +138,14 @@ class TradeWindsTest extends CommonTestSetup {
         assertTrue(addon.getPlayerCommand().isPresent());
         assertTrue(addon.getAdminCommand().isPresent());
         assertNotNull(addon.getBiomeProvider());
+        // Players can reach spawn but CANNOT create free islands - player
+        // islands are purchased (Stage 7)
+        assertTrue(addon.getPlayerCommand().get().getSubCommand("spawn").isPresent());
+        assertTrue(addon.getPlayerCommand().get().getSubCommand("create").isEmpty());
+        assertTrue(addon.getPlayerCommand().get().getSubCommand("reset").isEmpty());
+        // Admin discovery commands
+        assertTrue(addon.getAdminCommand().get().getSubCommand("islands").isPresent());
+        assertTrue(addon.getAdminCommand().get().getSubCommand("tpisland").isPresent());
     }
 
     /**

@@ -7,27 +7,46 @@ what only a live server can prove.
 
 ## Stage 0 — Addon scaffold
 
-- [ ] Server starts with no errors/warnings from TradeWinds in the console.
-- [ ] `bbox version` lists TradeWinds alongside the other gamemodes (AcidIsland, AOneBlock, Gusher…), state ENABLED.
-- [ ] Worlds `tradewinds_world` and `tradewinds_world_nether` exist (`mv list` / console log).
+- [x] Server starts with no errors/warnings from TradeWinds in the console.
+- [x] `bbox version` lists TradeWinds alongside the other gamemodes (AcidIsland, AOneBlock, Gusher…), state ENABLED.
+- [x] Worlds `tradewinds_world` and `tradewinds_world_nether` exist (`mv list` / console log).
 - [ ] `/tw` (and `/tradewinds`) teleports the player to spawn in open ocean — water to the horizon, no land, no vanilla continents.
-- [ ] Ocean floor exists (dive down: sand/sandstone floor roughly y25–y50, bedrock at bottom, no caves by default).
-- [ ] Above-water world is air up to build height (no floating junk).
+  - ~~Fail - Running `/tw` reports the error "There is no spawn in this gamemode" and nothing happens.~~
+  - ~~Running `/tw create` makes an island for the player with a bedrock.~~
+  - FIXED (retest): `/tw spawn` is now a TradeWinds command that teleports straight to the
+    world spawn on the sea surface (no spawn island needed); `create`/`reset` are removed —
+    player islands are purchase-only (Stage 7). Also retest: `/tw create` must now be
+    an unknown command. Delete the stray bedrock island from the earlier test with
+    `/twadmin delete <your name>`.
+- [x] Ocean floor exists (dive down: sand/sandstone floor roughly y25–y50, bedrock at bottom, no caves by default).
+- [x] Above-water world is air up to build height (no floating junk).
 - [ ] The interstice is inaccessible: nether portals in `tradewinds_world` do not activate/link (build one and light it), and no command teleports there.
-- [ ] Interstice world (teleport there as admin, e.g. `mv tp`): water sea over basalt/soul-sand floor, nether ambience.
-- [ ] No `tradewinds_world_the_end` world is created.
-- [ ] `/twadmin` responds (admin help).
-- [ ] `addons/TradeWinds/config.yml` generated with all Stage 0 sections (galaxy, travel, illegal-trade, world).
-- [ ] Restart the server: worlds reload, no duplicate-world or generator errors, chunks unchanged (fly the same area).
-- [ ] Other gamemodes still work (create/visit an AcidIsland island).
+    - ~~FAIL: I built a portal and was able to port there.~~
+    - FIXED (retest): a portal listener now cancels portal creation AND portal teleports in
+      both TradeWinds worlds (the config flag only stopped BentoBox's own linking, not
+      Multiverse's). Retest: lighting an obsidian frame should do nothing at all; the
+      portal built during the earlier test should also no longer teleport.
+- [x] Interstice world (teleport there as admin, e.g. `mv tp`): water sea over basalt/soul-sand floor, nether ambience.
+- [x] No `tradewinds_world_the_end` world is created.
+- [x] `/twadmin` responds (admin help).
+- [x] `addons/TradeWinds/config.yml` generated with all Stage 0 sections (galaxy, travel, illegal-trade, world).
+- [x] Restart the server: worlds reload, no duplicate-world or generator errors, chunks unchanged (fly the same area).
+- [x] Other gamemodes still work (create/visit an AcidIsland island).
 
 ## Stage 1 — Seeded galaxy
 
 Set `galaxy.seed` in `addons/TradeWinds/config.yml` to a known value (e.g. `20260729`)
 and delete the `tradewinds_world*` folders for a clean generation, then:
 
-- [ ] Console logs `TradeWinds galaxy seed: <seed>` on first world access.
-- [ ] Fly (or `/twadmin tp` / creative-fly a boat) toward the nearest island — one of the 5 starter islands should be within ~4–8k blocks of spawn (console logs each registration: name, type, band, coords).
+- [x] Console logs `TradeWinds galaxy seed: <seed>` on first world access.
+- [ ] Use `/twadmin islands` to list the 10 nearest trading islands (works before any
+      terrain generates — it queries the galaxy engine), then `/twadmin tpisland 1` to
+      visit the nearest. The registration log line (name, type, band, coords) appears
+      when the island's center chunk loads, i.e. on arrival.
+  - ~~FAIL - no islands logged in console. Cannot TP to any islands either.~~
+  - Not a generation bug: islands register lazily when their center chunk first loads,
+    and nothing had generated chunks 3.5k+ blocks out. The missing piece was a discovery
+    tool — hence the two new admin commands above.
 - [ ] Islands rise smoothly from the ocean: underwater shelf → beach → grassy interior; no cliffs of floating terrain, no chunk-border seams, no pop-in (land is generated, not pasted).
 - [ ] Each island has a single whole-island biome matching its logged type (e.g. MINING → windswept hills; FROZEN → snowy, with **ice sheets in the surrounding water ring** — ride a boat over the ice: it should be fast).
 - [ ] Entering an island's protection range announces its name ("Now entering <name>").
