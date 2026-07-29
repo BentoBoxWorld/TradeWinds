@@ -13,11 +13,12 @@ package world.bentobox.tradewinds.galaxy;
  * @param density chance (0-1) that a galaxy grid cell hosts an island
  * @param starterMinIslands the guaranteed number of islands nearest spawn (density floor)
  * @param bandRadius distance from spawn per security-band step, in blocks
+ * @param seaLevel the world's sea surface Y - dock and plaza heights hang off it
  *
  * @author tastybento
  */
 public record GalaxyConfig(long seed, int minSeparation, int terrainRadius, int landLift, double density,
-        int starterMinIslands, int bandRadius) {
+        int starterMinIslands, int bandRadius, int seaLevel) {
 
     /**
      * Grid cell size in blocks. With jitter confined to +/- minSeparation/2 of a

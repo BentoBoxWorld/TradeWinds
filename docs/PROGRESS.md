@@ -3,6 +3,36 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## Stage 2 — Island content (2026-07-29) — CODE COMPLETE, awaiting in-game test
+
+Stage 0/1 checklists fully passed in-game before starting this.
+
+**Done:**
+- **Deterministic dock** (open question resolved per the spec's lean): each
+  island has a seeded bearing; the quay is terraformed by the chunk generator
+  (principle 6 - generator makes land, nothing is pasted): stone-brick quay,
+  type-specific plank deck at sea+1, running from the plaza (45% of terrain
+  radius) out to open water (85%). Market **plaza**: flattened dirt-path disc
+  at sea+2 with a 10-block blend ring so it meets terrain without cliffs.
+  Geometry lives in the pure galaxy package (`DockPlan`, `ColumnPlan`,
+  `GalaxyEngine.columnPlanAt`); `GalaxyConfig` gained `seaLevel`.
+- **IslandDecorator** (BlockPopulator, overworld only): when an island's
+  plaza-center chunk generates - bell landmark, four lantern posts, 2-4 stalls
+  (fence + type-colored wool canopy + barrel), all island-deterministic
+  (seeded from the island hash, not the chunk Random). Structures are
+  code-built; per-type blueprint sets can replace the stall builder later.
+- **Residents** via `LimitedRegion.createEntity` → configure → `addEntity`
+  (Poseidon pattern): 3-5 villagers with professions per island economy
+  (`IslandPalette`), skin type per biome, persistent + PDC-tagged
+  `tradewinds:resident`; iron golems by band (SAFE 3 → ANARCHIC 0). Villagers
+  spawn on the plaza, inland of the quay (shoreline-safety rule).
+- Tests: 55 green (dock-plan geometry, column plans, terraform materials,
+  decorator determinism/placement/residents, golem counts, villager types).
+
+**Pitfalls:**
+- In test code, fully-qualified `world.bentobox...` names inside methods are
+  shadowed by CommonTestSetup's `protected World world` field - use imports.
+
 ## Playtest round 1 fixes (2026-07-29)
 
 Ben's first in-game pass (see TESTING.md) found three failures; all fixed:

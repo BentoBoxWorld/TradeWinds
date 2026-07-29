@@ -43,8 +43,8 @@ class TradeWindsBiomeProviderTest extends CommonTestSetup {
         addon = mock(TradeWinds.class);
         settings = new Settings();
         when(addon.getSettings()).thenReturn(settings);
-        emptyGalaxy = new GalaxyEngine(new GalaxyConfig(SEED, 2500, 160, 45, 0.0, 0, 5000));
-        denseGalaxy = new GalaxyEngine(new GalaxyConfig(SEED, 2500, 160, 45, 1.0, 0, 5000));
+        emptyGalaxy = new GalaxyEngine(new GalaxyConfig(SEED, 2500, 160, 45, 0.0, 0, 5000, 70));
+        denseGalaxy = new GalaxyEngine(new GalaxyConfig(SEED, 2500, 160, 45, 1.0, 0, 5000, 70));
         when(addon.getGalaxyEngine(anyLong())).thenReturn(emptyGalaxy);
         provider = new TradeWindsBiomeProvider(addon);
     }

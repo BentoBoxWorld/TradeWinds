@@ -1,6 +1,7 @@
 package world.bentobox.tradewinds.generator;
 
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
@@ -8,12 +9,14 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.World.Environment;
 import org.bukkit.generator.BiomeProvider;
+import org.bukkit.generator.BlockPopulator;
 import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.generator.WorldInfo;
 import org.bukkit.util.noise.PerlinOctaveGenerator;
 import org.eclipse.jdt.annotation.NonNull;
 
 import world.bentobox.tradewinds.TradeWinds;
+import world.bentobox.tradewinds.galaxy.ColumnPlan;
 
 /**
  * Generates the TradeWinds ocean: a noised ocean floor under open sea, everywhere.
@@ -54,6 +57,7 @@ public class ChunkGeneratorWorld extends ChunkGenerator {
     private final Map<Environment, PerlinOctaveGenerator> noiseGens = new EnumMap<>(Environment.class);
     // Deterministic palette randomness; re-seeded per chunk from (world seed, chunk coords)
     private final Random rand = new Random();
+    private IslandDecorator decorator;
 
     public ChunkGeneratorWorld(TradeWinds addon) {
         super();
@@ -113,10 +117,19 @@ public class ChunkGeneratorWorld extends ChunkGenerator {
                 double noiseVal = gen.noise(worldX, worldZ, 0.5, 0.5, true);
                 int lift = terrainLift(worldInfo, worldX, worldZ);
                 int floorTop = wc.seaFloor() + (int) (NOISE_MAX + NOISE_MAX * noiseVal) + lift;
+                // Dock quay and market plaza terraforming (overworld only)
+                ColumnPlan plan = worldInfo.getEnvironment() == Environment.NORMAL
+                        ? addon.getGalaxyEngine(worldInfo.getSeed()).columnPlanAt(worldX, worldZ).orElse(null)
+                        : null;
+                if (plan != null) {
+                    int wanted = plan.surfaceY() + 1;
+                    floorTop = plan.blend() >= 1.0 ? wanted
+                            : (int) Math.round(floorTop + (wanted - floorTop) * plan.blend());
+                }
                 floorTop = Math.min(floorTop, worldInfo.getMaxHeight() - 1);
                 boolean land = floorTop > wc.seaHeight() + 1;
                 for (int y = wc.seaFloor(); y < floorTop; y++) {
-                    chunkData.setBlock(x, y, z, columnMaterial(mats, y, floorTop, land));
+                    chunkData.setBlock(x, y, z, columnMaterial(mats, y, floorTop, land, plan));
                 }
                 // Water column above the floor
                 for (int y = Math.max(floorTop, wc.seaFloor()); y <= wc.seaHeight(); y++) {
@@ -130,9 +143,16 @@ public class ChunkGeneratorWorld extends ChunkGenerator {
      * Material for one block of a floor column. Underwater columns are the
      * sea-floor palette; island columns that clear the sea get a soil profile
      * (stone core, dirt subsoil, grass on top) so vanilla decoration can plant
-     * on them.
+     * on them. Dock columns are a stone-brick quay with a plank deck; fully
+     * flattened plaza columns get a path surface.
      */
-    private Material columnMaterial(FloorMats mats, int y, int floorTop, boolean land) {
+    private Material columnMaterial(FloorMats mats, int y, int floorTop, boolean land, ColumnPlan plan) {
+        if (plan != null && plan.feature() == ColumnPlan.Feature.DOCK) {
+            return y == floorTop - 1 ? IslandPalette.planks(plan.island().type()) : Material.STONE_BRICKS;
+        }
+        if (plan != null && plan.feature() == ColumnPlan.Feature.PLAZA && plan.blend() >= 1.0 && y == floorTop - 1) {
+            return Material.DIRT_PATH;
+        }
         if (!land) {
             return rand.nextBoolean() ? mats.top() : mats.base();
         }
@@ -174,6 +194,17 @@ public class ChunkGeneratorWorld extends ChunkGenerator {
     @Override
     public boolean shouldGenerateStructures() {
         return addon.getSettings().isMakeStructures();
+    }
+
+    @Override
+    public List<BlockPopulator> getDefaultPopulators(World world) {
+        if (world.getEnvironment() != Environment.NORMAL) {
+            return List.of();
+        }
+        if (decorator == null) {
+            decorator = new IslandDecorator(addon);
+        }
+        return List.of(decorator);
     }
 
     @Override

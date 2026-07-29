@@ -39,6 +39,19 @@ public class GalaxyEngine {
     private static final long SALT_BAND = 0xBA9D0001L;
     private static final long SALT_BIOME = 0xB10E0001L;
     private static final long SALT_NAME = 0x9A3E0001L;
+    private static final long SALT_DOCK = 0xD0C4B0A7L;
+
+    // Dock/plaza geometry, as fractions of the terrain radius. The plaza sits
+    // at ~45% out (where natural terrain is already near sea level, so the
+    // flattening cuts little), the quay runs from the plaza to 85% (open water).
+    private static final double PLAZA_DIST_FRACTION = 0.45;
+    private static final double DOCK_END_FRACTION = 0.85;
+    private static final int PLAZA_BLEND_WIDTH = 10;
+    private static final int DOCK_HALF_WIDTH = 3;
+    /** Plaza walking surface sits this many blocks above sea level. */
+    public static final int PLAZA_RISE = 2;
+    /** Dock deck sits this many blocks above sea level. */
+    public static final int DOCK_RISE = 1;
 
     private final GalaxyConfig config;
     private final Set<Long> starterCells;
@@ -212,6 +225,59 @@ public class GalaxyEngine {
             }
         }
         return (int) Math.round(config.landLift() * best);
+    }
+
+    /**
+     * The dock/market plan for an island - pure geometry from the island's
+     * seeded bearing.
+     *
+     * @param spec the island
+     * @return its dock plan
+     */
+    public DockPlan dockPlan(IslandSpec spec) {
+        double bearing = Hashing.toUnit(Hashing.cellHash(config.seed(), spec.cellX(), spec.cellZ(), SALT_DOCK)) * 2
+                * Math.PI;
+        int plazaDist = (int) (config.terrainRadius() * PLAZA_DIST_FRACTION);
+        int plazaX = spec.centerX() + (int) Math.round(Math.cos(bearing) * plazaDist);
+        int plazaZ = spec.centerZ() + (int) Math.round(Math.sin(bearing) * plazaDist);
+        int plazaRadius = Math.max(12, config.terrainRadius() / 10);
+        int dockEnd = (int) (config.terrainRadius() * DOCK_END_FRACTION);
+        return new DockPlan(spec, bearing, plazaX, plazaZ, plazaRadius, dockEnd);
+    }
+
+    /**
+     * The terraform instruction for a column that falls on an island's plaza or
+     * dock, or empty for natural terrain. The plaza is a flattened disc (with a
+     * blend ring); the dock is a solid quay strip from the plaza to open water.
+     *
+     * @param blockX block x
+     * @param blockZ block z
+     * @return the column plan, or empty
+     */
+    public Optional<ColumnPlan> columnPlanAt(int blockX, int blockZ) {
+        for (IslandSpec s : islandsNear(blockX, blockZ, config.terrainRadius())) {
+            DockPlan plan = dockPlan(s);
+            // Plaza disc + blend ring
+            double pd = Math.hypot((double) blockX - plan.plazaX(), (double) blockZ - plan.plazaZ());
+            int plazaSurface = config.seaLevel() + PLAZA_RISE;
+            if (pd <= plan.plazaRadius()) {
+                return Optional.of(new ColumnPlan(ColumnPlan.Feature.PLAZA, s, plazaSurface, 1.0));
+            }
+            if (pd <= plan.plazaRadius() + PLAZA_BLEND_WIDTH) {
+                double blend = 1.0 - (pd - plan.plazaRadius()) / PLAZA_BLEND_WIDTH;
+                return Optional.of(new ColumnPlan(ColumnPlan.Feature.PLAZA, s, plazaSurface, blend));
+            }
+            // Dock strip in bearing-aligned coordinates
+            double dx = (double) blockX - s.centerX();
+            double dz = (double) blockZ - s.centerZ();
+            double along = dx * Math.cos(plan.bearing()) + dz * Math.sin(plan.bearing());
+            double across = -dx * Math.sin(plan.bearing()) + dz * Math.cos(plan.bearing());
+            int plazaDist = (int) (config.terrainRadius() * PLAZA_DIST_FRACTION);
+            if (along >= plazaDist && along <= plan.dockEnd() && Math.abs(across) <= DOCK_HALF_WIDTH) {
+                return Optional.of(new ColumnPlan(ColumnPlan.Feature.DOCK, s, config.seaLevel() + DOCK_RISE, 1.0));
+            }
+        }
+        return Optional.empty();
     }
 
     /**

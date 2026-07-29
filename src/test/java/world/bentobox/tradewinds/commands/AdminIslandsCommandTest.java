@@ -34,7 +34,7 @@ class AdminIslandsCommandTest extends CommonTestSetup {
     public void setUp() throws Exception {
         super.setUp();
         addon = mock(TradeWinds.class);
-        GalaxyEngine engine = new GalaxyEngine(new GalaxyConfig(SEED, 2500, 160, 45, 0.5, 5, 5000));
+        GalaxyEngine engine = new GalaxyEngine(new GalaxyConfig(SEED, 2500, 160, 45, 0.5, 5, 5000, 70));
         when(addon.getGalaxyEngine(anyLong())).thenReturn(engine);
         when(addon.getOverWorld()).thenReturn(world);
         when(world.getSeed()).thenReturn(SEED);

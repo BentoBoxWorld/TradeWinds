@@ -21,6 +21,10 @@ import org.mockito.stubbing.Answer;
 import world.bentobox.tradewinds.CommonTestSetup;
 import world.bentobox.tradewinds.Settings;
 import world.bentobox.tradewinds.TradeWinds;
+import world.bentobox.tradewinds.galaxy.DockPlan;
+import world.bentobox.tradewinds.galaxy.GalaxyConfig;
+import world.bentobox.tradewinds.galaxy.GalaxyEngine;
+import world.bentobox.tradewinds.galaxy.IslandSpec;
 
 /**
  * Tests the ocean generation of {@link ChunkGeneratorWorld}: determinism, sea
@@ -59,8 +63,8 @@ class ChunkGeneratorWorldTest extends CommonTestSetup {
         when(addon.getSettings()).thenReturn(settings);
         // Default: an empty galaxy (density 0, no starter islands) - pure ocean
         when(addon.getGalaxyEngine(org.mockito.ArgumentMatchers.anyLong()))
-                .thenReturn(new world.bentobox.tradewinds.galaxy.GalaxyEngine(
-                        new world.bentobox.tradewinds.galaxy.GalaxyConfig(SEED, 2500, 160, 45, 0.0, 0, 5000)));
+                .thenReturn(new GalaxyEngine(
+                        new GalaxyConfig(SEED, 2500, 160, 45, 0.0, 0, 5000, 70)));
     }
 
     private WorldInfo worldInfo(Environment env, long seed) {
@@ -181,10 +185,10 @@ class ChunkGeneratorWorldTest extends CommonTestSetup {
     @Test
     void testTerrainLiftMakesIslands() {
         // A galaxy with an island at this chunk must lift grassy land above the sea
-        world.bentobox.tradewinds.galaxy.GalaxyEngine denseEngine = new world.bentobox.tradewinds.galaxy.GalaxyEngine(
-                new world.bentobox.tradewinds.galaxy.GalaxyConfig(SEED, 2500, 160, 45, 1.0, 0, 5000));
+        world.bentobox.tradewinds.galaxy.GalaxyEngine denseEngine = new GalaxyEngine(
+                new GalaxyConfig(SEED, 2500, 160, 45, 1.0, 0, 5000, 70));
         when(addon.getGalaxyEngine(org.mockito.ArgumentMatchers.anyLong())).thenReturn(denseEngine);
-        world.bentobox.tradewinds.galaxy.IslandSpec spec = denseEngine.islandInCell(0, 0).orElseThrow();
+        IslandSpec spec = denseEngine.islandInCell(0, 0).orElseThrow();
         ChunkGeneratorWorld gen = new ChunkGeneratorWorld(addon);
         RecordingChunkData r = generate(gen, Environment.NORMAL, SEED, spec.centerX() >> 4, spec.centerZ() >> 4);
 
@@ -208,6 +212,34 @@ class ChunkGeneratorWorldTest extends CommonTestSetup {
                 assertEquals(Material.AIR, nether.get(x, settings.getIntersticeSeaHeight() + 1, z));
             }
         }
+    }
+
+    @Test
+    void testPlazaAndDockTerraform() {
+        world.bentobox.tradewinds.galaxy.GalaxyEngine denseEngine = new GalaxyEngine(
+                new GalaxyConfig(SEED, 2500, 160, 45, 1.0, 0, 5000, 70));
+        when(addon.getGalaxyEngine(org.mockito.ArgumentMatchers.anyLong())).thenReturn(denseEngine);
+        IslandSpec spec = denseEngine.islandInCell(0, 0).orElseThrow();
+        DockPlan plan = denseEngine.dockPlan(spec);
+        ChunkGeneratorWorld gen = new ChunkGeneratorWorld(addon);
+
+        // Plaza center chunk: flat dirt-path surface at seaHeight + PLAZA_RISE
+        RecordingChunkData plaza = generate(gen, Environment.NORMAL, SEED, plan.plazaX() >> 4, plan.plazaZ() >> 4);
+        int px = plan.plazaX() & 15;
+        int pz = plan.plazaZ() & 15;
+        int plazaSurface = settings.getSeaHeight() + GalaxyEngine.PLAZA_RISE;
+        assertEquals(Material.DIRT_PATH, plaza.get(px, plazaSurface, pz));
+        assertEquals(Material.AIR, plaza.get(px, plazaSurface + 1, pz));
+
+        // A point on the quay: plank deck at seaHeight + DOCK_RISE over stone bricks, no water above
+        int dockDist = plan.dockEnd() - 4;
+        int dx = spec.centerX() + (int) Math.round(Math.cos(plan.bearing()) * dockDist);
+        int dz = spec.centerZ() + (int) Math.round(Math.sin(plan.bearing()) * dockDist);
+        RecordingChunkData dock = generate(gen, Environment.NORMAL, SEED, dx >> 4, dz >> 4);
+        int deckY = settings.getSeaHeight() + GalaxyEngine.DOCK_RISE;
+        assertEquals(IslandPalette.planks(spec.type()), dock.get(dx & 15, deckY, dz & 15));
+        assertEquals(Material.STONE_BRICKS, dock.get(dx & 15, deckY - 1, dz & 15));
+        assertEquals(Material.AIR, dock.get(dx & 15, deckY + 1, dz & 15));
     }
 
     @Test

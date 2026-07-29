@@ -10,7 +10,7 @@ what only a live server can prove.
 - [x] Server starts with no errors/warnings from TradeWinds in the console.
 - [x] `bbox version` lists TradeWinds alongside the other gamemodes (AcidIsland, AOneBlock, Gusher…), state ENABLED.
 - [x] Worlds `tradewinds_world` and `tradewinds_world_nether` exist (`mv list` / console log).
-- [ ] `/tw` (and `/tradewinds`) teleports the player to spawn in open ocean — water to the horizon, no land, no vanilla continents.
+- [x] `/tw` (and `/tradewinds`) teleports the player to spawn in open ocean — water to the horizon, no land, no vanilla continents.
   - ~~Fail - Running `/tw` reports the error "There is no spawn in this gamemode" and nothing happens.~~
   - ~~Running `/tw create` makes an island for the player with a bedrock.~~
   - FIXED (retest): `/tw spawn` is now a TradeWinds command that teleports straight to the
@@ -20,7 +20,7 @@ what only a live server can prove.
     `/twadmin delete <your name>`.
 - [x] Ocean floor exists (dive down: sand/sandstone floor roughly y25–y50, bedrock at bottom, no caves by default).
 - [x] Above-water world is air up to build height (no floating junk).
-- [ ] The interstice is inaccessible: nether portals in `tradewinds_world` do not activate/link (build one and light it), and no command teleports there.
+- [x] The interstice is inaccessible: nether portals in `tradewinds_world` do not activate/link (build one and light it), and no command teleports there.
     - ~~FAIL: I built a portal and was able to port there.~~
     - FIXED (retest): a portal listener now cancels portal creation AND portal teleports in
       both TradeWinds worlds (the config flag only stopped BentoBox's own linking, not
@@ -39,7 +39,7 @@ Set `galaxy.seed` in `addons/TradeWinds/config.yml` to a known value (e.g. `2026
 and delete the `tradewinds_world*` folders for a clean generation, then:
 
 - [x] Console logs `TradeWinds galaxy seed: <seed>` on first world access.
-- [ ] Use `/twadmin islands` to list the 10 nearest trading islands (works before any
+- [x] Use `/twadmin islands` to list the 10 nearest trading islands (works before any
       terrain generates — it queries the galaxy engine), then `/twadmin tpisland 1` to
       visit the nearest. The registration log line (name, type, band, coords) appears
       when the island's center chunk loads, i.e. on arrival.
@@ -47,11 +47,37 @@ and delete the `tradewinds_world*` folders for a clean generation, then:
   - Not a generation bug: islands register lazily when their center chunk first loads,
     and nothing had generated chunks 3.5k+ blocks out. The missing piece was a discovery
     tool — hence the two new admin commands above.
-- [ ] Islands rise smoothly from the ocean: underwater shelf → beach → grassy interior; no cliffs of floating terrain, no chunk-border seams, no pop-in (land is generated, not pasted).
-- [ ] Each island has a single whole-island biome matching its logged type (e.g. MINING → windswept hills; FROZEN → snowy, with **ice sheets in the surrounding water ring** — ride a boat over the ice: it should be fast).
-- [ ] Entering an island's protection range announces its name ("Now entering <name>").
-- [ ] `bbox` island info at an island (`/twadmin info` while standing there) shows an unowned island, range 1000, protection 400.
-- [ ] Restart the server: the same islands are still registered (no duplicate-registration log lines), names unchanged.
-- [ ] Regenerate the world from scratch with the same seed (stop server, delete world folders AND `database/` TradeWinds islands): identical island positions, names, types.
-- [ ] Islands are never within sight of one another (min separation 2500).
-- [ ] PvP setting: on a LAWLESS/ANARCHIC island the island PVP flag is on; on SAFE it is off.
+- [x] Islands rise smoothly from the ocean: underwater shelf → beach → grassy interior; no cliffs of floating terrain, no chunk-border seams, no pop-in (land is generated, not pasted).
+- [x] Each island has a single whole-island biome matching its logged type (e.g. MINING → windswept hills; FROZEN → snowy, with **ice sheets in the surrounding water ring** — ride a boat over the ice: it should be fast).
+- [x] Entering an island's protection range announces its name ("Now entering <name>").
+- [x] `bbox` island info at an island (`/twadmin info` while standing there) shows an unowned island, range 1000, protection 400.
+- [x] Restart the server: the same islands are still registered (no duplicate-registration log lines), names unchanged.
+- [x] Regenerate the world from scratch with the same seed (stop server, delete world folders AND `database/` TradeWinds islands): identical island positions, names, types.
+- [x] Islands are never within sight of one another (min separation 2500).
+- [x] PvP setting: on a LAWLESS/ANARCHIC island the island PVP flag is on; on SAFE it is off.
+
+## Stage 2 — Island content
+
+**IMPORTANT: needs freshly generated island chunks.** Docks/plazas/villagers only appear
+in chunks generated by this build — visit islands you have NOT been to before
+(`/twadmin islands`, pick ones beyond previous exploration), or regenerate the world.
+
+- [ ] Every island visited has a **dock**: a straight stone-brick quay with a plank deck
+      one block above the water, running from the island's flank out into open water.
+      A boat can pull up alongside the deck end.
+- [ ] The dock's plank type varies by island type (oak/spruce/acacia/cherry/dark oak).
+- [ ] Inland of the dock: a flattened **market plaza** (dirt-path disc) with a bell at
+      the center, four lantern posts, and 2–4 market stalls (fence posts + colored wool
+      canopy + barrel). Stall canopy color matches the island type.
+- [ ] Plaza edges blend into the terrain — no sheer walls around the plaza disc.
+- [ ] **Villagers** (3–5) stand on the plaza, professions matching the island's economy
+      (FISHING → fishermen; AGRICULTURAL → farmer/butcher/shepherd; MINING → mason/toolsmith;
+      INDUSTRIAL → smiths; LUXURY → librarian/cleric; …). Skin variant matches the biome
+      (snowy islands → snow villagers, desert → desert, …).
+- [ ] Villagers are on the plaza, NOT at the waterline (shoreline-safety rule).
+- [ ] **Iron golems** on the plaza: 3 on SAFE, 2 on POLICED, 1 on FRONTIER/LAWLESS,
+      none on ANARCHIC.
+- [ ] Leave (unload chunks) and return: villagers and golems are still there (persistent,
+      no despawn).
+- [ ] Restart the server and revisit: residents persist, and no duplicate set spawns.
+- [ ] Same seed regeneration: dock bearing, plaza position, and stall layout are identical.

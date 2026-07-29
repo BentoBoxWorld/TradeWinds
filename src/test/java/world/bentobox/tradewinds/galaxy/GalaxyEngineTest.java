@@ -21,7 +21,7 @@ class GalaxyEngineTest {
     private static final long SEED = 987654321L;
 
     private GalaxyConfig config(long seed, double density) {
-        return new GalaxyConfig(seed, 2500, 160, 45, density, 5, 5000);
+        return new GalaxyConfig(seed, 2500, 160, 45, density, 5, 5000, 70);
     }
 
     private List<IslandSpec> islands(GalaxyEngine engine, int cellRange) {
@@ -138,6 +138,44 @@ class GalaxyEngineTest {
         // Just outside the terrain radius but inside 2x: frozen ocean
         assertEquals(Optional.of("minecraft:frozen_ocean"),
                 engine.biomeKeyAt(frozen.centerX() + 200, frozen.centerZ()));
+    }
+
+    @Test
+    void testDockPlanGeometry() {
+        GalaxyEngine engine = new GalaxyEngine(config(SEED, 1.0));
+        IslandSpec spec = engine.islandInCell(3, -2).orElseThrow();
+        DockPlan plan = engine.dockPlan(spec);
+        // Deterministic
+        assertEquals(plan, engine.dockPlan(spec));
+        assertEquals(plan, new GalaxyEngine(config(SEED, 1.0)).dockPlan(spec));
+        // Plaza sits inside the island's terrain footprint
+        double plazaDist = Math.sqrt(spec.distanceSquared(plan.plazaX(), plan.plazaZ()));
+        assertTrue(plazaDist < 160, "Plaza outside terrain: " + plazaDist);
+        // Quay ends inside the terrain radius but beyond the plaza
+        assertTrue(plan.dockEnd() > plazaDist && plan.dockEnd() < 160);
+    }
+
+    @Test
+    void testColumnPlans() {
+        GalaxyEngine engine = new GalaxyEngine(config(SEED, 1.0));
+        IslandSpec spec = engine.islandInCell(1, 1).orElseThrow();
+        DockPlan plan = engine.dockPlan(spec);
+        // Plaza center: fully flattened at sea level + PLAZA_RISE
+        ColumnPlan plaza = engine.columnPlanAt(plan.plazaX(), plan.plazaZ()).orElseThrow();
+        assertEquals(ColumnPlan.Feature.PLAZA, plaza.feature());
+        assertEquals(70 + GalaxyEngine.PLAZA_RISE, plaza.surfaceY());
+        assertEquals(1.0, plaza.blend());
+        assertEquals(spec, plaza.island());
+        // Seaward end of the quay: DOCK at sea level + DOCK_RISE
+        int dockX = spec.centerX() + (int) Math.round(Math.cos(plan.bearing()) * (plan.dockEnd() - 2));
+        int dockZ = spec.centerZ() + (int) Math.round(Math.sin(plan.bearing()) * (plan.dockEnd() - 2));
+        ColumnPlan dock = engine.columnPlanAt(dockX, dockZ).orElseThrow();
+        assertEquals(ColumnPlan.Feature.DOCK, dock.feature());
+        assertEquals(70 + GalaxyEngine.DOCK_RISE, dock.surfaceY());
+        // Island center is natural terrain (no feature)
+        assertTrue(engine.columnPlanAt(spec.centerX(), spec.centerZ()).isEmpty());
+        // Open ocean has no plans
+        assertTrue(new GalaxyEngine(config(SEED, 0.0)).columnPlanAt(500_000, 500_000).isEmpty());
     }
 
     @Test

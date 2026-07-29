@@ -232,7 +232,7 @@ public class TradeWinds extends GameModeAddon {
             long seed = s.getGalaxySeed() != 0 ? s.getGalaxySeed() : worldSeed;
             galaxyEngine = new GalaxyEngine(new GalaxyConfig(seed, s.getGalaxyMinSeparation(),
                     s.getIslandTerrainRadius(), s.getLandLift(), s.getGalaxyDensity(),
-                    s.getStarterClusterMinIslands(), s.getBandRadius()));
+                    s.getStarterClusterMinIslands(), s.getBandRadius(), s.getSeaHeight()));
             log("TradeWinds galaxy seed: " + seed);
         }
         return galaxyEngine;

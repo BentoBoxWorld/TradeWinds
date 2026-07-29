@@ -50,7 +50,7 @@ class GalaxyIslandRegistrarTest extends CommonTestSetup {
         addon = mock(TradeWinds.class);
         Settings settings = new Settings();
         when(addon.getSettings()).thenReturn(settings);
-        engine = new GalaxyEngine(new GalaxyConfig(SEED, 2500, 160, 45, 1.0, 0, 5000));
+        engine = new GalaxyEngine(new GalaxyConfig(SEED, 2500, 160, 45, 1.0, 0, 5000, 70));
         when(addon.getGalaxyEngine(anyLong())).thenReturn(engine);
         when(addon.getOverWorld()).thenReturn(world);
         when(addon.getIslands()).thenReturn(im);
