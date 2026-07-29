@@ -1,0 +1,29 @@
+name: TradeWinds
+main: world.bentobox.tradewinds.TradeWinds
+version: ${version}${build.number}
+api-version: 3.18.0
+metrics: true
+icon: "OAK_CHEST_BOAT"
+repository: "BentoBoxWorld/TradeWinds"
+authors: tastybento
+softdepend: BlueBook, Border, Level, Challenges, Visit, Warps
+
+permissions:
+  tradewinds.island:
+    description: Allow use of the TradeWinds player command
+    default: true
+  tradewinds.island.spawn:
+    description: Allow teleporting to the TradeWinds spawn
+    default: true
+  tradewinds.island.info:
+    description: Allow use of the island info command
+    default: true
+  tradewinds.island.language:
+    description: Allow use of the language command
+    default: true
+  tradewinds.admin:
+    description: Allow use of the TradeWinds admin command
+    default: op
+  tradewinds.admin.*:
+    description: All TradeWinds admin permissions
+    default: op

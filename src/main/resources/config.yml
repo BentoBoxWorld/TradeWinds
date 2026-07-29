@@ -1,0 +1,76 @@
+# TradeWinds Configuration ${version}
+tradewinds:
+  command:
+    # Player command. What command users will run to access the game mode.
+    island: tw tradewinds
+    # The admin command.
+    admin: twadmin
+    # The default action for new player command call.
+    # TradeWinds players do not start with an island, so the default is 'spawn'.
+    new-player-action: spawn
+    # The default action for player command.
+    default-action: spawn
+galaxy:
+  # The galaxy seed. Every island position, type, security band, biome, name and
+  # route cost derives deterministically from this one number - share it and another
+  # server gets the same trading galaxy. 0 means: use the world seed.
+  seed: 0
+  # Minimum separation between trading island centers in blocks.
+  min-separation: 2500
+  # Radius in blocks around spawn inside which the starter-cluster density floor applies.
+  starter-cluster-radius: 5000
+  # Minimum number of trading islands guaranteed inside the starter cluster radius.
+  starter-cluster-min-islands: 5
+travel:
+  warp:
+    # Base warp fuel cost multiplier: fuel units per block of Euclidean route distance.
+    fuel-per-block: 0.01
+    # Chance (0.0-1.0) that a warp fails and drops the player into the interstice.
+    # Re-engaging the warp from the interstice to the original destination is always free.
+    failure-chance: 0.05
+illegal-trade:
+  # Master gate for all illegal-goods mechanics: contraband, customs scans, smuggling.
+  # Set false for family-friendly servers - removes the entire crime layer cleanly.
+  enabled: true
+world:
+  friendly-name: TradeWinds
+  world-name: tradewinds_world
+  difficulty: NORMAL
+  # Radius of island space in blocks (island "range"). Islands are never in sight of each other.
+  distance-between-islands: 1000
+  # Protection radius of trading islands in blocks.
+  protection-range: 400
+  start-x: 0
+  start-z: 0
+  island-height: 70
+  use-own-generator: false
+  # Sea surface level.
+  sea-height: 70
+  # Base y below which the ocean floor terrain noise starts.
+  sea-floor: 25
+  # Water block for the overworld ocean.
+  water-block: WATER
+  # Allow vanilla cave generation under the ocean floor.
+  make-caves: false
+  # Allow vanilla decoration (kelp, seagrass, trees on island land).
+  make-decorations: true
+  # Allow vanilla structure generation (shipwrecks, ruins...).
+  make-structures: false
+  max-islands: -1
+  default-game-mode: SURVIVAL
+  nether:
+    # The interstice: the hostile Nether-environment sea that failed warps drop players
+    # into. Unreachable by any portal - warp failure is the only way in.
+    generate: true
+    islands: true
+    sea-height: 70
+    sea-floor: 25
+    water-block: WATER
+    create-and-link-portals: false
+  end:
+    # Never enable: no End means shulker shells stay unobtainable, keeping cargo
+    # expanders a purchase-only money sink.
+    generate: false
+    islands: false
+# Log detailed [TradeWinds DEBUG] lines around galaxy generation, travel and trade.
+debug: false

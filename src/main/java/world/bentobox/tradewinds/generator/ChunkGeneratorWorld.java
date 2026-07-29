@@ -1,0 +1,164 @@
+package world.bentobox.tradewinds.generator;
+
+import java.util.EnumMap;
+import java.util.Map;
+import java.util.Random;
+
+import org.bukkit.Material;
+import org.bukkit.World;
+import org.bukkit.World.Environment;
+import org.bukkit.generator.BiomeProvider;
+import org.bukkit.generator.ChunkGenerator;
+import org.bukkit.generator.WorldInfo;
+import org.bukkit.util.noise.PerlinOctaveGenerator;
+import org.eclipse.jdt.annotation.NonNull;
+
+import world.bentobox.tradewinds.TradeWinds;
+
+/**
+ * Generates the TradeWinds ocean: a noised ocean floor under open sea, everywhere.
+ * <p>
+ * Both the overworld and the interstice (NETHER environment) use this generator;
+ * only the sea levels, water block and floor palette differ. Vanilla noise is off
+ * so no vanilla continents can appear: from Stage 1 the only land in the world
+ * comes from the seeded galaxy's radial island masks via {@link #terrainScale}.
+ *
+ * @author tastybento
+ */
+public class ChunkGeneratorWorld extends ChunkGenerator {
+
+    /**
+     * Floor palette: base fill under the surface layer, and the two materials the
+     * noised floor surface is randomly built from.
+     */
+    private record FloorMats(Material deepBase, Material base, Material top) {
+    }
+
+    /**
+     * Per-environment sea shape.
+     */
+    private record WorldConfig(int seaHeight, int seaFloor, Material waterBlock) {
+    }
+
+    /** Maximum height variation of the ocean floor noise, in blocks. */
+    private static final int NOISE_MAX = 25;
+    private static final double NOISE_SCALE = 1.0 / 30.0;
+    private static final int NOISE_OCTAVES = 8;
+
+    private final TradeWinds addon;
+    private final Map<Environment, WorldConfig> seaConfig = new EnumMap<>(Environment.class);
+    private static final Map<Environment, FloorMats> FLOOR_MATS = Map.of(
+            Environment.NORMAL, new FloorMats(Material.STONE, Material.SANDSTONE, Material.SAND),
+            Environment.NETHER, new FloorMats(Material.NETHERRACK, Material.BASALT, Material.SOUL_SAND));
+
+    private final Map<Environment, PerlinOctaveGenerator> noiseGens = new EnumMap<>(Environment.class);
+    // Deterministic palette randomness; re-seeded per chunk from (world seed, chunk coords)
+    private final Random rand = new Random();
+
+    public ChunkGeneratorWorld(TradeWinds addon) {
+        super();
+        this.addon = addon;
+        seaConfig.put(Environment.NORMAL, new WorldConfig(addon.getSettings().getSeaHeight(),
+                addon.getSettings().getSeaFloor(), addon.getSettings().getWaterBlock()));
+        seaConfig.put(Environment.NETHER, new WorldConfig(addon.getSettings().getIntersticeSeaHeight(),
+                addon.getSettings().getIntersticeSeaFloor(), addon.getSettings().getIntersticeWaterBlock()));
+    }
+
+    /**
+     * Terrain amplitude multiplier at a world column. Stage 0: flat ocean everywhere,
+     * so always 1. Stage 1 multiplies in the radial island mask here: >1 near island
+     * centers lifts the floor above sea level; 1 is plain ocean floor.
+     *
+     * @param worldInfo world being generated
+     * @param worldX world x of the column
+     * @param worldZ world z of the column
+     * @return amplitude multiplier, >= 0
+     */
+    protected double terrainScale(WorldInfo worldInfo, int worldX, int worldZ) {
+        return 1.0;
+    }
+
+    @Override
+    public void generateNoise(@NonNull WorldInfo worldInfo, @NonNull Random random, int chunkX, int chunkZ,
+            @NonNull ChunkData chunkData) {
+        WorldConfig wc = seaConfig.get(worldInfo.getEnvironment());
+        if (wc == null) {
+            return; // Only NORMAL and NETHER are ever created
+        }
+        FloorMats mats = FLOOR_MATS.get(worldInfo.getEnvironment());
+        PerlinOctaveGenerator gen = noiseGens.computeIfAbsent(worldInfo.getEnvironment(), env -> {
+            PerlinOctaveGenerator g = new PerlinOctaveGenerator(worldInfo.getSeed(), NOISE_OCTAVES);
+            g.setScale(NOISE_SCALE);
+            return g;
+        });
+        // Deterministic per-chunk palette randomness so regeneration is identical
+        rand.setSeed(worldInfo.getSeed() ^ (chunkX * 341873128712L + chunkZ * 132897987541L));
+
+        int minHeight = worldInfo.getMinHeight();
+        // Bedrock floor
+        chunkData.setRegion(0, minHeight, 0, 16, minHeight + 1, 16, Material.BEDROCK);
+        // Solid base up to the sea floor
+        if (wc.seaFloor() > minHeight + 1) {
+            chunkData.setRegion(0, minHeight + 1, 0, 16, wc.seaFloor(), 16, mats.deepBase());
+        }
+        // Noised floor surface, then water up to sea level
+        for (int x = 0; x < 16; x++) {
+            for (int z = 0; z < 16; z++) {
+                int worldX = (chunkX << 4) + x;
+                int worldZ = (chunkZ << 4) + z;
+                double noiseVal = gen.noise(worldX, worldZ, 0.5, 0.5, true);
+                double scale = terrainScale(worldInfo, worldX, worldZ);
+                int floorTop = wc.seaFloor() + (int) ((NOISE_MAX + NOISE_MAX * noiseVal) * scale);
+                floorTop = Math.min(floorTop, worldInfo.getMaxHeight() - 1);
+                for (int y = wc.seaFloor(); y < floorTop; y++) {
+                    chunkData.setBlock(x, y, z, rand.nextBoolean() ? mats.top() : mats.base());
+                }
+                // Water column above the floor
+                for (int y = Math.max(floorTop, wc.seaFloor()); y <= wc.seaHeight(); y++) {
+                    chunkData.setBlock(x, y, z, wc.waterBlock());
+                }
+            }
+        }
+    }
+
+    @Override
+    public boolean shouldGenerateNoise() {
+        // No vanilla terrain: land only ever comes from the island masks
+        return false;
+    }
+
+    @Override
+    public boolean shouldGenerateSurface() {
+        return false;
+    }
+
+    @Override
+    public boolean shouldGenerateCaves() {
+        return addon.getSettings().isMakeCaves();
+    }
+
+    @Override
+    public boolean shouldGenerateDecorations() {
+        return addon.getSettings().isMakeDecorations();
+    }
+
+    @Override
+    public boolean shouldGenerateMobs() {
+        return true;
+    }
+
+    @Override
+    public boolean shouldGenerateStructures() {
+        return addon.getSettings().isMakeStructures();
+    }
+
+    @Override
+    public BiomeProvider getDefaultBiomeProvider(WorldInfo worldInfo) {
+        return addon.getBiomeProvider();
+    }
+
+    @Override
+    public boolean canSpawn(World world, int x, int z) {
+        return true;
+    }
+}

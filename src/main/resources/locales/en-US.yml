@@ -1,0 +1,19 @@
+---
+###########################################################################################
+# This is a YML file. Be careful when editing. Check your edits in a YAML checker like    #
+# the one at http://yaml-online-parser.appspot.com                                        #
+###########################################################################################
+
+tradewinds:
+  general:
+    worlds:
+      overworld: "the open ocean"
+      interstice: "the interstice"
+  commands:
+    admin:
+      help:
+        description: "admin command for TradeWinds"
+    help:
+      description: "TradeWinds trading command"
+  spawn:
+    teleported: "&b You set sail on the open ocean."
