@@ -65,17 +65,21 @@ public class ChunkGeneratorWorld extends ChunkGenerator {
     }
 
     /**
-     * Terrain amplitude multiplier at a world column. Stage 0: flat ocean everywhere,
-     * so always 1. Stage 1 multiplies in the radial island mask here: >1 near island
-     * centers lifts the floor above sea level; 1 is plain ocean floor.
+     * Terrain lift in blocks at a world column - the seeded galaxy's radial
+     * island mask. This is the only source of land in the world: 0 is plain
+     * ocean floor; near an island center the lift raises the floor above sea
+     * level. The interstice has no islands.
      *
      * @param worldInfo world being generated
      * @param worldX world x of the column
      * @param worldZ world z of the column
-     * @return amplitude multiplier, >= 0
+     * @return lift in blocks, >= 0
      */
-    protected double terrainScale(WorldInfo worldInfo, int worldX, int worldZ) {
-        return 1.0;
+    protected int terrainLift(WorldInfo worldInfo, int worldX, int worldZ) {
+        if (worldInfo.getEnvironment() != Environment.NORMAL) {
+            return 0;
+        }
+        return addon.getGalaxyEngine(worldInfo.getSeed()).landLiftAt(worldX, worldZ);
     }
 
     @Override
@@ -101,17 +105,18 @@ public class ChunkGeneratorWorld extends ChunkGenerator {
         if (wc.seaFloor() > minHeight + 1) {
             chunkData.setRegion(0, minHeight + 1, 0, 16, wc.seaFloor(), 16, mats.deepBase());
         }
-        // Noised floor surface, then water up to sea level
+        // Noised floor surface (plus island lift), then water up to sea level
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
                 int worldX = (chunkX << 4) + x;
                 int worldZ = (chunkZ << 4) + z;
                 double noiseVal = gen.noise(worldX, worldZ, 0.5, 0.5, true);
-                double scale = terrainScale(worldInfo, worldX, worldZ);
-                int floorTop = wc.seaFloor() + (int) ((NOISE_MAX + NOISE_MAX * noiseVal) * scale);
+                int lift = terrainLift(worldInfo, worldX, worldZ);
+                int floorTop = wc.seaFloor() + (int) (NOISE_MAX + NOISE_MAX * noiseVal) + lift;
                 floorTop = Math.min(floorTop, worldInfo.getMaxHeight() - 1);
+                boolean land = floorTop > wc.seaHeight() + 1;
                 for (int y = wc.seaFloor(); y < floorTop; y++) {
-                    chunkData.setBlock(x, y, z, rand.nextBoolean() ? mats.top() : mats.base());
+                    chunkData.setBlock(x, y, z, columnMaterial(mats, y, floorTop, land));
                 }
                 // Water column above the floor
                 for (int y = Math.max(floorTop, wc.seaFloor()); y <= wc.seaHeight(); y++) {
@@ -119,6 +124,25 @@ public class ChunkGeneratorWorld extends ChunkGenerator {
                 }
             }
         }
+    }
+
+    /**
+     * Material for one block of a floor column. Underwater columns are the
+     * sea-floor palette; island columns that clear the sea get a soil profile
+     * (stone core, dirt subsoil, grass on top) so vanilla decoration can plant
+     * on them.
+     */
+    private Material columnMaterial(FloorMats mats, int y, int floorTop, boolean land) {
+        if (!land) {
+            return rand.nextBoolean() ? mats.top() : mats.base();
+        }
+        if (y == floorTop - 1) {
+            return Material.GRASS_BLOCK;
+        }
+        if (y >= floorTop - 4) {
+            return Material.DIRT;
+        }
+        return Material.STONE;
     }
 
     @Override

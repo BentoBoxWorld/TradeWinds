@@ -18,7 +18,10 @@ import world.bentobox.bentobox.api.commands.island.DefaultPlayerCommand;
 import world.bentobox.bentobox.api.configuration.Config;
 import world.bentobox.bentobox.api.configuration.WorldSettings;
 import world.bentobox.bentobox.lists.Flags;
+import world.bentobox.tradewinds.galaxy.GalaxyConfig;
+import world.bentobox.tradewinds.galaxy.GalaxyEngine;
 import world.bentobox.tradewinds.generator.ChunkGeneratorWorld;
+import world.bentobox.tradewinds.generator.GalaxyIslandRegistrar;
 import world.bentobox.tradewinds.generator.TradeWindsBiomeProvider;
 
 /**
@@ -39,6 +42,7 @@ public class TradeWinds extends GameModeAddon {
     private @Nullable ChunkGenerator chunkGenerator;
     private final Config<Settings> configObject = new Config<>(this, Settings.class);
     private BiomeProvider biomeProvider;
+    private @Nullable GalaxyEngine galaxyEngine;
 
     /**
      * This addon uses the new chunk generation API for the sea bottom
@@ -87,6 +91,10 @@ public class TradeWinds extends GameModeAddon {
         if (netherWorld != null) {
             Flags.BOAT.setDefaultSetting(netherWorld, true);
         }
+        // Island names are announced on entry ("Now entering [name]")
+        Flags.ENTER_EXIT_MESSAGES.setDefaultSetting(islandWorld, true);
+        // Register trading islands lazily as their center chunks first load
+        registerListener(new GalaxyIslandRegistrar(this));
     }
 
     @Override
@@ -177,5 +185,33 @@ public class TradeWinds extends GameModeAddon {
 
     public BiomeProvider getBiomeProvider() {
         return this.biomeProvider;
+    }
+
+    /**
+     * The seeded galaxy for the overworld. Created on first use because the
+     * effective seed may be the world's own seed (config galaxy.seed = 0), which
+     * is only known once the world exists.
+     *
+     * @param worldSeed the overworld seed, used when the config seed is 0
+     * @return the galaxy engine
+     */
+    public GalaxyEngine getGalaxyEngine(long worldSeed) {
+        if (galaxyEngine == null) {
+            Settings s = getSettings();
+            long seed = s.getGalaxySeed() != 0 ? s.getGalaxySeed() : worldSeed;
+            galaxyEngine = new GalaxyEngine(new GalaxyConfig(seed, s.getGalaxyMinSeparation(),
+                    s.getIslandTerrainRadius(), s.getLandLift(), s.getGalaxyDensity(),
+                    s.getStarterClusterMinIslands(), s.getBandRadius()));
+            log("TradeWinds galaxy seed: " + seed);
+        }
+        return galaxyEngine;
+    }
+
+    /**
+     * @return the galaxy engine, or null if no world query has initialized it yet
+     */
+    @Nullable
+    public GalaxyEngine getGalaxyEngine() {
+        return galaxyEngine;
     }
 }

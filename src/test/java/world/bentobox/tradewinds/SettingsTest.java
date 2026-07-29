@@ -73,6 +73,12 @@ class SettingsTest extends CommonTestSetup {
         assertTrue(settings.getGalaxyMinSeparation() >= 2 * settings.getIslandDistance());
         assertEquals(5000, settings.getStarterClusterRadius());
         assertEquals(5, settings.getStarterClusterMinIslands());
+        assertEquals(0.5, settings.getGalaxyDensity());
+        assertEquals(160, settings.getIslandTerrainRadius());
+        assertEquals(45, settings.getLandLift());
+        assertEquals(5000, settings.getBandRadius());
+        // Terrain must fit well inside the protection range
+        assertTrue(settings.getIslandTerrainRadius() < settings.getIslandProtectionRange());
     }
 
     @Test

@@ -21,6 +21,14 @@ galaxy:
   starter-cluster-radius: 5000
   # Minimum number of trading islands guaranteed inside the starter cluster radius.
   starter-cluster-min-islands: 5
+  # Chance (0.0-1.0) that a galaxy grid cell hosts a trading island.
+  density: 0.5
+  # Radius in blocks of an island's terrain footprint (land plus underwater shelf).
+  island-terrain-radius: 160
+  # Blocks of terrain lift at an island's center.
+  land-lift: 45
+  # Distance from spawn per security-band step (Safe -> Policed -> Frontier -> Lawless -> Anarchic).
+  band-radius: 5000
 travel:
   warp:
     # Base warp fuel cost multiplier: fuel units per block of Euclidean route distance.

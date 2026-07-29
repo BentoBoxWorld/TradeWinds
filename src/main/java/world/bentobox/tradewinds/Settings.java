@@ -77,6 +77,24 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "galaxy.starter-cluster-min-islands", needsReset = true)
     private int starterClusterMinIslands = 5;
 
+    @ConfigComment("Chance (0.0-1.0) that a galaxy grid cell hosts a trading island.")
+    @ConfigComment("Cells are 2 x min-separation across, so 0.5 averages one island per ~2 cells.")
+    @ConfigEntry(path = "galaxy.density", needsReset = true)
+    private double galaxyDensity = 0.5;
+
+    @ConfigComment("Radius in blocks of an island's terrain footprint (land plus underwater shelf).")
+    @ConfigEntry(path = "galaxy.island-terrain-radius", needsReset = true)
+    private int islandTerrainRadius = 160;
+
+    @ConfigComment("Blocks of terrain lift at an island's center. With sea-floor 25 and sea-height 70,")
+    @ConfigComment("45 puts mean island centers just above the waves with hills to ~30 blocks.")
+    @ConfigEntry(path = "galaxy.land-lift", needsReset = true)
+    private int landLift = 45;
+
+    @ConfigComment("Distance from spawn per security-band step (Safe -> Policed -> Frontier -> Lawless -> Anarchic).")
+    @ConfigEntry(path = "galaxy.band-radius", needsReset = true)
+    private int bandRadius = 5000;
+
     /*      TRAVEL      */
     @ConfigComment("Base warp fuel cost multiplier: fuel units per block of Euclidean route distance.")
     @ConfigComment("Per-edge overrides come later via the route-graph config.")
@@ -1997,6 +2015,14 @@ public class Settings implements WorldSettings {
     public void setStarterClusterRadius(int starterClusterRadius) { this.starterClusterRadius = starterClusterRadius; }
     public int getStarterClusterMinIslands() { return starterClusterMinIslands; }
     public void setStarterClusterMinIslands(int starterClusterMinIslands) { this.starterClusterMinIslands = starterClusterMinIslands; }
+    public double getGalaxyDensity() { return galaxyDensity; }
+    public void setGalaxyDensity(double galaxyDensity) { this.galaxyDensity = galaxyDensity; }
+    public int getIslandTerrainRadius() { return islandTerrainRadius; }
+    public void setIslandTerrainRadius(int islandTerrainRadius) { this.islandTerrainRadius = islandTerrainRadius; }
+    public int getLandLift() { return landLift; }
+    public void setLandLift(int landLift) { this.landLift = landLift; }
+    public int getBandRadius() { return bandRadius; }
+    public void setBandRadius(int bandRadius) { this.bandRadius = bandRadius; }
     public double getFuelPerBlock() { return fuelPerBlock; }
     public void setFuelPerBlock(double fuelPerBlock) { this.fuelPerBlock = fuelPerBlock; }
     public double getWarpFailureChance() { return warpFailureChance; }

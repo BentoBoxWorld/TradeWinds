@@ -57,6 +57,10 @@ class ChunkGeneratorWorldTest extends CommonTestSetup {
         addon = mock(TradeWinds.class);
         settings = new Settings();
         when(addon.getSettings()).thenReturn(settings);
+        // Default: an empty galaxy (density 0, no starter islands) - pure ocean
+        when(addon.getGalaxyEngine(org.mockito.ArgumentMatchers.anyLong()))
+                .thenReturn(new world.bentobox.tradewinds.galaxy.GalaxyEngine(
+                        new world.bentobox.tradewinds.galaxy.GalaxyConfig(SEED, 2500, 160, 45, 0.0, 0, 5000)));
     }
 
     private WorldInfo worldInfo(Environment env, long seed) {
@@ -175,23 +179,35 @@ class ChunkGeneratorWorldTest extends CommonTestSetup {
     }
 
     @Test
-    void testTerrainScaleHookLiftsLand() {
-        // Stage 1 readiness: a terrain scale > 1 must lift the floor above sea level
-        ChunkGeneratorWorld gen = new ChunkGeneratorWorld(addon) {
-            @Override
-            protected double terrainScale(WorldInfo worldInfo, int worldX, int worldZ) {
-                return 3.0;
-            }
-        };
-        RecordingChunkData r = generate(gen, Environment.NORMAL, SEED, 0, 0);
-        boolean landAboveSea = false;
-        for (int x = 0; x < 16 && !landAboveSea; x++) {
-            for (int z = 0; z < 16 && !landAboveSea; z++) {
-                Material m = r.get(x, settings.getSeaHeight() + 1, z);
-                landAboveSea = m == Material.SAND || m == Material.SANDSTONE;
+    void testTerrainLiftMakesIslands() {
+        // A galaxy with an island at this chunk must lift grassy land above the sea
+        world.bentobox.tradewinds.galaxy.GalaxyEngine denseEngine = new world.bentobox.tradewinds.galaxy.GalaxyEngine(
+                new world.bentobox.tradewinds.galaxy.GalaxyConfig(SEED, 2500, 160, 45, 1.0, 0, 5000));
+        when(addon.getGalaxyEngine(org.mockito.ArgumentMatchers.anyLong())).thenReturn(denseEngine);
+        world.bentobox.tradewinds.galaxy.IslandSpec spec = denseEngine.islandInCell(0, 0).orElseThrow();
+        ChunkGeneratorWorld gen = new ChunkGeneratorWorld(addon);
+        RecordingChunkData r = generate(gen, Environment.NORMAL, SEED, spec.centerX() >> 4, spec.centerZ() >> 4);
+
+        boolean grassAboveSea = false;
+        for (int x = 0; x < 16 && !grassAboveSea; x++) {
+            for (int z = 0; z < 16 && !grassAboveSea; z++) {
+                for (int y = settings.getSeaHeight() + 1; y < settings.getSeaHeight() + 45; y++) {
+                    if (r.get(x, y, z) == Material.GRASS_BLOCK) {
+                        grassAboveSea = true;
+                        break;
+                    }
+                }
             }
         }
-        assertTrue(landAboveSea, "terrainScale > 1 should lift terrain above sea level");
+        assertTrue(grassAboveSea, "The island mask should lift grassy land above sea level");
+
+        // And the interstice ignores the galaxy entirely
+        RecordingChunkData nether = generate(gen, Environment.NETHER, SEED, spec.centerX() >> 4, spec.centerZ() >> 4);
+        for (int x = 0; x < 16; x++) {
+            for (int z = 0; z < 16; z++) {
+                assertEquals(Material.AIR, nether.get(x, settings.getIntersticeSeaHeight() + 1, z));
+            }
+        }
     }
 
     @Test

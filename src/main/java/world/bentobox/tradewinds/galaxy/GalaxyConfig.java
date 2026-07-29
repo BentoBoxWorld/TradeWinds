@@ -1,0 +1,40 @@
+package world.bentobox.tradewinds.galaxy;
+
+/**
+ * Immutable configuration for the {@link GalaxyEngine}. Built from the addon
+ * Settings by the caller so the galaxy package stays free of Bukkit and
+ * BentoBox imports (spec principle 5: everything downstream of the seed is a
+ * pure function, unit-testable headlessly).
+ *
+ * @param seed the galaxy seed - the whole world derives from this one number
+ * @param minSeparation minimum distance in blocks between island centers
+ * @param terrainRadius radius in blocks of an island's terrain (land + shelf) mask
+ * @param landLift blocks of terrain lift at an island's center; tapers to 0 at terrainRadius
+ * @param density chance (0-1) that a galaxy grid cell hosts an island
+ * @param starterMinIslands the guaranteed number of islands nearest spawn (density floor)
+ * @param bandRadius distance from spawn per security-band step, in blocks
+ *
+ * @author tastybento
+ */
+public record GalaxyConfig(long seed, int minSeparation, int terrainRadius, int landLift, double density,
+        int starterMinIslands, int bandRadius) {
+
+    /**
+     * Grid cell size in blocks. With jitter confined to +/- minSeparation/2 of a
+     * cell's nominal center, islands in any two cells are constructively
+     * guaranteed to be at least minSeparation apart - no runtime rejection loop
+     * needed, and the result is order-independent and deterministic.
+     * @return cell size in blocks
+     */
+    public int cellSize() {
+        return minSeparation * 2;
+    }
+
+    /**
+     * Maximum jitter of an island position from its cell's nominal center.
+     * @return jitter radius in blocks
+     */
+    public int jitter() {
+        return minSeparation / 2;
+    }
+}
