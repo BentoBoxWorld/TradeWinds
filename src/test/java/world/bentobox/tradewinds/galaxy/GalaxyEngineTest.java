@@ -179,6 +179,26 @@ class GalaxyEngineTest {
     }
 
     @Test
+    void testWalkwayIsContinuousFromPlazaToPierEnd() {
+        // Playtest regression: the quay used to start ~10 blocks offshore because
+        // the plaza blend ring beat the dock strip. Walking the dock axis from the
+        // plaza center to the pier end must never leave planned ground.
+        GalaxyEngine engine = new GalaxyEngine(config(SEED, 1.0));
+        for (int cell = 0; cell < 12; cell++) {
+            IslandSpec spec = engine.islandInCell(cell, -cell - 1).orElseThrow();
+            DockPlan plan = engine.dockPlan(spec);
+            int plazaDist = (int) Math.round(Math.sqrt(spec.distanceSquared(plan.plazaX(), plan.plazaZ())));
+            for (int d = plazaDist; d <= plan.dockEnd() - 1; d++) {
+                int x = spec.centerX() + (int) Math.round(Math.cos(plan.bearing()) * d);
+                int z = spec.centerZ() + (int) Math.round(Math.sin(plan.bearing()) * d);
+                ColumnPlan plaza = engine.columnPlanAt(x, z).orElse(null);
+                assertTrue(plaza != null && (plaza.blend() >= 1.0),
+                        spec.name() + ": walkway hole at distance " + d + " (" + plaza + ")");
+            }
+        }
+    }
+
+    @Test
     void testNamesAreDistinctEnough() {
         GalaxyEngine engine = new GalaxyEngine(config(SEED, 1.0));
         List<IslandSpec> list = islands(engine, 7);

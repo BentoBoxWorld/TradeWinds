@@ -140,6 +140,11 @@ public class IslandDecorator extends BlockPopulator {
             Location loc = new Location(world, vx + 0.5, y, vz + 0.5);
             Villager villager = region.createEntity(loc, Villager.class);
             villager.setProfession(professions.get(i % professions.size()));
+            // A villager with zero trade XP and no claimed job site is reset to
+            // unemployed on first tick (and the stall barrels are fisherman job
+            // sites, so the survivors all turned fisherman). One XP point locks
+            // the assigned profession for good.
+            villager.setVillagerExperience(1);
             villager.setVillagerType(villagerType(spec.biomeKey()));
             villager.setPersistent(true);
             villager.setRemoveWhenFarAway(false);

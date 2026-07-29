@@ -33,6 +33,18 @@ Stage 0/1 checklists fully passed in-game before starting this.
 - In test code, fully-qualified `world.bentobox...` names inside methods are
   shadowed by CommonTestSetup's `protected World world` field - use imports.
 
+**Playtest round 2 fixes (same day):**
+- **Dock gap:** the plaza blend ring outranked the dock strip in
+  `columnPlanAt`, and on the seaward side the ring blends toward submerged
+  natural terrain - the quay started ~10 blocks offshore. Order is now plaza
+  disc → dock strip → blend ring, so the deck runs unbroken from plaza edge
+  to pier end. Regression test walks the full dock axis on 12 islands.
+- **Villager professions collapsed to Fisherman/none:** vanilla villager
+  brains reset a zero-XP, no-job-site villager to unemployed, and stall
+  BARRELs are fisherman job sites, so the survivors all claimed those.
+  `setVillagerExperience(1)` at spawn locks the assigned profession. (Known
+  vanilla behavior - worth remembering for any future spawned-NPC work.)
+
 ## Playtest round 1 fixes (2026-07-29)
 
 Ben's first in-game pass (see TESTING.md) found three failures; all fixed:

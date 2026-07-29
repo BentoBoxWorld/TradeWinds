@@ -257,17 +257,16 @@ public class GalaxyEngine {
     public Optional<ColumnPlan> columnPlanAt(int blockX, int blockZ) {
         for (IslandSpec s : islandsNear(blockX, blockZ, config.terrainRadius())) {
             DockPlan plan = dockPlan(s);
-            // Plaza disc + blend ring
             double pd = Math.hypot((double) blockX - plan.plazaX(), (double) blockZ - plan.plazaZ());
             int plazaSurface = config.seaLevel() + PLAZA_RISE;
+            // Plaza disc proper
             if (pd <= plan.plazaRadius()) {
                 return Optional.of(new ColumnPlan(ColumnPlan.Feature.PLAZA, s, plazaSurface, 1.0));
             }
-            if (pd <= plan.plazaRadius() + PLAZA_BLEND_WIDTH) {
-                double blend = 1.0 - (pd - plan.plazaRadius()) / PLAZA_BLEND_WIDTH;
-                return Optional.of(new ColumnPlan(ColumnPlan.Feature.PLAZA, s, plazaSurface, blend));
-            }
-            // Dock strip in bearing-aligned coordinates
+            // Dock strip in bearing-aligned coordinates. Checked BEFORE the plaza
+            // blend ring: the ring blends toward natural (often submerged) terrain
+            // on the seaward side, which used to cut a water gap between the plaza
+            // and the quay. The quay must run unbroken from plaza edge to pier end.
             double dx = (double) blockX - s.centerX();
             double dz = (double) blockZ - s.centerZ();
             double along = dx * Math.cos(plan.bearing()) + dz * Math.sin(plan.bearing());
@@ -275,6 +274,11 @@ public class GalaxyEngine {
             int plazaDist = (int) (config.terrainRadius() * PLAZA_DIST_FRACTION);
             if (along >= plazaDist && along <= plan.dockEnd() && Math.abs(across) <= DOCK_HALF_WIDTH) {
                 return Optional.of(new ColumnPlan(ColumnPlan.Feature.DOCK, s, config.seaLevel() + DOCK_RISE, 1.0));
+            }
+            // Plaza blend ring
+            if (pd <= plan.plazaRadius() + PLAZA_BLEND_WIDTH) {
+                double blend = 1.0 - (pd - plan.plazaRadius()) / PLAZA_BLEND_WIDTH;
+                return Optional.of(new ColumnPlan(ColumnPlan.Feature.PLAZA, s, plazaSurface, blend));
             }
         }
         return Optional.empty();

@@ -115,6 +115,9 @@ class IslandDecoratorTest extends CommonTestSetup {
         verify(villagers.get(0)).setProfession(IslandPalette.professions(spec.type()).get(0));
         verify(villagers.get(0)).setPersistent(true);
         verify(villagers.get(0)).setRemoveWhenFarAway(false);
+        // Playtest regression: without trade XP the brain resets professions to
+        // unemployed (or the stall barrels turn everyone fisherman)
+        villagers.forEach(v -> verify(v).setVillagerExperience(1));
     }
 
     @Test
