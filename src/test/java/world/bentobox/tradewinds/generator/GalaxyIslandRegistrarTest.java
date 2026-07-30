@@ -80,7 +80,14 @@ class GalaxyIslandRegistrarTest extends CommonTestSetup {
         assertEquals(spec.centerX() + 0.5, loc.getValue().getX());
         assertEquals(spec.centerZ() + 0.5, loc.getValue().getZ());
         verify(island).setName(spec.name());
-        verify(island).setSettingsFlag(Flags.PVP_OVERWORLD, spec.band().isPvp());
+        // Band policy: PvP, hostile spawning, villager protection
+        Settings settings = new Settings();
+        verify(island).setSettingsFlag(Flags.PVP_OVERWORLD,
+                settings.getBandPvp().get(spec.band().name()));
+        verify(island).setSettingsFlag(Flags.MONSTER_NATURAL_SPAWN,
+                settings.getBandMonsterSpawn().get(spec.band().name()));
+        verify(island).setFlag(Flags.HURT_VILLAGERS,
+                settings.getBandHurtVillagersRank().get(spec.band().name()));
     }
 
     @Test

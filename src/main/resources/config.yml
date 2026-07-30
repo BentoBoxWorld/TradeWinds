@@ -77,6 +77,40 @@ travel:
     BLAZE_ROD: 12.0
     COAL_BLOCK: 80.0
     LAVA_BUCKET: 100.0
+bands:
+  # Hostile mob natural spawning inside the protection range, per security band.
+  # Outside the protection range (approaches and open ocean) mobs always spawn.
+  monster-natural-spawn:
+    SAFE: false
+    POLICED: false
+    FRONTIER: true
+    LAWLESS: true
+    ANARCHIC: true
+  # PvP inside island space, per security band.
+  pvp:
+    SAFE: false
+    POLICED: false
+    FRONTIER: false
+    LAWLESS: true
+    ANARCHIC: true
+  # Minimum rank to hurt villagers (0 = anyone, 500 = effectively nobody).
+  # SAFE prevents it outright; elsewhere it is allowed - and punished (Stage 6).
+  hurt-villagers-rank:
+    SAFE: 500
+    POLICED: 0
+    FRONTIER: 0
+    LAWLESS: 0
+    ANARCHIC: 0
+residents:
+  # Distance from the plaza center beyond which a resident is teleported home.
+  tether-radius: 24
+  # Minutes before a killed resident respawns at the plaza. The market always recovers.
+  respawn-delay-minutes: 10
+  # Seconds between resident audits (tether check + respawn accounting).
+  audit-period-seconds: 30
+hud:
+  # Navigation boss bar in island waters: island name, standing, distance to dock.
+  navigation-bossbar: true
 illegal-trade:
   # Master gate for all illegal-goods mechanics: contraband, customs scans, smuggling.
   # Set false for family-friendly servers - removes the entire crime layer cleanly.

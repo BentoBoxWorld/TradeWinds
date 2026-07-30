@@ -228,6 +228,14 @@ public class GalaxyEngine {
     }
 
     /**
+     * The number of resident villagers an island supports (3-5, seeded).
+     * Deterministic so the respawn audit knows what "fully staffed" means.
+     */
+    public int villagerCount(IslandSpec spec) {
+        return 3 + (int) Math.floorMod(Hashing.cellHash(config.seed(), spec.cellX(), spec.cellZ(), 0x4E51DE47L), 3);
+    }
+
+    /**
      * The dock/market plan for an island - pure geometry from the island's
      * seeded bearing.
      *

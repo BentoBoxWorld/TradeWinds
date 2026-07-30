@@ -39,8 +39,10 @@ import world.bentobox.tradewinds.galaxy.SecurityBand;
  */
 public class IslandDecorator extends BlockPopulator {
 
-    /** PDC key marking island residents (villagers, golems). */
+    /** PDC key marking island residents (villagers, golems); value = island name. */
     public static final NamespacedKey RESIDENT_KEY = NamespacedKey.fromString("tradewinds:resident");
+    /** PDC key holding a resident's home position ("x,y,z") for the tether. */
+    public static final NamespacedKey HOME_KEY = NamespacedKey.fromString("tradewinds:home");
 
     private static final long SALT_DECOR = 0xDEC0AA7EL;
 
@@ -271,9 +273,11 @@ public class IslandDecorator extends BlockPopulator {
 
     private void spawnResidents(IslandSpec spec, DockPlan plan, LimitedRegion region, Random rand, World world,
             int y) {
-        // Villagers: professions match the island's economy
+        // Villagers: professions match the island's economy. Count is engine-
+        // deterministic so the respawn audit knows what fully-staffed means.
         List<Villager.Profession> professions = IslandPalette.professions(spec.type());
-        int villagers = 3 + rand.nextInt(3);
+        int villagers = addon.getGalaxyEngine(addon.getOverWorld() == null ? 0 : addon.getOverWorld().getSeed())
+                .villagerCount(spec);
         for (int i = 0; i < villagers; i++) {
             int vx = plan.plazaX() + rand.nextInt(9) - 4;
             int vz = plan.plazaZ() + rand.nextInt(9) - 4;
@@ -282,16 +286,7 @@ public class IslandDecorator extends BlockPopulator {
             }
             Location loc = new Location(world, vx + 0.5, y, vz + 0.5);
             Villager villager = region.createEntity(loc, Villager.class);
-            villager.setProfession(professions.get(i % professions.size()));
-            // A villager with zero trade XP and no claimed job site is reset to
-            // unemployed on first tick (and the stall barrels are fisherman job
-            // sites, so the survivors all turned fisherman). One XP point locks
-            // the assigned profession for good.
-            villager.setVillagerExperience(1);
-            villager.setVillagerType(villagerType(spec.biomeKey()));
-            villager.setPersistent(true);
-            villager.setRemoveWhenFarAway(false);
-            villager.getPersistentDataContainer().set(RESIDENT_KEY, PersistentDataType.STRING, spec.name());
+            configureVillager(villager, spec, i, plan.plazaX(), y, plan.plazaZ());
             region.addEntity(villager);
         }
         // Resident golems: civilization shows - none in anarchic space
@@ -303,17 +298,42 @@ public class IslandDecorator extends BlockPopulator {
             }
             Location loc = new Location(world, gx + 0.5, y, gz + 0.5);
             IronGolem golem = region.createEntity(loc, IronGolem.class);
-            golem.setPersistent(true);
-            golem.setRemoveWhenFarAway(false);
-            golem.getPersistentDataContainer().set(RESIDENT_KEY, PersistentDataType.STRING, spec.name());
+            configureResident(golem, spec, plan.plazaX(), y, plan.plazaZ());
             region.addEntity(golem);
         }
     }
 
     /**
+     * Shared resident setup for spawn and respawn: persistence, tags, home.
+     */
+    public static void configureResident(org.bukkit.entity.LivingEntity entity, IslandSpec spec, int homeX, int homeY,
+            int homeZ) {
+        entity.setPersistent(true);
+        entity.setRemoveWhenFarAway(false);
+        entity.getPersistentDataContainer().set(RESIDENT_KEY, PersistentDataType.STRING, spec.name());
+        entity.getPersistentDataContainer().set(HOME_KEY, PersistentDataType.STRING, homeX + "," + homeY + "," + homeZ);
+    }
+
+    /**
+     * Shared villager setup for spawn and respawn.
+     */
+    public static void configureVillager(Villager villager, IslandSpec spec, int index, int homeX, int homeY,
+            int homeZ) {
+        List<Villager.Profession> professions = IslandPalette.professions(spec.type());
+        villager.setProfession(professions.get(index % professions.size()));
+        // A villager with zero trade XP and no claimed job site is reset to
+        // unemployed on first tick (and the stall barrels are fisherman job
+        // sites, so the survivors all turned fisherman). One XP point locks
+        // the assigned profession for good.
+        villager.setVillagerExperience(1);
+        villager.setVillagerType(villagerType(spec.biomeKey()));
+        configureResident(villager, spec, homeX, homeY, homeZ);
+    }
+
+    /**
      * Resident golems by band - the visible face of island security.
      */
-    static int golemCount(SecurityBand band) {
+    public static int golemCount(SecurityBand band) {
         return switch (band) {
         case SAFE -> 3;
         case POLICED -> 2;

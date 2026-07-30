@@ -19,10 +19,12 @@ import world.bentobox.bentobox.api.commands.admin.DefaultAdminCommand;
 import world.bentobox.bentobox.api.commands.island.DefaultPlayerCommand;
 import world.bentobox.bentobox.api.commands.island.IslandInfoCommand;
 import world.bentobox.bentobox.api.commands.island.IslandLanguageCommand;
+import world.bentobox.bentobox.api.commands.island.IslandSettingsCommand;
 import world.bentobox.bentobox.api.configuration.Config;
 import world.bentobox.bentobox.api.configuration.WorldSettings;
 import world.bentobox.bentobox.lists.Flags;
 import world.bentobox.tradewinds.commands.AdminIslandsCommand;
+import world.bentobox.tradewinds.commands.AdminReflagCommand;
 import world.bentobox.tradewinds.commands.AdminTpIslandCommand;
 import world.bentobox.tradewinds.commands.TWChartCommand;
 import world.bentobox.tradewinds.commands.TWSpawnCommand;
@@ -30,9 +32,13 @@ import world.bentobox.tradewinds.commands.TWWarpCommand;
 import world.bentobox.tradewinds.dataobjects.PlayerDataManager;
 import world.bentobox.tradewinds.galaxy.RouteGraph;
 import world.bentobox.tradewinds.listeners.IntersticePortalListener;
+import world.bentobox.tradewinds.listeners.ResidentProtectionListener;
+import world.bentobox.tradewinds.tasks.NavigationBarTask;
+import world.bentobox.tradewinds.tasks.ResidentAuditTask;
 import world.bentobox.tradewinds.travel.BorderPromptListener;
 import world.bentobox.tradewinds.travel.ChartingListener;
 import world.bentobox.tradewinds.travel.FuelService;
+import world.bentobox.tradewinds.travel.StarterKit;
 import world.bentobox.tradewinds.travel.WarpService;
 import world.bentobox.tradewinds.galaxy.GalaxyConfig;
 import world.bentobox.tradewinds.galaxy.GalaxyEngine;
@@ -64,6 +70,9 @@ public class TradeWinds extends GameModeAddon {
     private FuelService fuelService;
     private WarpService warpService;
     private RouteGraph routeGraph;
+    private StarterKit starterKit;
+    private @Nullable ResidentAuditTask residentAuditTask;
+    private @Nullable NavigationBarTask navigationBarTask;
 
     /**
      * This addon uses the new chunk generation API for the sea bottom
@@ -99,6 +108,7 @@ public class TradeWinds extends GameModeAddon {
                 new TWWarpCommand(this);
                 new TWChartCommand(this);
                 new IslandInfoCommand(this);
+                new IslandSettingsCommand(this);
                 new IslandLanguageCommand(this);
             }
         };
@@ -108,6 +118,7 @@ public class TradeWinds extends GameModeAddon {
                 super.setup();
                 new AdminIslandsCommand(this);
                 new AdminTpIslandCommand(this);
+                new AdminReflagCommand(this);
             }
         };
     }
@@ -144,8 +155,16 @@ public class TradeWinds extends GameModeAddon {
         fuelService = new FuelService(this);
         routeGraph = new RouteGraph(getSettings().getFuelPerBlock(), getSettings().getEdgeOverrides());
         warpService = new WarpService(this);
+        starterKit = new StarterKit(this);
         registerListener(new ChartingListener(this));
         registerListener(new BorderPromptListener(this));
+        // Residents survive the night: no mob targeting, tether, respawn
+        registerListener(new ResidentProtectionListener());
+        residentAuditTask = new ResidentAuditTask(this);
+        residentAuditTask.start();
+        // Navigation boss bar: island, standing, distance to dock
+        navigationBarTask = new NavigationBarTask(this);
+        navigationBarTask.start();
         // Deterministic ocean spawn on the sea surface at the galaxy origin
         if (islandWorld != null) {
             islandWorld.setSpawnLocation(0, getSettings().getSeaHeight() + 1, 0);
@@ -154,6 +173,12 @@ public class TradeWinds extends GameModeAddon {
 
     @Override
     public void onDisable() {
+        if (residentAuditTask != null) {
+            residentAuditTask.stop();
+        }
+        if (navigationBarTask != null) {
+            navigationBarTask.stop();
+        }
         if (playerDataManager != null) {
             playerDataManager.saveAll();
         }
@@ -258,6 +283,21 @@ public class TradeWinds extends GameModeAddon {
 
     public RouteGraph getRouteGraph() {
         return routeGraph;
+    }
+
+    public StarterKit getStarterKit() {
+        return starterKit;
+    }
+
+    /**
+     * The player's legal standing, for HUDs. Until the reputation system
+     * (Stage 6) lands, everyone is Clean.
+     *
+     * @param playerId the player
+     * @return display name of the player's standing
+     */
+    public String getPlayerStanding(java.util.UUID playerId) {
+        return "Clean";
     }
 
     /**

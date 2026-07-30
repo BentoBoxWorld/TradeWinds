@@ -86,6 +86,22 @@ class SettingsTest extends CommonTestSetup {
     }
 
     @Test
+    void testBandPolicies() {
+        // No hostile spawns in civilized space; PvP only in lawless space
+        assertFalse(settings.getBandMonsterSpawn().get("SAFE"));
+        assertFalse(settings.getBandMonsterSpawn().get("POLICED"));
+        assertTrue(settings.getBandMonsterSpawn().get("FRONTIER"));
+        assertTrue(settings.getBandPvp().get("ANARCHIC"));
+        assertFalse(settings.getBandPvp().get("FRONTIER"));
+        // SAFE protects villagers outright; elsewhere crime is possible
+        assertEquals(500, settings.getBandHurtVillagersRank().get("SAFE"));
+        assertEquals(0, settings.getBandHurtVillagersRank().get("ANARCHIC"));
+        assertEquals(24, settings.getResidentTetherRadius());
+        assertEquals(10, settings.getResidentRespawnDelayMinutes());
+        assertTrue(settings.isNavigationBossbar());
+    }
+
+    @Test
     void testGameplayGates() {
         assertTrue(settings.isIllegalTradeEnabled());
         assertEquals(0.01, settings.getFuelPerBlock());

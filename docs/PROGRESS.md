@@ -3,6 +3,40 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## Stage 3b — Resident protection, band flags, nav bar, starter kit (2026-07-29)
+
+Playtest-driven package (traders died at night and scattered; no dock
+navigation after warp; bare-handed spawn):
+
+- **Band flag policy** (`bands.*` config): per-band MONSTER_NATURAL_SPAWN
+  (SAFE/POLICED off - note: setting flags only govern the protection range,
+  so approaches stay dangerous), PVP, and HURT_VILLAGERS rank (SAFE=500
+  prevents outright; elsewhere allowed - crime handled by Stage 6, not
+  invincibility). Applied at registration; `/twadmin reflag` re-applies to
+  existing islands after config changes.
+- **Residents survive**: mobs never target them (EntityTargetLivingEntityEvent
+  cancel on the resident PDC tag); only player-caused damage lands;
+  `ResidentAuditTask` tethers strays home (HOME_KEY PDC, plain teleport) and
+  respawns killed residents after `residents.respawn-delay-minutes` using the
+  engine-deterministic staffing count (`GalaxyEngine.villagerCount`).
+  Rejected: wandering-trader night despawn (blocks night trading, more state).
+- `/tw settings` restored - core targets the island AT the player's location,
+  so visitors get a read-only view for free (no rank = no toggling).
+- **Navigation boss bar** (1s task): island name | standing | dock distance;
+  fills as you close on the pier; color per band. `TradeWinds.getPlayerStanding` is a
+  "Clean" stub until Stage 6. Config gate `hud.navigation-bossbar`.
+- **Starter kit** (spec §4): first spawn arrival gives a named Trading Bundle
+  + oak boat - seated in it on water, item on land; `starterKitGiven` in
+  TWPlayerData. Boat owner UUID in PDC from day one. Repeat spawns auto-launch
+  a carried boat item.
+- MockBukkit patch extended AGAIN for a 26.2 registry gap:
+  `keyed/damage_type.json` lacked `minecraft:sulfur_cube_hot` and
+  `org.bukkit.damage.DamageType` clinit died - added `damage_type` to the
+  KEYED diff; script synced back to GushBlock. (Third instance of this
+  pattern: any `No value for minecraft:X` in tests means another registry
+  file needs the diff treatment.)
+- 84 tests green.
+
 ## Stage 3 — Travel: warp, fuel, charting (2026-07-29) — CODE COMPLETE, awaiting in-game test
 
 **Verify-first resolved:** Paper 26.2 dialog API confirmed and used:

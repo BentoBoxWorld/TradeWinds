@@ -56,6 +56,8 @@ KEYED = {
     # 26.2 added biomes (e.g. minecraft:sulfur_caves); org.bukkit.block.Biome
     # initialises every constant, so one missing key kills the class.
     "worldgen/biome": ("org/bukkit/block/Biome.class", False, "ocean"),
+    # 26.2 added damage types (e.g. minecraft:sulfur_cube_hot); same pattern.
+    "damage_type": ("org/bukkit/damage/DamageType.class", False, "generic"),
 }
 
 NEW_REGISTRIES = {

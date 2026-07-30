@@ -31,8 +31,15 @@ tradewinds:
         parameters: "[number]"
         unknown: "&c No island with that number - run /twadmin islands first."
         teleported: "&b Arrived at [name]."
+      reflag:
+        description: "re-apply security-band flags to all trading islands"
+        done: "&a Re-applied band flags to [number] trading islands."
   spawn:
     teleported: "&b You set sail on the open ocean."
+  starter-kit:
+    given: "&6 Your trading career begins: a boat and a trading bundle. Buy low, sell high."
+  status:
+    clean: "Clean"
   chart:
     charted: "Charted [name]!"
     empty: "&c Your chart is empty - row into an island's waters to chart it."

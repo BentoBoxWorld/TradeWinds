@@ -72,8 +72,7 @@ public class GalaxyIslandRegistrar implements Listener {
             return;
         }
         island.setName(spec.name());
-        // Security band flags: PvP live in lawless space
-        island.setSettingsFlag(Flags.PVP_OVERWORLD, spec.band().isPvp());
+        applyBandFlags(island, spec);
         if (island.getMetaData().isEmpty()) {
             island.setMetaData(new HashMap<>());
         }
@@ -81,5 +80,20 @@ public class GalaxyIslandRegistrar implements Listener {
         island.putMetaData(META_BAND, new MetaDataValue(spec.band().name()));
         addon.log("Registered trading island '" + spec.name() + "' (" + spec.type() + ", " + spec.band() + ") at "
                 + spec.centerX() + "," + spec.centerZ());
+    }
+
+    /**
+     * Apply the security band's configured flags to an island: PvP, hostile
+     * spawning within the protection range, and the hurt-villagers rank
+     * (SAFE prevents it outright; lower bands allow it - crime is Stage 6's
+     * problem).
+     */
+    public void applyBandFlags(Island island, IslandSpec spec) {
+        String band = spec.band().name();
+        island.setSettingsFlag(Flags.PVP_OVERWORLD,
+                addon.getSettings().getBandPvp().getOrDefault(band, spec.band().isPvp()));
+        island.setSettingsFlag(Flags.MONSTER_NATURAL_SPAWN,
+                addon.getSettings().getBandMonsterSpawn().getOrDefault(band, true));
+        island.setFlag(Flags.HURT_VILLAGERS, addon.getSettings().getBandHurtVillagersRank().getOrDefault(band, 0));
     }
 }

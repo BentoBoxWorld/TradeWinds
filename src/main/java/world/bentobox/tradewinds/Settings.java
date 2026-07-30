@@ -108,6 +108,71 @@ public class Settings implements WorldSettings {
         return map;
     }
 
+    /*      SECURITY BANDS      */
+    @ConfigComment("Hostile mob natural spawning inside the protection range, per security band.")
+    @ConfigComment("Outside the protection range (the island approaches and open ocean) mobs always spawn.")
+    @ConfigEntry(path = "bands.monster-natural-spawn")
+    private Map<String, Boolean> bandMonsterSpawn = defaultBandMonsterSpawn();
+
+    private static Map<String, Boolean> defaultBandMonsterSpawn() {
+        Map<String, Boolean> map = new HashMap<>();
+        map.put("SAFE", false);
+        map.put("POLICED", false);
+        map.put("FRONTIER", true);
+        map.put("LAWLESS", true);
+        map.put("ANARCHIC", true);
+        return map;
+    }
+
+    @ConfigComment("PvP inside island space, per security band.")
+    @ConfigEntry(path = "bands.pvp")
+    private Map<String, Boolean> bandPvp = defaultBandPvp();
+
+    private static Map<String, Boolean> defaultBandPvp() {
+        Map<String, Boolean> map = new HashMap<>();
+        map.put("SAFE", false);
+        map.put("POLICED", false);
+        map.put("FRONTIER", false);
+        map.put("LAWLESS", true);
+        map.put("ANARCHIC", true);
+        return map;
+    }
+
+    @ConfigComment("Minimum rank required to hurt villagers, per security band (0 = anyone/visitor,")
+    @ConfigComment("500 = member - effectively nobody on unowned trading islands).")
+    @ConfigComment("SAFE prevents it outright; lower bands allow it - and Stage 6 punishes it.")
+    @ConfigEntry(path = "bands.hurt-villagers-rank")
+    private Map<String, Integer> bandHurtVillagersRank = defaultBandHurtVillagers();
+
+    private static Map<String, Integer> defaultBandHurtVillagers() {
+        Map<String, Integer> map = new HashMap<>();
+        map.put("SAFE", 500);
+        map.put("POLICED", 0);
+        map.put("FRONTIER", 0);
+        map.put("LAWLESS", 0);
+        map.put("ANARCHIC", 0);
+        return map;
+    }
+
+    /*      RESIDENTS      */
+    @ConfigComment("Distance from the plaza center beyond which a resident is teleported home.")
+    @ConfigEntry(path = "residents.tether-radius")
+    private int residentTetherRadius = 24;
+
+    @ConfigComment("Minutes before a killed resident respawns at the plaza. The market always recovers.")
+    @ConfigEntry(path = "residents.respawn-delay-minutes")
+    private int residentRespawnDelayMinutes = 10;
+
+    @ConfigComment("Seconds between resident audits (tether check + respawn accounting).")
+    @ConfigEntry(path = "residents.audit-period-seconds")
+    private int residentAuditPeriodSeconds = 30;
+
+    /*      HUD      */
+    @ConfigComment("Show the navigation boss bar in island waters: island name, your standing,")
+    @ConfigComment("and the distance to the dock - so you can steer for it after a warp.")
+    @ConfigEntry(path = "hud.navigation-bossbar")
+    private boolean navigationBossbar = true;
+
     /*      TRAVEL      */
     @ConfigComment("Base warp fuel cost multiplier: fuel units per block of Euclidean route distance.")
     @ConfigComment("Per-edge overrides come later via the route-graph config.")
@@ -2115,6 +2180,20 @@ public class Settings implements WorldSettings {
     public void setFuelValues(Map<String, Double> fuelValues) { this.fuelValues = fuelValues; }
     public Map<String, Double> getEdgeOverrides() { return edgeOverrides; }
     public void setEdgeOverrides(Map<String, Double> edgeOverrides) { this.edgeOverrides = edgeOverrides; }
+    public Map<String, Boolean> getBandMonsterSpawn() { return bandMonsterSpawn; }
+    public void setBandMonsterSpawn(Map<String, Boolean> bandMonsterSpawn) { this.bandMonsterSpawn = bandMonsterSpawn; }
+    public Map<String, Boolean> getBandPvp() { return bandPvp; }
+    public void setBandPvp(Map<String, Boolean> bandPvp) { this.bandPvp = bandPvp; }
+    public Map<String, Integer> getBandHurtVillagersRank() { return bandHurtVillagersRank; }
+    public void setBandHurtVillagersRank(Map<String, Integer> bandHurtVillagersRank) { this.bandHurtVillagersRank = bandHurtVillagersRank; }
+    public int getResidentTetherRadius() { return residentTetherRadius; }
+    public void setResidentTetherRadius(int residentTetherRadius) { this.residentTetherRadius = residentTetherRadius; }
+    public int getResidentRespawnDelayMinutes() { return residentRespawnDelayMinutes; }
+    public void setResidentRespawnDelayMinutes(int residentRespawnDelayMinutes) { this.residentRespawnDelayMinutes = residentRespawnDelayMinutes; }
+    public int getResidentAuditPeriodSeconds() { return residentAuditPeriodSeconds; }
+    public void setResidentAuditPeriodSeconds(int residentAuditPeriodSeconds) { this.residentAuditPeriodSeconds = residentAuditPeriodSeconds; }
+    public boolean isNavigationBossbar() { return navigationBossbar; }
+    public void setNavigationBossbar(boolean navigationBossbar) { this.navigationBossbar = navigationBossbar; }
     public boolean isIllegalTradeEnabled() { return illegalTradeEnabled; }
     public void setIllegalTradeEnabled(boolean illegalTradeEnabled) { this.illegalTradeEnabled = illegalTradeEnabled; }
 

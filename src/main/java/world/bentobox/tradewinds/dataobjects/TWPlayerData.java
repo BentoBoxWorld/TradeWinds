@@ -28,6 +28,12 @@ public class TWPlayerData implements DataObject {
     @Expose
     private Set<String> chartedIslands = new HashSet<>();
 
+    /**
+     * Whether the one-time starter kit (boat + trading bundle) has been given.
+     */
+    @Expose
+    private boolean starterKitGiven;
+
     public TWPlayerData() {
         // Required by the database
     }
@@ -66,6 +72,14 @@ public class TWPlayerData implements DataObject {
     @Override
     public void setUniqueId(String uniqueId) {
         this.uniqueId = uniqueId;
+    }
+
+    public boolean isStarterKitGiven() {
+        return starterKitGiven;
+    }
+
+    public void setStarterKitGiven(boolean starterKitGiven) {
+        this.starterKitGiven = starterKitGiven;
     }
 
     public Set<String> getChartedIslands() {
