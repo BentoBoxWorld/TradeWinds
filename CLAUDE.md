@@ -67,8 +67,8 @@ renaming resources.
   MockBukkit, `docs/API_VERIFICATION.md` (verified 26.2 API facts).
 - `~/git/Boxed` — structure/jigsaw placement patterns (Stage 2).
 - `~/git/Border` — border display addon (passable visual border, Stage 3).
-- `~/git/bluebook` — economy prices: `BlueBook#getPriceEngine()`,
-  `PriceEngine.getPrice(ItemStack, worldName)` (Stage 4).
+- `~/git/bluebook` — origin of the pricing logic now embedded in
+  `economy.PriceEngine` (recipe-derived base prices).
 
 Follow BentoBox conventions: `Config<Settings>` + `@ConfigEntry`/`@StoreAt`,
 `Database<DataObject>` + cache managers, `FlagListener`, `DefaultPlayerCommand`

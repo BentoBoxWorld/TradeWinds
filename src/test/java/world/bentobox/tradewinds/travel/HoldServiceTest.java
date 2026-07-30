@@ -79,6 +79,16 @@ class HoldServiceTest extends CommonTestSetup {
     }
 
     @Test
+    void testFreeSpace() {
+        // Boat: wheat 40/64 (+24), coal 10/64 (+54), one empty slot (+64)
+        when(boatInv.getStorageContents()).thenReturn(new ItemStack[] { wheat, coal, null });
+        assertEquals(24 + 54 + 64, service.freeSpace(mockPlayer));
+        // No boat, no bundles: no hold at all
+        when(mockPlayer.getVehicle()).thenReturn(null);
+        assertEquals(0, service.freeSpace(mockPlayer));
+    }
+
+    @Test
     void testAddUsesBoatInventory() {
         when(boatInv.addItem(org.mockito.ArgumentMatchers.any(ItemStack.class))).thenReturn(new HashMap<>());
         assertEquals(16, service.add(mockPlayer, new ItemStack(Material.STONE, 16)));

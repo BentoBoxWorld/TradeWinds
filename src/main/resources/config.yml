@@ -136,8 +136,9 @@ economy:
   expander-cap: 4
   # Maximum trading bundles that count as hold space.
   max-bundles: 3
-  # Base prices used when BlueBook is not installed (Material -> price).
-  fallback-prices:
+  # Base prices (Material -> price). Anything not listed is priced by deriving from
+  # its crafting recipe (BlueBook logic, embedded); underivable = untradeable.
+  base-prices:
     WHEAT: 2.0
     CARROT: 1.5
     POTATO: 1.5

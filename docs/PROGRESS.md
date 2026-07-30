@@ -3,6 +3,22 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## Stage 4b — Trade UX + embedded BlueBook pricing (2026-07-30)
+
+Feedback round on the market screens, plus a direction change from Ben:
+- Every dialog page shows balance + approximate hold space
+  (`HoldService.freeSpace`: empty slots x 64 + stack headroom + bundle
+  weight); sub-pages get a Back exit button, the main menu a Close (the
+  dialog API's exitAction slot).
+- **BlueBook's pricing logic is now embedded** (`economy.PriceEngine`,
+  ported from ~/git/bluebook PriceEngine) instead of referenced as a plugin:
+  config base table (renamed `economy.base-prices`) + recursive recipe
+  derivation (depth 6, cycle-safe, cooking adds COAL/8 fuel share,
+  stonecutting passthrough, output-count division), durability scaling and
+  enchantment weights included for later gear-selling. Reflection bridge and
+  BlueBook softdepend removed; cache invalidated on reload. Recipe source is
+  injectable - derivation is fully unit-tested (109 total green).
+
 ## Stage 4 — Economy and cargo (2026-07-29) — CODE COMPLETE, awaiting in-game test
 
 The game becomes a game: buy low, sell high.

@@ -6,7 +6,7 @@ metrics: true
 icon: "OAK_CHEST_BOAT"
 repository: "BentoBoxWorld/TradeWinds"
 authors: tastybento
-softdepend: BlueBook, Border, Level, Challenges, Visit, Warps
+softdepend: Border, Level, Challenges, Visit, Warps
 
 permissions:
   tradewinds.island:

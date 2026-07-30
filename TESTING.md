@@ -204,8 +204,10 @@ the listener/tether; respawn accounting also applies everywhere):**
 
 ## Stage 4 — Economy and cargo
 
-Vault + an economy plugin must be running (they are on the test server). BlueBook is
-optional — without it the fallback price table applies (console logs which).
+Vault + an economy plugin must be running (they are on the test server). Base prices
+come from the embedded price engine: the config table (`economy.base-prices`) plus
+recipe derivation — e.g. HAY_BLOCK derives from 9x wheat even if unlisted, and a
+crafted item made of priced parts is automatically sellable.
 
 - [ ] New player: starter kit now also deposits the starting balance ($250).
 - [ ] **Open the market**: right-click any resident villager, or `/tw trade` anywhere
@@ -231,3 +233,12 @@ optional — without it the fallback price table applies (console logs which).
 - [ ] Expanders cannot be crafted (no shulker shells exist — no End).
 - [ ] A 4th bundle in your inventory does NOT add hold space (max-bundles 3).
 - [ ] Without a chest boat and bundles, buying refuses with "no room in your hold".
+
+### Stage 4b — trade screen UX + embedded pricing (feedback round)
+- [ ] Every market screen shows "Balance: $X | Hold space: ~N items", updating after
+      each transaction.
+- [ ] Sell and Buy pages have a "< Back" button returning to the main menu; the main
+      menu has "Close".
+- [ ] Recipe-derived pricing works: an item NOT in the base price table but craftable
+      from priced parts (e.g. a HAY_BLOCK, CRAFTING_TABLE from planks) gets a sane
+      sell price; junk with no priceable recipe (e.g. a stray BEDROCK) is untradeable.

@@ -53,6 +53,42 @@ public class HoldService {
     }
 
     /**
+     * Approximate free capacity of the hold in items, assuming 64-stacks:
+     * empty boat/expander slots count 64, partial stacks their headroom,
+     * bundles their remaining weight.
+     */
+    public int freeSpace(Player player) {
+        int free = 0;
+        if (player.getVehicle() instanceof ChestBoat boat) {
+            free += freeIn(boat.getInventory());
+            for (ItemStack stack : boat.getInventory().getContents()) {
+                if (isExpander(stack) && stack.getItemMeta() instanceof BlockStateMeta meta
+                        && meta.getBlockState() instanceof ShulkerBox box) {
+                    free += freeIn(box.getInventory());
+                }
+            }
+        }
+        for (ItemStack bundleItem : bundles(player)) {
+            if (bundleItem.getItemMeta() instanceof BundleMeta bundle) {
+                free += Math.max(0, 64 - bundle.getItems().stream().mapToInt(ItemStack::getAmount).sum());
+            }
+        }
+        return free;
+    }
+
+    private int freeIn(Inventory inventory) {
+        int free = 0;
+        for (ItemStack stack : inventory.getStorageContents()) {
+            if (stack == null || stack.getType().isAir()) {
+                free += 64;
+            } else if (stack.getMaxStackSize() >= 64 && !isExpander(stack)) {
+                free += stack.getMaxStackSize() - stack.getAmount();
+            }
+        }
+        return free;
+    }
+
+    /**
      * Remove up to {@code amount} of a material from the hold (chest boat
      * first, then expanders, then bundles).
      *

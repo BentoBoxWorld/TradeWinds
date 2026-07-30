@@ -274,6 +274,9 @@ public class TradeWinds extends GameModeAddon {
     @Override
     public void onReload() {
         if (loadSettings()) {
+            if (marketService != null) {
+                marketService.getPriceEngine().invalidate();
+            }
             log("Reloaded TradeWinds settings");
         }
     }

@@ -43,7 +43,6 @@ public class TradeDialog {
      * Open the market's main menu.
      */
     public void openMain(Player player, IslandSpec spec) {
-        double balance = addon.getPlugin().getVault().map(v -> v.getBalance(User.getInstance(player))).orElse(0.0);
         List<ActionButton> buttons = new ArrayList<>();
         buttons.add(button("Sell cargo", NamedTextColor.YELLOW, "Sell your hold's goods here",
                 () -> openSell(player, spec)));
@@ -62,8 +61,9 @@ public class TradeDialog {
                         openMain(player, spec);
                     }));
         }
-        show(player, spec.name() + " Market", "Balance: $" + String.format("%.2f", balance) + "  |  "
-                + spec.type().name() + ", " + spec.band().getDisplayName(), buttons);
+        show(player, spec.name() + " Market",
+                List.of(spec.type().name() + ", " + spec.band().getDisplayName(), statusLine(player)), buttons,
+                closeButton());
     }
 
     /**
@@ -83,9 +83,12 @@ public class TradeDialog {
         }
         if (buttons.isEmpty()) {
             User.getInstance(player).sendMessage("tradewinds.trade.nothing-to-sell");
+            openMain(player, spec);
             return;
         }
-        show(player, spec.name() + " - Selling", "The island pays for goods in your hold", buttons);
+        show(player, spec.name() + " - Selling",
+                List.of("The island pays for goods in your hold", statusLine(player)), buttons,
+                backButton(player, spec));
     }
 
     /**
@@ -106,9 +109,11 @@ public class TradeDialog {
         }
         if (buttons.isEmpty()) {
             User.getInstance(player).sendMessage("tradewinds.trade.nothing-for-sale");
+            openMain(player, spec);
             return;
         }
-        show(player, spec.name() + " - Buying", "Goods sold into your hold", buttons);
+        show(player, spec.name() + " - Buying",
+                List.of("Goods sold into your hold", statusLine(player)), buttons, backButton(player, spec));
     }
 
     /**
@@ -128,18 +133,39 @@ public class TradeDialog {
         return offers;
     }
 
+    /**
+     * Balance and hold space - shown on every market screen so traders always
+     * know what they can afford and what they can carry.
+     */
+    private String statusLine(Player player) {
+        double balance = addon.getPlugin().getVault().map(v -> v.getBalance(User.getInstance(player))).orElse(0.0);
+        return String.format("Balance: $%.2f  |  Hold space: ~%d items", balance,
+                addon.getHoldService().freeSpace(player));
+    }
+
+    private ActionButton backButton(Player player, IslandSpec spec) {
+        return button("< Back", NamedTextColor.GRAY, "Back to the market menu", () -> openMain(player, spec));
+    }
+
+    private ActionButton closeButton() {
+        // No action: clicking simply closes the dialog
+        return ActionButton.builder(Component.text("Close", NamedTextColor.GRAY)).width(300).build();
+    }
+
     private ActionButton button(String label, NamedTextColor color, String tooltip, Runnable action) {
         return ActionButton.create(Component.text(label, color), Component.text(tooltip), 300,
                 DialogAction.customClick((response, audience) -> action.run(),
                         ClickCallback.Options.builder().build()));
     }
 
-    private void show(Player player, String title, String body, List<ActionButton> buttons) {
+    private void show(Player player, String title, List<String> bodyLines, List<ActionButton> buttons,
+            ActionButton exitButton) {
+        List<DialogBody> body = bodyLines.stream()
+                .map(line -> (DialogBody) DialogBody.plainMessage(Component.text(line, NamedTextColor.GRAY)))
+                .toList();
         Dialog dialog = Dialog.create(factory -> factory.empty()
-                .base(DialogBase.builder(Component.text(title))
-                        .body(List.of(DialogBody.plainMessage(Component.text(body, NamedTextColor.GRAY))))
-                        .build())
-                .type(DialogType.multiAction(buttons).columns(1).build()));
+                .base(DialogBase.builder(Component.text(title)).body(body).build())
+                .type(DialogType.multiAction(buttons).exitAction(exitButton).columns(1).build()));
         player.showDialog(dialog);
     }
 }

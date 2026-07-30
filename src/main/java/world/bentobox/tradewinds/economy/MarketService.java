@@ -1,6 +1,5 @@
 package world.bentobox.tradewinds.economy;
 
-import java.lang.reflect.Method;
 import java.util.Optional;
 
 import org.bukkit.Material;
@@ -19,9 +18,9 @@ import world.bentobox.tradewinds.api.events.TWTradeEvent;
 import world.bentobox.tradewinds.galaxy.IslandSpec;
 
 /**
- * The market: prices and trades. Base prices come from BlueBook when it is
- * installed (looked up reflectively - soft dependency), else from the
- * fallback table in config. Island prices apply the type/band/stock model
+ * The market: prices and trades. Base prices come from the embedded
+ * {@link PriceEngine} (config table plus recipe derivation - BlueBook logic
+ * carried in-addon). Island prices apply the type/band/stock model
  * ({@link PriceModel}); all transactions move items through the hold ONLY and
  * money through Vault.
  *
@@ -33,12 +32,18 @@ public class MarketService {
     public static final NamespacedKey EXPANDER_KEY = NamespacedKey.fromString("tradewinds:expander");
 
     private final TradeWinds addon;
-    private Object priceEngine;
-    private Method getPriceMethod;
-    private boolean blueBookChecked;
+    private final PriceEngine priceEngine;
 
     public MarketService(TradeWinds addon) {
         this.addon = addon;
+        this.priceEngine = new PriceEngine(addon);
+    }
+
+    /**
+     * @return the embedded price engine
+     */
+    public PriceEngine getPriceEngine() {
+        return priceEngine;
     }
 
     /**
@@ -51,16 +56,12 @@ public class MarketService {
     }
 
     /**
-     * Base price of a material: BlueBook if present, else the fallback table.
-     * Empty means not tradeable.
+     * Base price of a material: configured, or derived from crafting recipes
+     * by the embedded price engine. Empty means not tradeable.
      */
     public Optional<Double> basePrice(Material material) {
-        Double blueBook = blueBookPrice(material);
-        if (blueBook != null && blueBook > 0) {
-            return Optional.of(blueBook);
-        }
-        Double fallback = addon.getSettings().getFallbackPrices().get(material.name());
-        return fallback != null && fallback > 0 ? Optional.of(fallback) : Optional.empty();
+        double price = priceEngine.getPrice(new ItemStack(material));
+        return price > 0 ? Optional.of(price) : Optional.empty();
     }
 
     /**
@@ -204,38 +205,7 @@ public class MarketService {
         return item;
     }
 
-    /**
-     * Reflective BlueBook lookup: PriceEngine.getPrice(ItemStack, worldName).
-     * Soft dependency - absent or failing BlueBook just means fallback prices.
-     */
-    private Double blueBookPrice(Material material) {
-        if (!blueBookChecked) {
-            blueBookChecked = true;
-            addon.getPlugin().getAddonsManager().getAddonByName("BlueBook").ifPresent(bb -> {
-                try {
-                    Object engine = bb.getClass().getMethod("getPriceEngine").invoke(bb);
-                    priceEngine = engine;
-                    getPriceMethod = engine.getClass().getMethod("getPrice", ItemStack.class, String.class);
-                    addon.log("Using BlueBook for base prices");
-                } catch (ReflectiveOperationException e) {
-                    addon.logError("BlueBook found but its price API is unavailable: " + e.getMessage());
-                }
-            });
-        }
-        if (priceEngine == null || getPriceMethod == null) {
-            return null;
-        }
-        try {
-            Object price = getPriceMethod.invoke(priceEngine, new ItemStack(material),
-                    addon.getSettings().getWorldName());
-            return price instanceof Number number ? number.doubleValue() : null;
-        } catch (ReflectiveOperationException e) {
-            return null;
-        }
-    }
-
     static String pretty(Material material) {
-        String name = material.name().toLowerCase(java.util.Locale.ENGLISH).replace('_', ' ');
-        return Character.toUpperCase(name.charAt(0)) + name.substring(1);
+        return PriceEngine.prettify(material.name());
     }
 }

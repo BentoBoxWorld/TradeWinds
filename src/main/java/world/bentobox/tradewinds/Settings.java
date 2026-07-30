@@ -297,11 +297,12 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "economy.max-bundles")
     private int maxBundles = 3;
 
-    @ConfigComment("Base prices used when BlueBook is not installed. Material -> price.")
-    @ConfigEntry(path = "economy.fallback-prices")
-    private Map<String, Double> fallbackPrices = defaultFallbackPrices();
+    @ConfigComment("Base prices (Material -> price). Anything not listed is priced by deriving")
+    @ConfigComment("from its crafting recipe (BlueBook logic, embedded); underivable = untradeable.")
+    @ConfigEntry(path = "economy.base-prices")
+    private Map<String, Double> basePrices = defaultBasePrices();
 
-    private static Map<String, Double> defaultFallbackPrices() {
+    private static Map<String, Double> defaultBasePrices() {
         Map<String, Double> map = new HashMap<>();
         map.put("WHEAT", 2.0); map.put("CARROT", 1.5); map.put("POTATO", 1.5); map.put("BEETROOT", 1.5);
         map.put("SUGAR_CANE", 1.0); map.put("SUGAR", 1.5); map.put("PUMPKIN", 3.0); map.put("MELON_SLICE", 0.5);
@@ -2305,8 +2306,8 @@ public class Settings implements WorldSettings {
     public void setExpanderCap(int expanderCap) { this.expanderCap = expanderCap; }
     public int getMaxBundles() { return maxBundles; }
     public void setMaxBundles(int maxBundles) { this.maxBundles = maxBundles; }
-    public Map<String, Double> getFallbackPrices() { return fallbackPrices; }
-    public void setFallbackPrices(Map<String, Double> fallbackPrices) { this.fallbackPrices = fallbackPrices; }
+    public Map<String, Double> getBasePrices() { return basePrices; }
+    public void setBasePrices(Map<String, Double> basePrices) { this.basePrices = basePrices; }
     public boolean isIllegalTradeEnabled() { return illegalTradeEnabled; }
     public void setIllegalTradeEnabled(boolean illegalTradeEnabled) { this.illegalTradeEnabled = illegalTradeEnabled; }
 
