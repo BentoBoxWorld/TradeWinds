@@ -169,6 +169,13 @@
             <version>${bentobox.version}</version>
             <scope>provided</scope>
         </dependency>
+        <!-- Vault economy API (BentoBox's VaultHook signatures reference it) -->
+        <dependency>
+            <groupId>com.github.MilkBowl</groupId>
+            <artifactId>VaultAPI</artifactId>
+            <version>1.7</version>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 
     <build>

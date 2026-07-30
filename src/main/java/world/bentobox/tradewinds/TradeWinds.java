@@ -28,8 +28,13 @@ import world.bentobox.tradewinds.commands.AdminReflagCommand;
 import world.bentobox.tradewinds.commands.AdminTpIslandCommand;
 import world.bentobox.tradewinds.commands.TWChartCommand;
 import world.bentobox.tradewinds.commands.TWSpawnCommand;
+import world.bentobox.tradewinds.commands.TWTradeCommand;
 import world.bentobox.tradewinds.commands.TWWarpCommand;
+import world.bentobox.tradewinds.dataobjects.IslandDataManager;
 import world.bentobox.tradewinds.dataobjects.PlayerDataManager;
+import world.bentobox.tradewinds.economy.MarketService;
+import world.bentobox.tradewinds.economy.TradeDialog;
+import world.bentobox.tradewinds.economy.TradeListener;
 import world.bentobox.tradewinds.galaxy.RouteGraph;
 import world.bentobox.tradewinds.listeners.IntersticePortalListener;
 import world.bentobox.tradewinds.listeners.ResidentProtectionListener;
@@ -38,6 +43,7 @@ import world.bentobox.tradewinds.tasks.ResidentAuditTask;
 import world.bentobox.tradewinds.travel.BorderPromptListener;
 import world.bentobox.tradewinds.travel.ChartingListener;
 import world.bentobox.tradewinds.travel.FuelService;
+import world.bentobox.tradewinds.travel.HoldService;
 import world.bentobox.tradewinds.travel.StarterKit;
 import world.bentobox.tradewinds.travel.WarpService;
 import world.bentobox.tradewinds.galaxy.GalaxyConfig;
@@ -71,6 +77,10 @@ public class TradeWinds extends GameModeAddon {
     private WarpService warpService;
     private RouteGraph routeGraph;
     private StarterKit starterKit;
+    private HoldService holdService;
+    private IslandDataManager islandDataManager;
+    private MarketService marketService;
+    private TradeDialog tradeDialog;
     private @Nullable ResidentAuditTask residentAuditTask;
     private @Nullable NavigationBarTask navigationBarTask;
 
@@ -107,6 +117,7 @@ public class TradeWinds extends GameModeAddon {
                 new TWSpawnCommand(this);
                 new TWWarpCommand(this);
                 new TWChartCommand(this);
+                new TWTradeCommand(this);
                 new IslandInfoCommand(this);
                 new IslandSettingsCommand(this);
                 new IslandLanguageCommand(this);
@@ -167,6 +178,12 @@ public class TradeWinds extends GameModeAddon {
         routeGraph = new RouteGraph(getSettings().getFuelPerBlock(), getSettings().getEdgeOverrides());
         warpService = new WarpService(this);
         starterKit = new StarterKit(this);
+        // Economy: hold, market data, prices, trade dialogs
+        holdService = new HoldService(this);
+        islandDataManager = new IslandDataManager(this);
+        marketService = new MarketService(this);
+        tradeDialog = new TradeDialog(this);
+        registerListener(new TradeListener(this));
         registerListener(new ChartingListener(this));
         registerListener(new BorderPromptListener(this));
         // Residents survive the night: no mob targeting, tether, respawn
@@ -192,6 +209,9 @@ public class TradeWinds extends GameModeAddon {
         }
         if (playerDataManager != null) {
             playerDataManager.saveAll();
+        }
+        if (islandDataManager != null) {
+            islandDataManager.saveAll();
         }
     }
 
@@ -298,6 +318,22 @@ public class TradeWinds extends GameModeAddon {
 
     public StarterKit getStarterKit() {
         return starterKit;
+    }
+
+    public HoldService getHoldService() {
+        return holdService;
+    }
+
+    public IslandDataManager getIslandDataManager() {
+        return islandDataManager;
+    }
+
+    public MarketService getMarketService() {
+        return marketService;
+    }
+
+    public TradeDialog getTradeDialog() {
+        return tradeDialog;
     }
 
     /**

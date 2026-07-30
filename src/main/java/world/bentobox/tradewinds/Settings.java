@@ -241,6 +241,89 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "travel.warp.edge-overrides")
     private Map<String, Double> edgeOverrides = new HashMap<>();
 
+    /*      ECONOMY      */
+    @ConfigComment("Money given to brand-new players with their starter kit.")
+    @ConfigEntry(path = "economy.starting-balance")
+    private double startingBalance = 250.0;
+
+    @ConfigComment("Multiplier on what players PAY an island (buying).")
+    @ConfigEntry(path = "economy.buy-spread")
+    private double buySpread = 1.15;
+
+    @ConfigComment("Multiplier on what an island PAYS players (selling). Together with buy-spread")
+    @ConfigComment("this makes a same-island round trip always lose money.")
+    @ConfigEntry(path = "economy.sell-spread")
+    private double sellSpread = 0.85;
+
+    @ConfigComment("Price multiplier for categories an island produces - its own goods are cheap.")
+    @ConfigEntry(path = "economy.produce-factor")
+    private double produceFactor = 0.6;
+
+    @ConfigComment("Price multiplier for categories an island demands - it pays over the odds.")
+    @ConfigEntry(path = "economy.demand-factor")
+    private double demandFactor = 1.4;
+
+    @ConfigComment("Extra demand multiplier per security band step - margins scale with danger:")
+    @ConfigComment("an ANARCHIC island pays (1 + 4 x this) times more on demanded goods.")
+    @ConfigEntry(path = "economy.band-demand-bonus")
+    private double bandDemandBonus = 0.125;
+
+    @ConfigComment("Stock units for a full price swing. Selling this much of a category to one")
+    @ConfigComment("island drives its prices to the drift minimum.")
+    @ConfigEntry(path = "economy.drift-scale")
+    private int driftScale = 500;
+
+    @ConfigComment("Lower clamp of the stock drift price factor.")
+    @ConfigEntry(path = "economy.drift-min")
+    private double driftMin = 0.7;
+
+    @ConfigComment("Upper clamp of the stock drift price factor.")
+    @ConfigEntry(path = "economy.drift-max")
+    private double driftMax = 1.3;
+
+    @ConfigComment("Stock units that decay back toward equilibrium per hour - markets recover.")
+    @ConfigEntry(path = "economy.stock-decay-per-hour")
+    private int stockDecayPerHour = 50;
+
+    @ConfigComment("Base price of the first cargo expander. Each further one costs double.")
+    @ConfigEntry(path = "economy.expander-base-price")
+    private double expanderBasePrice = 5000.0;
+
+    @ConfigComment("Maximum cargo expanders a player may ever buy.")
+    @ConfigEntry(path = "economy.expander-cap")
+    private int expanderCap = 4;
+
+    @ConfigComment("Maximum trading bundles that count as hold space.")
+    @ConfigEntry(path = "economy.max-bundles")
+    private int maxBundles = 3;
+
+    @ConfigComment("Base prices used when BlueBook is not installed. Material -> price.")
+    @ConfigEntry(path = "economy.fallback-prices")
+    private Map<String, Double> fallbackPrices = defaultFallbackPrices();
+
+    private static Map<String, Double> defaultFallbackPrices() {
+        Map<String, Double> map = new HashMap<>();
+        map.put("WHEAT", 2.0); map.put("CARROT", 1.5); map.put("POTATO", 1.5); map.put("BEETROOT", 1.5);
+        map.put("SUGAR_CANE", 1.0); map.put("SUGAR", 1.5); map.put("PUMPKIN", 3.0); map.put("MELON_SLICE", 0.5);
+        map.put("BREAD", 3.0); map.put("COOKED_BEEF", 4.0); map.put("COOKED_COD", 3.0); map.put("CAKE", 20.0);
+        map.put("GOLDEN_APPLE", 150.0); map.put("EGG", 1.0); map.put("HAY_BLOCK", 18.0);
+        map.put("COD", 2.0); map.put("SALMON", 3.0); map.put("TROPICAL_FISH", 5.0); map.put("PUFFERFISH", 4.0);
+        map.put("KELP", 0.3);
+        map.put("OAK_LOG", 1.5); map.put("SPRUCE_LOG", 1.5); map.put("BIRCH_LOG", 1.5); map.put("DARK_OAK_LOG", 1.5);
+        map.put("ACACIA_LOG", 1.5); map.put("JUNGLE_LOG", 1.5); map.put("CHERRY_LOG", 2.0);
+        map.put("STONE", 0.5); map.put("COBBLESTONE", 0.3); map.put("GRANITE", 0.4); map.put("DIORITE", 0.4);
+        map.put("ANDESITE", 0.4); map.put("DEEPSLATE", 0.6); map.put("SAND", 0.3); map.put("GRAVEL", 0.3);
+        map.put("COAL", 4.0); map.put("CHARCOAL", 3.0); map.put("RAW_IRON", 6.0); map.put("RAW_COPPER", 3.0);
+        map.put("RAW_GOLD", 12.0); map.put("FLINT", 1.0);
+        map.put("IRON_INGOT", 9.0); map.put("COPPER_INGOT", 4.0); map.put("GOLD_INGOT", 18.0);
+        map.put("IRON_NUGGET", 1.0); map.put("GOLD_NUGGET", 2.0);
+        map.put("DIAMOND", 100.0); map.put("EMERALD", 60.0); map.put("AMETHYST_SHARD", 10.0);
+        map.put("QUARTZ", 8.0); map.put("LAPIS_LAZULI", 6.0); map.put("REDSTONE", 3.0);
+        map.put("LEATHER", 4.0); map.put("WHITE_WOOL", 2.0); map.put("STRING", 1.5);
+        map.put("BEEF", 2.5); map.put("PORKCHOP", 2.5); map.put("CHICKEN", 2.0); map.put("MUTTON", 2.0);
+        return map;
+    }
+
     /*      ILLEGAL TRADE      */
     @ConfigComment("Master gate for all illegal-goods mechanics: contraband, customs scans, smuggling.")
     @ConfigComment("Set false for family-friendly servers - removes the entire crime layer cleanly.")
@@ -2196,6 +2279,34 @@ public class Settings implements WorldSettings {
     public void setResidentAuditPeriodSeconds(int residentAuditPeriodSeconds) { this.residentAuditPeriodSeconds = residentAuditPeriodSeconds; }
     public boolean isNavigationBossbar() { return navigationBossbar; }
     public void setNavigationBossbar(boolean navigationBossbar) { this.navigationBossbar = navigationBossbar; }
+    public double getStartingBalance() { return startingBalance; }
+    public void setStartingBalance(double startingBalance) { this.startingBalance = startingBalance; }
+    public double getBuySpread() { return buySpread; }
+    public void setBuySpread(double buySpread) { this.buySpread = buySpread; }
+    public double getSellSpread() { return sellSpread; }
+    public void setSellSpread(double sellSpread) { this.sellSpread = sellSpread; }
+    public double getProduceFactor() { return produceFactor; }
+    public void setProduceFactor(double produceFactor) { this.produceFactor = produceFactor; }
+    public double getDemandFactor() { return demandFactor; }
+    public void setDemandFactor(double demandFactor) { this.demandFactor = demandFactor; }
+    public double getBandDemandBonus() { return bandDemandBonus; }
+    public void setBandDemandBonus(double bandDemandBonus) { this.bandDemandBonus = bandDemandBonus; }
+    public int getDriftScale() { return driftScale; }
+    public void setDriftScale(int driftScale) { this.driftScale = driftScale; }
+    public double getDriftMin() { return driftMin; }
+    public void setDriftMin(double driftMin) { this.driftMin = driftMin; }
+    public double getDriftMax() { return driftMax; }
+    public void setDriftMax(double driftMax) { this.driftMax = driftMax; }
+    public int getStockDecayPerHour() { return stockDecayPerHour; }
+    public void setStockDecayPerHour(int stockDecayPerHour) { this.stockDecayPerHour = stockDecayPerHour; }
+    public double getExpanderBasePrice() { return expanderBasePrice; }
+    public void setExpanderBasePrice(double expanderBasePrice) { this.expanderBasePrice = expanderBasePrice; }
+    public int getExpanderCap() { return expanderCap; }
+    public void setExpanderCap(int expanderCap) { this.expanderCap = expanderCap; }
+    public int getMaxBundles() { return maxBundles; }
+    public void setMaxBundles(int maxBundles) { this.maxBundles = maxBundles; }
+    public Map<String, Double> getFallbackPrices() { return fallbackPrices; }
+    public void setFallbackPrices(Map<String, Double> fallbackPrices) { this.fallbackPrices = fallbackPrices; }
     public boolean isIllegalTradeEnabled() { return illegalTradeEnabled; }
     public void setIllegalTradeEnabled(boolean illegalTradeEnabled) { this.illegalTradeEnabled = illegalTradeEnabled; }
 

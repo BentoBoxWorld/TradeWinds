@@ -95,5 +95,9 @@ public class GalaxyIslandRegistrar implements Listener {
         island.setSettingsFlag(Flags.MONSTER_NATURAL_SPAWN,
                 addon.getSettings().getBandMonsterSpawn().getOrDefault(band, true));
         island.setFlag(Flags.HURT_VILLAGERS, addon.getSettings().getBandHurtVillagersRank().getOrDefault(band, 0));
+        // Everyone may drop and pick up items on trading islands - trade,
+        // jettisoned cargo, and plain convenience all depend on it
+        island.setFlag(Flags.ITEM_DROP, 0);
+        island.setFlag(Flags.ITEM_PICKUP, 0);
     }
 }

@@ -18,6 +18,8 @@ tradewinds:
       description: "open the warp dialog (in a boat, at an island)"
     chart:
       description: "list the islands on your chart"
+    trade:
+      description: "open the island market (within its protection range)"
     admin:
       help:
         description: "admin command for TradeWinds"
@@ -45,6 +47,16 @@ tradewinds:
     empty: "&c Your chart is empty - row into an island's waters to chart it."
     header: "&b Your chart ([number] islands):"
     entry: "&e [name] &7- [type], [band], [distance] blocks"
+  trade:
+    not-at-market: "&c There is no market here - trade within an island's protection range."
+    nothing-to-sell: "&c Nothing in your hold that this island will pay for."
+    nothing-for-sale: "&c This island has nothing for sale - it only buys."
+    sold: "&a Sold [amount] x [material] for $[price]."
+    bought: "&a Bought [amount] x [material] for $[price]."
+    cannot-afford: "&c You cannot afford that."
+    no-hold-space: "&c No room in your hold - stow cargo in your chest boat, expanders or bundles."
+    expander-bought: "&6 Cargo expander purchased for $[price] - stowed in your hold."
+    expander-cap: "&c Your boat cannot take any more expanders."
   warp:
     not-in-boat: "&c You need to be aboard a boat to warp."
     not-at-island: "&c The warp only engages within an island's waters."

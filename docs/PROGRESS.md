@@ -3,6 +3,41 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## Stage 4 — Economy and cargo (2026-07-29) — CODE COMPLETE, awaiting in-game test
+
+The game becomes a game: buy low, sell high.
+
+- **Prices**: `PriceModel` (pure record, fully tested invariants: produce->
+  demand routes profitable, same-island round trips always lose, margins
+  scale with band, stock drift clamps). Base prices from **BlueBook via
+  reflection** (soft dependency through AddonsManager - no compile-time
+  coupling; not in ~/.m2) with a ~50-entry fallback table in config.
+  `TradeCategory` classifies materials by name heuristics; `TypeEconomy`
+  holds the produce/demand tables and sale catalogs (code content for now,
+  config later). LUXURY produces nothing - pure demand sink in dangerous
+  space.
+- **Stock drift**: `TWIslandData` (keyed by cell) persists per-category
+  stock; selling floods depress prices, buyouts raise them; lazy decay
+  toward equilibrium per hour on access.
+- **The hold** (`HoldService`): chest-boat inventory + expander shulker
+  contents + up to `max-bundles` (3) bundles. contents/count/remove/add with
+  space handling. Pocket items are invisible to the market - tested.
+- **Trade dialogs**: main (balance, sell/buy/shipwright) -> sell page (one
+  button per hold material with island prices) -> buy page (catalog in
+  16-batches, limited by balance then by hold space - pay only for what
+  fit). Entry: right-click a resident trader (vanilla trade screen
+  suppressed) or `/tw trade` in protection range. `TWTradeEvent`
+  (cancellable) fires before every trade - Stage 6's contraband hook.
+- **Cargo expanders**: PDC-marked gold-named shulker boxes, purchase-only
+  (no End -> no shells), price doubling per owned (`expander-base-price`,
+  `expander-cap`), stowed directly into the hold.
+- **Vault**: BentoBox VaultHook; starter kit now deposits
+  `economy.starting-balance`. Needed the VaultAPI provided dependency in the
+  pom (VaultHook signatures reference EconomyResponse).
+- Item drop/pickup explicitly set to visitor rank on trading islands (Ben's
+  request; also a Stage 6 jettison prerequisite).
+- 100 tests green.
+
 ## Playtest fix: creeper-proof markets (2026-07-29)
 
 Creepers could be lured into the plaza to blow up stalls/landmarks. Fixed with

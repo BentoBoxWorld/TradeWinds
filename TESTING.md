@@ -201,3 +201,33 @@ the listener/tether; respawn accounting also applies everywhere):**
 - [ ] The starter boat has the owner recorded (no visible check yet — Stage 4+ uses it).
 - [ ] Returning to spawn later WITH a boat item in inventory: it is placed and you are
       seated (item consumed). Without one: you swim.
+
+## Stage 4 — Economy and cargo
+
+Vault + an economy plugin must be running (they are on the test server). BlueBook is
+optional — without it the fallback price table applies (console logs which).
+
+- [ ] New player: starter kit now also deposits the starting balance ($250).
+- [ ] **Open the market**: right-click any resident villager, or `/tw trade` anywhere
+      within an island's protection range. Main menu shows balance, island type/band,
+      and Sell / Buy / Shipwright buttons.
+- [ ] **Hold-only is enforced**: with wheat in your POCKETS and none in the hold, the
+      sell page says there is nothing to sell. Move it to the chest boat (or a bundle,
+      max 3 count) and it appears. This is the single most important economy check.
+- [ ] **Buy low**: at an AGRICULTURAL island, crops are cheap (produce factor). Buy 16
+      wheat — money leaves Vault balance, wheat lands in the chest boat.
+- [ ] **Sell high**: haul it to an island that demands CROPS (FISHING) — the sell price
+      there beats what you paid. A same-island buy-then-sell always loses money.
+- [ ] **Margins scale with danger**: the same demanded good pays visibly more at a
+      FRONTIER/LAWLESS island than at a SAFE one (band demand bonus).
+- [ ] **Stock drift**: sell a large amount of one category at one island — its prices
+      for that category drop. Buy an island out — prices rise. Restart the server:
+      the drift persists (TWIslandData in the database).
+- [ ] **LUXURY islands** sell nothing (no Buy button) but pay handsomely for gems,
+      luxuries, and fish.
+- [ ] **Shipwright**: buy a Cargo Expander ($5000) — a gold-named shulker box placed
+      into your chest boat. The next one costs $10,000; the cap (4) refuses further
+      purchases. Goods inside the expander count for selling and fuel.
+- [ ] Expanders cannot be crafted (no shulker shells exist — no End).
+- [ ] A 4th bundle in your inventory does NOT add hold space (max-bundles 3).
+- [ ] Without a chest boat and bundles, buying refuses with "no room in your hold".

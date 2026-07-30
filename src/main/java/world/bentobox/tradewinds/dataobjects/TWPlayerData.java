@@ -34,6 +34,12 @@ public class TWPlayerData implements DataObject {
     @Expose
     private boolean starterKitGiven;
 
+    /**
+     * Cargo expanders bought so far - drives the doubling price and the cap.
+     */
+    @Expose
+    private int expandersPurchased;
+
     public TWPlayerData() {
         // Required by the database
     }
@@ -72,6 +78,14 @@ public class TWPlayerData implements DataObject {
     @Override
     public void setUniqueId(String uniqueId) {
         this.uniqueId = uniqueId;
+    }
+
+    public int getExpandersPurchased() {
+        return expandersPurchased;
+    }
+
+    public void setExpandersPurchased(int expandersPurchased) {
+        this.expandersPurchased = expandersPurchased;
     }
 
     public boolean isStarterKitGiven() {

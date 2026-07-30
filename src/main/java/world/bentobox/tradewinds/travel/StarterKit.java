@@ -54,6 +54,10 @@ public class StarterKit {
             } else {
                 player.getInventory().addItem(new ItemStack(Material.OAK_BOAT));
             }
+            // Seed money for the first cargo
+            addon.getPlugin().getVault()
+                    .ifPresent(vault -> vault.deposit(User.getInstance(player),
+                            addon.getSettings().getStartingBalance()));
             User.getInstance(player).sendMessage("tradewinds.starter-kit.given");
             return;
         }
