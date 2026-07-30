@@ -54,7 +54,8 @@ travel:
     # Seconds between automatic warp-dialog offers at the same island's border.
     prompt-cooldown-seconds: 30
     # Maximum destinations listed in the warp dialog (nearest first).
-    max-destinations: 20
+    # 8 fits the dialog without scrolling - scrolling is easy to miss.
+    max-destinations: 8
     # Warping hurts - it gates the under-equipped.
     nausea-seconds: 8
     blindness-seconds: 3

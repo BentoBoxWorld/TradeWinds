@@ -199,8 +199,9 @@ public class Settings implements WorldSettings {
     private int warpPromptCooldownSeconds = 30;
 
     @ConfigComment("Maximum destinations listed in the warp dialog (nearest first).")
+    @ConfigComment("8 fits the dialog without scrolling - scrolling is easy to miss.")
     @ConfigEntry(path = "travel.warp.max-destinations")
-    private int maxWarpDestinations = 20;
+    private int maxWarpDestinations = 8;
 
     @ConfigComment("Seconds of nausea after a warp. Warping hurts - it gates the under-equipped.")
     @ConfigEntry(path = "travel.warp.nausea-seconds")

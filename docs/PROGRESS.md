@@ -3,6 +3,14 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## Accessibility tune: warp dialog capped at 8 (2026-07-30)
+
+The dialog scrolls beyond ~8 buttons, but the scroll affordance is easy to
+miss (kids, accessibility). `travel.warp.max-destinations` default 20 -> 8 so
+the list always fits on screen; live server config updated too (stored
+values beat new defaults). Charting more islands is still fine - the eight
+NEAREST are listed.
+
 ## Stage 4b — Trade UX + embedded BlueBook pricing (2026-07-30)
 
 Feedback round on the market screens, plus a direction change from Ben:
