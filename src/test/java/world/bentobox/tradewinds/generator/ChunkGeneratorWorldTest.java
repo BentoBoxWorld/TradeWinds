@@ -228,7 +228,7 @@ class ChunkGeneratorWorldTest extends CommonTestSetup {
         int px = plan.plazaX() & 15;
         int pz = plan.plazaZ() & 15;
         int plazaSurface = settings.getSeaHeight() + GalaxyEngine.PLAZA_RISE;
-        assertEquals(Material.DIRT_PATH, plaza.get(px, plazaSurface, pz));
+        assertEquals(IslandPalette.plazaSurface(spec.type()), plaza.get(px, plazaSurface, pz));
         assertEquals(Material.AIR, plaza.get(px, plazaSurface + 1, pz));
 
         // A point on the quay: plank deck at seaHeight + DOCK_RISE over stone bricks, no water above

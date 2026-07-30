@@ -33,6 +33,7 @@ import world.bentobox.tradewinds.galaxy.DockPlan;
 import world.bentobox.tradewinds.galaxy.GalaxyConfig;
 import world.bentobox.tradewinds.galaxy.GalaxyEngine;
 import world.bentobox.tradewinds.galaxy.IslandSpec;
+import world.bentobox.tradewinds.galaxy.IslandType;
 import world.bentobox.tradewinds.galaxy.SecurityBand;
 
 /**
@@ -82,6 +83,7 @@ class IslandDecoratorTest extends CommonTestSetup {
             placed.add(inv.getArgument(3));
             return null;
         }).when(region).setType(anyInt(), anyInt(), anyInt(), any(Material.class));
+        when(region.isInRegion(any(Location.class))).thenReturn(true);
         when(region.createEntity(any(Location.class), any())).thenAnswer(inv -> {
             Class<?> clazz = inv.getArgument(1);
             if (clazz == Villager.class) {
@@ -90,10 +92,13 @@ class IslandDecoratorTest extends CommonTestSetup {
                 villagers.add(villager);
                 return villager;
             }
-            IronGolem golem = mock(IronGolem.class);
-            when(golem.getPersistentDataContainer()).thenReturn(mock(PersistentDataContainer.class));
-            golems.add(golem);
-            return golem;
+            if (clazz == IronGolem.class) {
+                IronGolem golem = mock(IronGolem.class);
+                when(golem.getPersistentDataContainer()).thenReturn(mock(PersistentDataContainer.class));
+                golems.add(golem);
+                return golem;
+            }
+            return mock(clazz);
         });
         return region;
     }
@@ -111,6 +116,10 @@ class IslandDecoratorTest extends CommonTestSetup {
         // Residents
         assertFalse(villagers.isEmpty(), "No villagers spawned");
         assertEquals(IslandDecorator.golemCount(spec.band()), golems.size());
+        // Workstations and the type landmark are present
+        assertTrue(placed.contains(IslandPalette.workstations(spec.type()).get(0)), "No workstation placed");
+        assertTrue(placed.stream().anyMatch(LANDMARK_SIGNATURES.get(spec.type())::contains),
+                "No landmark signature block for " + spec.type());
         // Professions come from the island type's list
         verify(villagers.get(0)).setProfession(IslandPalette.professions(spec.type()).get(0));
         verify(villagers.get(0)).setPersistent(true);
@@ -150,6 +159,26 @@ class IslandDecoratorTest extends CommonTestSetup {
         decorator.populate(worldInfo(Environment.NETHER), new Random(1), plan.plazaX() >> 4, plan.plazaZ() >> 4,
                 region);
         verify(region, never()).setType(anyInt(), anyInt(), anyInt(), any(Material.class));
+    }
+
+    /** One block that only the landmark of that type places. */
+    private static final java.util.Map<IslandType, List<Material>> LANDMARK_SIGNATURES = java.util.Map.of(
+            IslandType.AGRICULTURAL, List.of(Material.WHEAT, Material.HAY_BLOCK),
+            IslandType.FOREST, List.of(Material.DARK_OAK_LOG),
+            IslandType.FISHING, List.of(Material.CAMPFIRE),
+            IslandType.MINING, List.of(Material.RAIL, Material.STRIPPED_SPRUCE_LOG),
+            IslandType.INDUSTRIAL, List.of(Material.BRICKS, Material.CAMPFIRE),
+            IslandType.LUXURY, List.of(Material.CHISELED_QUARTZ_BLOCK),
+            IslandType.FROZEN, List.of(Material.PACKED_ICE));
+
+    @Test
+    void testPierEndGetsBanner() {
+        LimitedRegion region = region();
+        int pierX = spec.centerX() + (int) Math.round(Math.cos(plan.bearing()) * (plan.dockEnd() - 2));
+        int pierZ = spec.centerZ() + (int) Math.round(Math.sin(plan.bearing()) * (plan.dockEnd() - 2));
+        decorator.populate(worldInfo(Environment.NORMAL), new Random(1), pierX >> 4, pierZ >> 4, region);
+        assertTrue(placed.contains(IslandPalette.banner(spec.type())), "No banner at pier end");
+        assertTrue(placed.contains(Material.LANTERN), "No lantern at pier end");
     }
 
     @Test

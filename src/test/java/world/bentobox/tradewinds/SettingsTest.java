@@ -79,6 +79,10 @@ class SettingsTest extends CommonTestSetup {
         assertEquals(5000, settings.getBandRadius());
         // Terrain must fit well inside the protection range
         assertTrue(settings.getIslandTerrainRadius() < settings.getIslandProtectionRange());
+        // Type weights default to the enum weights, keyed by name
+        assertEquals(7, settings.getTypeWeights().size());
+        assertEquals(10, settings.getTypeWeights().get("AGRICULTURAL"));
+        assertEquals(4, settings.getTypeWeights().get("LUXURY"));
     }
 
     @Test

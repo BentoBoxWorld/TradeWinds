@@ -95,6 +95,19 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "galaxy.band-radius", needsReset = true)
     private int bandRadius = 5000;
 
+    @ConfigComment("Relative spawn weight per island type. Higher = more common; 0 disables a type.")
+    @ConfigComment("Types: AGRICULTURAL, FOREST, FISHING, MINING, INDUSTRIAL, LUXURY, FROZEN.")
+    @ConfigEntry(path = "galaxy.type-weights", needsReset = true)
+    private Map<String, Integer> typeWeights = defaultTypeWeights();
+
+    private static Map<String, Integer> defaultTypeWeights() {
+        Map<String, Integer> map = new HashMap<>();
+        for (world.bentobox.tradewinds.galaxy.IslandType t : world.bentobox.tradewinds.galaxy.IslandType.values()) {
+            map.put(t.name(), t.getWeight());
+        }
+        return map;
+    }
+
     /*      TRAVEL      */
     @ConfigComment("Base warp fuel cost multiplier: fuel units per block of Euclidean route distance.")
     @ConfigComment("Per-edge overrides come later via the route-graph config.")
@@ -2023,6 +2036,8 @@ public class Settings implements WorldSettings {
     public void setLandLift(int landLift) { this.landLift = landLift; }
     public int getBandRadius() { return bandRadius; }
     public void setBandRadius(int bandRadius) { this.bandRadius = bandRadius; }
+    public Map<String, Integer> getTypeWeights() { return typeWeights; }
+    public void setTypeWeights(Map<String, Integer> typeWeights) { this.typeWeights = typeWeights; }
     public double getFuelPerBlock() { return fuelPerBlock; }
     public void setFuelPerBlock(double fuelPerBlock) { this.fuelPerBlock = fuelPerBlock; }
     public double getWarpFailureChance() { return warpFailureChance; }

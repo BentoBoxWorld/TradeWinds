@@ -151,7 +151,7 @@ public class ChunkGeneratorWorld extends ChunkGenerator {
             return y == floorTop - 1 ? IslandPalette.planks(plan.island().type()) : Material.STONE_BRICKS;
         }
         if (plan != null && plan.feature() == ColumnPlan.Feature.PLAZA && plan.blend() >= 1.0 && y == floorTop - 1) {
-            return Material.DIRT_PATH;
+            return IslandPalette.plazaSurface(plan.island().type());
         }
         if (!land) {
             return rand.nextBoolean() ? mats.top() : mats.base();

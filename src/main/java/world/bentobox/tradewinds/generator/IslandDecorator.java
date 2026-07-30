@@ -10,6 +10,7 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.entity.IronGolem;
 import org.bukkit.entity.Villager;
+import org.bukkit.entity.boat.OakBoat;
 import org.bukkit.generator.BlockPopulator;
 import org.bukkit.generator.LimitedRegion;
 import org.bukkit.generator.WorldInfo;
@@ -21,6 +22,7 @@ import world.bentobox.tradewinds.galaxy.DockPlan;
 import world.bentobox.tradewinds.galaxy.GalaxyEngine;
 import world.bentobox.tradewinds.galaxy.Hashing;
 import world.bentobox.tradewinds.galaxy.IslandSpec;
+import world.bentobox.tradewinds.galaxy.IslandType;
 import world.bentobox.tradewinds.galaxy.SecurityBand;
 
 /**
@@ -55,7 +57,7 @@ public class IslandDecorator extends BlockPopulator {
             return;
         }
         GalaxyEngine engine = addon.getGalaxyEngine(worldInfo.getSeed());
-        // Islands whose plaza center lands in this chunk
+        // Islands whose plaza center or pier end lands in this chunk
         int minX = chunkX << 4;
         int minZ = chunkZ << 4;
         for (IslandSpec spec : engine.islandsNear(minX + 8, minZ + 8, engine.getConfig().terrainRadius() + 16)) {
@@ -63,6 +65,35 @@ public class IslandDecorator extends BlockPopulator {
             if (plan.plazaX() >= minX && plan.plazaX() < minX + 16 && plan.plazaZ() >= minZ
                     && plan.plazaZ() < minZ + 16) {
                 decoratePlaza(worldInfo, spec, plan, limitedRegion);
+            }
+            int pierX = spec.centerX() + (int) Math.round(Math.cos(plan.bearing()) * (plan.dockEnd() - 2));
+            int pierZ = spec.centerZ() + (int) Math.round(Math.sin(plan.bearing()) * (plan.dockEnd() - 2));
+            if (pierX >= minX && pierX < minX + 16 && pierZ >= minZ && pierZ < minZ + 16) {
+                decoratePierEnd(worldInfo, spec, pierX, pierZ, limitedRegion);
+            }
+        }
+    }
+
+    /**
+     * Pier-end dressing: the island's banner flying at the seaward end of the
+     * quay (spot your destination's color from open water), a lantern, and on
+     * FISHING islands a moored rowboat.
+     */
+    private void decoratePierEnd(WorldInfo worldInfo, IslandSpec spec, int pierX, int pierZ, LimitedRegion region) {
+        int deckY = addon.getGalaxyEngine(worldInfo.getSeed()).getConfig().seaLevel() + GalaxyEngine.DOCK_RISE;
+        setIfPossible(region, pierX, deckY + 1, pierZ, IslandPalette.banner(spec.type()));
+        // Lantern on a post one block to the side
+        int lx = pierX + (spec.cellX() % 2 == 0 ? 2 : -2);
+        setIfPossible(region, lx, deckY + 1, pierZ, IslandPalette.fence(spec.type()));
+        setIfPossible(region, lx, deckY + 2, pierZ, Material.LANTERN);
+        if (spec.type() == IslandType.FISHING) {
+            World world = Bukkit.getWorld(worldInfo.getUID());
+            // Moored rowboat on the water beside the deck
+            Location loc = new Location(world, pierX + 0.5, deckY - GalaxyEngine.DOCK_RISE + 1.0, pierZ + 4.5);
+            if (region.isInRegion(loc)) {
+                OakBoat boat = region.createEntity(loc, OakBoat.class);
+                boat.setPersistent(true);
+                region.addEntity(boat);
             }
         }
     }
@@ -87,19 +118,131 @@ public class IslandDecorator extends BlockPopulator {
             setIfPossible(region, lx, y + 2, lz, Material.LANTERN);
         }
 
-        // Market stalls on a ring: fence corners, wool canopy, a barrel counter
+        // Market stalls on a ring: fence corners, wool canopy, a barrel counter,
+        // and a profession workstation beside each stall
         int stalls = 2 + rand.nextInt(3);
         double startAngle = rand.nextDouble() * Math.PI * 2;
         int stallR = (int) (plan.plazaRadius() * 0.55);
+        List<Material> workstations = IslandPalette.workstations(spec.type());
         for (int i = 0; i < stalls; i++) {
             double angle = startAngle + i * (Math.PI * 2 / stalls);
             int sx = plan.plazaX() + (int) Math.round(Math.cos(angle) * stallR);
             int sz = plan.plazaZ() + (int) Math.round(Math.sin(angle) * stallR);
             buildStall(region, spec, sx, y, sz);
+            // Workstation just outside the stall, facing the ring center
+            int wx = plan.plazaX() + (int) Math.round(Math.cos(angle) * (stallR + 3));
+            int wz = plan.plazaZ() + (int) Math.round(Math.sin(angle) * (stallR + 3));
+            setIfPossible(region, wx, y, wz, workstations.get(i % workstations.size()));
         }
+
+        // The island's signature landmark on the inland edge of the plaza,
+        // opposite the dock - this is what makes an INDUSTRIAL island read
+        // industrial before you ever talk to a villager
+        int landmarkDist = plan.plazaRadius() - 5;
+        int lx = plan.plazaX() - (int) Math.round(Math.cos(plan.bearing()) * landmarkDist);
+        int lz = plan.plazaZ() - (int) Math.round(Math.sin(plan.bearing()) * landmarkDist);
+        buildLandmark(region, spec, rand, lx, y, lz);
 
         World world = Bukkit.getWorld(worldInfo.getUID());
         spawnResidents(spec, plan, region, rand, world, y);
+    }
+
+    /**
+     * One signature structure per island type. Code-built and deterministic,
+     * like the stalls; replaceable by blueprint sets later.
+     */
+    private void buildLandmark(LimitedRegion region, IslandSpec spec, Random rand, int x, int y, int z) {
+        switch (spec.type()) {
+        case INDUSTRIAL -> {
+            // Brick chimney with a signal fire on top: a smoke column visible
+            // from open water. Smelter yard at its foot.
+            for (int dy = 0; dy < 2; dy++) {
+                for (int dx = -1; dx <= 1; dx++) {
+                    for (int dz = -1; dz <= 1; dz++) {
+                        setIfPossible(region, x + dx, y + dy, z + dz, Material.BRICKS);
+                    }
+                }
+            }
+            for (int dy = 2; dy < 9; dy++) {
+                setIfPossible(region, x, y + dy, z, Material.BRICKS);
+            }
+            setIfPossible(region, x, y + 9, z, Material.HAY_BLOCK);
+            setIfPossible(region, x, y + 10, z, Material.CAMPFIRE);
+            setIfPossible(region, x + 2, y, z, Material.BLAST_FURNACE);
+            setIfPossible(region, x + 2, y, z + 1, Material.BLAST_FURNACE);
+            setIfPossible(region, x + 2, y, z - 1, Material.ANVIL);
+            setIfPossible(region, x - 2, y, z, Material.COAL_BLOCK);
+            setIfPossible(region, x - 2, y, z + 1, Material.IRON_BLOCK);
+        }
+        case MINING -> {
+            // Timbered shaft head with rails and a spoil heap
+            for (int dy = 0; dy < 3; dy++) {
+                setIfPossible(region, x - 1, y + dy, z, Material.STRIPPED_SPRUCE_LOG);
+                setIfPossible(region, x + 1, y + dy, z, Material.STRIPPED_SPRUCE_LOG);
+            }
+            setIfPossible(region, x, y + 3, z, Material.SPRUCE_PLANKS);
+            setIfPossible(region, x, y, z + 1, Material.RAIL);
+            setIfPossible(region, x, y, z + 2, Material.RAIL);
+            setIfPossible(region, x + 2, y, z + 1, Material.COBBLESTONE);
+            setIfPossible(region, x + 2, y, z + 2, Material.GRAVEL);
+            setIfPossible(region, x + 3, y, z + 1, Material.IRON_ORE);
+            setIfPossible(region, x - 2, y, z + 1, Material.COAL_ORE);
+        }
+        case AGRICULTURAL -> {
+            // Fenced wheat plot with an irrigation channel and hay stack
+            for (int dx = -2; dx <= 2; dx++) {
+                for (int dz = -2; dz <= 2; dz++) {
+                    if (dx == 0) {
+                        setIfPossible(region, x + dx, y - 1, z + dz, Material.WATER);
+                    } else {
+                        setIfPossible(region, x + dx, y - 1, z + dz, Material.FARMLAND);
+                        setIfPossible(region, x + dx, y, z + dz, Material.WHEAT);
+                    }
+                }
+            }
+            setIfPossible(region, x + 4, y, z, Material.HAY_BLOCK);
+            setIfPossible(region, x + 4, y + 1, z, Material.HAY_BLOCK);
+            setIfPossible(region, x + 4, y, z + 1, Material.HAY_BLOCK);
+        }
+        case FISHING -> {
+            // Smokehouse corner: campfire, barrel stack
+            setIfPossible(region, x, y, z, Material.CAMPFIRE);
+            setIfPossible(region, x + 1, y, z, Material.BARREL);
+            setIfPossible(region, x + 1, y + 1, z, Material.BARREL);
+            setIfPossible(region, x + 1, y, z + 1, Material.BARREL);
+        }
+        case FOREST -> {
+            // Log pile at the sawyer's yard
+            Material log = Material.DARK_OAK_LOG;
+            for (int dx = 0; dx < 3; dx++) {
+                for (int dz = 0; dz < 2; dz++) {
+                    setIfPossible(region, x + dx, y, z + dz, log);
+                }
+            }
+            setIfPossible(region, x, y + 1, z, Material.STRIPPED_DARK_OAK_LOG);
+            setIfPossible(region, x + 1, y + 1, z, Material.STRIPPED_DARK_OAK_LOG);
+        }
+        case LUXURY -> {
+            // Quartz fountain
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    setIfPossible(region, x + dx, y, z + dz,
+                            dx == 0 && dz == 0 ? Material.WATER : Material.CHISELED_QUARTZ_BLOCK);
+                }
+            }
+            setIfPossible(region, x + 1, y + 1, z + 1, Material.POTTED_PINK_TULIP);
+            setIfPossible(region, x - 1, y + 1, z - 1, Material.POTTED_BLUE_ORCHID);
+        }
+        case FROZEN -> {
+            // Ice beacon: packed-ice cairn with a lantern
+            for (int dy = 0; dy < 4; dy++) {
+                setIfPossible(region, x, y + dy, z, Material.PACKED_ICE);
+            }
+            setIfPossible(region, x, y + 4, z, Material.LANTERN);
+            setIfPossible(region, x + 1, y, z, Material.SNOW_BLOCK);
+            setIfPossible(region, x - 1, y, z + 1, Material.SNOW_BLOCK);
+        }
+        }
     }
 
     private long engineSeed(WorldInfo worldInfo) {

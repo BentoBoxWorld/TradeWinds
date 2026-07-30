@@ -132,11 +132,11 @@ public class GalaxyEngine {
     private IslandType rollType(int cellX, int cellZ) {
         int total = 0;
         for (IslandType t : IslandType.values()) {
-            total += t.getWeight();
+            total += Math.max(0, config.typeWeights().getOrDefault(t, 0));
         }
         long roll = Math.floorMod(Hashing.cellHash(config.seed(), cellX, cellZ, SALT_TYPE), total);
         for (IslandType t : IslandType.values()) {
-            roll -= t.getWeight();
+            roll -= Math.max(0, config.typeWeights().getOrDefault(t, 0));
             if (roll < 0) {
                 return t;
             }

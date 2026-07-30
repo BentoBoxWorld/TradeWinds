@@ -33,6 +33,25 @@ Stage 0/1 checklists fully passed in-game before starting this.
 - In test code, fully-qualified `world.bentobox...` names inside methods are
   shadowed by CommonTestSetup's `protected World world` field - use imports.
 
+**Stage 2b — island identity (same day, playtest feedback "islands all look
+the same; INDUSTRIAL doesn't look industrial"):**
+- Type **landmarks** built by IslandDecorator on the inland plaza edge:
+  INDUSTRIAL brick chimney with campfire-on-hay signal smoke (visible from
+  sea), MINING shaft head + rails + ore, AGRICULTURAL wheat plot + hay,
+  FISHING smokehouse + moored OakBoat at the pier, FOREST log pile, LUXURY
+  quartz fountain, FROZEN ice beacon.
+- **Plaza surface per type** (polished blackstone / smooth quartz /
+  cobblestone / podzol / planks / dirt path) via IslandPalette; type-colored
+  **banner + lantern at the pier end**; **workstation blocks** beside each
+  stall (safe now professions are XP-locked).
+- **`galaxy.type-weights` config**: weights moved into GalaxyConfig (record
+  gained a typeWeights param with a compact-constructor fallback to enum
+  defaults on zero/empty totals; old 8-arg constructor kept for
+  compatibility). Settings parses name→weight map, unknown names logged.
+  Weight changes reshape the galaxy → needsReset.
+- 58 tests green (landmark signatures, pier banner, weight overrides,
+  default-weights galaxy unchanged by the new parameter).
+
 **Playtest round 2 fixes (same day):**
 - **Dock gap:** the plaza blend ring outranked the dock strip in
   `columnPlanAt`, and on the seaward side the ring blends toward submerged

@@ -9,36 +9,57 @@ import org.bukkit.entity.Villager;
 import world.bentobox.tradewinds.galaxy.IslandType;
 
 /**
- * The Bukkit-material face of each island type: dock wood, stall canopy color,
- * and resident villager professions. Kept out of the galaxy package so that
- * stays Bukkit-free.
+ * The Bukkit-material face of each island type: dock wood, plaza surface,
+ * stall canopy color, pier banner, villager professions and their workstation
+ * blocks. Kept out of the galaxy package so that stays Bukkit-free.
  *
  * @author tastybento
  */
 public final class IslandPalette {
 
-    private record Palette(Material planks, Material fence, Material canopy,
-            List<Villager.Profession> professions) {
+    private record Palette(Material planks, Material fence, Material canopy, Material plazaSurface, Material banner,
+            List<Villager.Profession> professions, List<Material> workstations) {
     }
 
     private static final Map<IslandType, Palette> PALETTES = Map.of(
-            IslandType.AGRICULTURAL, new Palette(Material.OAK_PLANKS, Material.OAK_FENCE, Material.YELLOW_WOOL,
-                    List.of(Villager.Profession.FARMER, Villager.Profession.BUTCHER, Villager.Profession.SHEPHERD)),
-            IslandType.FOREST, new Palette(Material.DARK_OAK_PLANKS, Material.DARK_OAK_FENCE, Material.GREEN_WOOL,
-                    List.of(Villager.Profession.FLETCHER, Villager.Profession.CARTOGRAPHER)),
-            IslandType.FISHING, new Palette(Material.OAK_PLANKS, Material.OAK_FENCE, Material.BLUE_WOOL,
+            IslandType.AGRICULTURAL,
+            new Palette(Material.OAK_PLANKS, Material.OAK_FENCE, Material.YELLOW_WOOL, Material.DIRT_PATH,
+                    Material.YELLOW_BANNER,
+                    List.of(Villager.Profession.FARMER, Villager.Profession.BUTCHER, Villager.Profession.SHEPHERD),
+                    List.of(Material.COMPOSTER, Material.SMOKER, Material.LOOM)),
+            IslandType.FOREST,
+            new Palette(Material.DARK_OAK_PLANKS, Material.DARK_OAK_FENCE, Material.GREEN_WOOL, Material.PODZOL,
+                    Material.GREEN_BANNER,
+                    List.of(Villager.Profession.FLETCHER, Villager.Profession.CARTOGRAPHER),
+                    List.of(Material.FLETCHING_TABLE, Material.CARTOGRAPHY_TABLE)),
+            IslandType.FISHING,
+            new Palette(Material.OAK_PLANKS, Material.OAK_FENCE, Material.BLUE_WOOL, Material.OAK_PLANKS,
+                    Material.BLUE_BANNER,
                     List.of(Villager.Profession.FISHERMAN, Villager.Profession.FISHERMAN,
-                            Villager.Profession.LEATHERWORKER)),
-            IslandType.MINING, new Palette(Material.SPRUCE_PLANKS, Material.SPRUCE_FENCE, Material.GRAY_WOOL,
-                    List.of(Villager.Profession.MASON, Villager.Profession.TOOLSMITH)),
-            IslandType.INDUSTRIAL, new Palette(Material.ACACIA_PLANKS, Material.ACACIA_FENCE, Material.ORANGE_WOOL,
+                            Villager.Profession.LEATHERWORKER),
+                    List.of(Material.BARREL, Material.CAULDRON, Material.SMOKER)),
+            IslandType.MINING,
+            new Palette(Material.SPRUCE_PLANKS, Material.SPRUCE_FENCE, Material.GRAY_WOOL, Material.COBBLESTONE,
+                    Material.GRAY_BANNER,
+                    List.of(Villager.Profession.MASON, Villager.Profession.TOOLSMITH),
+                    List.of(Material.STONECUTTER, Material.SMITHING_TABLE)),
+            IslandType.INDUSTRIAL,
+            new Palette(Material.ACACIA_PLANKS, Material.ACACIA_FENCE, Material.ORANGE_WOOL,
+                    Material.POLISHED_BLACKSTONE, Material.ORANGE_BANNER,
                     List.of(Villager.Profession.TOOLSMITH, Villager.Profession.WEAPONSMITH,
-                            Villager.Profession.ARMORER)),
-            IslandType.LUXURY, new Palette(Material.CHERRY_PLANKS, Material.CHERRY_FENCE, Material.MAGENTA_WOOL,
+                            Villager.Profession.ARMORER),
+                    List.of(Material.BLAST_FURNACE, Material.GRINDSTONE, Material.ANVIL)),
+            IslandType.LUXURY,
+            new Palette(Material.CHERRY_PLANKS, Material.CHERRY_FENCE, Material.MAGENTA_WOOL, Material.SMOOTH_QUARTZ,
+                    Material.MAGENTA_BANNER,
                     List.of(Villager.Profession.LIBRARIAN, Villager.Profession.CLERIC,
-                            Villager.Profession.CARTOGRAPHER)),
-            IslandType.FROZEN, new Palette(Material.SPRUCE_PLANKS, Material.SPRUCE_FENCE, Material.LIGHT_BLUE_WOOL,
-                    List.of(Villager.Profession.LEATHERWORKER, Villager.Profession.CLERIC)));
+                            Villager.Profession.CARTOGRAPHER),
+                    List.of(Material.LECTERN, Material.BREWING_STAND, Material.CARTOGRAPHY_TABLE)),
+            IslandType.FROZEN,
+            new Palette(Material.SPRUCE_PLANKS, Material.SPRUCE_FENCE, Material.LIGHT_BLUE_WOOL,
+                    Material.SPRUCE_PLANKS, Material.LIGHT_BLUE_BANNER,
+                    List.of(Villager.Profession.LEATHERWORKER, Villager.Profession.CLERIC),
+                    List.of(Material.CAULDRON, Material.BREWING_STAND)));
 
     private IslandPalette() {
         // Static use only
@@ -56,7 +77,19 @@ public final class IslandPalette {
         return PALETTES.get(type).canopy();
     }
 
+    public static Material plazaSurface(IslandType type) {
+        return PALETTES.get(type).plazaSurface();
+    }
+
+    public static Material banner(IslandType type) {
+        return PALETTES.get(type).banner();
+    }
+
     public static List<Villager.Profession> professions(IslandType type) {
         return PALETTES.get(type).professions();
+    }
+
+    public static List<Material> workstations(IslandType type) {
+        return PALETTES.get(type).workstations();
     }
 }

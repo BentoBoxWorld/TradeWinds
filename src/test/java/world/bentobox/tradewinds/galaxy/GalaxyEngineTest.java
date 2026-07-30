@@ -199,6 +199,21 @@ class GalaxyEngineTest {
     }
 
     @Test
+    void testTypeWeightOverrides() {
+        // Only LUXURY weighted -> every island is LUXURY
+        GalaxyConfig cfg = new GalaxyConfig(SEED, 2500, 160, 45, 1.0, 5, 5000, 70,
+                java.util.Map.of(IslandType.LUXURY, 1));
+        islands(new GalaxyEngine(cfg), 5).forEach(s -> assertEquals(IslandType.LUXURY, s.type()));
+        // A zero/empty weight table falls back to the built-in defaults
+        GalaxyConfig broken = new GalaxyConfig(SEED, 2500, 160, 45, 1.0, 5, 5000, 70, java.util.Map.of());
+        assertEquals(GalaxyConfig.defaultTypeWeights(), broken.typeWeights());
+        // And the default-weights galaxy is unchanged by the new parameter
+        assertEquals(islands(new GalaxyEngine(config(SEED, 1.0)), 5),
+                islands(new GalaxyEngine(new GalaxyConfig(SEED, 2500, 160, 45, 1.0, 5, 5000, 70,
+                        GalaxyConfig.defaultTypeWeights())), 5));
+    }
+
+    @Test
     void testNamesAreDistinctEnough() {
         GalaxyEngine engine = new GalaxyEngine(config(SEED, 1.0));
         List<IslandSpec> list = islands(engine, 7);

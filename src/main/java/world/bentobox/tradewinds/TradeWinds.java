@@ -1,5 +1,7 @@
 package world.bentobox.tradewinds;
 
+import java.util.EnumMap;
+import java.util.Map;
 import java.util.Objects;
 
 import org.bukkit.World;
@@ -26,6 +28,7 @@ import world.bentobox.tradewinds.commands.TWSpawnCommand;
 import world.bentobox.tradewinds.listeners.IntersticePortalListener;
 import world.bentobox.tradewinds.galaxy.GalaxyConfig;
 import world.bentobox.tradewinds.galaxy.GalaxyEngine;
+import world.bentobox.tradewinds.galaxy.IslandType;
 import world.bentobox.tradewinds.generator.ChunkGeneratorWorld;
 import world.bentobox.tradewinds.generator.GalaxyIslandRegistrar;
 import world.bentobox.tradewinds.generator.TradeWindsBiomeProvider;
@@ -232,10 +235,27 @@ public class TradeWinds extends GameModeAddon {
             long seed = s.getGalaxySeed() != 0 ? s.getGalaxySeed() : worldSeed;
             galaxyEngine = new GalaxyEngine(new GalaxyConfig(seed, s.getGalaxyMinSeparation(),
                     s.getIslandTerrainRadius(), s.getLandLift(), s.getGalaxyDensity(),
-                    s.getStarterClusterMinIslands(), s.getBandRadius(), s.getSeaHeight()));
+                    s.getStarterClusterMinIslands(), s.getBandRadius(), s.getSeaHeight(), typeWeights()));
             log("TradeWinds galaxy seed: " + seed);
         }
         return galaxyEngine;
+    }
+
+    /**
+     * Parse the configured island type weights; unknown type names are logged
+     * and skipped (a zero total falls back to built-in defaults inside
+     * GalaxyConfig).
+     */
+    private Map<IslandType, Integer> typeWeights() {
+        Map<IslandType, Integer> weights = new EnumMap<>(IslandType.class);
+        getSettings().getTypeWeights().forEach((name, weight) -> {
+            try {
+                weights.put(IslandType.valueOf(name.toUpperCase(java.util.Locale.ENGLISH)), weight);
+            } catch (IllegalArgumentException e) {
+                logError("Unknown island type in galaxy.type-weights: " + name);
+            }
+        });
+        return weights;
     }
 
     /**

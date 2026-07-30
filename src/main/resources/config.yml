@@ -29,6 +29,15 @@ galaxy:
   land-lift: 45
   # Distance from spawn per security-band step (Safe -> Policed -> Frontier -> Lawless -> Anarchic).
   band-radius: 5000
+  # Relative spawn weight per island type. Higher = more common; 0 disables a type.
+  type-weights:
+    AGRICULTURAL: 10
+    FOREST: 10
+    FISHING: 10
+    MINING: 10
+    INDUSTRIAL: 8
+    LUXURY: 4
+    FROZEN: 8
 travel:
   warp:
     # Base warp fuel cost multiplier: fuel units per block of Euclidean route distance.

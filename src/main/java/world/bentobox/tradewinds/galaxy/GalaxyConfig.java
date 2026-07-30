@@ -1,5 +1,10 @@
 package world.bentobox.tradewinds.galaxy;
 
+import java.util.Arrays;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 /**
  * Immutable configuration for the {@link GalaxyEngine}. Built from the addon
  * Settings by the caller so the galaxy package stays free of Bukkit and
@@ -14,11 +19,36 @@ package world.bentobox.tradewinds.galaxy;
  * @param starterMinIslands the guaranteed number of islands nearest spawn (density floor)
  * @param bandRadius distance from spawn per security-band step, in blocks
  * @param seaLevel the world's sea surface Y - dock and plaza heights hang off it
+ * @param typeWeights relative spawn weight per island type; a zero or missing
+ *        total falls back to the built-in defaults
  *
  * @author tastybento
  */
 public record GalaxyConfig(long seed, int minSeparation, int terrainRadius, int landLift, double density,
-        int starterMinIslands, int bandRadius, int seaLevel) {
+        int starterMinIslands, int bandRadius, int seaLevel, Map<IslandType, Integer> typeWeights) {
+
+    public GalaxyConfig {
+        if (typeWeights == null || typeWeights.values().stream().mapToInt(w -> Math.max(0, w)).sum() <= 0) {
+            typeWeights = defaultTypeWeights();
+        }
+    }
+
+    /**
+     * Convenience constructor using the built-in type weights.
+     */
+    public GalaxyConfig(long seed, int minSeparation, int terrainRadius, int landLift, double density,
+            int starterMinIslands, int bandRadius, int seaLevel) {
+        this(seed, minSeparation, terrainRadius, landLift, density, starterMinIslands, bandRadius, seaLevel,
+                defaultTypeWeights());
+    }
+
+    /**
+     * @return the built-in default weight for every island type
+     */
+    public static Map<IslandType, Integer> defaultTypeWeights() {
+        return Arrays.stream(IslandType.values())
+                .collect(Collectors.toUnmodifiableMap(Function.identity(), IslandType::getWeight));
+    }
 
     /**
      * Grid cell size in blocks. With jitter confined to +/- minSeparation/2 of a
