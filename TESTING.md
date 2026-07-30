@@ -187,6 +187,13 @@ the listener/tether; respawn accounting also applies everywhere):**
 - [ ] Leaving island waters (or the world) removes the bar. `hud.navigation-bossbar:
       false` disables it entirely.
 
+**Creeper griefing (playtest feedback):**
+- [ ] Lure a creeper next to a market stall / landmark and let it explode: **no blocks
+      break** anywhere in the world, but the blast still damages you (and would damage
+      other players). Residents take no damage (mob damage is blocked for them).
+- [ ] `world.flags` in config.yml shows `CREEPER_DAMAGE: false`, `CREEPER_GRIEFING: true`
+      after a restart (the addon re-asserts these each enable).
+
 **Starter kit:**
 - [ ] A brand-new player's first `/tw` arrival: gets a gold-named "Trading Bundle",
       and — since spawn is water — an oak boat appears with them seated in it.

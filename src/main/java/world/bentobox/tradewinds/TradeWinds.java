@@ -146,6 +146,17 @@ public class TradeWinds extends GameModeAddon {
         }
         // Island names are announced on entry ("Now entering [name]")
         Flags.ENTER_EXIT_MESSAGES.setDefaultSetting(islandWorld, true);
+        // Markets must survive: creeper explosions never break blocks anywhere
+        // in TradeWinds (no lure-bombing the stalls or landmarks). GRIEFING
+        // stays true because false would cancel the whole explosion for
+        // non-members - and everyone is a non-member on a trading island;
+        // creepers killing players is legitimate (and, later, piracy).
+        Flags.CREEPER_DAMAGE.setDefaultSetting(islandWorld, false);
+        Flags.CREEPER_GRIEFING.setDefaultSetting(islandWorld, true);
+        if (netherWorld != null) {
+            Flags.CREEPER_DAMAGE.setDefaultSetting(netherWorld, false);
+            Flags.CREEPER_GRIEFING.setDefaultSetting(netherWorld, true);
+        }
         // Register trading islands lazily as their center chunks first load
         registerListener(new GalaxyIslandRegistrar(this));
         // Seal both worlds against portals - the interstice is warp-failure-only

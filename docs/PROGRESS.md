@@ -3,6 +3,18 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## Playtest fix: creeper-proof markets (2026-07-29)
+
+Creepers could be lured into the plaza to blow up stalls/landmarks. Fixed with
+core's own flags, asserted each enable for both worlds:
+`CREEPER_DAMAGE=false` (explosions break no blocks, still hurt entities) +
+`CREEPER_GRIEFING=true` - counterintuitive but required: GRIEFING=false makes
+core cancel the ENTIRE explosion when the creeper targets a non-member, and
+everyone is a non-member on unowned trading islands, so creepers could not
+even hurt players. Residents were already creeper-proof (non-player damage
+cancelled). setDefaultSetting persists into world.flags, overriding any stale
+lazily-saved true from earlier runs.
+
 ## Playtest tune: warp arrival distance (2026-07-29)
 
 350-from-center arrivals were a boring paddle and easy to get lost from even
