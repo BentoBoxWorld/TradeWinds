@@ -189,9 +189,10 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "travel.warp.trigger-distance")
     private int warpTriggerDistance = 30;
 
-    @ConfigComment("How far inside the destination's visible border (protection edge) a warp arrival lands.")
-    @ConfigEntry(path = "travel.warp.arrival-margin")
-    private int warpArrivalMargin = 50;
+    @ConfigComment("How far from the destination island's CENTER a warp arrival lands. Default 130:")
+    @ConfigComment("inside the default view distance, so you materialize seeing your destination.")
+    @ConfigEntry(path = "travel.warp.arrival-distance")
+    private int warpArrivalDistance = 130;
 
     @ConfigComment("Seconds between automatic warp-dialog offers at the same island's border.")
     @ConfigEntry(path = "travel.warp.prompt-cooldown-seconds")
@@ -2165,8 +2166,8 @@ public class Settings implements WorldSettings {
     public void setWarpFailureChance(double warpFailureChance) { this.warpFailureChance = warpFailureChance; }
     public int getWarpTriggerDistance() { return warpTriggerDistance; }
     public void setWarpTriggerDistance(int warpTriggerDistance) { this.warpTriggerDistance = warpTriggerDistance; }
-    public int getWarpArrivalMargin() { return warpArrivalMargin; }
-    public void setWarpArrivalMargin(int warpArrivalMargin) { this.warpArrivalMargin = warpArrivalMargin; }
+    public int getWarpArrivalDistance() { return warpArrivalDistance; }
+    public void setWarpArrivalDistance(int warpArrivalDistance) { this.warpArrivalDistance = warpArrivalDistance; }
     public int getWarpPromptCooldownSeconds() { return warpPromptCooldownSeconds; }
     public void setWarpPromptCooldownSeconds(int warpPromptCooldownSeconds) { this.warpPromptCooldownSeconds = warpPromptCooldownSeconds; }
     public int getMaxWarpDestinations() { return maxWarpDestinations; }

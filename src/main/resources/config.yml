@@ -48,8 +48,9 @@ travel:
     # Half-width of the offer ring around an island's visible border (the protection edge,
     # where 'Now leaving...' appears): boated players crossing it get the warp dialog.
     trigger-distance: 30
-    # How far inside the destination's visible border (protection edge) a warp arrival lands.
-    arrival-margin: 50
+    # How far from the destination island's CENTER a warp arrival lands. Default 130:
+    # inside the default view distance, so you materialize seeing your destination.
+    arrival-distance: 130
     # Seconds between automatic warp-dialog offers at the same island's border.
     prompt-cooldown-seconds: 30
     # Maximum destinations listed in the warp dialog (nearest first).

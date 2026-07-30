@@ -3,6 +3,16 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## Playtest tune: warp arrival distance (2026-07-29)
+
+350-from-center arrivals were a boring paddle and easy to get lost from even
+with the HUD. Config reworked from margin-inside-border to a direct
+`travel.warp.arrival-distance` (blocks from destination center), default 130 -
+inside the default 10-chunk view distance, so you materialize looking at your
+destination. Note 130 is just inside the terrain radius (160): a high-noise
+flank can occasionally mean shallow shelf water on arrival; boats cope. Add a
+water-nudge only if playtests show beached arrivals.
+
 ## Playtest fix: warp offer at the visible border (2026-07-29)
 
 Ben rowed out of Tiabi, got "Now leaving", and no warp offer ever came. Root

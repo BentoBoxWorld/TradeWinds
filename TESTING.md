@@ -141,9 +141,11 @@ a lava bucket 100 — see `travel.fuel-values`), and:
 - [ ] **Warp**: clicking an affordable destination consumes fuel from the chest boat /
       bundles (check the inventory after), plays portal particles/sound, dismounts,
       teleports player AND boat, re-seats the player in the boat, applies ~8s nausea +
-      3s blindness + 1 heart damage, and lands **just inside the destination's visible
-      border on the side facing the origin island** (~350 from its center — the island
-      is in sight, a short row from the dock).
+      3s blindness + 1 heart damage, and lands **~130 blocks from the destination's
+      center on the side facing the origin island** — the island is right in front of
+      you at default view distance (`travel.warp.arrival-distance`).
+      - Playtest: 350 was too far — a boring paddle, and easy to get lost even with
+        the HUD. Retuned to 130 per test.
 - [ ] Fuel in the player's pockets (not in chest boat or bundle) does NOT count and is
       never consumed — hold-only is the spec's core rule.
 - [ ] Lava bucket burns to an empty bucket (bucket stays aboard).

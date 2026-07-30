@@ -52,21 +52,21 @@ public class RouteGraph {
     }
 
     /**
-     * Warp arrival point: just inside the destination's border, on the bearing
-     * of the origin island - you arrive on the side you notionally came from.
+     * Warp arrival point: at arrival-distance from the destination's center, on
+     * the bearing of the origin island - you arrive on the side you notionally
+     * came from, close enough to see where you are going (default view
+     * distance is ~160 blocks).
      *
      * @param from origin island
      * @param to destination island
-     * @param islandRange the island space radius (border distance)
-     * @param margin how far inside the border to arrive
+     * @param arrivalDistance distance from the destination center to arrive at
      * @return {x, z} block position
      */
-    public static int[] arrivalPoint(IslandSpec from, IslandSpec to, int islandRange, int margin) {
+    public static int[] arrivalPoint(IslandSpec from, IslandSpec to, int arrivalDistance) {
         double dx = (double) from.centerX() - to.centerX();
         double dz = (double) from.centerZ() - to.centerZ();
         double len = Math.max(1.0, Math.hypot(dx, dz));
-        double dist = (double) islandRange - margin;
-        return new int[] { to.centerX() + (int) Math.round(dx / len * dist),
-                to.centerZ() + (int) Math.round(dz / len * dist) };
+        return new int[] { to.centerX() + (int) Math.round(dx / len * arrivalDistance),
+                to.centerZ() + (int) Math.round(dz / len * arrivalDistance) };
     }
 }

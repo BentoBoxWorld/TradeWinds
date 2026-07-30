@@ -47,13 +47,13 @@ class RouteGraphTest {
 
     @Test
     void testArrivalPoint() {
-        int[] p = RouteGraph.arrivalPoint(a, b, 1000, 50);
-        // 950 blocks from the destination center...
+        int[] p = RouteGraph.arrivalPoint(a, b, 130);
+        // 130 blocks from the destination center (inside view distance)...
         double distFromDest = Math.sqrt(b.distanceSquared(p[0], p[1]));
-        assertEquals(950, distFromDest, 2.0);
+        assertEquals(130, distFromDest, 2.0);
         // ...on the origin side: closer to the origin than the destination center is
         double destToOrigin = Math.sqrt(b.distanceSquared(a.centerX(), a.centerZ()));
         double arrivalToOrigin = Math.sqrt(a.distanceSquared(p[0], p[1]));
-        assertEquals(destToOrigin - 950, arrivalToOrigin, 2.0);
+        assertEquals(destToOrigin - 130, arrivalToOrigin, 2.0);
     }
 }
