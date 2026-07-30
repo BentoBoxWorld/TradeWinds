@@ -3,6 +3,20 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## Playtest fix: warp offer at the visible border (2026-07-29)
+
+Ben rowed out of Tiabi, got "Now leaving", and no warp offer ever came. Root
+cause: TWO borders. BentoBox's enter/leave messages and the Border addon's
+wall are at the PROTECTION range (400); the warp trigger and arrival were at
+the island-space range (~1000) - 550 blocks of dead ocean past the perceived
+border. Fixed: the offer ring now straddles the protection edge (fires the
+moment "Now leaving" appears; ring is trigger-distance wide each side so a
+crossing cannot skip it), and warp arrival lands protection - margin (~350)
+from the destination center - island in sight, short row to the dock.
+Not-a-bug notes from the same session: the HUD keeps showing the island out
+to the full range (island waters), the bar fill is closeness-to-dock
+(1 - dist/range), and fuel never hides the warp dialog (greyed entries).
+
 ## Stage 3b — Resident protection, band flags, nav bar, starter kit (2026-07-29)
 
 Playtest-driven package (traders died at night and scattered; no dock

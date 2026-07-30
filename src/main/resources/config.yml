@@ -45,9 +45,10 @@ travel:
     # Chance (0.0-1.0) that a warp fails and drops the player into the interstice.
     # Re-engaging the warp from the interstice to the original destination is always free.
     failure-chance: 0.05
-    # Distance inside an island's border at which a boated player is offered the warp dialog.
+    # Half-width of the offer ring around an island's visible border (the protection edge,
+    # where 'Now leaving...' appears): boated players crossing it get the warp dialog.
     trigger-distance: 30
-    # How far inside the destination border a warp arrival lands.
+    # How far inside the destination's visible border (protection edge) a warp arrival lands.
     arrival-margin: 50
     # Seconds between automatic warp-dialog offers at the same island's border.
     prompt-cooldown-seconds: 30

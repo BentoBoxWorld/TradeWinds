@@ -184,11 +184,12 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "travel.warp.failure-chance")
     private double warpFailureChance = 0.05;
 
-    @ConfigComment("Distance inside an island's border at which a boated player is offered the warp dialog.")
+    @ConfigComment("Half-width of the offer ring around an island's visible border (the protection")
+    @ConfigComment("edge, where 'Now leaving...' appears): boated players crossing it get the warp dialog.")
     @ConfigEntry(path = "travel.warp.trigger-distance")
     private int warpTriggerDistance = 30;
 
-    @ConfigComment("How far inside the destination border a warp arrival lands.")
+    @ConfigComment("How far inside the destination's visible border (protection edge) a warp arrival lands.")
     @ConfigEntry(path = "travel.warp.arrival-margin")
     private int warpArrivalMargin = 50;
 

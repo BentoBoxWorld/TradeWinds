@@ -132,7 +132,9 @@ public class WarpService {
         here.getWorld().spawnParticle(Particle.PORTAL, here, 80, 1, 1, 1, 0.5);
         here.getWorld().playSound(here, Sound.BLOCK_PORTAL_TRAVEL, 0.4f, 1.2f);
 
-        int[] arrive = RouteGraph.arrivalPoint(from, to, addon.getSettings().getIslandDistance(),
+        // Arrive just inside the destination's VISIBLE border (the protection
+        // edge), on the bearing of the origin - close enough to see the island
+        int[] arrive = RouteGraph.arrivalPoint(from, to, addon.getSettings().getIslandProtectionRange(),
                 addon.getSettings().getWarpArrivalMargin());
         Location target = new Location(addon.getOverWorld(), arrive[0] + 0.5,
                 addon.getSettings().getSeaHeight() + 1.0, arrive[1] + 0.5);

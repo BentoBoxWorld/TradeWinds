@@ -127,17 +127,23 @@ a lava bucket 100 — see `travel.fuel-values`), and:
 - [ ] **Charting**: joining fresh, `/tw chart` already lists the starter-cluster islands
       (pre-charted). Rowing into a NEW island's waters (range 1000) pops "Charted <name>!"
       on the action bar, and it appears in `/tw chart` with type/band/distance.
-- [ ] **Warp offer**: rowing a boat to within ~30 blocks of an island's border pops the
-      warp dialog automatically (once per 30s per island). `/tw warp` opens it anywhere
+- [ ] **Warp offer**: rowing a boat across an island's VISIBLE border (the protection
+      edge, ~400 from center — the moment "Now leaving <name>" appears) pops the warp
+      dialog automatically (once per 30s per island). `/tw warp` opens it anywhere
       inside an island's waters while boated.
+      - ~~Playtest: no offer when rowing out past the leaving message~~ FIXED: the
+        trigger sat at the far range edge (~1000), 550 blocks of empty ocean later.
+        Now it fires right at the visible border. (Fuel never gates the offer —
+        unaffordable routes show greyed out.)
 - [ ] The dialog lists **charted islands only** (uncharted never appear), nearest first,
       with fuel cost per destination; the body shows fuel aboard. Unaffordable entries
       are dark grey and clicking them just says "not enough fuel".
 - [ ] **Warp**: clicking an affordable destination consumes fuel from the chest boat /
       bundles (check the inventory after), plays portal particles/sound, dismounts,
       teleports player AND boat, re-seats the player in the boat, applies ~8s nausea +
-      3s blindness + 1 heart damage, and lands **just inside the destination's border on
-      the side facing the origin island** (~950 blocks from its center).
+      3s blindness + 1 heart damage, and lands **just inside the destination's visible
+      border on the side facing the origin island** (~350 from its center — the island
+      is in sight, a short row from the dock).
 - [ ] Fuel in the player's pockets (not in chest boat or bundle) does NOT count and is
       never consumed — hold-only is the spec's core rule.
 - [ ] Lava bucket burns to an empty bucket (bucket stays aboard).

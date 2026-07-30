@@ -83,19 +83,23 @@ public class BorderPromptListener implements Listener {
     }
 
     /**
-     * The island whose border the position is just inside, if any: within the
-     * island's range, but within trigger-distance of its edge.
+     * The island whose VISIBLE border the position is at, if any. The visible
+     * border is the protection range (where BentoBox announces "Now leaving
+     * ..." and the Border addon draws the wall) - the warp offer fires right
+     * at that moment, not out at the far edge of island space. The ring spans
+     * trigger-distance either side of the line so an outbound crossing cannot
+     * skip it.
      */
     Optional<IslandSpec> originIslandNearBorder(int x, int z) {
         GalaxyEngine engine = addon.getGalaxyEngine(addon.getOverWorld().getSeed());
-        int range = addon.getSettings().getIslandDistance();
-        long outer = (long) range * range;
-        int inner = range - addon.getSettings().getWarpTriggerDistance();
-        long innerSq = (long) inner * inner;
-        return engine.islandsNear(x, z, range).stream()
+        int border = addon.getSettings().getIslandProtectionRange();
+        int trigger = addon.getSettings().getWarpTriggerDistance();
+        long outerSq = (long) (border + trigger) * (border + trigger);
+        long innerSq = (long) (border - trigger) * (border - trigger);
+        return engine.islandsNear(x, z, border + trigger).stream()
                 .filter(spec -> {
                     long d2 = spec.distanceSquared(x, z);
-                    return d2 <= outer && d2 >= innerSq;
+                    return d2 <= outerSq && d2 >= innerSq;
                 })
                 .findFirst();
     }

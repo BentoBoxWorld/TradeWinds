@@ -47,11 +47,15 @@ class BorderPromptListenerTest extends CommonTestSetup {
     }
 
     @Test
-    void testOfferedJustInsideBorder() {
-        // 10 blocks inside the border (range 1000, trigger 30)
-        Optional<IslandSpec> hit = listener.originIslandNearBorder(spec.centerX() + 990, spec.centerZ());
-        assertTrue(hit.isPresent());
-        assertEquals(spec, hit.get());
+    void testOfferedAtVisibleBorder() {
+        // The visible border is the protection edge (400) - the offer fires
+        // exactly where "Now leaving..." appears (playtest regression: it used
+        // to sit at the range edge ~1000, 550 blocks of dead ocean later)
+        Optional<IslandSpec> inside = listener.originIslandNearBorder(spec.centerX() + 390, spec.centerZ());
+        assertTrue(inside.isPresent());
+        assertEquals(spec, inside.get());
+        Optional<IslandSpec> outside = listener.originIslandNearBorder(spec.centerX() + 410, spec.centerZ());
+        assertTrue(outside.isPresent());
     }
 
     @Test
@@ -61,7 +65,9 @@ class BorderPromptListenerTest extends CommonTestSetup {
     }
 
     @Test
-    void testNotOfferedOutside() {
+    void testNotOfferedBeyondTheRing() {
+        // Still inside island waters but past the ring: no repeat offers
+        assertTrue(listener.originIslandNearBorder(spec.centerX() + 600, spec.centerZ()).isEmpty());
         assertTrue(listener.originIslandNearBorder(spec.centerX() + 1100, spec.centerZ()).isEmpty());
     }
 }
