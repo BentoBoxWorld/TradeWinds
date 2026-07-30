@@ -3,6 +3,47 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## Stage 3 — Travel: warp, fuel, charting (2026-07-29) — CODE COMPLETE, awaiting in-game test
+
+**Verify-first resolved:** Paper 26.2 dialog API confirmed and used:
+`Dialog.create(factory -> factory.empty().base(...).type(...))`,
+`DialogType.multiAction(buttons)`, `ActionButton.create(label, tooltip, width,
+DialogAction.customClick(callback, options))`, shown via Adventure's
+`Player#showDialog`. No command round-trips - button callbacks call the warp
+directly.
+
+**Done:**
+- `RouteGraph` (pure): cost = Euclidean x fuel-per-block, ceil, min 1;
+  direction-independent `edgeKey("cx,cz>cx,cz")` overrides from config
+  (`travel.warp.edge-overrides`) make cheap lanes/expensive frontiers.
+  `arrivalPoint`: just inside the destination border on the origin bearing.
+- `TWPlayerData` + `PlayerDataManager` (first Database use; AOneBlock
+  cache-in-front pattern): chart as Set of cell keys; new players pre-chart
+  the starter cluster; save on quit/disable.
+- `ChartingListener`: chunk-crossing-gated moves chart islands whose range
+  (1000) the player enters - action bar + `IslandChartedEvent`.
+- `FuelService`: hold = chest-boat inventory + bundle contents ONLY (spec
+  principle 1 - pocket fuel never counts). Cheapest-first consumption,
+  overshoot burned, lava bucket leaves its empty bucket. Values config
+  `travel.fuel-values`.
+- `WarpService`: destination selection (charted-only, origin excluded,
+  nearest-first, capped, affordability-flagged - pure and tested separately
+  from dialog rendering); warp = TWWarpEvent (cancellable) -> consume ->
+  dismount -> teleportAsync player + boat -> re-seat next tick (AcidIsland
+  pattern) -> nausea/blindness/damage + portal effects ->
+  TWWarpCompletedEvent. Failure roll deliberately absent until Stage 5.
+- `BorderPromptListener`: boat within trigger-distance (30) inside an island
+  border auto-offers the dialog, per-island cooldown. `/tw warp` (boated, in
+  island waters) and `/tw chart` commands.
+- Tests: 75 green (route math incl. overrides + arrival geometry, chart data,
+  fuel hold-only/cheapest-first/lava rule, destination selection, border ring
+  geometry).
+
+**Notes:**
+- Real `ItemStack`s work fine in tests under the mocked ItemFactory as long
+  as no ItemMeta operations are exercised (bundle internals are in-game-only
+  territory).
+
 ## Stage 2 — Island content (2026-07-29) — CODE COMPLETE, awaiting in-game test
 
 Stage 0/1 checklists fully passed in-game before starting this.

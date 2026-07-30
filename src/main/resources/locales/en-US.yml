@@ -14,6 +14,10 @@ tradewinds:
       description: "TradeWinds trading command"
     spawn:
       description: "teleport to the ocean spawn"
+    warp:
+      description: "open the warp dialog (in a boat, at an island)"
+    chart:
+      description: "list the islands on your chart"
     admin:
       help:
         description: "admin command for TradeWinds"
@@ -29,3 +33,14 @@ tradewinds:
         teleported: "&b Arrived at [name]."
   spawn:
     teleported: "&b You set sail on the open ocean."
+  chart:
+    charted: "Charted [name]!"
+    empty: "&c Your chart is empty - row into an island's waters to chart it."
+    header: "&b Your chart ([number] islands):"
+    entry: "&e [name] &7- [type], [band], [distance] blocks"
+  warp:
+    not-in-boat: "&c You need to be aboard a boat to warp."
+    not-at-island: "&c The warp only engages within an island's waters."
+    no-destinations: "&c No charted destinations - row into new waters first."
+    not-enough-fuel: "&c Not enough fuel aboard for that jump."
+    arrived: "&b The warp releases you at [name]."

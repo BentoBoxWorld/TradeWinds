@@ -24,8 +24,16 @@ import world.bentobox.bentobox.api.configuration.WorldSettings;
 import world.bentobox.bentobox.lists.Flags;
 import world.bentobox.tradewinds.commands.AdminIslandsCommand;
 import world.bentobox.tradewinds.commands.AdminTpIslandCommand;
+import world.bentobox.tradewinds.commands.TWChartCommand;
 import world.bentobox.tradewinds.commands.TWSpawnCommand;
+import world.bentobox.tradewinds.commands.TWWarpCommand;
+import world.bentobox.tradewinds.dataobjects.PlayerDataManager;
+import world.bentobox.tradewinds.galaxy.RouteGraph;
 import world.bentobox.tradewinds.listeners.IntersticePortalListener;
+import world.bentobox.tradewinds.travel.BorderPromptListener;
+import world.bentobox.tradewinds.travel.ChartingListener;
+import world.bentobox.tradewinds.travel.FuelService;
+import world.bentobox.tradewinds.travel.WarpService;
 import world.bentobox.tradewinds.galaxy.GalaxyConfig;
 import world.bentobox.tradewinds.galaxy.GalaxyEngine;
 import world.bentobox.tradewinds.galaxy.IslandType;
@@ -52,6 +60,10 @@ public class TradeWinds extends GameModeAddon {
     private final Config<Settings> configObject = new Config<>(this, Settings.class);
     private BiomeProvider biomeProvider;
     private @Nullable GalaxyEngine galaxyEngine;
+    private PlayerDataManager playerDataManager;
+    private FuelService fuelService;
+    private WarpService warpService;
+    private RouteGraph routeGraph;
 
     /**
      * This addon uses the new chunk generation API for the sea bottom
@@ -84,6 +96,8 @@ public class TradeWinds extends GameModeAddon {
                 setOnlyPlayer(true);
                 setPermission("island");
                 new TWSpawnCommand(this);
+                new TWWarpCommand(this);
+                new TWChartCommand(this);
                 new IslandInfoCommand(this);
                 new IslandLanguageCommand(this);
             }
@@ -125,6 +139,13 @@ public class TradeWinds extends GameModeAddon {
         registerListener(new GalaxyIslandRegistrar(this));
         // Seal both worlds against portals - the interstice is warp-failure-only
         registerListener(new IntersticePortalListener(this));
+        // Travel: charting, fuel, warp
+        playerDataManager = new PlayerDataManager(this);
+        fuelService = new FuelService(this);
+        routeGraph = new RouteGraph(getSettings().getFuelPerBlock(), getSettings().getEdgeOverrides());
+        warpService = new WarpService(this);
+        registerListener(new ChartingListener(this));
+        registerListener(new BorderPromptListener(this));
         // Deterministic ocean spawn on the sea surface at the galaxy origin
         if (islandWorld != null) {
             islandWorld.setSpawnLocation(0, getSettings().getSeaHeight() + 1, 0);
@@ -133,7 +154,9 @@ public class TradeWinds extends GameModeAddon {
 
     @Override
     public void onDisable() {
-        // Nothing to do here yet
+        if (playerDataManager != null) {
+            playerDataManager.saveAll();
+        }
     }
 
     @NonNull
@@ -219,6 +242,22 @@ public class TradeWinds extends GameModeAddon {
 
     public BiomeProvider getBiomeProvider() {
         return this.biomeProvider;
+    }
+
+    public PlayerDataManager getPlayerDataManager() {
+        return playerDataManager;
+    }
+
+    public FuelService getFuelService() {
+        return fuelService;
+    }
+
+    public WarpService getWarpService() {
+        return warpService;
+    }
+
+    public RouteGraph getRouteGraph() {
+        return routeGraph;
     }
 
     /**

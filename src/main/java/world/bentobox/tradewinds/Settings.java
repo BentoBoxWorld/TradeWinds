@@ -119,6 +119,61 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "travel.warp.failure-chance")
     private double warpFailureChance = 0.05;
 
+    @ConfigComment("Distance inside an island's border at which a boated player is offered the warp dialog.")
+    @ConfigEntry(path = "travel.warp.trigger-distance")
+    private int warpTriggerDistance = 30;
+
+    @ConfigComment("How far inside the destination border a warp arrival lands.")
+    @ConfigEntry(path = "travel.warp.arrival-margin")
+    private int warpArrivalMargin = 50;
+
+    @ConfigComment("Seconds between automatic warp-dialog offers at the same island's border.")
+    @ConfigEntry(path = "travel.warp.prompt-cooldown-seconds")
+    private int warpPromptCooldownSeconds = 30;
+
+    @ConfigComment("Maximum destinations listed in the warp dialog (nearest first).")
+    @ConfigEntry(path = "travel.warp.max-destinations")
+    private int maxWarpDestinations = 20;
+
+    @ConfigComment("Seconds of nausea after a warp. Warping hurts - it gates the under-equipped.")
+    @ConfigEntry(path = "travel.warp.nausea-seconds")
+    private int warpNauseaSeconds = 8;
+
+    @ConfigComment("Seconds of blindness after a warp.")
+    @ConfigEntry(path = "travel.warp.blindness-seconds")
+    private int warpBlindnessSeconds = 3;
+
+    @ConfigComment("Damage (in half-hearts) taken on warp arrival. 0 disables.")
+    @ConfigEntry(path = "travel.warp.damage")
+    private double warpDamage = 2.0;
+
+    @ConfigComment("Fuel unit value per material. Fuel is consumed from the hold only:")
+    @ConfigComment("the chest boat's inventory and trading bundles - never loose pockets.")
+    @ConfigComment("Lava buckets leave their empty bucket behind. Non-stackable but potent: deliberate tension.")
+    @ConfigEntry(path = "travel.fuel-values")
+    private Map<String, Double> fuelValues = defaultFuelValues();
+
+    private static Map<String, Double> defaultFuelValues() {
+        Map<String, Double> map = new HashMap<>();
+        for (String log : List.of("OAK_LOG", "SPRUCE_LOG", "BIRCH_LOG", "JUNGLE_LOG", "ACACIA_LOG", "DARK_OAK_LOG",
+                "MANGROVE_LOG", "CHERRY_LOG")) {
+            map.put(log, 1.0);
+        }
+        map.put("COAL", 8.0);
+        map.put("CHARCOAL", 8.0);
+        map.put("COAL_BLOCK", 80.0);
+        map.put("BLAZE_ROD", 12.0);
+        map.put("DRIED_KELP_BLOCK", 4.0);
+        map.put("LAVA_BUCKET", 100.0);
+        return map;
+    }
+
+    @ConfigComment("Per-edge fuel cost overrides, replacing the distance-based cost in both directions.")
+    @ConfigComment("Key: the two island cells, smaller first, e.g. '0,0>1,2'. Value: absolute fuel units.")
+    @ConfigComment("Cheap lanes and expensive frontiers without regenerating the world.")
+    @ConfigEntry(path = "travel.warp.edge-overrides")
+    private Map<String, Double> edgeOverrides = new HashMap<>();
+
     /*      ILLEGAL TRADE      */
     @ConfigComment("Master gate for all illegal-goods mechanics: contraband, customs scans, smuggling.")
     @ConfigComment("Set false for family-friendly servers - removes the entire crime layer cleanly.")
@@ -2042,6 +2097,24 @@ public class Settings implements WorldSettings {
     public void setFuelPerBlock(double fuelPerBlock) { this.fuelPerBlock = fuelPerBlock; }
     public double getWarpFailureChance() { return warpFailureChance; }
     public void setWarpFailureChance(double warpFailureChance) { this.warpFailureChance = warpFailureChance; }
+    public int getWarpTriggerDistance() { return warpTriggerDistance; }
+    public void setWarpTriggerDistance(int warpTriggerDistance) { this.warpTriggerDistance = warpTriggerDistance; }
+    public int getWarpArrivalMargin() { return warpArrivalMargin; }
+    public void setWarpArrivalMargin(int warpArrivalMargin) { this.warpArrivalMargin = warpArrivalMargin; }
+    public int getWarpPromptCooldownSeconds() { return warpPromptCooldownSeconds; }
+    public void setWarpPromptCooldownSeconds(int warpPromptCooldownSeconds) { this.warpPromptCooldownSeconds = warpPromptCooldownSeconds; }
+    public int getMaxWarpDestinations() { return maxWarpDestinations; }
+    public void setMaxWarpDestinations(int maxWarpDestinations) { this.maxWarpDestinations = maxWarpDestinations; }
+    public int getWarpNauseaSeconds() { return warpNauseaSeconds; }
+    public void setWarpNauseaSeconds(int warpNauseaSeconds) { this.warpNauseaSeconds = warpNauseaSeconds; }
+    public int getWarpBlindnessSeconds() { return warpBlindnessSeconds; }
+    public void setWarpBlindnessSeconds(int warpBlindnessSeconds) { this.warpBlindnessSeconds = warpBlindnessSeconds; }
+    public double getWarpDamage() { return warpDamage; }
+    public void setWarpDamage(double warpDamage) { this.warpDamage = warpDamage; }
+    public Map<String, Double> getFuelValues() { return fuelValues; }
+    public void setFuelValues(Map<String, Double> fuelValues) { this.fuelValues = fuelValues; }
+    public Map<String, Double> getEdgeOverrides() { return edgeOverrides; }
+    public void setEdgeOverrides(Map<String, Double> edgeOverrides) { this.edgeOverrides = edgeOverrides; }
     public boolean isIllegalTradeEnabled() { return illegalTradeEnabled; }
     public void setIllegalTradeEnabled(boolean illegalTradeEnabled) { this.illegalTradeEnabled = illegalTradeEnabled; }
 

@@ -45,6 +45,38 @@ travel:
     # Chance (0.0-1.0) that a warp fails and drops the player into the interstice.
     # Re-engaging the warp from the interstice to the original destination is always free.
     failure-chance: 0.05
+    # Distance inside an island's border at which a boated player is offered the warp dialog.
+    trigger-distance: 30
+    # How far inside the destination border a warp arrival lands.
+    arrival-margin: 50
+    # Seconds between automatic warp-dialog offers at the same island's border.
+    prompt-cooldown-seconds: 30
+    # Maximum destinations listed in the warp dialog (nearest first).
+    max-destinations: 20
+    # Warping hurts - it gates the under-equipped.
+    nausea-seconds: 8
+    blindness-seconds: 3
+    # Damage (in half-hearts) taken on warp arrival. 0 disables.
+    damage: 2.0
+    # Per-edge fuel cost overrides ('cx,cz>cx,cz' smaller cell first -> absolute fuel units).
+    edge-overrides: {}
+  # Fuel unit value per material. Fuel is consumed from the hold only: the chest
+  # boat's inventory and trading bundles - never loose pockets.
+  fuel-values:
+    OAK_LOG: 1.0
+    SPRUCE_LOG: 1.0
+    BIRCH_LOG: 1.0
+    JUNGLE_LOG: 1.0
+    ACACIA_LOG: 1.0
+    DARK_OAK_LOG: 1.0
+    MANGROVE_LOG: 1.0
+    CHERRY_LOG: 1.0
+    DRIED_KELP_BLOCK: 4.0
+    COAL: 8.0
+    CHARCOAL: 8.0
+    BLAZE_ROD: 12.0
+    COAL_BLOCK: 80.0
+    LAVA_BUCKET: 100.0
 illegal-trade:
   # Master gate for all illegal-goods mechanics: contraband, customs scans, smuggling.
   # Set false for family-friendly servers - removes the entire crime layer cleanly.

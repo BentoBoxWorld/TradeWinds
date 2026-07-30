@@ -118,3 +118,33 @@ industrial. **Needs freshly generated island chunks**, as ever.
 - [ ] Villagers do NOT lose or change their professions near the workstations (locked by XP).
 - [ ] `galaxy.type-weights` appears in config.yml; setting a type's weight to 0 and
       regenerating removes that type (needs world regen — weights are seed-shaping).
+
+## Stage 3 — Travel: warp, fuel, charting
+
+Get a chest boat, put fuel in it (coal is 8 units, a coal block 80, logs 1,
+a lava bucket 100 — see `travel.fuel-values`), and:
+
+- [ ] **Charting**: joining fresh, `/tw chart` already lists the starter-cluster islands
+      (pre-charted). Rowing into a NEW island's waters (range 1000) pops "Charted <name>!"
+      on the action bar, and it appears in `/tw chart` with type/band/distance.
+- [ ] **Warp offer**: rowing a boat to within ~30 blocks of an island's border pops the
+      warp dialog automatically (once per 30s per island). `/tw warp` opens it anywhere
+      inside an island's waters while boated.
+- [ ] The dialog lists **charted islands only** (uncharted never appear), nearest first,
+      with fuel cost per destination; the body shows fuel aboard. Unaffordable entries
+      are dark grey and clicking them just says "not enough fuel".
+- [ ] **Warp**: clicking an affordable destination consumes fuel from the chest boat /
+      bundles (check the inventory after), plays portal particles/sound, dismounts,
+      teleports player AND boat, re-seats the player in the boat, applies ~8s nausea +
+      3s blindness + 1 heart damage, and lands **just inside the destination's border on
+      the side facing the origin island** (~950 blocks from its center).
+- [ ] Fuel in the player's pockets (not in chest boat or bundle) does NOT count and is
+      never consumed — hold-only is the spec's core rule.
+- [ ] Lava bucket burns to an empty bucket (bucket stays aboard).
+- [ ] Fuel costs match distance × 0.01 rounded up (check two islands at a known distance
+      via `/twadmin islands`); add an entry under `travel.warp.edge-overrides`
+      (e.g. `"0,0>0,1": 1`), reload, and see that edge cost change.
+- [ ] Warp back: the full row-out → warp → warp-back loop works, including re-seating.
+- [ ] Chart persists across relog and server restart.
+- [ ] A player without a boat: `/tw warp` refuses ("aboard a boat"); the border prompt
+      does not fire while swimming.
