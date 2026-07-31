@@ -317,3 +317,13 @@ have not visited). The protection flip and stamps work immediately.
       (protection flipped outside named islands). Trading islands remain protected.
 - [ ] **/tw restart**: confirmation, then balance resets to starting, fresh kit at
       spawn, chart KEPT; counter decrements (3 by default); refuses at 0.
+
+### Stage 4h — the Shipwright (boat acquisition)
+- [ ] Every market's main menu has a "Shipwright" page: Oak Boat ($20-ish), Oak Chest
+      Boat ($60-ish), and the Cargo Expander ladder (moved here from the main menu).
+- [ ] Buying a hull delivers the (stamped) boat item to your INVENTORY — place it at
+      the dock and ride off. Expanders still require a chest boat (hold delivery).
+- [ ] Boats are NOT valid warp fuel (they are hulls, not firewood).
+- [ ] Wild islets have trees: chop, plank, craft boat + chest → chest boat, the frugal
+      path. Bought hulls cost more than crafted ones by design.
+- [ ] Boatless + broke: wild-islet timber or /tw restart are the exits.

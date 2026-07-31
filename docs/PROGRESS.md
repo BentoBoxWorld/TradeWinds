@@ -3,6 +3,19 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## The Shipwright (2026-07-30)
+
+Boat acquisition (Ben's design): every market's Shipwright page sells Oak
+Boat ($20) and Oak Chest Boat ($60) - explicit base prices above raw plank
+cost (shipwright labor) so crafting from wild-islet timber stays the frugal
+path - plus the cargo-expander ladder (moved from the main menu; the whole
+cargo progression boat -> chest boat -> expanders now lives in one shop).
+Hulls deliver to the player INVENTORY (a shipless sailor has no hold), via
+MarketService.buyToInventory, stamped like any purchase. No free boat on
+death: buy, craft, or /tw restart. Pitfall: first put the boat prices into
+defaultFuelValues by matching the wrong map's tail - boats briefly counted
+as 20 fuel units. 127 tests green.
+
 ## The two economies: stamps, outfitters, wild islets, restart (2026-07-30)
 
 Ben's survival-design discussion (players died gearless and hungry; farming

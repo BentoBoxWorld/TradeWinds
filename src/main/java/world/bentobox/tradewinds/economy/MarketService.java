@@ -74,6 +74,47 @@ public class MarketService {
     }
 
     /**
+     * The shipwright's slipway: hulls, bought straight to the player's
+     * inventory (a shipless sailor has no hold to receive into - a vessel is
+     * not cargo). Cargo expanders complete the shipwright's stock via
+     * {@link #buyExpander}.
+     */
+    public java.util.List<Material> shipwrightCatalog() {
+        return java.util.List.of(Material.OAK_BOAT, Material.OAK_CHEST_BOAT);
+    }
+
+    /**
+     * Buy an item delivered to the player's inventory rather than the hold -
+     * used for hulls only. Stamped like any purchase.
+     *
+     * @return true if bought
+     */
+    public boolean buyToInventory(Player player, IslandSpec spec, Material material) {
+        Optional<Double> unitPrice = playerBuysAt(spec, material);
+        Optional<VaultHook> vault = addon.getPlugin().getVault();
+        if (unitPrice.isEmpty() || vault.isEmpty()) {
+            return false;
+        }
+        User user = User.getInstance(player);
+        if (!vault.get().has(user, unitPrice.get())) {
+            user.sendMessage("tradewinds.trade.cannot-afford");
+            return false;
+        }
+        TWTradeEvent event = new TWTradeEvent(player, spec, material, 1, unitPrice.get(), false);
+        org.bukkit.Bukkit.getPluginManager().callEvent(event);
+        if (event.isCancelled()) {
+            return false;
+        }
+        vault.get().withdraw(user, unitPrice.get());
+        ItemStack item = stamp(new ItemStack(material));
+        player.getInventory().addItem(item).values()
+                .forEach(left -> player.getWorld().dropItem(player.getLocation(), left));
+        user.sendMessage("tradewinds.trade.bought", "[amount]", "1", "[material]", pretty(material), "[price]",
+                String.format("%.2f", unitPrice.get()));
+        return true;
+    }
+
+    /**
      * Apply the customs stamp: trader-bought goods carry a PDC marker and a
      * lore line. Only stamped goods can be sold back to traders - homegrown
      * and homemade items are for living with, not for selling (with the

@@ -374,6 +374,10 @@ public class Settings implements WorldSettings {
         map.put("QUARTZ", 8.0); map.put("LAPIS_LAZULI", 6.0); map.put("REDSTONE", 3.0);
         map.put("LEATHER", 4.0); map.put("WHITE_WOOL", 2.0); map.put("STRING", 1.5);
         map.put("BEEF", 2.5); map.put("PORKCHOP", 2.5); map.put("CHICKEN", 2.0); map.put("MUTTON", 2.0);
+        // Hulls: priced above raw plank cost - shipwright labor. Frugal
+        // players craft their own from wild-islet timber.
+        map.put("OAK_BOAT", 20.0);
+        map.put("OAK_CHEST_BOAT", 60.0);
         return map;
     }
 

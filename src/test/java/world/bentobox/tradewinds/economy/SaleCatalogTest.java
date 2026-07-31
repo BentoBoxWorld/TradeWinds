@@ -79,6 +79,16 @@ class SaleCatalogTest extends CommonTestSetup {
     }
 
     @Test
+    void testShipwrightSellsHulls() {
+        // Boats purchasable everywhere - lose your boat, buy your way afloat
+        assertTrue(service.shipwrightCatalog().contains(Material.OAK_BOAT));
+        assertTrue(service.shipwrightCatalog().contains(Material.OAK_CHEST_BOAT));
+        // Priced (explicit base prices - above raw plank cost)
+        assertTrue(service.basePrice(Material.OAK_BOAT).orElse(0.0) >= 20.0);
+        assertTrue(service.basePrice(Material.OAK_CHEST_BOAT).orElse(0.0) > service.basePrice(Material.OAK_BOAT).orElse(0.0));
+    }
+
+    @Test
     void testSmithsArmYou() {
         List<Material> smith = service.outfitterCatalog(spec(IslandType.INDUSTRIAL));
         assertTrue(smith.contains(Material.IRON_SWORD));

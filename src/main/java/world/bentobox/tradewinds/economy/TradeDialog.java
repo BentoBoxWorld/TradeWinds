@@ -59,17 +59,8 @@ public class TradeDialog {
         }
         buttons.add(button("Outfitter", NamedTextColor.GREEN, "Food, fuel and gear for the sailing life",
                 () -> openBuy(player, spec, addon.getMarketService().outfitterCatalog(spec), " - Outfitter")));
-        int owned = addon.getPlayerDataManager().get(player.getUniqueId()).getExpandersPurchased();
-        if (owned < addon.getSettings().getExpanderCap()) {
-            double price = PriceModel.expanderPrice(addon.getSettings().getExpanderBasePrice(), owned);
-            buttons.add(button(String.format("Shipwright: Cargo Expander - $%.0f", price), NamedTextColor.GOLD,
-                    "Shulker hold expansion (" + owned + "/" + addon.getSettings().getExpanderCap()
-                            + " owned). Price doubles each time.",
-                    () -> {
-                        addon.getMarketService().buyExpander(player);
-                        openMain(player, spec);
-                    }));
-        }
+        buttons.add(button("Shipwright", NamedTextColor.GOLD, "Boats, chest boats and cargo expanders",
+                () -> openShipwright(player, spec)));
         show(player, spec.name() + " Market",
                 List.of(spec.type().name() + ", " + spec.band().getDisplayName(), statusLine(player)), buttons,
                 closeButton(), 1);
@@ -141,6 +132,38 @@ public class TradeDialog {
             String titleSuffix) {
         addon.getMarketService().buy(player, spec, material, amount);
         openBuy(player, spec, catalog, titleSuffix);
+    }
+
+    /**
+     * The shipwright's slipway: hulls to your inventory, expanders to your
+     * hold. The cargo progression lives here: boat -> chest boat -> expanders.
+     */
+    public void openShipwright(Player player, IslandSpec spec) {
+        List<ActionButton> buttons = new ArrayList<>();
+        for (Material hull : addon.getMarketService().shipwrightCatalog()) {
+            addon.getMarketService().playerBuysAt(spec, hull).ifPresent(unit -> buttons.add(button(
+                    String.format("%s - $%.2f", MarketService.pretty(hull), unit), NamedTextColor.GOLD,
+                    "Delivered to your inventory - place it at the dock",
+                    () -> {
+                        addon.getMarketService().buyToInventory(player, spec, hull);
+                        openShipwright(player, spec);
+                    })));
+        }
+        int owned = addon.getPlayerDataManager().get(player.getUniqueId()).getExpandersPurchased();
+        if (owned < addon.getSettings().getExpanderCap()) {
+            double price = PriceModel.expanderPrice(addon.getSettings().getExpanderBasePrice(), owned);
+            buttons.add(button(String.format("Cargo Expander - $%.0f", price), NamedTextColor.GOLD,
+                    "Shulker hold expansion (" + owned + "/" + addon.getSettings().getExpanderCap()
+                            + " owned). Price doubles each time. Stowed into your chest boat.",
+                    () -> {
+                        addon.getMarketService().buyExpander(player);
+                        openShipwright(player, spec);
+                    }));
+        }
+        show(player, spec.name() + " - Shipwright",
+                List.of("Hulls and holds. Smart sailors craft their own boats from wild timber.",
+                        statusLine(player)),
+                buttons, backButton(player, spec), 1);
     }
 
     /**

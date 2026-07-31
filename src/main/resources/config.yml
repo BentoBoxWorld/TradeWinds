@@ -190,6 +190,8 @@ economy:
     AMETHYST_SHARD: 10.0
     CAKE: 20.0
     GOLDEN_APPLE: 150.0
+    OAK_BOAT: 20.0
+    OAK_CHEST_BOAT: 60.0
     # (the full default table ships in code; add or override entries here)
 player:
   # Career restarts a destitute player may use (/tw restart). -1 unlimited, 0 none.
