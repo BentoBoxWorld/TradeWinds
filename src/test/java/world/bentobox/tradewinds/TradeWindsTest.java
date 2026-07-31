@@ -1,6 +1,7 @@
 package world.bentobox.tradewinds;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -198,6 +199,15 @@ class TradeWindsTest extends CommonTestSetup {
         verify(plugin).log("[tradewinds] Creating TradeWinds ocean...");
         verify(plugin, never()).log("[tradewinds] Creating TradeWinds interstice...");
         assertNull(addon.getNetherWorld());
+    }
+
+    /**
+     * Stranger Realms pattern: arbitrary island positions and sizes.
+     */
+    @Test
+    void testArbitraryIslandGeometryAllowed() {
+        assertFalse(addon.isFixIslandCenter());
+        assertFalse(addon.isEnforceEqualRanges());
     }
 
     /**

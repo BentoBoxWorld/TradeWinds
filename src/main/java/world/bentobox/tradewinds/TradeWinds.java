@@ -98,6 +98,25 @@ public class TradeWinds extends GameModeAddon {
         return true;
     }
 
+    /**
+     * TradeWinds islands live at arbitrary seeded positions - never realign
+     * them to the grid (Stranger Realms pattern).
+     */
+    @Override
+    public boolean isFixIslandCenter() {
+        return false;
+    }
+
+    /**
+     * Island ranges vary here: trading islands use the full distance, the
+     * spawn island is small, and Stage 7 claims will size to their islet
+     * (Stranger Realms pattern).
+     */
+    @Override
+    public boolean isEnforceEqualRanges() {
+        return false;
+    }
+
     @Override
     public void onLoad() {
         // Save the default config from config.yml
@@ -220,6 +239,7 @@ public class TradeWinds extends GameModeAddon {
         if (islandWorld != null) {
             int top = islandWorld.getHighestBlockYAt(0, 0);
             islandWorld.setSpawnLocation(0, Math.max(top + 1, getSettings().getSeaHeight() + 1), 0);
+            bootstrapSpawnIsland(top);
         }
     }
 
@@ -328,6 +348,33 @@ public class TradeWinds extends GameModeAddon {
 
     public BiomeProvider getBiomeProvider() {
         return this.biomeProvider;
+    }
+
+    /**
+     * The spawn islet is a real (small-range) BentoBox spawn island, so it is
+     * protected like any island - non-ops cannot grief it - and core spawn
+     * mechanics recognize it. Possible only because ranges are not enforced
+     * equal (see isEnforceEqualRanges).
+     */
+    private void bootstrapSpawnIsland(int surfaceY) {
+        if (getIslands().getSpawn(islandWorld).isPresent()) {
+            return;
+        }
+        org.bukkit.Location center = new org.bukkit.Location(islandWorld, 0.5,
+                Math.max(surfaceY + 1, getSettings().getSeaHeight() + 1), 0.5);
+        world.bentobox.bentobox.database.objects.Island spawn = getIslands().createIsland(center, null,
+                getSettings().getSpawnProtectionRange());
+        if (spawn == null) {
+            logError("Could not register the spawn island - spawn is unprotected");
+            return;
+        }
+        // Small range: the spawn island must never crowd the starter cluster
+        // (starter centers can be as close as ~1250 per axis)
+        spawn.setRange(getSettings().getSpawnProtectionRange() * 2);
+        spawn.setName("Spawn");
+        spawn.setSpawnPoint(Environment.NORMAL, center);
+        getIslands().setSpawn(spawn);
+        log("Registered the spawn island (protection " + getSettings().getSpawnProtectionRange() + ")");
     }
 
     public PlayerDataManager getPlayerDataManager() {

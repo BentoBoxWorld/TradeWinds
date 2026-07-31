@@ -3,6 +3,23 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## Protected spawn island (2026-07-30)
+
+The protection flip left the spawn islet explicitly free-build (non-ops
+could grief it). Fixed with Ben's own Stranger Realms machinery: TradeWinds
+overrides isFixIslandCenter=false (arbitrary island centers - we had been
+relying on luck that core's grid realignment never moved our jittered
+trading islands) and isEnforceEqualRanges=false (arbitrary ranges - also
+what Stage 7 claims will need). Then the spawn islet is a REAL BentoBox
+spawn island: created unowned at the origin, protection
+galaxy.spawn-protection-range (100), range shrunk to 200 (provably can
+never overlap a starter island: min starter center is ~1250/axis > 200 +
+1000). setSpawn + named "Spawn". Known wrinkle: the grid indexes the
+creation-time range (1000) until first restart - on pathological seeds a
+starter island rowed to in the very first session could fail to register
+until restart heals the grid. hasDistanceMismatch honors the override, so
+loads are safe. 128 tests green.
+
 ## The Shipwright (2026-07-30)
 
 Boat acquisition (Ben's design): every market's Shipwright page sells Oak

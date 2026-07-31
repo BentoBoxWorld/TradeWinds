@@ -37,6 +37,8 @@ galaxy:
   wild-islet-chance: 0.3
   # Terrain radius of wild islets. 0 disables them.
   wild-islet-radius: 70
+  # Protection radius of the spawn island (covers the islet plus its shore).
+  spawn-protection-range: 100
   # Relative spawn weight per island type. Higher = more common; 0 disables a type.
   type-weights:
     AGRICULTURAL: 10

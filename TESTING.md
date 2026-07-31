@@ -332,3 +332,14 @@ have not visited). The protection flip and stamps work immediately.
 - [ ] As a NON-OP player (test account, no LuckPerms grants): /tw, spawn, warp, chart,
       starchart, trade, restart, info, settings, language all work.
 - [ ] Non-op cannot use /twadmin or its subcommands.
+
+### Stage 4j — protected spawn island
+- [ ] Console logs "Registered the spawn island (protection 100)" on first enable.
+- [ ] As NON-OP: breaking/placing blocks on the spawn islet is blocked; wild islets
+      and open ocean remain free-build.
+- [ ] /twadmin info at spawn shows an unowned island named "Spawn", protection 100,
+      range 200 (small ranges are legal now — Stranger Realms overrides).
+- [ ] Restart: BentoBox loads cleanly (no "island distance mismatch" panic), spawn
+      island persists as spawn.
+- [ ] Trading islands still register/announce correctly (arbitrary centers untouched
+      by the isFixIslandCenter override).

@@ -109,6 +109,10 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "galaxy.wild-islet-radius", needsReset = true)
     private int wildIsletRadius = 70;
 
+    @ConfigComment("Protection radius of the spawn island (covers the islet plus its shore).")
+    @ConfigEntry(path = "galaxy.spawn-protection-range")
+    private int spawnProtectionRange = 100;
+
     @ConfigComment("Relative spawn weight per island type. Higher = more common; 0 disables a type.")
     @ConfigComment("Types: AGRICULTURAL, FOREST, FISHING, MINING, INDUSTRIAL, LUXURY, FROZEN.")
     @ConfigEntry(path = "galaxy.type-weights", needsReset = true)
@@ -2304,6 +2308,8 @@ public class Settings implements WorldSettings {
     public void setWildIsletChance(double wildIsletChance) { this.wildIsletChance = wildIsletChance; }
     public int getWildIsletRadius() { return wildIsletRadius; }
     public void setWildIsletRadius(int wildIsletRadius) { this.wildIsletRadius = wildIsletRadius; }
+    public int getSpawnProtectionRange() { return spawnProtectionRange; }
+    public void setSpawnProtectionRange(int spawnProtectionRange) { this.spawnProtectionRange = spawnProtectionRange; }
     public Map<String, Integer> getTypeWeights() { return typeWeights; }
     public void setTypeWeights(Map<String, Integer> typeWeights) { this.typeWeights = typeWeights; }
     public double getFuelPerBlock() { return fuelPerBlock; }
