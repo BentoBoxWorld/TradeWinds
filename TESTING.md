@@ -294,3 +294,26 @@ everything else (islands, database) is untouched; the area regenerates with the 
       and everywhere else — including LUXURY, which otherwise sells nothing — CHARCOAL
       appears as the fallback line, priced like any commodity.
 - [ ] With money but no fuel, you can always refuel at whatever island you are at.
+
+## Stage 4g — Two economies: stamps, outfitters, wild islets, restart
+
+**World note**: wild islets appear only in freshly generated chunks (empty cells you
+have not visited). The protection flip and stamps work immediately.
+
+- [ ] **Customs stamp**: goods bought from any market carry a lore line "⚓ Customs
+      Stamped" (PDC-marked; `economy.stamp-glint: true` adds a glint). Stamped and
+      identical unstamped items never stack together.
+- [ ] Only stamped goods appear on the Sell page. Homegrown wheat/mined ore in the
+      hold: not offered, and "traders only buy customs-stamped goods" if forced.
+- [ ] **Exception**: unstamped SUGAR sells fine (the smallholder economy) — unless
+      `illegal-trade.enabled: false`.
+- [ ] **Outfitter** button at every market: bread always; charcoal where the trade
+      catalog has no fuel; INDUSTRIAL sells iron sword/shield/armor; farms sell beds;
+      FISHING sells rods; MINING an iron pickaxe; LUXURY golden apples. All priced by
+      the engine (gear prices derive from their recipes).
+- [ ] **Wild islets**: row between trading islands through fresh ocean — small
+      unnamed islands (~140 across) in varied vanilla biomes, no dock/market/name
+      announcement. You can break/place/farm/sleep there and in open ocean
+      (protection flipped outside named islands). Trading islands remain protected.
+- [ ] **/tw restart**: confirmation, then balance resets to starting, fresh kit at
+      spawn, chart KEPT; counter decrements (3 by default); refuses at 0.

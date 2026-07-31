@@ -229,6 +229,40 @@ class GalaxyEngineTest {
     }
 
     @Test
+    void testWildIslets() {
+        GalaxyEngine engine = new GalaxyEngine(config(SEED, 0.0));
+        // With density 0 almost every cell is empty: some roll wild islets
+        int found = 0;
+        int[] sample = null;
+        for (int cx = -10; cx <= 10; cx++) {
+            for (int cz = -10; cz <= 10; cz++) {
+                if (engine.islandInCell(cx, cz).isEmpty() && engine.wildIsletInCell(cx, cz).isPresent()) {
+                    found++;
+                    sample = engine.wildIsletInCell(cx, cz).get();
+                }
+            }
+        }
+        // ~30% of 441 cells
+        assertTrue(found > 60 && found < 200, "Wild islet count off: " + found);
+        // Deterministic across engines
+        GalaxyEngine again = new GalaxyEngine(config(SEED, 0.0));
+        assertTrue(again.wildIsletAt(sample[0], sample[1]).isPresent());
+        // Terrain rises there, with a vanilla wild biome
+        assertEquals(45, engine.landLiftAt(sample[0], sample[1]));
+        assertTrue(engine.biomeKeyAt(sample[0], sample[1]).orElseThrow().startsWith("minecraft:"));
+        // Never inside a trading island's cell
+        GalaxyEngine dense = new GalaxyEngine(config(SEED, 1.0));
+        for (int cx = -5; cx <= 5; cx++) {
+            for (int cz = -5; cz <= 5; cz++) {
+                if (dense.islandInCell(cx, cz).isPresent()) {
+                    assertTrue(dense.wildIsletInCell(cx, cz).isEmpty(),
+                            "Cell with a trading island must not also host a wild islet");
+                }
+            }
+        }
+    }
+
+    @Test
     void testNamesAreDistinctEnough() {
         GalaxyEngine engine = new GalaxyEngine(config(SEED, 1.0));
         List<IslandSpec> list = islands(engine, 7);

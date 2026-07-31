@@ -94,6 +94,31 @@ Free. The border (Border addon in passable/visual mode, or protection-range visu
 
 ## 5. Economy
 
+### 5.0 The two economies (adopted 2026-07-30)
+
+TradeWinds runs **two parallel economies** connected at only three points:
+
+- **The stamped trade economy (money).** Goods bought from traders carry a
+  **customs stamp** (PDC key `tradewinds:stamp` + lore line; API-visible).
+  Traders buy ONLY stamped goods - money enters the game exclusively through
+  trade margins on goods that money already bought. Farming cannot mint money.
+- **The vanilla survival economy (stuff).** **Wild islets** (small unnamed
+  islands seeded into empty galaxy cells; `galaxy.wild-islet-*`) are free
+  country: mine, farm, build, sleep. All protection flags default to allowed
+  outside named islands' protection ranges. Homemade goods are freely usable
+  (eat, wear, build, burn as warp fuel) but unsellable.
+- **The connections:** buying (money->stuff, stamped); **contraband**
+  (stuff->money: unstamped sugar - and later villagers - are the only
+  farmable income, balanced by scan risk per principle 3); and self-supply
+  (homemade food/fuel substitute for purchases).
+
+Survival needs are met by the **outfitter** shelf every island guarantees
+(bread always, charcoal when the trade catalog carries no fuel, gear by type:
+smiths at INDUSTRIAL, beds at farms, rods at fisheries) and by wild-islet
+living. Destitution has an exit: `/tw restart` (config-capped) resets balance
+and kit, keeping the chart. Wild islets are the future claim targets for
+Stage 7 player islands (teams + Bank addon).
+
 - **BlueBook** (`~/git/bluebook`, addon name `BlueBook`) supplies base prices via `PriceEngine.getPrice(ItemStack, worldName)` (single price; TradeWinds derives buy/sell spread). Soft-depend; fail gracefully with a config fallback table if absent.
 - **Per-island modifiers:** island type (farm sells food cheap, wants raw materials…), biome, security band (margins scale with danger), plus per-island **stock and price drift** persisted via the BentoBox Database (keyed by island). Everything in Minecraft is tradeable; players may sell found/crafted goods into the same market.
 - **Trade GUI** at the dock (villager interaction or dock sign), transacting only against the hold (§4).

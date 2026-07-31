@@ -22,6 +22,8 @@ tradewinds:
       description: "receive a Star Chart map of your charted islands"
     trade:
       description: "open the island market (within its protection range)"
+    restart:
+      description: "restart your trading career (limited uses)"
     admin:
       help:
         description: "admin command for TradeWinds"
@@ -51,8 +53,13 @@ tradewinds:
     empty: "&c Your chart is empty - row into an island's waters to chart it."
     header: "&b Your chart ([number] islands):"
     entry: "&e [name] &7- [type], [band], [distance] blocks"
+  restart:
+    confirm: "&c Restart your career? Balance and kit reset; your chart is kept."
+    none-left: "&c No restarts left (maximum [number])."
+    done: "&6 A fresh start. Restarts remaining: [number]."
   trade:
     not-at-market: "&c There is no market here - trade within an island's protection range."
+    not-stamped: "&c Traders only buy customs-stamped goods (or... certain other merchandise)."
     nothing-to-sell: "&c Nothing in your hold that this island will pay for."
     nothing-for-sale: "&c This island has nothing for sale - it only buys."
     sold: "&a Sold [amount] x [material] for $[price]."

@@ -54,8 +54,29 @@ public final class TypeEconomy {
             TradeCategory.LUXURY, List.of(Material.CAKE, Material.GOLDEN_APPLE),
             TradeCategory.MISC, List.of());
 
+    /**
+     * Per-type outfitter stock beyond the universal bread/fuel: smiths arm
+     * you at INDUSTRIAL, farms sell beds, fisheries sell rods.
+     */
+    private static final Map<IslandType, List<Material>> OUTFITTER_EXTRAS = Map.of(
+            IslandType.INDUSTRIAL, List.of(Material.IRON_SWORD, Material.SHIELD, Material.IRON_HELMET,
+                    Material.IRON_CHESTPLATE, Material.IRON_LEGGINGS, Material.IRON_BOOTS),
+            IslandType.AGRICULTURAL, List.of(Material.WHITE_BED),
+            IslandType.FISHING, List.of(Material.FISHING_ROD),
+            IslandType.FOREST, List.of(Material.WHITE_BED),
+            IslandType.MINING, List.of(Material.IRON_PICKAXE),
+            IslandType.LUXURY, List.of(Material.GOLDEN_APPLE),
+            IslandType.FROZEN, List.of());
+
     private TypeEconomy() {
         // Static use only
+    }
+
+    /**
+     * The outfitter's per-type stock (beyond universal essentials).
+     */
+    public static List<Material> outfitterExtras(IslandType type) {
+        return OUTFITTER_EXTRAS.getOrDefault(type, List.of());
     }
 
     public static Set<TradeCategory> produces(IslandType type) {

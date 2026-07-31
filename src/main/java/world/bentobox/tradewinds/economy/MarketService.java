@@ -30,6 +30,8 @@ public class MarketService {
 
     /** PDC key marking cargo expander items. */
     public static final NamespacedKey EXPANDER_KEY = NamespacedKey.fromString("tradewinds:expander");
+    /** PDC key marking customs-stamped (trader-bought) goods - the API marker. */
+    public static final NamespacedKey STAMP_KEY = NamespacedKey.fromString("tradewinds:stamp");
 
     private final TradeWinds addon;
     private final PriceEngine priceEngine;
@@ -47,19 +49,71 @@ public class MarketService {
     }
 
     /**
-     * What this island offers for sale: its type's catalog, with a fuel
-     * guarantee - if the catalog carries no warp fuel, CHARCOAL is added, so
-     * anyone with money can always buy their way off rowing. Only the skint
-     * and fuel-less row.
+     * What this island trades: its type's produce catalog.
      */
     public java.util.List<Material> saleCatalog(IslandSpec spec) {
-        java.util.List<Material> catalog = new java.util.ArrayList<>(TypeEconomy.catalog(spec.type()));
-        boolean hasFuel = catalog.stream()
+        return TypeEconomy.catalog(spec.type());
+    }
+
+    /**
+     * The outfitter's shelf: survival essentials every island guarantees.
+     * Bread always; fuel (CHARCOAL) unless the trade catalog already sells
+     * fuel - only the skint AND fuel-less row; plus per-type gear (smiths at
+     * INDUSTRIAL, beds at AGRICULTURAL, rods at FISHING).
+     */
+    public java.util.List<Material> outfitterCatalog(IslandSpec spec) {
+        java.util.List<Material> shelf = new java.util.ArrayList<>();
+        shelf.add(Material.BREAD);
+        boolean tradeHasFuel = saleCatalog(spec).stream()
                 .anyMatch(m -> addon.getSettings().getFuelValues().getOrDefault(m.name(), 0.0) > 0);
-        if (!hasFuel) {
-            catalog.add(Material.CHARCOAL);
+        if (!tradeHasFuel) {
+            shelf.add(Material.CHARCOAL);
         }
-        return catalog;
+        shelf.addAll(TypeEconomy.outfitterExtras(spec.type()));
+        return shelf;
+    }
+
+    /**
+     * Apply the customs stamp: trader-bought goods carry a PDC marker and a
+     * lore line. Only stamped goods can be sold back to traders - homegrown
+     * and homemade items are for living with, not for selling (with the
+     * illegal exceptions the customs office would rather not discuss).
+     */
+    public ItemStack stamp(ItemStack item) {
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) {
+            return item;
+        }
+        meta.getPersistentDataContainer().set(STAMP_KEY, PersistentDataType.STRING, "stamped");
+        java.util.List<Component> lore = meta.lore() == null ? new java.util.ArrayList<>()
+                : new java.util.ArrayList<>(meta.lore());
+        lore.add(Component.text("\u2693 Customs Stamped", NamedTextColor.DARK_AQUA));
+        meta.lore(lore);
+        if (addon.getSettings().isStampGlint()) {
+            meta.setEnchantmentGlintOverride(true);
+        }
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    /**
+     * Is this item customs-stamped (trader-bought)? Public API for other
+     * addons.
+     */
+    public boolean isStamped(ItemStack item) {
+        return item != null && item.hasItemMeta()
+                && item.getItemMeta().getPersistentDataContainer().has(STAMP_KEY, PersistentDataType.STRING);
+    }
+
+    /**
+     * The filter deciding what traders will buy: stamped goods, plus the
+     * configured unstamped exceptions (contraband - if the illegal trade is
+     * enabled at all).
+     */
+    public java.util.function.Predicate<ItemStack> sellableFilter() {
+        return stack -> isStamped(stack)
+                || (addon.getSettings().isIllegalTradeEnabled()
+                        && addon.getSettings().getUnstampedSellables().contains(stack.getType().name()));
     }
 
     /**
@@ -113,8 +167,9 @@ public class MarketService {
         if (unitPrice.isEmpty() || vault.isEmpty() || amount <= 0) {
             return 0;
         }
-        int count = Math.min(addon.getHoldService().count(player, material), amount);
+        int count = Math.min(addon.getHoldService().count(player, material, sellableFilter()), amount);
         if (count <= 0) {
+            User.getInstance(player).sendMessage("tradewinds.trade.not-stamped");
             return 0;
         }
         TWTradeEvent event = new TWTradeEvent(player, spec, material, count, unitPrice.get(), true);
@@ -122,7 +177,7 @@ public class MarketService {
         if (event.isCancelled()) {
             return 0;
         }
-        int removed = addon.getHoldService().remove(player, material, count);
+        int removed = addon.getHoldService().remove(player, material, count, sellableFilter());
         double total = PriceModel.round2(removed * unitPrice.get());
         vault.get().deposit(User.getInstance(player), total);
         addon.getIslandDataManager().adjustStock(spec, TradeCategory.of(material), removed);
@@ -156,8 +211,9 @@ public class MarketService {
         if (event.isCancelled()) {
             return 0;
         }
-        // Limit by hold space: add first, pay for what fit
-        int added = addon.getHoldService().add(player, new ItemStack(material, affordable));
+        // Limit by hold space: add first, pay for what fit. Bought goods are
+        // customs stamped - the only goods traders will buy back.
+        int added = addon.getHoldService().add(player, stamp(new ItemStack(material, affordable)));
         if (added <= 0) {
             user.sendMessage("tradewinds.trade.no-hold-space");
             return 0;

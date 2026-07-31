@@ -40,6 +40,15 @@ public class GalaxyEngine {
     private static final long SALT_BIOME = 0xB10E0001L;
     private static final long SALT_NAME = 0x9A3E0001L;
     private static final long SALT_DOCK = 0xD0C4B0A7L;
+    private static final long SALT_WILD = 0x317DBEA7L;
+    private static final long SALT_WILD_X = 0x317DBEA8L;
+    private static final long SALT_WILD_Z = 0x317DBEA9L;
+    private static final long SALT_WILD_BIOME = 0x317DBEAAL;
+
+    /** Vanilla biomes wild islets draw from - Minecraft-stuff land. */
+    private static final List<String> WILD_BIOMES = List.of("minecraft:plains", "minecraft:forest",
+            "minecraft:birch_forest", "minecraft:jungle", "minecraft:savanna", "minecraft:swamp",
+            "minecraft:flower_forest", "minecraft:dark_forest");
 
     // Dock/plaza geometry, as fractions of the terrain radius. The plaza sits
     // at ~45% out (where natural terrain is already near sea level, so the
@@ -233,7 +242,77 @@ public class GalaxyEngine {
                 best = Math.max(best, 0.5 * (1 + Math.cos(Math.PI * d / isletRadius)));
             }
         }
+        // Wild islets: free land between the trading islands
+        Optional<int[]> wild = wildIsletAt(blockX, blockZ);
+        if (wild.isPresent()) {
+            double d = Math.hypot((double) blockX - wild.get()[0], (double) blockZ - wild.get()[1]);
+            best = Math.max(best, 0.5 * (1 + Math.cos(Math.PI * d / config.wildIsletRadius())));
+        }
         return (int) Math.round(config.landLift() * best);
+    }
+
+    /**
+     * The wild islet hosted by a cell, if any: cells without a trading island
+     * may roll a small unnamed island - free land for mining, farming and
+     * building ("Minecraft stuff"), and claim material for later stages.
+     *
+     * @param cellX cell x
+     * @param cellZ cell z
+     * @return {centerX, centerZ} or empty
+     */
+    public Optional<int[]> wildIsletInCell(int cellX, int cellZ) {
+        if (config.wildIsletChance() <= 0 || islandInCell(cellX, cellZ).isPresent()) {
+            return Optional.empty();
+        }
+        if (Hashing.toUnit(Hashing.cellHash(config.seed(), cellX, cellZ, SALT_WILD)) >= config.wildIsletChance()) {
+            return Optional.empty();
+        }
+        int size = config.cellSize();
+        int jitter = config.jitter();
+        double jx = Hashing.toUnit(Hashing.cellHash(config.seed(), cellX, cellZ, SALT_WILD_X)) * 2 - 1;
+        double jz = Hashing.toUnit(Hashing.cellHash(config.seed(), cellX, cellZ, SALT_WILD_Z)) * 2 - 1;
+        return Optional.of(new int[] { (int) Math.round((cellX + 0.5) * size + jx * jitter),
+                (int) Math.round((cellZ + 0.5) * size + jz * jitter) });
+    }
+
+    /**
+     * The wild islet whose footprint covers a column, if any.
+     *
+     * @param blockX block x
+     * @param blockZ block z
+     * @return {centerX, centerZ} or empty
+     */
+    public Optional<int[]> wildIsletAt(int blockX, int blockZ) {
+        int radius = config.wildIsletRadius();
+        if (radius <= 0) {
+            return Optional.empty();
+        }
+        int size = config.cellSize();
+        int cellX = Math.floorDiv(blockX, size);
+        int cellZ = Math.floorDiv(blockZ, size);
+        for (int cx = cellX - 1; cx <= cellX + 1; cx++) {
+            for (int cz = cellZ - 1; cz <= cellZ + 1; cz++) {
+                Optional<int[]> islet = wildIsletInCell(cx, cz);
+                if (islet.isPresent()) {
+                    long dx = (long) blockX - islet.get()[0];
+                    long dz = (long) blockZ - islet.get()[1];
+                    if (dx * dx + dz * dz <= (long) radius * radius) {
+                        return islet;
+                    }
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * A wild islet's whole-island biome (seeded from its cell).
+     */
+    public String wildIsletBiome(int centerX, int centerZ) {
+        int size = config.cellSize();
+        long hash = Hashing.cellHash(config.seed(), Math.floorDiv(centerX, size), Math.floorDiv(centerZ, size),
+                SALT_WILD_BIOME);
+        return WILD_BIOMES.get((int) Math.floorMod(hash, WILD_BIOMES.size()));
     }
 
     /**
@@ -316,6 +395,10 @@ public class GalaxyEngine {
         if (config.spawnIsletRadius() > 0
                 && Math.hypot(blockX, blockZ) < config.spawnIsletRadius()) {
             return Optional.of("minecraft:plains");
+        }
+        Optional<int[]> wild = wildIsletAt(blockX, blockZ);
+        if (wild.isPresent()) {
+            return Optional.of(wildIsletBiome(wild.get()[0], wild.get()[1]));
         }
         int radius = config.terrainRadius();
         long r2 = (long) radius * radius;

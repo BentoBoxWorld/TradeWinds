@@ -40,6 +40,12 @@ public class TWPlayerData implements DataObject {
     @Expose
     private int expandersPurchased;
 
+    /**
+     * Career restarts consumed (/tw restart).
+     */
+    @Expose
+    private int restartsUsed;
+
     public TWPlayerData() {
         // Required by the database
     }
@@ -86,6 +92,14 @@ public class TWPlayerData implements DataObject {
 
     public void setExpandersPurchased(int expandersPurchased) {
         this.expandersPurchased = expandersPurchased;
+    }
+
+    public int getRestartsUsed() {
+        return restartsUsed;
+    }
+
+    public void setRestartsUsed(int restartsUsed) {
+        this.restartsUsed = restartsUsed;
     }
 
     public boolean isStarterKitGiven() {

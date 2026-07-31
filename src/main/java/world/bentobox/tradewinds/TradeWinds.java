@@ -27,6 +27,7 @@ import world.bentobox.tradewinds.commands.AdminIslandsCommand;
 import world.bentobox.tradewinds.commands.AdminReflagCommand;
 import world.bentobox.tradewinds.commands.AdminTpIslandCommand;
 import world.bentobox.tradewinds.commands.TWChartCommand;
+import world.bentobox.tradewinds.commands.TWRestartCommand;
 import world.bentobox.tradewinds.commands.TWSpawnCommand;
 import world.bentobox.tradewinds.commands.TWStarChartCommand;
 import world.bentobox.tradewinds.commands.TWTradeCommand;
@@ -124,6 +125,7 @@ public class TradeWinds extends GameModeAddon {
                 new TWChartCommand(this);
                 new TWStarChartCommand(this);
                 new TWTradeCommand(this);
+                new TWRestartCommand(this);
                 new IslandInfoCommand(this);
                 new IslandSettingsCommand(this);
                 new IslandLanguageCommand(this);
@@ -174,6 +176,17 @@ public class TradeWinds extends GameModeAddon {
             Flags.CREEPER_DAMAGE.setDefaultSetting(netherWorld, false);
             Flags.CREEPER_GRIEFING.setDefaultSetting(netherWorld, true);
         }
+        // The open ocean and wild islets are free country: every protection
+        // flag defaults to allowed OUTSIDE island protection ranges. Trading
+        // islands keep their own band flags; player islands (Stage 7) theirs.
+        getPlugin().getFlagsManager().getFlags().stream()
+                .filter(flag -> flag.getType() == world.bentobox.bentobox.api.flags.Flag.Type.PROTECTION)
+                .forEach(flag -> {
+                    flag.setDefaultSetting(islandWorld, true);
+                    if (netherWorld != null) {
+                        flag.setDefaultSetting(netherWorld, true);
+                    }
+                });
         // Register trading islands lazily as their center chunks first load
         registerListener(new GalaxyIslandRegistrar(this));
         // Seal both worlds against portals - the interstice is warp-failure-only
@@ -387,7 +400,7 @@ public class TradeWinds extends GameModeAddon {
             galaxyEngine = new GalaxyEngine(new GalaxyConfig(seed, s.getGalaxyMinSeparation(),
                     s.getIslandTerrainRadius(), s.getLandLift(), s.getGalaxyDensity(),
                     s.getStarterClusterMinIslands(), s.getBandRadius(), s.getSeaHeight(), typeWeights(),
-                    s.getSpawnIsletRadius()));
+                    s.getSpawnIsletRadius(), s.getWildIsletChance(), s.getWildIsletRadius()));
             log("TradeWinds galaxy seed: " + seed);
         }
         return galaxyEngine;

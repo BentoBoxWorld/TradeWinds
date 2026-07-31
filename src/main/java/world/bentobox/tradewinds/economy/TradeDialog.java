@@ -54,9 +54,11 @@ public class TradeDialog {
                     () -> openSell(player, spec)));
         }
         if (!addon.getMarketService().saleCatalog(spec).isEmpty()) {
-            buttons.add(button("Buy goods", NamedTextColor.AQUA, "Buy this island's goods into your hold",
-                    () -> openBuy(player, spec)));
+            buttons.add(button("Buy goods", NamedTextColor.AQUA, "Buy this island's trade goods into your hold",
+                    () -> openBuy(player, spec, addon.getMarketService().saleCatalog(spec), " - Buying")));
         }
+        buttons.add(button("Outfitter", NamedTextColor.GREEN, "Food, fuel and gear for the sailing life",
+                () -> openBuy(player, spec, addon.getMarketService().outfitterCatalog(spec), " - Outfitter")));
         int owned = addon.getPlayerDataManager().get(player.getUniqueId()).getExpandersPurchased();
         if (owned < addon.getSettings().getExpanderCap()) {
             double price = PriceModel.expanderPrice(addon.getSettings().getExpanderBasePrice(), owned);
@@ -110,19 +112,19 @@ public class TradeDialog {
     /**
      * The buy page: the island's catalog in batches.
      */
-    public void openBuy(Player player, IslandSpec spec) {
+    public void openBuy(Player player, IslandSpec spec, List<Material> catalog, String titleSuffix) {
         List<ActionButton> buttons = new ArrayList<>();
-        for (Material material : addon.getMarketService().saleCatalog(spec)) {
+        for (Material material : catalog) {
             Optional<Double> price = addon.getMarketService().playerBuysAt(spec, material);
             price.ifPresent(unit -> {
                 String name = MarketService.pretty(material);
                 String each = String.format("$%.2f each; limited by balance and hold space", unit);
                 buttons.add(button(String.format("%s x1 - $%.2f", name, unit), NamedTextColor.AQUA, each,
-                        () -> buyThenReopen(player, spec, material, 1)));
+                        () -> buyThenReopen(player, spec, material, 1, catalog, titleSuffix)));
                 buttons.add(button(String.format("x%d - $%.2f", MID_BATCH, unit * MID_BATCH), NamedTextColor.AQUA,
-                        each, () -> buyThenReopen(player, spec, material, MID_BATCH)));
+                        each, () -> buyThenReopen(player, spec, material, MID_BATCH, catalog, titleSuffix)));
                 buttons.add(button(String.format("x%d - $%.2f", BIG_BATCH, unit * BIG_BATCH), NamedTextColor.AQUA,
-                        each, () -> buyThenReopen(player, spec, material, BIG_BATCH)));
+                        each, () -> buyThenReopen(player, spec, material, BIG_BATCH, catalog, titleSuffix)));
             });
         }
         if (buttons.isEmpty()) {
@@ -130,13 +132,15 @@ public class TradeDialog {
             openMain(player, spec);
             return;
         }
-        show(player, spec.name() + " - Buying",
-                List.of("Goods sold into your hold", statusLine(player)), buttons, backButton(player, spec), 3);
+        show(player, spec.name() + titleSuffix,
+                List.of("Goods sold into your hold - customs stamped", statusLine(player)), buttons,
+                backButton(player, spec), 3);
     }
 
-    private void buyThenReopen(Player player, IslandSpec spec, Material material, int amount) {
+    private void buyThenReopen(Player player, IslandSpec spec, Material material, int amount, List<Material> catalog,
+            String titleSuffix) {
         addon.getMarketService().buy(player, spec, material, amount);
-        openBuy(player, spec);
+        openBuy(player, spec, catalog, titleSuffix);
     }
 
     /**
@@ -148,7 +152,9 @@ public class TradeDialog {
 
     List<SellOffer> sellOffers(Player player, IslandSpec spec) {
         List<SellOffer> offers = new ArrayList<>();
-        for (Map.Entry<Material, Integer> entry : addon.getHoldService().contents(player).entrySet()) {
+        // Traders only buy customs-stamped goods (plus the illegal exceptions)
+        for (Map.Entry<Material, Integer> entry : addon.getHoldService()
+                .contents(player, addon.getMarketService().sellableFilter()).entrySet()) {
             addon.getMarketService().playerSellsAt(spec, entry.getKey())
                     .ifPresent(unit -> offers.add(new SellOffer(entry.getKey(), entry.getValue(), unit,
                             PriceModel.round2(unit * entry.getValue()))));

@@ -32,6 +32,11 @@ galaxy:
   # Radius of the safe spawn islet generated at the world origin - players spawn
   # and respawn there. 0 disables it (not recommended: seabed respawns kill).
   spawn-islet-radius: 48
+  # Chance (0-1) that a galaxy cell WITHOUT a trading island hosts a wild islet -
+  # small unnamed islands, unprotected: mine, farm, build, live.
+  wild-islet-chance: 0.3
+  # Terrain radius of wild islets. 0 disables them.
+  wild-islet-radius: 70
   # Relative spawn weight per island type. Higher = more common; 0 disables a type.
   type-weights:
     AGRICULTURAL: 10
@@ -151,6 +156,11 @@ economy:
   expander-cap: 4
   # Maximum trading bundles that count as hold space.
   max-bundles: 3
+  # Give customs-stamped goods an enchantment glint as well as their lore line.
+  stamp-glint: false
+  # Materials traders buy even WITHOUT a customs stamp - the contraband exceptions.
+  unstamped-sellables:
+    - SUGAR
   # Base prices (Material -> price). Anything not listed is priced by deriving from
   # its crafting recipe (BlueBook logic, embedded); underivable = untradeable.
   base-prices:
@@ -181,6 +191,9 @@ economy:
     CAKE: 20.0
     GOLDEN_APPLE: 150.0
     # (the full default table ships in code; add or override entries here)
+player:
+  # Career restarts a destitute player may use (/tw restart). -1 unlimited, 0 none.
+  max-restarts: 3
 illegal-trade:
   # Master gate for all illegal-goods mechanics: contraband, customs scans, smuggling.
   # Set false for family-friendly servers - removes the entire crime layer cleanly.

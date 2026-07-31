@@ -100,6 +100,15 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "galaxy.spawn-islet-radius", needsReset = true)
     private int spawnIsletRadius = 48;
 
+    @ConfigComment("Chance (0-1) that a galaxy cell WITHOUT a trading island hosts a wild islet -")
+    @ConfigComment("small unnamed islands, unprotected: mine, farm, build, live. Minecraft-stuff land.")
+    @ConfigEntry(path = "galaxy.wild-islet-chance", needsReset = true)
+    private double wildIsletChance = 0.3;
+
+    @ConfigComment("Terrain radius of wild islets. 0 disables them.")
+    @ConfigEntry(path = "galaxy.wild-islet-radius", needsReset = true)
+    private int wildIsletRadius = 70;
+
     @ConfigComment("Relative spawn weight per island type. Higher = more common; 0 disables a type.")
     @ConfigComment("Types: AGRICULTURAL, FOREST, FISHING, MINING, INDUSTRIAL, LUXURY, FROZEN.")
     @ConfigEntry(path = "galaxy.type-weights", needsReset = true)
@@ -325,6 +334,20 @@ public class Settings implements WorldSettings {
     @ConfigComment("Maximum trading bundles that count as hold space.")
     @ConfigEntry(path = "economy.max-bundles")
     private int maxBundles = 3;
+
+    @ConfigComment("Give customs-stamped goods an enchantment glint as well as their lore line.")
+    @ConfigEntry(path = "economy.stamp-glint")
+    private boolean stampGlint = false;
+
+    @ConfigComment("Materials traders buy even WITHOUT a customs stamp - the contraband exceptions.")
+    @ConfigComment("Only honored while illegal-trade.enabled is true.")
+    @ConfigEntry(path = "economy.unstamped-sellables")
+    private List<String> unstampedSellables = new ArrayList<>(List.of("SUGAR"));
+
+    @ConfigComment("Career restarts a destitute player may use (/tw restart): fresh kit, starting")
+    @ConfigComment("balance, chart kept. -1 = unlimited, 0 = none.")
+    @ConfigEntry(path = "player.max-restarts")
+    private int maxRestarts = 3;
 
     @ConfigComment("Base prices (Material -> price). Anything not listed is priced by deriving")
     @ConfigComment("from its crafting recipe (BlueBook logic, embedded); underivable = untradeable.")
@@ -2273,6 +2296,10 @@ public class Settings implements WorldSettings {
     public void setBandRadius(int bandRadius) { this.bandRadius = bandRadius; }
     public int getSpawnIsletRadius() { return spawnIsletRadius; }
     public void setSpawnIsletRadius(int spawnIsletRadius) { this.spawnIsletRadius = spawnIsletRadius; }
+    public double getWildIsletChance() { return wildIsletChance; }
+    public void setWildIsletChance(double wildIsletChance) { this.wildIsletChance = wildIsletChance; }
+    public int getWildIsletRadius() { return wildIsletRadius; }
+    public void setWildIsletRadius(int wildIsletRadius) { this.wildIsletRadius = wildIsletRadius; }
     public Map<String, Integer> getTypeWeights() { return typeWeights; }
     public void setTypeWeights(Map<String, Integer> typeWeights) { this.typeWeights = typeWeights; }
     public double getFuelPerBlock() { return fuelPerBlock; }
@@ -2347,6 +2374,12 @@ public class Settings implements WorldSettings {
     public void setExpanderCap(int expanderCap) { this.expanderCap = expanderCap; }
     public int getMaxBundles() { return maxBundles; }
     public void setMaxBundles(int maxBundles) { this.maxBundles = maxBundles; }
+    public boolean isStampGlint() { return stampGlint; }
+    public void setStampGlint(boolean stampGlint) { this.stampGlint = stampGlint; }
+    public List<String> getUnstampedSellables() { return unstampedSellables; }
+    public void setUnstampedSellables(List<String> unstampedSellables) { this.unstampedSellables = unstampedSellables; }
+    public int getMaxRestarts() { return maxRestarts; }
+    public void setMaxRestarts(int maxRestarts) { this.maxRestarts = maxRestarts; }
     public Map<String, Double> getBasePrices() { return basePrices; }
     public void setBasePrices(Map<String, Double> basePrices) { this.basePrices = basePrices; }
     public boolean isIllegalTradeEnabled() { return illegalTradeEnabled; }

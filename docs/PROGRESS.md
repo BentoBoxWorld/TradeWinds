@@ -3,6 +3,34 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## The two economies: stamps, outfitters, wild islets, restart (2026-07-30)
+
+Ben's survival-design discussion (players died gearless and hungry; farming
+must not mint money). Adopted into the spec as §5.0:
+- **Customs stamp**: MarketService.stamp() on every purchase (PDC
+  tradewinds:stamp + lore, optional glint). sellableFilter() = stamped OR
+  configured unstamped exceptions (SUGAR) while illegal-trade is enabled.
+  HoldService went predicate-aware (count/remove/contents filter overloads
+  threading through shulkers and bundles). Different lore = stamped and
+  homemade stacks never merge.
+- **Outfitter** (second buy page): bread always, charcoal when the trade
+  catalog lacks fuel (fuel guarantee moved here), per-type gear
+  (TypeEconomy.OUTFITTER_EXTRAS) - INDUSTRIAL arms you, farms sell beds,
+  fisheries rods, MINING a pickaxe. Gear prices derive from recipes (the
+  embedded engine pays off). Shelf capped at 8 (dialog fits, tested).
+- **Wild islets**: empty galaxy cells roll small unnamed islands
+  (galaxy.wild-islet-chance 0.3, radius 70; pure engine math, deterministic,
+  never in a trading-island cell, tests). Vanilla wild biomes. All PROTECTION
+  flags default-allowed outside island protection ranges (blanket
+  setDefaultSetting loop) - open ocean and wild islets are free country;
+  future Stage 7 claim targets.
+- **/tw restart** (ConfirmableCommand): zero balance -> fresh kit at spawn
+  (starter deposit restores starting balance), chart kept, restartsUsed
+  capped by player.max-restarts (3).
+- Starting money note: already existed ($250 with the kit); Ben's account
+  predates Stage 4 so never saw it.
+126 tests green.
+
 ## The fuel guarantee (2026-07-30)
 
 Ben's rule: only the skint AND fuel-less row. `MarketService.saleCatalog`

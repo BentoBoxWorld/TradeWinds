@@ -47,25 +47,41 @@ class SaleCatalogTest extends CommonTestSetup {
     }
 
     @Test
-    void testEveryIslandTypeSellsFuel() {
+    void testEveryIslandSellsFuelAndFood() {
         for (IslandType type : IslandType.values()) {
-            List<Material> catalog = service.saleCatalog(spec(type));
-            assertTrue(catalog.stream()
+            List<Material> shelf = new java.util.ArrayList<>(service.saleCatalog(spec(type)));
+            shelf.addAll(service.outfitterCatalog(spec(type)));
+            assertTrue(shelf.stream()
                     .anyMatch(m -> settings.getFuelValues().getOrDefault(m.name(), 0.0) > 0),
                     type + " must sell some kind of fuel");
-            assertTrue(!catalog.isEmpty(), type + " catalog must never be empty");
+            assertTrue(shelf.contains(Material.BREAD) || shelf.contains(Material.COOKED_BEEF)
+                    || shelf.contains(Material.COOKED_COD), type + " must sell food");
         }
     }
 
     @Test
     void testCharcoalIsTheFallbackNotTheRule() {
-        // FOREST sells logs (fuel) already - no charcoal forced in
-        assertTrue(!service.saleCatalog(spec(IslandType.FOREST)).contains(Material.CHARCOAL));
-        // MINING sells coal - no charcoal forced in
-        assertTrue(!service.saleCatalog(spec(IslandType.MINING)).contains(Material.CHARCOAL));
-        // LUXURY produces nothing: charcoal appears as the guaranteed fuel
-        assertTrue(service.saleCatalog(spec(IslandType.LUXURY)).contains(Material.CHARCOAL));
-        // AGRICULTURAL produce (crops/food) has no fuel: charcoal appears
-        assertTrue(service.saleCatalog(spec(IslandType.AGRICULTURAL)).contains(Material.CHARCOAL));
+        // FOREST trades logs (fuel) already - no charcoal on the shelf
+        assertTrue(!service.outfitterCatalog(spec(IslandType.FOREST)).contains(Material.CHARCOAL));
+        // MINING trades coal - no charcoal
+        assertTrue(!service.outfitterCatalog(spec(IslandType.MINING)).contains(Material.CHARCOAL));
+        // LUXURY trades nothing burnable: charcoal appears on the outfitter shelf
+        assertTrue(service.outfitterCatalog(spec(IslandType.LUXURY)).contains(Material.CHARCOAL));
+        assertTrue(service.outfitterCatalog(spec(IslandType.AGRICULTURAL)).contains(Material.CHARCOAL));
+    }
+
+    @Test
+    void testOutfitterFitsTheDialog() {
+        for (IslandType type : IslandType.values()) {
+            assertTrue(service.outfitterCatalog(spec(type)).size() <= 8,
+                    type + " outfitter must fit the dialog without scrolling");
+        }
+    }
+
+    @Test
+    void testSmithsArmYou() {
+        List<Material> smith = service.outfitterCatalog(spec(IslandType.INDUSTRIAL));
+        assertTrue(smith.contains(Material.IRON_SWORD));
+        assertTrue(smith.contains(Material.IRON_CHESTPLATE));
     }
 }

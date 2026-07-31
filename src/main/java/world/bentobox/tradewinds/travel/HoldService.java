@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 import org.bukkit.Material;
 import org.bukkit.block.ShulkerBox;
@@ -40,8 +41,19 @@ public class HoldService {
      * order.
      */
     public Map<Material, Integer> contents(Player player) {
+        return contents(player, stack -> true);
+    }
+
+    /**
+     * Hold contents matching a stack filter (e.g. customs-stamped only).
+     */
+    public Map<Material, Integer> contents(Player player, Predicate<ItemStack> filter) {
         Map<Material, Integer> result = new LinkedHashMap<>();
-        forEachHoldStack(player, stack -> result.merge(stack.getType(), stack.getAmount(), Integer::sum));
+        forEachHoldStack(player, stack -> {
+            if (filter.test(stack)) {
+                result.merge(stack.getType(), stack.getAmount(), Integer::sum);
+            }
+        });
         return result;
     }
 
@@ -50,6 +62,13 @@ public class HoldService {
      */
     public int count(Player player, Material material) {
         return contents(player).getOrDefault(material, 0);
+    }
+
+    /**
+     * How many of a material, counting only stacks passing the filter.
+     */
+    public int count(Player player, Material material, Predicate<ItemStack> filter) {
+        return contents(player, filter).getOrDefault(material, 0);
     }
 
     /**
@@ -95,6 +114,16 @@ public class HoldService {
      * @return how many were actually removed
      */
     public int remove(Player player, Material material, int amount) {
+        return remove(player, material, amount, stack -> true);
+    }
+
+    /**
+     * Remove up to {@code amount} of a material, taking only stacks that pass
+     * the filter (e.g. customs-stamped only).
+     *
+     * @return how many were actually removed
+     */
+    public int remove(Player player, Material material, int amount, Predicate<ItemStack> filter) {
         int[] left = { amount };
         if (player.getVehicle() instanceof ChestBoat boat) {
             Inventory inv = boat.getInventory();
@@ -105,7 +134,7 @@ public class HoldService {
                 if (stack == null) {
                     continue;
                 }
-                if (stack.getType() == material) {
+                if (stack.getType() == material && filter.test(stack)) {
                     int take = Math.min(left[0], stack.getAmount());
                     stack.setAmount(stack.getAmount() - take);
                     if (stack.getAmount() <= 0) {
@@ -113,7 +142,7 @@ public class HoldService {
                     }
                     left[0] -= take;
                 } else if (isExpander(stack)) {
-                    left[0] -= removeFromShulker(stack, material, left[0]);
+                    left[0] -= removeFromShulker(stack, material, left[0], filter);
                 }
             }
         }
@@ -121,7 +150,7 @@ public class HoldService {
             if (left[0] <= 0) {
                 break;
             }
-            left[0] -= removeFromBundle(bundleItem, material, left[0]);
+            left[0] -= removeFromBundle(bundleItem, material, left[0], filter);
         }
         return amount - left[0];
     }
@@ -223,7 +252,7 @@ public class HoldService {
         return List.of();
     }
 
-    private int removeFromShulker(ItemStack expander, Material material, int amount) {
+    private int removeFromShulker(ItemStack expander, Material material, int amount, Predicate<ItemStack> filter) {
         if (!(expander.getItemMeta() instanceof BlockStateMeta meta)
                 || !(meta.getBlockState() instanceof ShulkerBox box)) {
             return 0;
@@ -233,7 +262,7 @@ public class HoldService {
             if (removed >= amount) {
                 break;
             }
-            if (stack != null && stack.getType() == material) {
+            if (stack != null && stack.getType() == material && filter.test(stack)) {
                 int take = Math.min(amount - removed, stack.getAmount());
                 stack.setAmount(stack.getAmount() - take);
                 if (stack.getAmount() <= 0) {
@@ -265,7 +294,7 @@ public class HoldService {
         return added;
     }
 
-    private int removeFromBundle(ItemStack bundleItem, Material material, int amount) {
+    private int removeFromBundle(ItemStack bundleItem, Material material, int amount, Predicate<ItemStack> filter) {
         if (!(bundleItem.getItemMeta() instanceof BundleMeta bundle)) {
             return 0;
         }
@@ -273,7 +302,7 @@ public class HoldService {
         List<ItemStack> items = new ArrayList<>(bundle.getItems());
         List<ItemStack> kept = new ArrayList<>();
         for (ItemStack stack : items) {
-            if (removed < amount && stack.getType() == material) {
+            if (removed < amount && stack.getType() == material && filter.test(stack)) {
                 int take = Math.min(amount - removed, stack.getAmount());
                 removed += take;
                 if (stack.getAmount() > take) {
