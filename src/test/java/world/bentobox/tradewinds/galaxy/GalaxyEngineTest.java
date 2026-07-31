@@ -214,18 +214,35 @@ class GalaxyEngineTest {
     }
 
     @Test
-    void testSpawnIslet() {
+    void testSpawnIslandAtOrigin() {
+        // The origin cell is reserved: a full SAFE trading island at exactly 0,0
         GalaxyEngine engine = new GalaxyEngine(config(SEED, 0.0));
-        // Full lift at the origin even with an empty galaxy, plains biome
+        IslandSpec spawn = engine.spawnIsland();
+        assertEquals(0, spawn.centerX());
+        assertEquals(0, spawn.centerZ());
+        assertEquals(SecurityBand.SAFE, spawn.band());
+        assertEquals(GalaxyEngine.SPAWN_NAME, spawn.name());
+        // It has land and a dock like any trading island
         assertEquals(45, engine.landLiftAt(0, 0));
-        assertEquals(java.util.Optional.of("minecraft:plains"), engine.biomeKeyAt(0, 0));
-        // Gone past the islet radius (default 48)
-        assertEquals(0, engine.landLiftAt(60, 0));
-        assertTrue(engine.biomeKeyAt(60, 0).isEmpty());
-        // Radius 0 disables it
-        GalaxyEngine off = new GalaxyEngine(new GalaxyConfig(SEED, 2500, 160, 45, 0.0, 5, 5000, 70,
-                GalaxyConfig.defaultTypeWeights(), 0));
-        assertEquals(0, off.landLiftAt(0, 0));
+        assertEquals(spawn, engine.islandAt(0, 0).orElseThrow());
+        assertTrue(engine.dockPlan(spawn).dockEnd() > 0);
+        // Its economy is configurable
+        GalaxyEngine industrial = new GalaxyEngine(new GalaxyConfig(SEED, 2500, 160, 45, 0.0, 5, 5000, 70,
+                GalaxyConfig.defaultTypeWeights(), IslandType.INDUSTRIAL));
+        assertEquals(IslandType.INDUSTRIAL, industrial.spawnIsland().type());
+    }
+
+    @Test
+    void testNothingCrowdsTheSpawnIsland() {
+        // Every other island keeps min separation from the origin
+        GalaxyEngine engine = new GalaxyEngine(config(SEED, 1.0));
+        for (IslandSpec spec : islands(engine, 6)) {
+            if (spec.cellX() == 0 && spec.cellZ() == 0) {
+                continue;
+            }
+            double distance = Math.hypot(spec.centerX(), spec.centerZ());
+            assertTrue(distance >= 2500, spec.name() + " crowds spawn at " + distance);
+        }
     }
 
     @Test

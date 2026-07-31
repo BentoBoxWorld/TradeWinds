@@ -388,3 +388,25 @@ temporarily to force it.
       ingots...) which IS customs-stamped — check it can be sold at a market.
 - [ ] Only one encounter at a time per player; mobs despawn naturally when far away.
 - [ ] `encounters.enabled: false` turns the whole system off.
+
+## Stage 5b — Spawn is a real trading island
+
+**World note**: the origin now hosts a full trading island instead of the bare islet.
+Stop the server, delete the four origin region files (`tradewinds_world/region/r.0.0.mca`,
+`r.-1.0.mca`, `r.0.-1.mca`, `r.-1.-1.mca`) AND the old spawn island from the TradeWinds
+database (or use `/twadmin delete` on it), then restart.
+
+- [ ] Console logs "Designated Spawn (FISHING) as the spawn island" on first enable.
+- [ ] `/tw` puts you ON the market plaza of an island named **Spawn** — villagers,
+      stalls, landmark, the lot. Trading is available from second one.
+- [ ] Walk down the dock, place your boat, and sail: the border warp prompt appears at
+      the island edge like any other island. The navigation boss bar shows "Spawn".
+- [ ] The island is SAFE band: no hostile spawns, no PvP, villagers protected — plus
+      the harbor allowances (boats, workbenches, hitting monsters) for visitors.
+- [ ] Non-op still cannot break blocks there; TNT breaks nothing.
+- [ ] Die without a bed: respawn on the Spawn plaza.
+- [ ] `galaxy.spawn-island-type` picks the economy (FISHING default, RANDOM allowed) —
+      needs a world regen to change.
+- [ ] Admin control works as normal BentoBox: `/twadmin setname`, `/twadmin
+      setspawnpoint`, `/twadmin settings` on the spawn island.
+- [ ] No other island is closer than 2500 blocks to spawn (nothing crowds the port).

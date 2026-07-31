@@ -95,10 +95,12 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "galaxy.band-radius", needsReset = true)
     private int bandRadius = 5000;
 
-    @ConfigComment("Radius of the safe spawn islet generated at the world origin - players spawn")
-    @ConfigComment("and respawn there. 0 disables it (not recommended: seabed respawns kill).")
-    @ConfigEntry(path = "galaxy.spawn-islet-radius", needsReset = true)
-    private int spawnIsletRadius = 48;
+    @ConfigComment("Economy of the spawn island - the trading island reserved at the world origin,")
+    @ConfigComment("where players spawn and respawn. A working port: dock, plaza, market, warp zone.")
+    @ConfigComment("One of AGRICULTURAL, FOREST, FISHING, MINING, INDUSTRIAL, LUXURY, FROZEN,")
+    @ConfigComment("or RANDOM to let the seed decide.")
+    @ConfigEntry(path = "galaxy.spawn-island-type", needsReset = true)
+    private String spawnIslandType = "FISHING";
 
     @ConfigComment("Chance (0-1) that a galaxy cell WITHOUT a trading island hosts a wild islet -")
     @ConfigComment("small unnamed islands, unprotected: mine, farm, build, live. Minecraft-stuff land.")
@@ -108,10 +110,6 @@ public class Settings implements WorldSettings {
     @ConfigComment("Terrain radius of wild islets. 0 disables them.")
     @ConfigEntry(path = "galaxy.wild-islet-radius", needsReset = true)
     private int wildIsletRadius = 70;
-
-    @ConfigComment("Protection radius of the spawn island (covers the islet plus its shore).")
-    @ConfigEntry(path = "galaxy.spawn-protection-range")
-    private int spawnProtectionRange = 100;
 
     @ConfigComment("Relative spawn weight per island type. Higher = more common; 0 disables a type.")
     @ConfigComment("Types: AGRICULTURAL, FOREST, FISHING, MINING, INDUSTRIAL, LUXURY, FROZEN.")
@@ -2370,14 +2368,12 @@ public class Settings implements WorldSettings {
     public void setLandLift(int landLift) { this.landLift = landLift; }
     public int getBandRadius() { return bandRadius; }
     public void setBandRadius(int bandRadius) { this.bandRadius = bandRadius; }
-    public int getSpawnIsletRadius() { return spawnIsletRadius; }
-    public void setSpawnIsletRadius(int spawnIsletRadius) { this.spawnIsletRadius = spawnIsletRadius; }
+    public String getSpawnIslandType() { return spawnIslandType; }
+    public void setSpawnIslandType(String spawnIslandType) { this.spawnIslandType = spawnIslandType; }
     public double getWildIsletChance() { return wildIsletChance; }
     public void setWildIsletChance(double wildIsletChance) { this.wildIsletChance = wildIsletChance; }
     public int getWildIsletRadius() { return wildIsletRadius; }
     public void setWildIsletRadius(int wildIsletRadius) { this.wildIsletRadius = wildIsletRadius; }
-    public int getSpawnProtectionRange() { return spawnProtectionRange; }
-    public void setSpawnProtectionRange(int spawnProtectionRange) { this.spawnProtectionRange = spawnProtectionRange; }
     public Map<String, Integer> getTypeWeights() { return typeWeights; }
     public void setTypeWeights(Map<String, Integer> typeWeights) { this.typeWeights = typeWeights; }
     public double getFuelPerBlock() { return fuelPerBlock; }

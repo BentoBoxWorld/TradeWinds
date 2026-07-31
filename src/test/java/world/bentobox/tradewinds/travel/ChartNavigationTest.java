@@ -24,7 +24,8 @@ class ChartNavigationTest {
 
     @Test
     void testMarkersPointTheRightWay() {
-        IslandSpec spec = engine.islandInCell(0, 0).orElseThrow();
+        // Not cell 0,0 - that is the spawn island, directly under the player
+        IslandSpec spec = engine.islandInCell(1, 1).orElseThrow();
         List<ChartHolograms.Marker> markers = ChartHolograms.markers(List.of(spec), 0, 0, 10.0, 12);
         assertEquals(1, markers.size());
         ChartHolograms.Marker marker = markers.get(0);
@@ -60,6 +61,14 @@ class ChartNavigationTest {
         }
         assertTrue(many.size() > 12);
         assertEquals(12, ChartHolograms.markers(many, 0, 0, 10.0, 12).size());
+    }
+
+    @Test
+    void testSpawnIslandIsUnderfoot() {
+        // The spawn island sits at the origin: zero distance, no bearing
+        IslandSpec spawn = engine.spawnIsland();
+        assertEquals(0, spawn.centerX());
+        assertEquals(0, spawn.centerZ());
     }
 
     @Test

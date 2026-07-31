@@ -3,6 +3,28 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## Stage 5b — Spawn is a real trading island (2026-07-31)
+
+Ben: make spawn a proper named island with dock, plaza and a config-picked
+economy, designated as BentoBox's spawn - and preferably by reusing an
+existing island rather than special-casing 0,0. Done by reserving the ORIGIN
+CELL for it, which deleted more code than it added: the galaxy engine returns
+a full SAFE trading island named "Spawn" centered exactly at 0,0 (economy from
+galaxy.spawn-island-type, default FISHING, RANDOM allowed), so dock, plaza,
+market, villagers, boss bar and border warp zone all come for free from the
+existing systems. Other cells' islands are pushed radially clear of the origin
+so min separation still holds (tested). The bare spawn islet and its
+protection-range config are gone.
+`bootstrapSpawnIsland` now: computes the plaza position from pure geometry (no
+chunk load needed), sets it as the world spawn, registers the island via a
+new reusable `GalaxyIslandRegistrar.register(spec, world)`, calls
+`setSpawnPoint` + `IslandsManager.setSpawn` once (so admins can rename, move
+the spawn point and change flags afterwards with normal BentoBox commands),
+and re-asserts the harbor allowances every enable.
+Players now spawn on a working market plaza with coal, money and a boat -
+trade immediately, then walk to the dock and sail. No long empty row to start.
+140 tests green (three tests had assumed 0,0 was open ocean).
+
 ## Stage 5 — Risk at sea (2026-07-30) — CODE COMPLETE, awaiting in-game test
 
 Built as one package because it IS one idea: spec principle 2 (risk symmetry)

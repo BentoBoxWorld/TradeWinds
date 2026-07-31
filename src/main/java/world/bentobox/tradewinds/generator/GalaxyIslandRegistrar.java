@@ -58,18 +58,32 @@ public class GalaxyIslandRegistrar implements Listener {
         if (!handled.add(key)) {
             return;
         }
-        Location center = new Location(event.getWorld(), spec.centerX() + 0.5,
+        if (register(spec, event.getWorld()) == null) {
+            handled.remove(key);
+        }
+    }
+
+    /**
+     * Register a trading island as an unowned BentoBox island: named, flagged
+     * for its security band, and tagged with its type. Returns the existing
+     * island if it was registered in a previous session.
+     *
+     * @param spec the island
+     * @param world the overworld
+     * @return the island, or null if registration failed
+     */
+    public Island register(IslandSpec spec, org.bukkit.World world) {
+        Location center = new Location(world, spec.centerX() + 0.5,
                 addon.getSettings().getSeaHeight() + 1.0, spec.centerZ() + 0.5);
-        if (addon.getIslands().getIslandAt(center).isPresent()) {
-            // Already registered in a previous session
-            return;
+        Island existing = addon.getIslands().getIslandAt(center).orElse(null);
+        if (existing != null) {
+            return existing;
         }
         Island island = addon.getIslands().createIsland(center, null);
         if (island == null) {
             addon.logError("Could not register trading island " + spec.name() + " at " + spec.centerX() + ","
                     + spec.centerZ());
-            handled.remove(key);
-            return;
+            return null;
         }
         island.setName(spec.name());
         applyBandFlags(island, spec);
@@ -80,6 +94,7 @@ public class GalaxyIslandRegistrar implements Listener {
         island.putMetaData(META_BAND, new MetaDataValue(spec.band().name()));
         addon.log("Registered trading island '" + spec.name() + "' (" + spec.type() + ", " + spec.band() + ") at "
                 + spec.centerX() + "," + spec.centerZ());
+        return island;
     }
 
     /**

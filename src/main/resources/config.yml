@@ -29,16 +29,15 @@ galaxy:
   land-lift: 45
   # Distance from spawn per security-band step (Safe -> Policed -> Frontier -> Lawless -> Anarchic).
   band-radius: 5000
-  # Radius of the safe spawn islet generated at the world origin - players spawn
-  # and respawn there. 0 disables it (not recommended: seabed respawns kill).
-  spawn-islet-radius: 48
+  # Economy of the spawn island - the trading island reserved at the world origin,
+  # where players spawn and respawn. A working port: dock, plaza, market, warp zone.
+  # AGRICULTURAL, FOREST, FISHING, MINING, INDUSTRIAL, LUXURY, FROZEN, or RANDOM.
+  spawn-island-type: FISHING
   # Chance (0-1) that a galaxy cell WITHOUT a trading island hosts a wild islet -
   # small unnamed islands, unprotected: mine, farm, build, live.
   wild-islet-chance: 0.3
   # Terrain radius of wild islets. 0 disables them.
   wild-islet-radius: 70
-  # Protection radius of the spawn island (covers the islet plus its shore).
-  spawn-protection-range: 100
   # Relative spawn weight per island type. Higher = more common; 0 disables a type.
   type-weights:
     AGRICULTURAL: 10

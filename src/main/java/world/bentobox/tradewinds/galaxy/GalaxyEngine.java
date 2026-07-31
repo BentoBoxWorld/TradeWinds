@@ -108,6 +108,15 @@ public class GalaxyEngine {
     }
 
     /**
+     * The spawn island: the trading island reserved at the origin.
+     *
+     * @return the spawn island spec
+     */
+    public IslandSpec spawnIsland() {
+        return islandInCell(0, 0).orElseThrow();
+    }
+
+    /**
      * The island hosted by a galaxy cell, if any. Pure function of (seed, cell).
      *
      * @param cellX cell x
@@ -118,7 +127,18 @@ public class GalaxyEngine {
         return cache.computeIfAbsent(cellKey(cellX, cellZ), k -> computeIsland(cellX, cellZ));
     }
 
+    /** The name every spawn island is born with (admins may rename it). */
+    public static final String SPAWN_NAME = "Spawn";
+
     private Optional<IslandSpec> computeIsland(int cellX, int cellZ) {
+        // The origin cell is reserved for the spawn island: a full trading
+        // island (dock, plaza, market, warp zone) sitting exactly at 0,0, so
+        // new sailors start in a working port instead of empty water.
+        if (cellX == 0 && cellZ == 0) {
+            IslandType type = config.spawnIslandType() != null ? config.spawnIslandType() : rollType(0, 0);
+            return Optional.of(new IslandSpec(0, 0, 0, 0, type, SecurityBand.SAFE, rollBiome(0, 0, type),
+                    SPAWN_NAME));
+        }
         boolean starter = starterCells.contains(cellKey(cellX, cellZ));
         if (!starter
                 && Hashing.toUnit(Hashing.cellHash(config.seed(), cellX, cellZ, SALT_OCCUPANCY)) >= config.density()) {
@@ -130,6 +150,13 @@ public class GalaxyEngine {
         double jz = Hashing.toUnit(Hashing.cellHash(config.seed(), cellX, cellZ, SALT_JITTER_Z)) * 2 - 1;
         int centerX = (int) Math.round((cellX + 0.5) * size + jx * jitter);
         int centerZ = (int) Math.round((cellZ + 0.5) * size + jz * jitter);
+        // Keep clear of the spawn island at the origin
+        double fromOrigin = Math.hypot(centerX, centerZ);
+        if (fromOrigin < config.minSeparation()) {
+            double scale = config.minSeparation() / Math.max(1.0, fromOrigin);
+            centerX = (int) Math.round(centerX * scale);
+            centerZ = (int) Math.round(centerZ * scale);
+        }
 
         IslandType type = rollType(cellX, cellZ);
         SecurityBand band = starter ? SecurityBand.SAFE : rollBand(cellX, cellZ, centerX, centerZ);
@@ -231,15 +258,6 @@ public class GalaxyEngine {
             if (d < radius) {
                 double mask = 0.5 * (1 + Math.cos(Math.PI * d / radius));
                 best = Math.max(best, mask);
-            }
-        }
-        // The spawn islet: a small safe island at the origin so players spawn
-        // and respawn on dry land, never in the seabed
-        int isletRadius = config.spawnIsletRadius();
-        if (isletRadius > 0) {
-            double d = Math.hypot(blockX, blockZ);
-            if (d < isletRadius) {
-                best = Math.max(best, 0.5 * (1 + Math.cos(Math.PI * d / isletRadius)));
             }
         }
         // Wild islets: free land between the trading islands
@@ -391,11 +409,6 @@ public class GalaxyEngine {
      * @return biome key, or empty for open ocean
      */
     public Optional<String> biomeKeyAt(int blockX, int blockZ) {
-        // Spawn islet is gentle plains
-        if (config.spawnIsletRadius() > 0
-                && Math.hypot(blockX, blockZ) < config.spawnIsletRadius()) {
-            return Optional.of("minecraft:plains");
-        }
         Optional<int[]> wild = wildIsletAt(blockX, blockZ);
         if (wild.isPresent()) {
             return Optional.of(wildIsletBiome(wild.get()[0], wild.get()[1]));

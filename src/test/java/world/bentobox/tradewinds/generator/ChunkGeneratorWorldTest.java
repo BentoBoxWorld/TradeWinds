@@ -64,7 +64,7 @@ class ChunkGeneratorWorldTest extends CommonTestSetup {
         // Default: an empty galaxy (density 0, no starter islands, no spawn islet) - pure ocean
         when(addon.getGalaxyEngine(org.mockito.ArgumentMatchers.anyLong()))
                 .thenReturn(new GalaxyEngine(new GalaxyConfig(SEED, 2500, 160, 45, 0.0, 0, 5000, 70,
-                        GalaxyConfig.defaultTypeWeights(), 0)));
+                        GalaxyConfig.defaultTypeWeights(), null)));
     }
 
     private WorldInfo worldInfo(Environment env, long seed) {
@@ -117,8 +117,9 @@ class ChunkGeneratorWorldTest extends CommonTestSetup {
 
     @Test
     void testOceanShape() {
+        // Far from the origin: the spawn island occupies 0,0
         ChunkGeneratorWorld gen = new ChunkGeneratorWorld(addon);
-        RecordingChunkData r = generate(gen, Environment.NORMAL, SEED, 0, 0);
+        RecordingChunkData r = generate(gen, Environment.NORMAL, SEED, 40, 40);
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
                 // Bedrock at the bottom
@@ -243,8 +244,8 @@ class ChunkGeneratorWorldTest extends CommonTestSetup {
     }
 
     @Test
-    void testSpawnIsletRisesAtOrigin() {
-        // Even with an empty galaxy, the spawn islet makes dry land at 0,0
+    void testSpawnIslandRisesAtOrigin() {
+        // Even with an empty galaxy, the reserved spawn island makes land at 0,0
         when(addon.getGalaxyEngine(org.mockito.ArgumentMatchers.anyLong()))
                 .thenReturn(new GalaxyEngine(new GalaxyConfig(SEED, 2500, 160, 45, 0.0, 0, 5000, 70)));
         ChunkGeneratorWorld gen = new ChunkGeneratorWorld(addon);
@@ -253,7 +254,7 @@ class ChunkGeneratorWorldTest extends CommonTestSetup {
         for (int y = settings.getSeaHeight() + 1; y < settings.getSeaHeight() + 50 && !landAboveSea; y++) {
             landAboveSea = r.get(0, y, 0) == Material.GRASS_BLOCK;
         }
-        assertTrue(landAboveSea, "Spawn islet should rise above the sea at the origin");
+        assertTrue(landAboveSea, "The spawn island should rise above the sea at the origin");
     }
 
     @Test

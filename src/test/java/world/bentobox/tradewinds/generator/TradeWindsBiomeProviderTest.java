@@ -44,9 +44,9 @@ class TradeWindsBiomeProviderTest extends CommonTestSetup {
         settings = new Settings();
         when(addon.getSettings()).thenReturn(settings);
         emptyGalaxy = new GalaxyEngine(new GalaxyConfig(SEED, 2500, 160, 45, 0.0, 0, 5000, 70,
-                GalaxyConfig.defaultTypeWeights(), 0));
+                GalaxyConfig.defaultTypeWeights(), null));
         denseGalaxy = new GalaxyEngine(new GalaxyConfig(SEED, 2500, 160, 45, 1.0, 0, 5000, 70,
-                GalaxyConfig.defaultTypeWeights(), 0));
+                GalaxyConfig.defaultTypeWeights(), null));
         when(addon.getGalaxyEngine(anyLong())).thenReturn(emptyGalaxy);
         provider = new TradeWindsBiomeProvider(addon);
     }
@@ -60,10 +60,12 @@ class TradeWindsBiomeProviderTest extends CommonTestSetup {
 
     @Test
     void testOpenOceanBiomes() {
+        // Sampled far from the origin - the spawn island sits at 0,0
         WorldInfo wi = worldInfo(Environment.NORMAL);
-        assertEquals(Biome.OCEAN, provider.getBiome(wi, 0, settings.getSeaHeight(), 0));
-        assertEquals(Biome.OCEAN, provider.getBiome(wi, 0, 10, 0));
-        assertEquals(settings.getDefaultAirBiome(), provider.getBiome(wi, 0, settings.getSeaHeight() + 1, 0));
+        int x = 100_000;
+        assertEquals(Biome.OCEAN, provider.getBiome(wi, x, settings.getSeaHeight(), x));
+        assertEquals(Biome.OCEAN, provider.getBiome(wi, x, 10, x));
+        assertEquals(settings.getDefaultAirBiome(), provider.getBiome(wi, x, settings.getSeaHeight() + 1, x));
     }
 
     @Test

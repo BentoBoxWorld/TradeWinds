@@ -248,12 +248,10 @@ public class TradeWinds extends GameModeAddon {
         // Navigation boss bar: island, standing, distance to dock
         navigationBarTask = new NavigationBarTask(this);
         navigationBarTask.start();
-        // Spawn (and bed-less respawn) is on the spawn islet's surface
+        // Spawn (and bed-less respawn) is the spawn island's market plaza
         registerListener(new world.bentobox.tradewinds.listeners.SpawnRespawnListener(this));
         if (islandWorld != null) {
-            int top = islandWorld.getHighestBlockYAt(0, 0);
-            islandWorld.setSpawnLocation(0, Math.max(top + 1, getSettings().getSeaHeight() + 1), 0);
-            bootstrapSpawnIsland(top);
+            bootstrapSpawnIsland();
         }
     }
 
@@ -371,37 +369,39 @@ public class TradeWinds extends GameModeAddon {
     }
 
     /**
-     * The spawn islet is a real (small-range) BentoBox spawn island, so it is
-     * protected like any island - non-ops cannot grief it - and core spawn
-     * mechanics recognize it. Possible only because ranges are not enforced
-     * equal (see isEnforceEqualRanges).
+     * Designate the origin trading island as BentoBox's spawn island: a
+     * working port where players arrive, meet the market, and set sail from
+     * the dock - no long empty row to start. Admins can rename it, move its
+     * spawn point and change its flags with the usual BentoBox commands
+     * afterwards; only the first registration sets these.
      */
-    private void bootstrapSpawnIsland(int surfaceY) {
-        world.bentobox.bentobox.database.objects.Island spawn = getIslands().getSpawn(islandWorld).orElse(null);
+    private void bootstrapSpawnIsland() {
+        GalaxyEngine engine = getGalaxyEngine(islandWorld.getSeed());
+        world.bentobox.tradewinds.galaxy.IslandSpec spec = engine.spawnIsland();
+        // The plaza is deterministic geometry - no chunk needs to be loaded
+        world.bentobox.tradewinds.galaxy.DockPlan plan = engine.dockPlan(spec);
+        org.bukkit.Location plaza = new org.bukkit.Location(islandWorld, plan.plazaX() + 0.5,
+                getSettings().getSeaHeight() + GalaxyEngine.PLAZA_RISE + 1.0, plan.plazaZ() + 0.5);
+        islandWorld.setSpawnLocation(plaza);
+
+        GalaxyIslandRegistrar registrar = new GalaxyIslandRegistrar(this);
+        world.bentobox.bentobox.database.objects.Island spawn = getIslands().getSpawn(islandWorld)
+                .orElseGet(() -> registrar.register(spec, islandWorld));
         if (spawn == null) {
-            org.bukkit.Location center = new org.bukkit.Location(islandWorld, 0.5,
-                    Math.max(surfaceY + 1, getSettings().getSeaHeight() + 1), 0.5);
-            spawn = getIslands().createIsland(center, null, getSettings().getSpawnProtectionRange());
-            if (spawn == null) {
-                logError("Could not register the spawn island - spawn is unprotected");
-                return;
-            }
-            // Small range: the spawn island must never crowd the starter cluster
-            // (starter centers can be as close as ~1250 per axis)
-            spawn.setRange(getSettings().getSpawnProtectionRange() * 2);
-            spawn.setName("Spawn");
-            spawn.setSpawnPoint(Environment.NORMAL, center);
-            getIslands().setSpawn(spawn);
-            log("Registered the spawn island (protection " + getSettings().getSpawnProtectionRange() + ")");
+            logError("Could not register the spawn island - spawn is unprotected");
+            return;
         }
-        // (Re-)assert spawn island policy every enable, so existing spawn
-        // islands pick up rule changes too:
-        // - visitors may use boats (it is a harbor), fight monsters in
-        //   self-defense, and use workbenches (craft a boat from wild timber)
+        if (!spawn.isSpawn()) {
+            spawn.setSpawnPoint(Environment.NORMAL, plaza);
+            getIslands().setSpawn(spawn);
+            log("Designated " + spec.name() + " (" + spec.type() + ") as the spawn island");
+        }
+        // Spawn-port allowances, re-asserted every enable: it is a harbor, so
+        // boats, self-defense and workbenches are everyone's right, and
+        // nothing hostile spawns or explodes here
         spawn.setFlag(Flags.BOAT, 0);
         spawn.setFlag(Flags.HURT_MONSTERS, 0);
         spawn.setFlag(Flags.CRAFTING, 0);
-        // - nothing hostile spawns and TNT cannot blow the harbor apart
         spawn.setSettingsFlag(Flags.MONSTER_NATURAL_SPAWN, false);
         spawn.setSettingsFlag(Flags.TNT_DAMAGE, false);
         spawn.setSettingsFlag(Flags.BLOCK_EXPLODE_DAMAGE, false);
@@ -485,10 +485,26 @@ public class TradeWinds extends GameModeAddon {
             galaxyEngine = new GalaxyEngine(new GalaxyConfig(seed, s.getGalaxyMinSeparation(),
                     s.getIslandTerrainRadius(), s.getLandLift(), s.getGalaxyDensity(),
                     s.getStarterClusterMinIslands(), s.getBandRadius(), s.getSeaHeight(), typeWeights(),
-                    s.getSpawnIsletRadius(), s.getWildIsletChance(), s.getWildIsletRadius()));
+                    spawnIslandType(), s.getWildIsletChance(), s.getWildIsletRadius()));
             log("TradeWinds galaxy seed: " + seed);
         }
         return galaxyEngine;
+    }
+
+    /**
+     * The configured spawn island economy, or null to let the seed roll it.
+     */
+    private IslandType spawnIslandType() {
+        String name = getSettings().getSpawnIslandType();
+        if (name == null || name.isBlank() || "RANDOM".equalsIgnoreCase(name)) {
+            return null;
+        }
+        try {
+            return IslandType.valueOf(name.toUpperCase(java.util.Locale.ENGLISH));
+        } catch (IllegalArgumentException e) {
+            logError("Unknown galaxy.spawn-island-type: " + name + " - using a seeded type");
+            return null;
+        }
     }
 
     /**
