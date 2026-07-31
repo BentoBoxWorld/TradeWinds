@@ -35,6 +35,8 @@ import world.bentobox.tradewinds.commands.TWWarpCommand;
 import world.bentobox.tradewinds.dataobjects.IslandDataManager;
 import world.bentobox.tradewinds.dataobjects.PlayerDataManager;
 import world.bentobox.tradewinds.economy.MarketService;
+import world.bentobox.tradewinds.encounters.EncounterListener;
+import world.bentobox.tradewinds.encounters.EncounterService;
 import world.bentobox.tradewinds.economy.TradeDialog;
 import world.bentobox.tradewinds.economy.TradeListener;
 import world.bentobox.tradewinds.galaxy.RouteGraph;
@@ -47,6 +49,7 @@ import world.bentobox.tradewinds.travel.BorderPromptListener;
 import world.bentobox.tradewinds.travel.ChartHolograms;
 import world.bentobox.tradewinds.travel.ChartingListener;
 import world.bentobox.tradewinds.travel.FuelService;
+import world.bentobox.tradewinds.travel.IntersticeService;
 import world.bentobox.tradewinds.travel.HoldService;
 import world.bentobox.tradewinds.travel.StarChartService;
 import world.bentobox.tradewinds.travel.StarterKit;
@@ -88,6 +91,8 @@ public class TradeWinds extends GameModeAddon {
     private TradeDialog tradeDialog;
     private ChartHolograms chartHolograms;
     private StarChartService starChartService;
+    private IntersticeService intersticeService;
+    private @Nullable EncounterService encounterService;
     private @Nullable ResidentAuditTask residentAuditTask;
     private @Nullable NavigationBarTask navigationBarTask;
 
@@ -230,6 +235,12 @@ public class TradeWinds extends GameModeAddon {
         registerListener(new BorderPromptListener(this));
         // Teleporting while boated brings the boat (and cargo) along
         registerListener(new BoatPickupListener(this));
+        // Risk at sea: the interstice for warpers, encounters for rowers
+        intersticeService = new IntersticeService(this);
+        intersticeService.start();
+        encounterService = new EncounterService(this);
+        encounterService.start();
+        registerListener(new EncounterListener(this));
         // Residents survive the night: no mob targeting, tether, respawn
         registerListener(new ResidentProtectionListener());
         residentAuditTask = new ResidentAuditTask(this);
@@ -253,6 +264,12 @@ public class TradeWinds extends GameModeAddon {
         }
         if (navigationBarTask != null) {
             navigationBarTask.stop();
+        }
+        if (intersticeService != null) {
+            intersticeService.stop();
+        }
+        if (encounterService != null) {
+            encounterService.stop();
         }
         if (chartHolograms != null) {
             chartHolograms.clearAll();
@@ -432,6 +449,14 @@ public class TradeWinds extends GameModeAddon {
 
     public StarChartService getStarChartService() {
         return starChartService;
+    }
+
+    public IntersticeService getIntersticeService() {
+        return intersticeService;
+    }
+
+    public EncounterService getEncounterService() {
+        return encounterService;
     }
 
     /**

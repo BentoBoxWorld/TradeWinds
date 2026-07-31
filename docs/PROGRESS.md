@@ -3,6 +3,36 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## Stage 5 — Risk at sea (2026-07-30) — CODE COMPLETE, awaiting in-game test
+
+Built as one package because it IS one idea: spec principle 2 (risk symmetry)
+was half-implemented - warping was to risk the interstice, rowing to risk the
+lawless ocean, but rowing was free AND safe, quietly dominant for the patient.
+
+**Interstice (warp risk):** `IntersticeService` rolls
+travel.warp.failure-chance at jump time; failure teleports player+boat to the
+NETHER world partway along the route (35-65%), spawns
+interstice.ghasts-min..max Ghasts targeting them, fires TWWarpFailedEvent.
+The owed destination is remembered and the free re-engage dialog is offered
+every interstice.prompt-seconds; taking it calls the new
+`WarpService.deliver()` (the arrival half, split out of the jump) with no
+fuel charge. Fallback if the pending destination is lost (relog): a free jump
+to the nearest charted island - stranding must be impossible.
+
+**Sea encounters (rowing risk):** pure `EncounterTable` (chance scales with
+distance from the nearest island, clamped 0.25-1.0 of the band's base;
+roster filtered by band and day/night) + `EncounterService` (45s rolls for
+players actually at sea, one encounter at a time, spawned
+encounters.distance ahead so fleeing is always possible, PDC-tagged,
+setRemoveWhenFarAway). Roster: guardian picket (day), trident drowned
+(night), ZOMBIE_NAUTILUS (26.2's new undead sea mob, FRONTIER+), phantoms,
+pillager pirate crews and a sea witch in their own boats (LAWLESS+).
+`EncounterListener` drops **customs-stamped** booty - so fighting is the
+third income beside honest margins and smuggled sugar, and the stamp system
+lets us aim the faucet precisely.
+
+138 tests green.
+
 ## Teleport friction: stand-still before warping (2026-07-30)
 
 Ben asked about BentoBox's stand-still-before-teleport. Finding: /tw spawn

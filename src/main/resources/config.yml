@@ -204,6 +204,43 @@ economy:
 player:
   # Career restarts a destitute player may use (/tw restart). -1 unlimited, 0 none.
   max-restarts: 3
+interstice:
+  # Ghasts spawned around a stranded sailor.
+  ghasts-min: 1
+  ghasts-max: 3
+  # Seconds between offers of the free re-engage while adrift.
+  prompt-seconds: 20
+encounters:
+  # Random mob encounters at sea - the risk that balances free rowing against
+  # the warp's fuel cost and interstice risk.
+  enabled: true
+  # Seconds between encounter rolls per player at sea.
+  check-seconds: 45
+  # Blocks ahead of the sailor an encounter appears - far enough to see and flee.
+  distance: 28
+  # Chance per roll, by the security band of the nearest island (ANARCHIC also
+  # governs the deep ocean). Scaled by distance from that island.
+  chance:
+    SAFE: 0.02
+    POLICED: 0.06
+    FRONTIER: 0.12
+    LAWLESS: 0.20
+    ANARCHIC: 0.28
+  # Chance a spawned drowned carries a trident.
+  drowned-trident-chance: 0.35
+  # Chance that a slain encounter mob yields booty, and what it may drop.
+  # Booty is customs-stamped, so it can be sold: fighting is the third way to earn.
+  booty-chance: 0.5
+  booty-table:
+    - NAUTILUS_SHELL
+    - PRISMARINE_SHARD
+    - PRISMARINE_CRYSTALS
+    - GOLD_INGOT
+    - IRON_INGOT
+    - EMERALD
+    - COAL
+    - COOKED_COD
+    - TRIDENT
 illegal-trade:
   # Master gate for all illegal-goods mechanics: contraband, customs scans, smuggling.
   # Set false for family-friendly servers - removes the entire crime layer cleanly.

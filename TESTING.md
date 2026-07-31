@@ -360,3 +360,31 @@ Set `commands.delay.time: 3` in `plugins/BentoBox/config.yml` and test as a NON-
 - [ ] Moving during the countdown aborts the warp and salvages the fuel back into the
       hold as charcoal (dropped at your feet if the hold is full).
 - [ ] With `stand-still-seconds: 0` (default) warps remain instant.
+
+## Stage 5 — Risk at sea
+
+**Half one: the interstice (warp risk).** Set `travel.warp.failure-chance: 1.0`
+temporarily to force it.
+- [ ] Warping drops you into `tradewinds_world_nether` partway along the route, in
+      your boat, with 1-3 Ghasts inbound and a "the warp collapses!" message.
+- [ ] The re-engage dialog appears within ~20s (and repeats): clicking it delivers
+      you to the ORIGINAL destination for FREE — no second fuel charge.
+- [ ] Stranding is impossible: relog in the interstice (losing the pending
+      destination) — the dialog still offers a free jump to your nearest charted
+      island.
+- [ ] Ghast fireballs can be batted back; the fight is survivable in a boat.
+- [ ] Restore `failure-chance: 0.05` afterwards.
+
+**Half two: sea encounters (rowing risk).**
+- [ ] Row in open water far from islands: within a few rolls (45s each) mobs appear
+      ~28 blocks AHEAD of you — visible, so fleeing is a real choice.
+- [ ] Day vs night differ: guardians by day, trident-throwing drowned at night.
+- [ ] Lawless/anarchic water adds worse things: Zombie Nautilus (26.2's undead sea
+      horror), phantoms at night, pillager PIRATE CREWS in their own boat, and the
+      sea witch.
+- [ ] Safe island waters are quiet (2% base, further reduced near the dock);
+      encounters intensify with distance from any island.
+- [ ] Killing encounter mobs sometimes drops booty (nautilus shells, tridents,
+      ingots...) which IS customs-stamped — check it can be sold at a market.
+- [ ] Only one encounter at a time per player; mobs despawn naturally when far away.
+- [ ] `encounters.enabled: false` turns the whole system off.

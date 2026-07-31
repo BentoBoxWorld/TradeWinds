@@ -396,6 +396,63 @@ public class Settings implements WorldSettings {
         return map;
     }
 
+    /*      INTERSTICE      */
+    @ConfigComment("Ghasts spawned around a stranded sailor in the interstice.")
+    @ConfigEntry(path = "interstice.ghasts-min")
+    private int intersticeGhastsMin = 1;
+
+    @ConfigEntry(path = "interstice.ghasts-max")
+    private int intersticeGhastsMax = 3;
+
+    @ConfigComment("Seconds between offers of the free re-engage while adrift in the interstice.")
+    @ConfigEntry(path = "interstice.prompt-seconds")
+    private int intersticePromptSeconds = 20;
+
+    /*      SEA ENCOUNTERS      */
+    @ConfigComment("Random mob encounters at sea - the risk that balances free rowing against")
+    @ConfigComment("the warp's fuel cost and interstice risk.")
+    @ConfigEntry(path = "encounters.enabled")
+    private boolean encountersEnabled = true;
+
+    @ConfigComment("Seconds between encounter rolls per player at sea.")
+    @ConfigEntry(path = "encounters.check-seconds")
+    private int encounterCheckSeconds = 45;
+
+    @ConfigComment("Blocks ahead of the sailor that an encounter appears - far enough to see")
+    @ConfigComment("and flee from. Fleeing should always be a real option.")
+    @ConfigEntry(path = "encounters.distance")
+    private int encounterDistance = 28;
+
+    @ConfigComment("Chance per roll of an encounter, by the security band of the nearest island")
+    @ConfigComment("(ANARCHIC also governs the deep ocean far from anywhere). Scaled by distance")
+    @ConfigComment("from that island: quiet by the docks, dangerous in open water.")
+    @ConfigEntry(path = "encounters.chance")
+    private Map<String, Double> encounterChance = defaultEncounterChance();
+
+    private static Map<String, Double> defaultEncounterChance() {
+        Map<String, Double> map = new HashMap<>();
+        map.put("SAFE", 0.02);
+        map.put("POLICED", 0.06);
+        map.put("FRONTIER", 0.12);
+        map.put("LAWLESS", 0.20);
+        map.put("ANARCHIC", 0.28);
+        return map;
+    }
+
+    @ConfigComment("Chance a spawned drowned carries a trident.")
+    @ConfigEntry(path = "encounters.drowned-trident-chance")
+    private double drownedTridentChance = 0.35;
+
+    @ConfigComment("Chance that a slain encounter mob yields booty.")
+    @ConfigEntry(path = "encounters.booty-chance")
+    private double bootyChance = 0.5;
+
+    @ConfigComment("Booty materials. Dropped customs-stamped, so salvage can be sold -")
+    @ConfigComment("fighting is the third way to earn, beside trading and smuggling.")
+    @ConfigEntry(path = "encounters.booty-table")
+    private List<String> bootyTable = new ArrayList<>(List.of("NAUTILUS_SHELL", "PRISMARINE_SHARD",
+            "PRISMARINE_CRYSTALS", "GOLD_INGOT", "IRON_INGOT", "EMERALD", "COAL", "COOKED_COD", "TRIDENT"));
+
     /*      ILLEGAL TRADE      */
     @ConfigComment("Master gate for all illegal-goods mechanics: contraband, customs scans, smuggling.")
     @ConfigComment("Set false for family-friendly servers - removes the entire crime layer cleanly.")
@@ -2407,6 +2464,26 @@ public class Settings implements WorldSettings {
     public void setMaxRestarts(int maxRestarts) { this.maxRestarts = maxRestarts; }
     public Map<String, Double> getBasePrices() { return basePrices; }
     public void setBasePrices(Map<String, Double> basePrices) { this.basePrices = basePrices; }
+    public int getIntersticeGhastsMin() { return intersticeGhastsMin; }
+    public void setIntersticeGhastsMin(int intersticeGhastsMin) { this.intersticeGhastsMin = intersticeGhastsMin; }
+    public int getIntersticeGhastsMax() { return intersticeGhastsMax; }
+    public void setIntersticeGhastsMax(int intersticeGhastsMax) { this.intersticeGhastsMax = intersticeGhastsMax; }
+    public int getIntersticePromptSeconds() { return intersticePromptSeconds; }
+    public void setIntersticePromptSeconds(int intersticePromptSeconds) { this.intersticePromptSeconds = intersticePromptSeconds; }
+    public boolean isEncountersEnabled() { return encountersEnabled; }
+    public void setEncountersEnabled(boolean encountersEnabled) { this.encountersEnabled = encountersEnabled; }
+    public int getEncounterCheckSeconds() { return encounterCheckSeconds; }
+    public void setEncounterCheckSeconds(int encounterCheckSeconds) { this.encounterCheckSeconds = encounterCheckSeconds; }
+    public int getEncounterDistance() { return encounterDistance; }
+    public void setEncounterDistance(int encounterDistance) { this.encounterDistance = encounterDistance; }
+    public Map<String, Double> getEncounterChance() { return encounterChance; }
+    public void setEncounterChance(Map<String, Double> encounterChance) { this.encounterChance = encounterChance; }
+    public double getDrownedTridentChance() { return drownedTridentChance; }
+    public void setDrownedTridentChance(double drownedTridentChance) { this.drownedTridentChance = drownedTridentChance; }
+    public double getBootyChance() { return bootyChance; }
+    public void setBootyChance(double bootyChance) { this.bootyChance = bootyChance; }
+    public List<String> getBootyTable() { return bootyTable; }
+    public void setBootyTable(List<String> bootyTable) { this.bootyTable = bootyTable; }
     public boolean isIllegalTradeEnabled() { return illegalTradeEnabled; }
     public void setIllegalTradeEnabled(boolean illegalTradeEnabled) { this.illegalTradeEnabled = illegalTradeEnabled; }
 

@@ -68,6 +68,15 @@ tradewinds:
     no-hold-space: "&c No room in your hold - stow cargo in your chest boat, expanders or bundles."
     expander-bought: "&6 Cargo expander purchased for $[price] - stowed in your hold."
     expander-cap: "&c Your boat cannot take any more expanders."
+  interstice:
+    stranded: "&4 The warp collapses! Dark water, and screaming above it."
+  encounter:
+    guardian_picket: "&3 Guardians rise in your path."
+    drowned_raiders: "&3 Drowned surface off the bow - some carry tridents."
+    nautilus_horror: "&5 Something vast and dead uncoils beneath the hull."
+    phantom_flight: "&3 Wings in the dark above the mast."
+    pirate_crew: "&c A crewed boat turns toward you. Pirates."
+    sea_witch: "&5 A witch adrift, and she has seen you."
   warp:
     not-in-boat: "&c You need to be aboard a boat to warp."
     not-at-island: "&c The warp only engages within an island's waters."

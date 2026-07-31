@@ -180,7 +180,8 @@ public class WarpService {
     }
 
     /**
-     * The jump itself: effects, teleport, re-seat.
+     * The jump itself: departure effects, then either the interstice (on a
+     * failed warp) or delivery to the destination.
      */
     private void jump(Player player, IslandSpec from, IslandSpec to, int fuelCost) {
         // Departure effects
@@ -190,7 +191,25 @@ public class WarpService {
 
         // Arrive close to the destination, on the bearing of the origin -
         // inside view distance, so the island is right there in front of you
-        int[] arrive = RouteGraph.arrivalPoint(from, to, addon.getSettings().getWarpArrivalDistance());
+        // The warp does not always hold: a failure drops the sailor into the
+        // interstice, still owed this destination (spec 3.3)
+        if (addon.getIntersticeService().rollFailure()) {
+            addon.getIntersticeService().strand(player, from, to);
+            return;
+        }
+        deliver(player, to, from, fuelCost);
+    }
+
+    /**
+     * Deliver a player (and their boat) to an island - the arrival half of a
+     * warp. Also used by the interstice's free re-engage.
+     */
+    public void deliver(Player player, IslandSpec to) {
+        deliver(player, to, to, 0);
+    }
+
+    private void deliver(Player player, IslandSpec to, IslandSpec bearingFrom, int fuelCost) {
+        int[] arrive = RouteGraph.arrivalPoint(bearingFrom, to, addon.getSettings().getWarpArrivalDistance());
         Location target = new Location(addon.getOverWorld(), arrive[0] + 0.5,
                 addon.getSettings().getSeaHeight() + 1.0, arrive[1] + 0.5);
 
@@ -206,7 +225,7 @@ public class WarpService {
             }
             arrivalEffects(player, target);
             player.sendMessage(user(player).getTranslation("tradewinds.warp.arrived", "[name]", to.name()));
-            Bukkit.getPluginManager().callEvent(new TWWarpCompletedEvent(player, from, to, fuelCost));
+            Bukkit.getPluginManager().callEvent(new TWWarpCompletedEvent(player, bearingFrom, to, fuelCost));
         });
     }
 
