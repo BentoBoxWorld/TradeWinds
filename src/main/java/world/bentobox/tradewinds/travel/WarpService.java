@@ -5,8 +5,10 @@ import java.util.List;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.entity.Boat;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
@@ -115,7 +117,9 @@ public class WarpService {
     }
 
     /**
-     * Engage the warp: fuel is consumed here; the jump follows.
+     * Engage the warp: fuel is consumed here; the jump follows after any
+     * configured stand-still period (moving aborts it and the fuel is
+     * refunded - see {@link #standStillThen}).
      */
     public void warp(Player player, IslandSpec from, IslandSpec to, int fuelCost) {
         TWWarpEvent event = new TWWarpEvent(player, from, to, fuelCost);
@@ -127,6 +131,58 @@ public class WarpService {
             player.sendMessage(user(player).getTranslation("tradewinds.warp.not-enough-fuel"));
             return;
         }
+        standStillThen(player, () -> jump(player, from, to, fuelCost), fuelCost);
+    }
+
+    /**
+     * Hold the player still for the configured seconds, then run the jump.
+     * Moving beyond a block aborts and refunds the fuel - the warp is a
+     * course, not a panic button. Ops and bypass-permission holders skip it.
+     */
+    private void standStillThen(Player player, Runnable jump, int fuelCost) {
+        int seconds = addon.getSettings().getWarpStandStillSeconds();
+        if (seconds <= 0 || player.isOp()
+                || player.hasPermission(addon.getPermissionPrefix() + "mod.bypassdelays")) {
+            jump.run();
+            return;
+        }
+        Location start = player.getLocation().clone();
+        user(player).sendMessage("tradewinds.warp.hold-course", "[seconds]", String.valueOf(seconds));
+        Bukkit.getScheduler().runTaskLater(addon.getPlugin(), () -> {
+            if (!player.isOnline()) {
+                return;
+            }
+            Location now = player.getLocation();
+            if (!now.getWorld().equals(start.getWorld()) || now.distanceSquared(start) > 4.0) {
+                // Course broken: refund the fuel that was spent on engagement
+                refund(player, fuelCost);
+                user(player).sendMessage("tradewinds.warp.course-broken");
+                return;
+            }
+            jump.run();
+        }, seconds * 20L);
+    }
+
+    /**
+     * Give back fuel value after an aborted warp, as charcoal into the hold
+     * (or at the player's feet if the hold is full).
+     */
+    private void refund(Player player, int fuelUnits) {
+        double charcoalValue = Math.max(1.0, addon.getSettings().getFuelValues().getOrDefault("CHARCOAL", 3.0));
+        int amount = (int) Math.ceil(fuelUnits / charcoalValue);
+        ItemStack refund = new ItemStack(Material.CHARCOAL, Math.max(1, amount));
+        int added = addon.getHoldService().add(player, refund);
+        if (added < refund.getAmount()) {
+            ItemStack rest = refund.clone();
+            rest.setAmount(refund.getAmount() - added);
+            player.getWorld().dropItem(player.getLocation(), rest);
+        }
+    }
+
+    /**
+     * The jump itself: effects, teleport, re-seat.
+     */
+    private void jump(Player player, IslandSpec from, IslandSpec to, int fuelCost) {
         // Departure effects
         Location here = player.getLocation();
         here.getWorld().spawnParticle(Particle.PORTAL, here, 80, 1, 1, 1, 0.5);

@@ -347,3 +347,13 @@ have not visited). The protection flip and stamps work immediately.
       (flags re-asserted every enable, so the existing spawn island picks these up).
 - [ ] Trading islands still register/announce correctly (arbitrary centers untouched
       by the isFixIslandCenter override).
+
+### Stage 4k — teleport friction (anti-escape)
+Set `commands.delay.time: 3` in `plugins/BentoBox/config.yml` and test as a NON-OP
+(ops and `tradewinds.mod.bypassdelays` holders always bypass delays):
+- [ ] `/tw spawn` says "stand still for 3 seconds"; moving cancels the teleport.
+- [ ] Set `travel.warp.stand-still-seconds: 3` in the TradeWinds config: engaging a
+      warp says "Hold your course..."; standing still completes the jump.
+- [ ] Moving during the countdown aborts the warp and salvages the fuel back into the
+      hold as charcoal (dropped at your feet if the hold is full).
+- [ ] With `stand-still-seconds: 0` (default) warps remain instant.

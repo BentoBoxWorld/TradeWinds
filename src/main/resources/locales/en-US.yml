@@ -74,3 +74,5 @@ tradewinds:
     no-destinations: "&c No charted destinations - row into new waters first."
     not-enough-fuel: "&c Not enough fuel aboard for that jump."
     arrived: "&b The warp releases you at [name]."
+    hold-course: "&b Hold your course for [seconds] seconds - the warp is spinning up..."
+    course-broken: "&c You broke course - the warp fizzles out. Fuel salvaged."

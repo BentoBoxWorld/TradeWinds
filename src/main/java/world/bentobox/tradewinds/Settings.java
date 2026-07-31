@@ -244,6 +244,12 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "travel.warp.max-destinations")
     private int maxWarpDestinations = 8;
 
+    @ConfigComment("Seconds a player must hold still before an engaged warp fires (moving cancels it,")
+    @ConfigComment("fuel refunded). Stops the warp being a panic button in a fight or a customs chase.")
+    @ConfigComment("0 = instant. Ops and holders of tradewinds.mod.bypassdelays always warp instantly.")
+    @ConfigEntry(path = "travel.warp.stand-still-seconds")
+    private int warpStandStillSeconds = 0;
+
     @ConfigComment("Seconds of nausea after a warp. Warping hurts - it gates the under-equipped.")
     @ConfigEntry(path = "travel.warp.nausea-seconds")
     private int warpNauseaSeconds = 8;
@@ -2329,6 +2335,8 @@ public class Settings implements WorldSettings {
     public void setWarpPromptCooldownSeconds(int warpPromptCooldownSeconds) { this.warpPromptCooldownSeconds = warpPromptCooldownSeconds; }
     public int getMaxWarpDestinations() { return maxWarpDestinations; }
     public void setMaxWarpDestinations(int maxWarpDestinations) { this.maxWarpDestinations = maxWarpDestinations; }
+    public int getWarpStandStillSeconds() { return warpStandStillSeconds; }
+    public void setWarpStandStillSeconds(int warpStandStillSeconds) { this.warpStandStillSeconds = warpStandStillSeconds; }
     public int getWarpNauseaSeconds() { return warpNauseaSeconds; }
     public void setWarpNauseaSeconds(int warpNauseaSeconds) { this.warpNauseaSeconds = warpNauseaSeconds; }
     public int getWarpBlindnessSeconds() { return warpBlindnessSeconds; }

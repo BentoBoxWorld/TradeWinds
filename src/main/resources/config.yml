@@ -66,6 +66,10 @@ travel:
     # Maximum destinations listed in the warp dialog (nearest first).
     # 8 fits the dialog without scrolling - scrolling is easy to miss.
     max-destinations: 8
+    # Seconds a player must hold still before an engaged warp fires (moving cancels it,
+    # fuel salvaged). Stops the warp being a panic button in a fight or customs chase.
+    # 0 = instant. Ops and tradewinds.mod.bypassdelays holders always warp instantly.
+    stand-still-seconds: 0
     # Warping hurts - it gates the under-equipped.
     nausea-seconds: 8
     blindness-seconds: 3

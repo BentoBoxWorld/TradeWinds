@@ -3,6 +3,19 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## Teleport friction: stand-still before warping (2026-07-30)
+
+Ben asked about BentoBox's stand-still-before-teleport. Finding: /tw spawn
+already extends DelayedTeleportCommand and calls delayCommand, so it is
+wired - the server just has commands.delay.time: 0, and ops bypass delays
+anyway (which is why it never appeared in testing).
+The warp teleports from a dialog callback, out of reach of the command-level
+delay, so WarpService gained an equivalent: travel.warp.stand-still-seconds
+(default 0 = instant, preserving the spec's fast warp until Ben tunes it).
+Moving >2 blocks during the countdown aborts the jump and SALVAGES the fuel
+as charcoal into the hold (never a silent loss); ops and
+tradewinds.mod.bypassdelays bypass. 133 tests green.
+
 ## Spawn island visitor allowances (2026-07-30, playtest bug)
 
 Full protection was too much: visitors could not launch boats, defend
