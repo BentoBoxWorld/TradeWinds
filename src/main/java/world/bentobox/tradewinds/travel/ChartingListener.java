@@ -8,6 +8,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.vehicle.VehicleEnterEvent;
 
 import net.kyori.adventure.text.Component;
 import world.bentobox.bentobox.api.user.User;
@@ -39,6 +40,22 @@ public class ChartingListener implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void onQuit(PlayerQuitEvent event) {
         addon.getPlayerDataManager().unload(event.getPlayer().getUniqueId());
+        addon.getChartHolograms().clear(event.getPlayer().getUniqueId());
+    }
+
+    /**
+     * Boarding a boat raises the hologram chart - the game shows new sailors
+     * where to go the moment they set sail, no telling needed. (Fades on its
+     * own; config chart.show-on-boarding.)
+     */
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onBoardBoat(VehicleEnterEvent event) {
+        if (addon.getSettings().isChartOnBoarding()
+                && event.getVehicle() instanceof org.bukkit.entity.Boat
+                && event.getEntered() instanceof Player player
+                && player.getWorld().equals(addon.getOverWorld())) {
+            addon.getChartHolograms().show(player);
+        }
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)

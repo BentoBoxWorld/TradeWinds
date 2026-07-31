@@ -198,6 +198,11 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "chart.hologram-max")
     private int chartHologramMax = 12;
 
+    @ConfigComment("Show the hologram chart automatically whenever a player boards a boat -")
+    @ConfigComment("new players see where to go the moment they set sail, untold.")
+    @ConfigEntry(path = "chart.show-on-boarding")
+    private boolean chartOnBoarding = true;
+
     @ConfigComment("Star Chart map scale: blocks per map pixel. 64 shows ~8km across;")
     @ConfigComment("smaller values zoom in (islands render larger).")
     @ConfigEntry(path = "chart.starchart-blocks-per-pixel")
@@ -2352,6 +2357,8 @@ public class Settings implements WorldSettings {
     public void setChartHologramSeconds(int chartHologramSeconds) { this.chartHologramSeconds = chartHologramSeconds; }
     public int getChartHologramMax() { return chartHologramMax; }
     public void setChartHologramMax(int chartHologramMax) { this.chartHologramMax = chartHologramMax; }
+    public boolean isChartOnBoarding() { return chartOnBoarding; }
+    public void setChartOnBoarding(boolean chartOnBoarding) { this.chartOnBoarding = chartOnBoarding; }
     public int getStarChartBlocksPerPixel() { return starChartBlocksPerPixel; }
     public void setStarChartBlocksPerPixel(int starChartBlocksPerPixel) { this.starChartBlocksPerPixel = starChartBlocksPerPixel; }
     public boolean isNavigationBossbar() { return navigationBossbar; }
