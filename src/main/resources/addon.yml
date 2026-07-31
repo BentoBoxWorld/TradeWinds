@@ -16,8 +16,11 @@ permissions:
     description: Allow teleporting to the ocean spawn
     default: true
   tradewinds.island.warp:
-    description: Allow opening the warp dialog at island borders
-    default: true
+    description: >
+      Shortcut: open the warp dialog from anywhere in island waters. Off by
+      default - the intended path is to row to the island border, which offers
+      the dialog automatically. Grant to bypass the sailing.
+    default: op
   tradewinds.island.chart:
     description: Allow viewing the chart (holograms afloat, list ashore)
     default: true
@@ -25,8 +28,11 @@ permissions:
     description: Allow receiving the Star Chart map
     default: true
   tradewinds.island.trade:
-    description: Allow trading at island markets
-    default: true
+    description: >
+      Shortcut: open the market from anywhere in an island's protection range.
+      Off by default - the intended path is to dock and right-click a trader
+      on the plaza. Grant to bypass the walk.
+    default: op
   tradewinds.island.restart:
     description: Allow restarting the trading career (config-capped)
     default: true

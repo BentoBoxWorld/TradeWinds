@@ -329,8 +329,11 @@ have not visited). The protection flip and stamps work immediately.
 - [ ] Boatless + broke: wild-islet timber or /tw restart are the exits.
 
 ### Stage 4i — command permissions
-- [ ] As a NON-OP player (test account, no LuckPerms grants): /tw, spawn, warp, chart,
-      starchart, trade, restart, info, settings, language all work.
+- [ ] As a NON-OP player (test account, no LuckPerms grants): /tw, spawn, chart,
+      starchart, restart, info, settings, language all work.
+- [ ] Non-op canNOT use /tw warp or /tw trade (op-only shortcuts) — but the intended
+      paths still work for them: rowing to an island border offers the warp dialog,
+      and right-clicking a plaza trader opens the market.
 - [ ] Non-op cannot use /twadmin or its subcommands.
 
 ### Stage 4j — protected spawn island (updated: visitor allowances)
