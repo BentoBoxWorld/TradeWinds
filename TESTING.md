@@ -333,7 +333,7 @@ have not visited). The protection flip and stamps work immediately.
       starchart, trade, restart, info, settings, language all work.
 - [ ] Non-op cannot use /twadmin or its subcommands.
 
-### Stage 4j — protected spawn island
+### Stage 4j — protected spawn island (updated: visitor allowances)
 - [ ] Console logs "Registered the spawn island (protection 100)" on first enable.
 - [ ] As NON-OP: breaking/placing blocks on the spawn islet is blocked; wild islets
       and open ocean remain free-build.
@@ -341,5 +341,9 @@ have not visited). The protection flip and stamps work immediately.
       range 200 (small ranges are legal now — Stranger Realms overrides).
 - [ ] Restart: BentoBox loads cleanly (no "island distance mismatch" panic), spawn
       island persists as spawn.
+- [ ] As NON-OP on the spawn island: placing/riding a BOAT works, hitting a monster
+      works, using a CRAFTING TABLE works — but block break/place is still blocked.
+- [ ] No hostile mobs spawn on the spawn island; primed TNT there breaks no blocks
+      (flags re-asserted every enable, so the existing spawn island picks these up).
 - [ ] Trading islands still register/announce correctly (arbitrary centers untouched
       by the isFixIslandCenter override).

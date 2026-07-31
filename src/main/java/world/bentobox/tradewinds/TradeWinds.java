@@ -357,24 +357,34 @@ public class TradeWinds extends GameModeAddon {
      * equal (see isEnforceEqualRanges).
      */
     private void bootstrapSpawnIsland(int surfaceY) {
-        if (getIslands().getSpawn(islandWorld).isPresent()) {
-            return;
-        }
-        org.bukkit.Location center = new org.bukkit.Location(islandWorld, 0.5,
-                Math.max(surfaceY + 1, getSettings().getSeaHeight() + 1), 0.5);
-        world.bentobox.bentobox.database.objects.Island spawn = getIslands().createIsland(center, null,
-                getSettings().getSpawnProtectionRange());
+        world.bentobox.bentobox.database.objects.Island spawn = getIslands().getSpawn(islandWorld).orElse(null);
         if (spawn == null) {
-            logError("Could not register the spawn island - spawn is unprotected");
-            return;
+            org.bukkit.Location center = new org.bukkit.Location(islandWorld, 0.5,
+                    Math.max(surfaceY + 1, getSettings().getSeaHeight() + 1), 0.5);
+            spawn = getIslands().createIsland(center, null, getSettings().getSpawnProtectionRange());
+            if (spawn == null) {
+                logError("Could not register the spawn island - spawn is unprotected");
+                return;
+            }
+            // Small range: the spawn island must never crowd the starter cluster
+            // (starter centers can be as close as ~1250 per axis)
+            spawn.setRange(getSettings().getSpawnProtectionRange() * 2);
+            spawn.setName("Spawn");
+            spawn.setSpawnPoint(Environment.NORMAL, center);
+            getIslands().setSpawn(spawn);
+            log("Registered the spawn island (protection " + getSettings().getSpawnProtectionRange() + ")");
         }
-        // Small range: the spawn island must never crowd the starter cluster
-        // (starter centers can be as close as ~1250 per axis)
-        spawn.setRange(getSettings().getSpawnProtectionRange() * 2);
-        spawn.setName("Spawn");
-        spawn.setSpawnPoint(Environment.NORMAL, center);
-        getIslands().setSpawn(spawn);
-        log("Registered the spawn island (protection " + getSettings().getSpawnProtectionRange() + ")");
+        // (Re-)assert spawn island policy every enable, so existing spawn
+        // islands pick up rule changes too:
+        // - visitors may use boats (it is a harbor), fight monsters in
+        //   self-defense, and use workbenches (craft a boat from wild timber)
+        spawn.setFlag(Flags.BOAT, 0);
+        spawn.setFlag(Flags.HURT_MONSTERS, 0);
+        spawn.setFlag(Flags.CRAFTING, 0);
+        // - nothing hostile spawns and TNT cannot blow the harbor apart
+        spawn.setSettingsFlag(Flags.MONSTER_NATURAL_SPAWN, false);
+        spawn.setSettingsFlag(Flags.TNT_DAMAGE, false);
+        spawn.setSettingsFlag(Flags.BLOCK_EXPLODE_DAMAGE, false);
     }
 
     public PlayerDataManager getPlayerDataManager() {

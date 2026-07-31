@@ -3,6 +3,15 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## Spawn island visitor allowances (2026-07-30, playtest bug)
+
+Full protection was too much: visitors could not launch boats, defend
+themselves or use a workbench at spawn. bootstrapSpawnIsland now (re-)asserts
+policy every enable (existing spawn islands pick up changes): BOAT /
+HURT_MONSTERS / CRAFTING at visitor rank; MONSTER_NATURAL_SPAWN, TNT_DAMAGE
+and BLOCK_EXPLODE_DAMAGE settings off. (SAFE/POLICED trading islands already
+had monster spawning off via bands config.)
+
 ## Protected spawn island (2026-07-30)
 
 The protection flip left the spawn islet explicitly free-build (non-ops
