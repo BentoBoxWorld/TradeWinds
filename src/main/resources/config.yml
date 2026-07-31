@@ -129,6 +129,8 @@ hud:
 economy:
   # Money given to brand-new players with their starter kit.
   starting-balance: 250.0
+  # Coal tucked into the starter bundle - fuel for a first warp. 0 disables.
+  starter-coal: 8
   # Multiplier on what players PAY an island (buying) / what an island PAYS players (selling).
   # Together these make a same-island round trip always lose money.
   buy-spread: 1.15

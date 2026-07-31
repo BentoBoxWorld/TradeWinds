@@ -270,6 +270,11 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "economy.starting-balance")
     private double startingBalance = 250.0;
 
+    @ConfigComment("Coal tucked into the starter bundle - enough fuel that the first island hop")
+    @ConfigComment("can be a warp instead of a seven-minute row. 0 disables.")
+    @ConfigEntry(path = "economy.starter-coal")
+    private int starterCoal = 8;
+
     @ConfigComment("Multiplier on what players PAY an island (buying).")
     @ConfigEntry(path = "economy.buy-spread")
     private double buySpread = 1.15;
@@ -2316,6 +2321,8 @@ public class Settings implements WorldSettings {
     public void setNavigationBossbar(boolean navigationBossbar) { this.navigationBossbar = navigationBossbar; }
     public double getStartingBalance() { return startingBalance; }
     public void setStartingBalance(double startingBalance) { this.startingBalance = startingBalance; }
+    public int getStarterCoal() { return starterCoal; }
+    public void setStarterCoal(int starterCoal) { this.starterCoal = starterCoal; }
     public double getBuySpread() { return buySpread; }
     public void setBuySpread(double buySpread) { this.buySpread = buySpread; }
     public double getSellSpread() { return sellSpread; }

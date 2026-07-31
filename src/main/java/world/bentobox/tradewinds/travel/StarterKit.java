@@ -75,6 +75,12 @@ public class StarterKit {
         ItemMeta meta = bundle.getItemMeta();
         if (meta != null) {
             meta.displayName(Component.text("Trading Bundle", NamedTextColor.GOLD));
+            // A little coal in the bundle: it is hold cargo, so the first
+            // island hop can be a warp instead of a long row
+            int coal = addon.getSettings().getStarterCoal();
+            if (coal > 0 && meta instanceof org.bukkit.inventory.meta.BundleMeta bundleMeta) {
+                bundleMeta.setItems(java.util.List.of(new ItemStack(Material.COAL, coal)));
+            }
             bundle.setItemMeta(meta);
         }
         return bundle;
