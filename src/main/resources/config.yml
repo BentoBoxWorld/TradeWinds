@@ -114,6 +114,15 @@ residents:
   respawn-delay-minutes: 10
   # Seconds between resident audits (tether check + respawn accounting).
   audit-period-seconds: 30
+chart:
+  # Ring radius in blocks for /tw chart's direction holograms.
+  hologram-distance: 10.0
+  # Seconds before chart holograms fade away.
+  hologram-duration-seconds: 15
+  # Maximum holograms shown at once (nearest islands first).
+  hologram-max: 12
+  # Star Chart map scale: blocks per map pixel. 64 shows ~8km across.
+  starchart-blocks-per-pixel: 64
 hud:
   # Navigation boss bar in island waters: island name, standing, distance to dock.
   navigation-bossbar: true

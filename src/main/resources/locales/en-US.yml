@@ -17,7 +17,9 @@ tradewinds:
     warp:
       description: "open the warp dialog (in a boat, at an island)"
     chart:
-      description: "list the islands on your chart"
+      description: "show your chart - holograms afloat, a list ashore"
+    starchart:
+      description: "receive a Star Chart map of your charted islands"
     trade:
       description: "open the island market (within its protection range)"
     admin:
@@ -44,6 +46,8 @@ tradewinds:
     clean: "Clean"
   chart:
     charted: "Charted [name]!"
+    holograms-shown: "&b Your chart shimmers into the air - row toward a name."
+    starchart-given: "&b The Star Chart is yours - hold it to see your world."
     empty: "&c Your chart is empty - row into an island's waters to chart it."
     header: "&b Your chart ([number] islands):"
     entry: "&e [name] &7- [type], [band], [distance] blocks"

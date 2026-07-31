@@ -31,6 +31,15 @@ public class TWChartCommand extends CompositeCommand {
     @Override
     public boolean execute(User user, String label, List<String> args) {
         TradeWinds addon = getAddon();
+        // In a boat (and not asking for the text list): raise the hologram
+        // compass - visual targets to row toward
+        boolean wantList = !args.isEmpty() && args.get(0).equalsIgnoreCase("list");
+        if (!wantList && user.getPlayer().getVehicle() instanceof org.bukkit.entity.Boat
+                && getWorld().equals(user.getWorld())) {
+            addon.getChartHolograms().show(user.getPlayer());
+            user.sendMessage("tradewinds.chart.holograms-shown");
+            return true;
+        }
         GalaxyEngine engine = addon.getGalaxyEngine(addon.getOverWorld().getSeed());
         int x = getWorld().equals(user.getWorld()) ? user.getLocation().getBlockX() : 0;
         int z = getWorld().equals(user.getWorld()) ? user.getLocation().getBlockZ() : 0;

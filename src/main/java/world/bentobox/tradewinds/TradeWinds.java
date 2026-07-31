@@ -28,6 +28,7 @@ import world.bentobox.tradewinds.commands.AdminReflagCommand;
 import world.bentobox.tradewinds.commands.AdminTpIslandCommand;
 import world.bentobox.tradewinds.commands.TWChartCommand;
 import world.bentobox.tradewinds.commands.TWSpawnCommand;
+import world.bentobox.tradewinds.commands.TWStarChartCommand;
 import world.bentobox.tradewinds.commands.TWTradeCommand;
 import world.bentobox.tradewinds.commands.TWWarpCommand;
 import world.bentobox.tradewinds.dataobjects.IslandDataManager;
@@ -41,9 +42,11 @@ import world.bentobox.tradewinds.listeners.ResidentProtectionListener;
 import world.bentobox.tradewinds.tasks.NavigationBarTask;
 import world.bentobox.tradewinds.tasks.ResidentAuditTask;
 import world.bentobox.tradewinds.travel.BorderPromptListener;
+import world.bentobox.tradewinds.travel.ChartHolograms;
 import world.bentobox.tradewinds.travel.ChartingListener;
 import world.bentobox.tradewinds.travel.FuelService;
 import world.bentobox.tradewinds.travel.HoldService;
+import world.bentobox.tradewinds.travel.StarChartService;
 import world.bentobox.tradewinds.travel.StarterKit;
 import world.bentobox.tradewinds.travel.WarpService;
 import world.bentobox.tradewinds.galaxy.GalaxyConfig;
@@ -81,6 +84,8 @@ public class TradeWinds extends GameModeAddon {
     private IslandDataManager islandDataManager;
     private MarketService marketService;
     private TradeDialog tradeDialog;
+    private ChartHolograms chartHolograms;
+    private StarChartService starChartService;
     private @Nullable ResidentAuditTask residentAuditTask;
     private @Nullable NavigationBarTask navigationBarTask;
 
@@ -117,6 +122,7 @@ public class TradeWinds extends GameModeAddon {
                 new TWSpawnCommand(this);
                 new TWWarpCommand(this);
                 new TWChartCommand(this);
+                new TWStarChartCommand(this);
                 new TWTradeCommand(this);
                 new IslandInfoCommand(this);
                 new IslandSettingsCommand(this);
@@ -184,6 +190,9 @@ public class TradeWinds extends GameModeAddon {
         marketService = new MarketService(this);
         tradeDialog = new TradeDialog(this);
         registerListener(new TradeListener(this));
+        chartHolograms = new ChartHolograms(this);
+        starChartService = new StarChartService(this);
+        registerListener(starChartService);
         registerListener(new ChartingListener(this));
         registerListener(new BorderPromptListener(this));
         // Residents survive the night: no mob targeting, tether, respawn
@@ -208,6 +217,9 @@ public class TradeWinds extends GameModeAddon {
         }
         if (navigationBarTask != null) {
             navigationBarTask.stop();
+        }
+        if (chartHolograms != null) {
+            chartHolograms.clearAll();
         }
         if (playerDataManager != null) {
             playerDataManager.saveAll();
@@ -339,6 +351,14 @@ public class TradeWinds extends GameModeAddon {
 
     public TradeDialog getTradeDialog() {
         return tradeDialog;
+    }
+
+    public ChartHolograms getChartHolograms() {
+        return chartHolograms;
+    }
+
+    public StarChartService getStarChartService() {
+        return starChartService;
     }
 
     /**

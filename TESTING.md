@@ -269,3 +269,21 @@ everything else (islands, database) is untouched; the area regenerates with the 
       still limited by balance and hold space.
 - [ ] More than 8 cargo types: the sell page shows the first 8 with a note; selling
       some reveals the rest.
+
+## Stage 4e — Rower navigation: chart holograms + Star Chart
+
+- [ ] **Hologram compass**: in a boat, `/tw chart` raises floating name-tags around you,
+      each hanging in the true direction of a charted island (name / type, band /
+      distance). They start at you and glide out to a ~10 block ring.
+- [ ] Islands sharing a bearing stack vertically — nearest lowest, further ones above.
+- [ ] Holograms fade after ~15s (`chart.hologram-duration-seconds`); re-running the
+      command replaces them; only YOU see them (check with a second account).
+- [ ] Ashore (not in a boat) or with `/tw chart list`: the text list as before.
+- [ ] **Star Chart**: `/tw starchart` gives a map item. Holding it: dark-blue ocean,
+      you centered as a rotating arrow, charted islands as band-colored dots with
+      names. Islands beyond the map edge are pinned AT the edge with their name —
+      a heading hint until you get closer.
+- [ ] The chart follows you as you row (you stay centered); scale via
+      `chart.starchart-blocks-per-pixel` (64 = ~8km across).
+- [ ] Restart the server: an existing Star Chart item still renders (the view id
+      persists and the renderer re-attaches).

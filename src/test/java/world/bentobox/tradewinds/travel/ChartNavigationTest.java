@@ -1,0 +1,90 @@
+package world.bentobox.tradewinds.travel;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
+
+import world.bentobox.tradewinds.galaxy.GalaxyConfig;
+import world.bentobox.tradewinds.galaxy.GalaxyEngine;
+import world.bentobox.tradewinds.galaxy.IslandSpec;
+import world.bentobox.tradewinds.galaxy.SecurityBand;
+
+/**
+ * Pure tests of the rower navigation math: hologram marker geometry and star
+ * chart pixel mapping.
+ *
+ * @author tastybento
+ */
+class ChartNavigationTest {
+
+    private final GalaxyEngine engine = new GalaxyEngine(new GalaxyConfig(77L, 2500, 160, 45, 1.0, 0, 5000, 70));
+
+    @Test
+    void testMarkersPointTheRightWay() {
+        IslandSpec spec = engine.islandInCell(0, 0).orElseThrow();
+        List<ChartHolograms.Marker> markers = ChartHolograms.markers(List.of(spec), 0, 0, 10.0, 12);
+        assertEquals(1, markers.size());
+        ChartHolograms.Marker marker = markers.get(0);
+        // On the 10-block ring
+        assertEquals(10.0, Math.hypot(marker.dx(), marker.dz()), 0.01);
+        // Pointing at the island: same bearing as the island itself
+        double markerBearing = Math.atan2(marker.dz(), marker.dx());
+        double islandBearing = Math.atan2(spec.centerZ(), spec.centerX());
+        assertEquals(islandBearing, markerBearing, 0.001);
+        assertEquals((int) Math.hypot(spec.centerX(), spec.centerZ()), marker.distance());
+    }
+
+    @Test
+    void testSharedBearingStacksByDistance() {
+        // Two islands due east at different ranges: nearest sits lowest
+        IslandSpec near = new IslandSpec(0, 0, 3000, 0, world.bentobox.tradewinds.galaxy.IslandType.FISHING,
+                SecurityBand.SAFE, "minecraft:beach", "Nearby");
+        IslandSpec far = new IslandSpec(1, 0, 8000, 0, world.bentobox.tradewinds.galaxy.IslandType.MINING,
+                SecurityBand.SAFE, "minecraft:stony_peaks", "Distant");
+        List<ChartHolograms.Marker> markers = ChartHolograms.markers(List.of(far, near), 0, 0, 10.0, 12);
+        assertEquals("Nearby", markers.get(0).island().name());
+        assertTrue(markers.get(0).dy() < markers.get(1).dy(),
+                "Nearest island should sit below the further one on the same bearing");
+    }
+
+    @Test
+    void testMarkerCap() {
+        List<IslandSpec> many = new java.util.ArrayList<>();
+        for (int cx = -3; cx <= 3; cx++) {
+            for (int cz = -3; cz <= 3; cz++) {
+                engine.islandInCell(cx, cz).ifPresent(many::add);
+            }
+        }
+        assertTrue(many.size() > 12);
+        assertEquals(12, ChartHolograms.markers(many, 0, 0, 10.0, 12).size());
+    }
+
+    @Test
+    void testStarChartPixels() {
+        // On-map island: simple scaled offset from center
+        int[] pixel = StarChartRenderer.toPixel(640, -1280, 64);
+        assertEquals(64 + 10, pixel[0]);
+        assertEquals(64 - 20, pixel[1]);
+        assertEquals(0, pixel[2]);
+        // Beyond the map: clamped to the edge, flagged
+        int[] edge = StarChartRenderer.toPixel(64 * 200, 0, 64);
+        assertEquals(1, edge[2]);
+        assertEquals(64 + 60, edge[0]);
+        assertEquals(64, edge[1]);
+        // Diagonal clamp keeps direction
+        int[] diag = StarChartRenderer.toPixel(64 * 200, 64 * 200, 64);
+        assertEquals(1, diag[2]);
+        assertEquals(64 + 60, diag[0]);
+        assertEquals(64 + 60, diag[1]);
+    }
+
+    @Test
+    void testBandColorsDistinct() {
+        long distinct = java.util.Arrays.stream(SecurityBand.values()).map(StarChartRenderer::bandColor).distinct()
+                .count();
+        assertEquals(SecurityBand.values().length, distinct);
+    }
+}

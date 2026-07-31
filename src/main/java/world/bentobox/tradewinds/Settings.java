@@ -172,6 +172,24 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "residents.audit-period-seconds")
     private int residentAuditPeriodSeconds = 30;
 
+    /*      CHART NAVIGATION      */
+    @ConfigComment("Ring radius in blocks for /tw chart's direction holograms.")
+    @ConfigEntry(path = "chart.hologram-distance")
+    private double chartHologramDistance = 10.0;
+
+    @ConfigComment("Seconds before chart holograms fade away.")
+    @ConfigEntry(path = "chart.hologram-duration-seconds")
+    private int chartHologramSeconds = 15;
+
+    @ConfigComment("Maximum holograms shown at once (nearest islands first).")
+    @ConfigEntry(path = "chart.hologram-max")
+    private int chartHologramMax = 12;
+
+    @ConfigComment("Star Chart map scale: blocks per map pixel. 64 shows ~8km across;")
+    @ConfigComment("smaller values zoom in (islands render larger).")
+    @ConfigEntry(path = "chart.starchart-blocks-per-pixel")
+    private int starChartBlocksPerPixel = 64;
+
     /*      HUD      */
     @ConfigComment("Show the navigation boss bar in island waters: island name, your standing,")
     @ConfigComment("and the distance to the dock - so you can steer for it after a warp.")
@@ -2286,6 +2304,14 @@ public class Settings implements WorldSettings {
     public void setResidentRespawnDelayMinutes(int residentRespawnDelayMinutes) { this.residentRespawnDelayMinutes = residentRespawnDelayMinutes; }
     public int getResidentAuditPeriodSeconds() { return residentAuditPeriodSeconds; }
     public void setResidentAuditPeriodSeconds(int residentAuditPeriodSeconds) { this.residentAuditPeriodSeconds = residentAuditPeriodSeconds; }
+    public double getChartHologramDistance() { return chartHologramDistance; }
+    public void setChartHologramDistance(double chartHologramDistance) { this.chartHologramDistance = chartHologramDistance; }
+    public int getChartHologramSeconds() { return chartHologramSeconds; }
+    public void setChartHologramSeconds(int chartHologramSeconds) { this.chartHologramSeconds = chartHologramSeconds; }
+    public int getChartHologramMax() { return chartHologramMax; }
+    public void setChartHologramMax(int chartHologramMax) { this.chartHologramMax = chartHologramMax; }
+    public int getStarChartBlocksPerPixel() { return starChartBlocksPerPixel; }
+    public void setStarChartBlocksPerPixel(int starChartBlocksPerPixel) { this.starChartBlocksPerPixel = starChartBlocksPerPixel; }
     public boolean isNavigationBossbar() { return navigationBossbar; }
     public void setNavigationBossbar(boolean navigationBossbar) { this.navigationBossbar = navigationBossbar; }
     public double getStartingBalance() { return startingBalance; }

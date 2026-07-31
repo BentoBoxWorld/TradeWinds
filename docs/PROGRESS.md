@@ -3,6 +3,29 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## Rower navigation: hologram compass + Star Chart (2026-07-30)
+
+Ben: /tw chart's text list was useless for navigation; rowers (no fuel) had
+no idea which way to go. Two aids, both his design:
+- **Hologram compass** (`ChartHolograms`): boated `/tw chart` spawns
+  TextDisplay holograms on a 10-block ring in each charted island's true
+  bearing (name/type+band/distance), zooming out from the player via display
+  teleport interpolation (setTeleportDuration). Shared-bearing islands stack
+  nearest-lowest (20-degree sectors). Caller-only (hideEntity for others),
+  non-persistent, auto-fade after chart.hologram-duration-seconds. Marker
+  geometry is pure and tested. `/tw chart list` keeps the text list.
+- **Star Chart** (`StarChartRenderer` + `StarChartService` + `TWWorldData`):
+  /tw starchart gives a FILLED_MAP bound to one shared contextual MapView;
+  the renderer draws per holder - ocean background, holder centered as a
+  rotating cursor, charted islands as band-colored dots (sized by real
+  terrain radius) with MinecraftFont names, out-of-range islands pinned to
+  the map edge as heading hints. Redraw throttled to 1/s or a pixel of
+  movement. Map id persists in TWWorldData; MapInitializeEvent re-attaches
+  the renderer after restarts so old items keep working. Click-to-zoom is
+  not possible with map renderers - scale is config
+  (chart.starchart-blocks-per-pixel).
+119 tests green.
+
 ## Trade quantities + empty-hold UX (2026-07-30)
 
 Ben wanted partial sells ("left-click all, right-click one"). Dialog buttons
