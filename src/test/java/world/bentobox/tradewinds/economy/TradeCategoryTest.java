@@ -27,6 +27,8 @@ class TradeCategoryTest extends CommonTestSetup {
         assertEquals(TradeCategory.STONE, TradeCategory.of(Material.GRANITE));
         assertEquals(TradeCategory.ORES, TradeCategory.of(Material.RAW_IRON));
         assertEquals(TradeCategory.ORES, TradeCategory.of(Material.COAL));
+        // Charcoal is charred timber, not a mined ore - FOREST islands sell it cheap
+        assertEquals(TradeCategory.WOOD, TradeCategory.of(Material.CHARCOAL));
         assertEquals(TradeCategory.METALS, TradeCategory.of(Material.IRON_INGOT));
         assertEquals(TradeCategory.GEMS, TradeCategory.of(Material.DIAMOND));
         assertEquals(TradeCategory.LUXURY, TradeCategory.of(Material.CAKE));

@@ -47,6 +47,22 @@ public class MarketService {
     }
 
     /**
+     * What this island offers for sale: its type's catalog, with a fuel
+     * guarantee - if the catalog carries no warp fuel, CHARCOAL is added, so
+     * anyone with money can always buy their way off rowing. Only the skint
+     * and fuel-less row.
+     */
+    public java.util.List<Material> saleCatalog(IslandSpec spec) {
+        java.util.List<Material> catalog = new java.util.ArrayList<>(TypeEconomy.catalog(spec.type()));
+        boolean hasFuel = catalog.stream()
+                .anyMatch(m -> addon.getSettings().getFuelValues().getOrDefault(m.name(), 0.0) > 0);
+        if (!hasFuel) {
+            catalog.add(Material.CHARCOAL);
+        }
+        return catalog;
+    }
+
+    /**
      * The configured price model.
      */
     public PriceModel model() {

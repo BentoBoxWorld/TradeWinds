@@ -53,8 +53,8 @@ public class TradeDialog {
             buttons.add(button("Sell cargo", NamedTextColor.YELLOW, "Sell your hold's goods here",
                     () -> openSell(player, spec)));
         }
-        if (!TypeEconomy.catalog(spec.type()).isEmpty()) {
-            buttons.add(button("Buy goods", NamedTextColor.AQUA, "Buy this island's produce into your hold",
+        if (!addon.getMarketService().saleCatalog(spec).isEmpty()) {
+            buttons.add(button("Buy goods", NamedTextColor.AQUA, "Buy this island's goods into your hold",
                     () -> openBuy(player, spec)));
         }
         int owned = addon.getPlayerDataManager().get(player.getUniqueId()).getExpandersPurchased();
@@ -112,7 +112,7 @@ public class TradeDialog {
      */
     public void openBuy(Player player, IslandSpec spec) {
         List<ActionButton> buttons = new ArrayList<>();
-        for (Material material : TypeEconomy.catalog(spec.type())) {
+        for (Material material : addon.getMarketService().saleCatalog(spec)) {
             Optional<Double> price = addon.getMarketService().playerBuysAt(spec, material);
             price.ifPresent(unit -> {
                 String name = MarketService.pretty(material);

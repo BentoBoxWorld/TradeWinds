@@ -37,11 +37,11 @@ public enum TradeCategory {
             return FOOD;
         }
         if (name.endsWith("_log") || name.endsWith("_planks") || name.endsWith("_wood") || name.contains("stripped")
-                || name.contains("sapling") || name.equals("stick") || name.contains("bamboo")) {
+                || name.contains("sapling") || name.equals("stick") || name.contains("bamboo")
+                || name.equals("charcoal")) {
             return WOOD;
         }
-        if (name.contains("raw_") || name.endsWith("_ore") || name.equals("coal") || name.equals("charcoal")
-                || name.contains("flint")) {
+        if (name.contains("raw_") || name.endsWith("_ore") || name.equals("coal") || name.contains("flint")) {
             return ORES;
         }
         if (name.endsWith("_ingot") || name.endsWith("_block") && (name.contains("iron") || name.contains("copper")

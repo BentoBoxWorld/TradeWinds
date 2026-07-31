@@ -287,3 +287,10 @@ everything else (islands, database) is untouched; the area regenerates with the 
       `chart.starchart-blocks-per-pixel` (64 = ~8km across).
 - [ ] Restart the server: an existing Star Chart item still renders (the view id
       persists and the renderer re-attaches).
+
+### Stage 4f — the fuel guarantee
+- [ ] Every island's Buy page includes at least one fuel: FOREST sells logs (and
+      charcoal is classified as wood, so forest charcoal is cheap), MINING sells coal,
+      and everywhere else — including LUXURY, which otherwise sells nothing — CHARCOAL
+      appears as the fallback line, priced like any commodity.
+- [ ] With money but no fuel, you can always refuel at whatever island you are at.

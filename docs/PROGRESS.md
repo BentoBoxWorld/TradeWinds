@@ -3,6 +3,16 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## The fuel guarantee (2026-07-30)
+
+Ben's rule: only the skint AND fuel-less row. `MarketService.saleCatalog`
+wraps the type catalog and appends CHARCOAL when it carries no fuel-valued
+material - so LUXURY (sells nothing) and AGRICULTURAL/FISHING/FROZEN all
+offer charcoal, while FOREST (logs) and MINING (coal) already qualify.
+Charcoal reclassified ORES -> WOOD (charred timber; forest islands sell it
+cheap, differentiates from mined coal). Priced through the normal model.
+Tested per type. 121 tests green.
+
 ## Rower navigation: hologram compass + Star Chart (2026-07-30)
 
 Ben: /tw chart's text list was useless for navigation; rowers (no fuel) had

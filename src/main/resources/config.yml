@@ -168,6 +168,7 @@ economy:
     DARK_OAK_LOG: 1.5
     STONE: 0.5
     COAL: 4.0
+    CHARCOAL: 3.0
     RAW_IRON: 6.0
     RAW_COPPER: 3.0
     RAW_GOLD: 12.0
