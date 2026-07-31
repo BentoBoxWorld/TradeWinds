@@ -42,6 +42,7 @@ import world.bentobox.tradewinds.listeners.IntersticePortalListener;
 import world.bentobox.tradewinds.listeners.ResidentProtectionListener;
 import world.bentobox.tradewinds.tasks.NavigationBarTask;
 import world.bentobox.tradewinds.tasks.ResidentAuditTask;
+import world.bentobox.tradewinds.travel.BoatPickupListener;
 import world.bentobox.tradewinds.travel.BorderPromptListener;
 import world.bentobox.tradewinds.travel.ChartHolograms;
 import world.bentobox.tradewinds.travel.ChartingListener;
@@ -227,6 +228,8 @@ public class TradeWinds extends GameModeAddon {
         registerListener(starChartService);
         registerListener(new ChartingListener(this));
         registerListener(new BorderPromptListener(this));
+        // Teleporting while boated brings the boat (and cargo) along
+        registerListener(new BoatPickupListener(this));
         // Residents survive the night: no mob targeting, tether, respawn
         registerListener(new ResidentProtectionListener());
         residentAuditTask = new ResidentAuditTask(this);
