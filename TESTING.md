@@ -242,3 +242,20 @@ crafted item made of priced parts is automatically sellable.
 - [ ] Recipe-derived pricing works: an item NOT in the base price table but craftable
       from priced parts (e.g. a HAY_BLOCK, CRAFTING_TABLE from planks) gets a sane
       sell price; junk with no priceable recipe (e.g. a stray BEDROCK) is untradeable.
+
+### Stage 4c — Spawn islet and safe respawn (playtest fix)
+
+**Existing worlds**: the islet only appears in freshly generated chunks. Stop the
+server and delete the four region files around the origin
+(`tradewinds_world/region/r.0.0.mca`, `r.-1.0.mca`, `r.0.-1.mca`, `r.-1.-1.mca`) —
+everything else (islands, database) is untouched; the area regenerates with the islet.
+
+- [ ] A grassy plains islet (~96 blocks across) exists at 0,0; world spawn is on top
+      of it.
+- [ ] `/tw` teleports onto the islet (dry land). First-time players get the bundle and
+      a boat ITEM (spawn is land now, not water).
+- [ ] Die without a bed: you respawn ON the islet — not at 0,42,0 in the seabed, and
+      not drowning. Repeat deaths respawn there every time.
+- [ ] Die with a bed set somewhere: the bed is honored.
+- [ ] Dying in the interstice (admin-teleport there) without a bed also returns you to
+      the islet.

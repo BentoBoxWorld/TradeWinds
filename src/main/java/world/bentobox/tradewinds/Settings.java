@@ -95,6 +95,11 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "galaxy.band-radius", needsReset = true)
     private int bandRadius = 5000;
 
+    @ConfigComment("Radius of the safe spawn islet generated at the world origin - players spawn")
+    @ConfigComment("and respawn there. 0 disables it (not recommended: seabed respawns kill).")
+    @ConfigEntry(path = "galaxy.spawn-islet-radius", needsReset = true)
+    private int spawnIsletRadius = 48;
+
     @ConfigComment("Relative spawn weight per island type. Higher = more common; 0 disables a type.")
     @ConfigComment("Types: AGRICULTURAL, FOREST, FISHING, MINING, INDUSTRIAL, LUXURY, FROZEN.")
     @ConfigEntry(path = "galaxy.type-weights", needsReset = true)
@@ -2243,6 +2248,8 @@ public class Settings implements WorldSettings {
     public void setLandLift(int landLift) { this.landLift = landLift; }
     public int getBandRadius() { return bandRadius; }
     public void setBandRadius(int bandRadius) { this.bandRadius = bandRadius; }
+    public int getSpawnIsletRadius() { return spawnIsletRadius; }
+    public void setSpawnIsletRadius(int spawnIsletRadius) { this.spawnIsletRadius = spawnIsletRadius; }
     public Map<String, Integer> getTypeWeights() { return typeWeights; }
     public void setTypeWeights(Map<String, Integer> typeWeights) { this.typeWeights = typeWeights; }
     public double getFuelPerBlock() { return fuelPerBlock; }

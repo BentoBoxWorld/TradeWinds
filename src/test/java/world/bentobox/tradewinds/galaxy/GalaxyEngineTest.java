@@ -214,6 +214,21 @@ class GalaxyEngineTest {
     }
 
     @Test
+    void testSpawnIslet() {
+        GalaxyEngine engine = new GalaxyEngine(config(SEED, 0.0));
+        // Full lift at the origin even with an empty galaxy, plains biome
+        assertEquals(45, engine.landLiftAt(0, 0));
+        assertEquals(java.util.Optional.of("minecraft:plains"), engine.biomeKeyAt(0, 0));
+        // Gone past the islet radius (default 48)
+        assertEquals(0, engine.landLiftAt(60, 0));
+        assertTrue(engine.biomeKeyAt(60, 0).isEmpty());
+        // Radius 0 disables it
+        GalaxyEngine off = new GalaxyEngine(new GalaxyConfig(SEED, 2500, 160, 45, 0.0, 5, 5000, 70,
+                GalaxyConfig.defaultTypeWeights(), 0));
+        assertEquals(0, off.landLiftAt(0, 0));
+    }
+
+    @Test
     void testNamesAreDistinctEnough() {
         GalaxyEngine engine = new GalaxyEngine(config(SEED, 1.0));
         List<IslandSpec> list = islands(engine, 7);

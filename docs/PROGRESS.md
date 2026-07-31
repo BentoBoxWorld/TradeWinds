@@ -3,6 +3,27 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## Playtest fix: spawn islet + safe respawn (2026-07-30)
+
+Ben died and vanilla respawn hunted for "solid ground" near world spawn -
+which in an ocean world is the seabed at y42, entombing him in a death loop.
+Fix in three parts:
+- **Spawn islet**: GalaxyConfig.spawnIsletRadius (config
+  galaxy.spawn-islet-radius, 48) - the engine's landLiftAt raises a small
+  plains islet at the origin (generator-made, principle 6; deterministic and
+  independent of galaxy islands, which stay bit-identical). needsReset: only
+  fresh chunks get it - delete the four origin region files on existing
+  worlds.
+- **World spawn pinned** to the islet surface (getHighestBlockYAt at enable).
+- **SpawnRespawnListener**: deaths in either TradeWinds world without a
+  bed/anchor respawn on the islet; bed and anchor spawns honored; other
+  gamemodes untouched. StarterKit's land branch now applies at first spawn
+  (boat item rather than water launch).
+No BentoBox island object at spawn (a range-1000 island at the origin can
+overlap a jittered starter island's range and break grid registration - see
+the round-1 fix notes); protection of the islet itself is deferred.
+114 tests green.
+
 ## Accessibility tune: warp dialog capped at 8 (2026-07-30)
 
 The dialog scrolls beyond ~8 buttons, but the scroll affordance is easy to

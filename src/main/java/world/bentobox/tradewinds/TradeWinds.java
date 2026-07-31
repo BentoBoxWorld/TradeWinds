@@ -193,9 +193,11 @@ public class TradeWinds extends GameModeAddon {
         // Navigation boss bar: island, standing, distance to dock
         navigationBarTask = new NavigationBarTask(this);
         navigationBarTask.start();
-        // Deterministic ocean spawn on the sea surface at the galaxy origin
+        // Spawn (and bed-less respawn) is on the spawn islet's surface
+        registerListener(new world.bentobox.tradewinds.listeners.SpawnRespawnListener(this));
         if (islandWorld != null) {
-            islandWorld.setSpawnLocation(0, getSettings().getSeaHeight() + 1, 0);
+            int top = islandWorld.getHighestBlockYAt(0, 0);
+            islandWorld.setSpawnLocation(0, Math.max(top + 1, getSettings().getSeaHeight() + 1), 0);
         }
     }
 
@@ -364,7 +366,8 @@ public class TradeWinds extends GameModeAddon {
             long seed = s.getGalaxySeed() != 0 ? s.getGalaxySeed() : worldSeed;
             galaxyEngine = new GalaxyEngine(new GalaxyConfig(seed, s.getGalaxyMinSeparation(),
                     s.getIslandTerrainRadius(), s.getLandLift(), s.getGalaxyDensity(),
-                    s.getStarterClusterMinIslands(), s.getBandRadius(), s.getSeaHeight(), typeWeights()));
+                    s.getStarterClusterMinIslands(), s.getBandRadius(), s.getSeaHeight(), typeWeights(),
+                    s.getSpawnIsletRadius()));
             log("TradeWinds galaxy seed: " + seed);
         }
         return galaxyEngine;

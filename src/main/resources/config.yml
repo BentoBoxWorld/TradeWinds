@@ -29,6 +29,9 @@ galaxy:
   land-lift: 45
   # Distance from spawn per security-band step (Safe -> Policed -> Frontier -> Lawless -> Anarchic).
   band-radius: 5000
+  # Radius of the safe spawn islet generated at the world origin - players spawn
+  # and respawn there. 0 disables it (not recommended: seabed respawns kill).
+  spawn-islet-radius: 48
   # Relative spawn weight per island type. Higher = more common; 0 disables a type.
   type-weights:
     AGRICULTURAL: 10

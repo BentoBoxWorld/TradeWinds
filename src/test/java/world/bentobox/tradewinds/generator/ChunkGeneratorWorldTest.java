@@ -61,10 +61,10 @@ class ChunkGeneratorWorldTest extends CommonTestSetup {
         addon = mock(TradeWinds.class);
         settings = new Settings();
         when(addon.getSettings()).thenReturn(settings);
-        // Default: an empty galaxy (density 0, no starter islands) - pure ocean
+        // Default: an empty galaxy (density 0, no starter islands, no spawn islet) - pure ocean
         when(addon.getGalaxyEngine(org.mockito.ArgumentMatchers.anyLong()))
-                .thenReturn(new GalaxyEngine(
-                        new GalaxyConfig(SEED, 2500, 160, 45, 0.0, 0, 5000, 70)));
+                .thenReturn(new GalaxyEngine(new GalaxyConfig(SEED, 2500, 160, 45, 0.0, 0, 5000, 70,
+                        GalaxyConfig.defaultTypeWeights(), 0)));
     }
 
     private WorldInfo worldInfo(Environment env, long seed) {
@@ -240,6 +240,20 @@ class ChunkGeneratorWorldTest extends CommonTestSetup {
         assertEquals(IslandPalette.planks(spec.type()), dock.get(dx & 15, deckY, dz & 15));
         assertEquals(Material.STONE_BRICKS, dock.get(dx & 15, deckY - 1, dz & 15));
         assertEquals(Material.AIR, dock.get(dx & 15, deckY + 1, dz & 15));
+    }
+
+    @Test
+    void testSpawnIsletRisesAtOrigin() {
+        // Even with an empty galaxy, the spawn islet makes dry land at 0,0
+        when(addon.getGalaxyEngine(org.mockito.ArgumentMatchers.anyLong()))
+                .thenReturn(new GalaxyEngine(new GalaxyConfig(SEED, 2500, 160, 45, 0.0, 0, 5000, 70)));
+        ChunkGeneratorWorld gen = new ChunkGeneratorWorld(addon);
+        RecordingChunkData r = generate(gen, Environment.NORMAL, SEED, 0, 0);
+        boolean landAboveSea = false;
+        for (int y = settings.getSeaHeight() + 1; y < settings.getSeaHeight() + 50 && !landAboveSea; y++) {
+            landAboveSea = r.get(0, y, 0) == Material.GRASS_BLOCK;
+        }
+        assertTrue(landAboveSea, "Spawn islet should rise above the sea at the origin");
     }
 
     @Test

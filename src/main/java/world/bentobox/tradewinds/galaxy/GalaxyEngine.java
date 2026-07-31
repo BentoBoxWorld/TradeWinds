@@ -224,6 +224,15 @@ public class GalaxyEngine {
                 best = Math.max(best, mask);
             }
         }
+        // The spawn islet: a small safe island at the origin so players spawn
+        // and respawn on dry land, never in the seabed
+        int isletRadius = config.spawnIsletRadius();
+        if (isletRadius > 0) {
+            double d = Math.hypot(blockX, blockZ);
+            if (d < isletRadius) {
+                best = Math.max(best, 0.5 * (1 + Math.cos(Math.PI * d / isletRadius)));
+            }
+        }
         return (int) Math.round(config.landLift() * best);
     }
 
@@ -303,6 +312,11 @@ public class GalaxyEngine {
      * @return biome key, or empty for open ocean
      */
     public Optional<String> biomeKeyAt(int blockX, int blockZ) {
+        // Spawn islet is gentle plains
+        if (config.spawnIsletRadius() > 0
+                && Math.hypot(blockX, blockZ) < config.spawnIsletRadius()) {
+            return Optional.of("minecraft:plains");
+        }
         int radius = config.terrainRadius();
         long r2 = (long) radius * radius;
         long ring2 = 4L * radius * radius;
