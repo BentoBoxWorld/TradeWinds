@@ -327,3 +327,8 @@ have not visited). The protection flip and stamps work immediately.
 - [ ] Wild islets have trees: chop, plank, craft boat + chest → chest boat, the frugal
       path. Bought hulls cost more than crafted ones by design.
 - [ ] Boatless + broke: wild-islet timber or /tw restart are the exits.
+
+### Stage 4i — command permissions
+- [ ] As a NON-OP player (test account, no LuckPerms grants): /tw, spawn, warp, chart,
+      starchart, trade, restart, info, settings, language all work.
+- [ ] Non-op cannot use /twadmin or its subcommands.

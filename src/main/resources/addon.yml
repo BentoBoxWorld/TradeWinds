@@ -13,16 +13,43 @@ permissions:
     description: Allow use of the TradeWinds player command
     default: true
   tradewinds.island.spawn:
-    description: Allow teleporting to the TradeWinds spawn
+    description: Allow teleporting to the ocean spawn
+    default: true
+  tradewinds.island.warp:
+    description: Allow opening the warp dialog at island borders
+    default: true
+  tradewinds.island.chart:
+    description: Allow viewing the chart (holograms afloat, list ashore)
+    default: true
+  tradewinds.island.starchart:
+    description: Allow receiving the Star Chart map
+    default: true
+  tradewinds.island.trade:
+    description: Allow trading at island markets
+    default: true
+  tradewinds.island.restart:
+    description: Allow restarting the trading career (config-capped)
     default: true
   tradewinds.island.info:
     description: Allow use of the island info command
+    default: true
+  tradewinds.island.settings:
+    description: Allow viewing island settings (editing is rank-gated)
     default: true
   tradewinds.island.language:
     description: Allow use of the language command
     default: true
   tradewinds.admin:
     description: Allow use of the TradeWinds admin command
+    default: op
+  tradewinds.admin.islands:
+    description: Allow listing the nearest trading islands
+    default: op
+  tradewinds.admin.tpisland:
+    description: Allow teleporting to trading islands
+    default: op
+  tradewinds.admin.reflag:
+    description: Allow re-applying security-band flags to all islands
     default: op
   tradewinds.admin.*:
     description: All TradeWinds admin permissions
