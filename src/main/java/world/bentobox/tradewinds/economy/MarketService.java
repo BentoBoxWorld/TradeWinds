@@ -86,17 +86,18 @@ public class MarketService {
     }
 
     /**
-     * Sell everything of one material from the player's hold to the island.
+     * Sell up to {@code amount} of one material from the player's hold to the
+     * island (Integer.MAX_VALUE = everything).
      *
      * @return amount sold
      */
-    public int sell(Player player, IslandSpec spec, Material material) {
+    public int sell(Player player, IslandSpec spec, Material material, int amount) {
         Optional<Double> unitPrice = playerSellsAt(spec, material);
         Optional<VaultHook> vault = addon.getPlugin().getVault();
-        if (unitPrice.isEmpty() || vault.isEmpty()) {
+        if (unitPrice.isEmpty() || vault.isEmpty() || amount <= 0) {
             return 0;
         }
-        int count = addon.getHoldService().count(player, material);
+        int count = Math.min(addon.getHoldService().count(player, material), amount);
         if (count <= 0) {
             return 0;
         }

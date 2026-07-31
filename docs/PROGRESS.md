@@ -3,6 +3,15 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## Trade quantities + empty-hold UX (2026-07-30)
+
+Ben wanted partial sells ("left-click all, right-click one"). Dialog buttons
+carry no click-type, so instead each cargo row is THREE grid buttons
+(columns(3)): x1 | x16 | All-with-total; buy rows are x1 | x16 | x64.
+MarketService.sell gained an amount cap (MAX_VALUE = all). The Sell button
+hides when the hold has nothing the island pays for; sell rows cap at 8
+(dialog fits, note shown when truncated). 114 tests green.
+
 ## Playtest fix: spawn islet + safe respawn (2026-07-30)
 
 Ben died and vanilla respawn hunted for "solid ground" near world spawn -

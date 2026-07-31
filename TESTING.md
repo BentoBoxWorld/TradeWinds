@@ -259,3 +259,13 @@ everything else (islands, database) is untouched; the area regenerates with the 
 - [ ] Die with a bed set somewhere: the bed is honored.
 - [ ] Dying in the interstice (admin-teleport there) without a bed also returns you to
       the islet.
+
+### Stage 4d — trade quantities (feedback round)
+- [ ] Main menu: with an empty hold (or nothing this island pays for), there is NO
+      "Sell cargo" button; it appears once sellable cargo is aboard.
+- [ ] Sell page: each cargo type is one ROW of three buttons — "x1", "x16",
+      "All <n> - $total" — selling exactly that many (x16 with only 9 aboard sells 9).
+- [ ] Buy page: each catalog good is a row of "x1 / x16 / x64" at quoted totals,
+      still limited by balance and hold space.
+- [ ] More than 8 cargo types: the sell page shows the first 8 with a note; selling
+      some reveals the rest.
