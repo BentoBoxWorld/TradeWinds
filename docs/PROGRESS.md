@@ -3,6 +3,26 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## Recovery: the pouch soft-lock and the harbourmaster (2026-07-31)
+
+Ben died, respawned with under $250, and could not afford a pouch. Worse than
+a price problem: with NO pouch there is no hold, and with no hold a player can
+neither buy nor sell - the market moves goods through the hold on both sides -
+so a dead player could not earn the money to buy the thing that lets them
+earn. A hard soft-lock, and my fault for pricing the entry ticket as an
+upgrade.
+Two fixes:
+- **First pouch $50** (was 250), each further one x3 (50/150/450). The
+  3-pouch CAP, not the price, is what makes expanders necessary - so pouches
+  can be affordable without undermining the money sink. A test asserts the
+  starting balance always covers a pouch plus a boat.
+- **The harbourmaster's charity**: at any market, a sailor with no cargo
+  space, no boat and too little money to buy either can claim a free pouch
+  (and a hull if needed), on a config cooldown (15 min). Unabusable by
+  construction: charity goods are unstamped, so they cannot be sold for
+  money, and the button only appears while genuinely destitute.
+149 tests green.
+
 ## Playtest fixes: empty ocean, unopenable expanders (2026-07-31)
 
 Ben teleported to 10000,10000 and found nothing at all. Measured: nearest

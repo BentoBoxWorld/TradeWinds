@@ -46,6 +46,12 @@ public class TWPlayerData implements DataObject {
     @Expose
     private int restartsUsed;
 
+    /**
+     * Epoch millis of the last harbourmaster's charity claim.
+     */
+    @Expose
+    private long lastCharity;
+
     public TWPlayerData() {
         // Required by the database
     }
@@ -92,6 +98,14 @@ public class TWPlayerData implements DataObject {
 
     public void setExpandersPurchased(int expandersPurchased) {
         this.expandersPurchased = expandersPurchased;
+    }
+
+    public long getLastCharity() {
+        return lastCharity;
+    }
+
+    public void setLastCharity(long lastCharity) {
+        this.lastCharity = lastCharity;
     }
 
     public int getRestartsUsed() {

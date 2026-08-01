@@ -358,6 +358,79 @@ public class MarketService {
      *
      * @return true if bought
      */
+    /**
+     * What the next pouch costs: cheap for a sailor with none, escalating for
+     * each one already carried.
+     */
+    public double pouchPrice(Player player) {
+        return addon.getSettings().getPouchPrice()
+                * Math.pow(addon.getSettings().getPouchPriceMultiplier(),
+                        addon.getHoldService().pouchCount(player));
+    }
+
+    /**
+     * Is this sailor destitute - no cargo space, and unable to buy any?
+     */
+    public boolean isDestitute(Player player) {
+        if (addon.getHoldService().pouchCount(player) > 0 || !addon.getHoldService().expanders(player).isEmpty()) {
+            return false;
+        }
+        return addon.getPlugin().getVault()
+                .map(vault -> vault.getBalance(User.getInstance(player)) < addon.getSettings().getPouchPrice())
+                .orElse(false);
+    }
+
+    /**
+     * The harbourmaster's charity: a sailor with no hold and no money to buy
+     * one cannot earn anything at all - the market needs cargo space on both
+     * sides of a trade - so the port gives them the bare minimum to work
+     * again. Charity goods are unstamped and therefore unsellable, so there is
+     * nothing here to farm.
+     *
+     * @return true if something was given
+     */
+    public boolean claimCharity(Player player) {
+        User user = User.getInstance(player);
+        var data = addon.getPlayerDataManager().get(player.getUniqueId());
+        int cooldown = addon.getSettings().getCharityCooldownMinutes();
+        if (cooldown <= 0 || !isDestitute(player)) {
+            user.sendMessage("tradewinds.trade.charity-not-needed");
+            thud(player);
+            return false;
+        }
+        long wait = data.getLastCharity() + cooldown * 60_000L - System.currentTimeMillis();
+        if (wait > 0) {
+            user.sendMessage("tradewinds.trade.charity-cooldown", "[number]",
+                    String.valueOf(Math.max(1, wait / 60_000L)));
+            thud(player);
+            return false;
+        }
+        data.setLastCharity(System.currentTimeMillis());
+        addon.getPlayerDataManager().save(player.getUniqueId());
+        player.getInventory().addItem(pouchItem()).values()
+                .forEach(left -> player.getWorld().dropItem(player.getLocation(), left));
+        // A hull too, if they have neither boat nor boat item
+        if (!hasBoat(player)) {
+            player.getInventory().addItem(new ItemStack(Material.OAK_BOAT)).values()
+                    .forEach(left -> player.getWorld().dropItem(player.getLocation(), left));
+        }
+        user.sendMessage("tradewinds.trade.charity-given");
+        chime(player);
+        return true;
+    }
+
+    private boolean hasBoat(Player player) {
+        if (player.getVehicle() instanceof org.bukkit.entity.Boat) {
+            return true;
+        }
+        for (ItemStack stack : player.getInventory().getContents()) {
+            if (stack != null && stack.getType().name().endsWith("_BOAT")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public boolean buyPouch(Player player) {
         Optional<VaultHook> vault = addon.getPlugin().getVault();
         if (vault.isEmpty()) {
@@ -369,7 +442,7 @@ public class MarketService {
             thud(player);
             return false;
         }
-        double price = addon.getSettings().getPouchPrice();
+        double price = pouchPrice(player);
         if (!vault.get().has(user, price)) {
             user.sendMessage("tradewinds.trade.cannot-afford");
             thud(player);

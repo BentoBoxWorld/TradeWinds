@@ -360,11 +360,22 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "economy.max-bundles")
     private int maxBundles = 3;
 
-    @ConfigComment("Price of a trading pouch from the shipwright. A pouch holds 64 items, so at")
-    @ConfigComment("the default prices it is deliberately worse value per item than a cargo")
-    @ConfigComment("expander (27 stacks for 5000) - pouches are the early rung, expanders the goal.")
+    @ConfigComment("Price of a sailor's FIRST trading pouch. Deliberately cheap: with no pouch a")
+    @ConfigComment("player has no hold, and with no hold they can neither buy nor sell - so the")
+    @ConfigComment("first pouch is the price of being able to play at all, not an upgrade.")
     @ConfigEntry(path = "economy.pouch-price")
-    private double pouchPrice = 250.0;
+    private double pouchPrice = 50.0;
+
+    @ConfigComment("Each further pouch costs this much more than the last (50, 150, 450...).")
+    @ConfigComment("The 3-pouch cap is what makes cargo expanders necessary, not the price.")
+    @ConfigEntry(path = "economy.pouch-price-multiplier")
+    private double pouchPriceMultiplier = 3.0;
+
+    @ConfigComment("The harbourmaster's charity: a destitute sailor - no cargo space, no boat, and")
+    @ConfigComment("too little money to buy either - is given the bare minimum to work again.")
+    @ConfigComment("Charity goods cannot be sold, so there is nothing to farm. 0 disables it.")
+    @ConfigEntry(path = "economy.charity-cooldown-minutes")
+    private int charityCooldownMinutes = 15;
 
     @ConfigComment("Give customs-stamped goods an enchantment glint as well as their lore line.")
     @ConfigEntry(path = "economy.stamp-glint")
@@ -2476,6 +2487,10 @@ public class Settings implements WorldSettings {
     public void setMaxBundles(int maxBundles) { this.maxBundles = maxBundles; }
     public double getPouchPrice() { return pouchPrice; }
     public void setPouchPrice(double pouchPrice) { this.pouchPrice = pouchPrice; }
+    public double getPouchPriceMultiplier() { return pouchPriceMultiplier; }
+    public void setPouchPriceMultiplier(double pouchPriceMultiplier) { this.pouchPriceMultiplier = pouchPriceMultiplier; }
+    public int getCharityCooldownMinutes() { return charityCooldownMinutes; }
+    public void setCharityCooldownMinutes(int charityCooldownMinutes) { this.charityCooldownMinutes = charityCooldownMinutes; }
     public boolean isStampGlint() { return stampGlint; }
     public void setStampGlint(boolean stampGlint) { this.stampGlint = stampGlint; }
     public List<String> getUnstampedSellables() { return unstampedSellables; }

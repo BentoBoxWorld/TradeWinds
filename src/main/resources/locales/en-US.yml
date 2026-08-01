@@ -70,6 +70,9 @@ tradewinds:
     expander-bought: "&6 Cargo expander purchased for $[price] - carried in your pack."
     pouch-bought: "&6 Trading pouch purchased for $[price]."
     pouch-cap: "&c You cannot carry any more trading pouches."
+    charity-given: "&a The harbourmaster hands you a pouch. 'Get back to work, sailor.'"
+    charity-not-needed: "&c The harbourmaster looks you over. 'You'll manage.'"
+    charity-cooldown: "&c 'I helped you already. Come back in [number] minutes.'"
     expander-cap: "&c Your boat cannot take any more expanders."
   interstice:
     stranded: "&4 The warp collapses! Dark water, and screaming above it."

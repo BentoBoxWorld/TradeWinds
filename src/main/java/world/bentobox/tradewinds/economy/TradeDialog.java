@@ -187,10 +187,10 @@ public class TradeDialog {
         int pouches = addon.getHoldService().pouchCount(player);
         int maxPouches = addon.getSettings().getMaxBundles();
         if (pouches < maxPouches) {
-            buttons.add(button(String.format("Trading Pouch - $%.0f", addon.getSettings().getPouchPrice()),
-                    NamedTextColor.GOLD,
-                    "Holds 64 items (" + pouches + "/" + maxPouches + " carried). Cheap to start with; a "
-                            + "cargo expander is far better value once you can afford one.",
+            buttons.add(button(String.format("Trading Pouch - $%.0f",
+                    addon.getMarketService().pouchPrice(player)), NamedTextColor.GOLD,
+                    "Holds 64 items (" + pouches + "/" + maxPouches + " carried). Each further pouch costs "
+                            + "more; expanders carry far more per slot.",
                     () -> {
                         addon.getMarketService().buyPouch(player);
                         openShipwright(player, spec);
@@ -204,6 +204,15 @@ public class TradeDialog {
                             + " owned). Price doubles each time. Carried in your pack - open it anywhere.",
                     () -> {
                         addon.getMarketService().buyExpander(player);
+                        openShipwright(player, spec);
+                    }));
+        }
+        if (addon.getMarketService().isDestitute(player)) {
+            buttons.add(button("Harbourmaster's charity", NamedTextColor.GREEN,
+                    "Shipwrecked and penniless? Take a pouch, and a boat if you need one. "
+                            + "Nobody starves in this port.",
+                    () -> {
+                        addon.getMarketService().claimCharity(player);
                         openShipwright(player, spec);
                     }));
         }

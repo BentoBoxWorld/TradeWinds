@@ -169,9 +169,15 @@ economy:
   expander-cap: 4
   # Maximum trading pouches (bundles) that count as hold space.
   max-bundles: 3
-  # Price of a trading pouch. A pouch holds 64 items, so at the default prices it is
-  # deliberately worse value per item than an expander - pouches are the early rung.
-  pouch-price: 250.0
+  # Price of a sailor's FIRST trading pouch. Deliberately cheap: with no pouch there
+  # is no hold, and with no hold a player can neither buy nor sell - so the first
+  # pouch is the price of playing at all, not an upgrade.
+  pouch-price: 50.0
+  # Each further pouch costs this much more than the last (50, 150, 450...).
+  pouch-price-multiplier: 3.0
+  # The harbourmaster's charity: a sailor with no cargo space, no boat and no money
+  # is given the bare minimum to work again. Charity goods cannot be sold. 0 disables.
+  charity-cooldown-minutes: 15
   # Give customs-stamped goods an enchantment glint as well as their lore line.
   stamp-glint: false
   # Materials traders buy even WITHOUT a customs stamp - the contraband exceptions.

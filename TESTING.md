@@ -474,3 +474,13 @@ database (or use `/twadmin delete` on it), then restart.
 - [ ] Rowing within ~1200 blocks of an uncharted island charts it ("Charted <name>!"
       on the action bar) and it then appears in /tw chart, the warp dialog and the
       star chart. `chart.sighting-range` tunes this.
+
+### Stage 5g — recovery: cheap first pouch and the harbourmaster's charity
+- [ ] A first Trading Pouch costs $50 (was $250); the second $150, the third $450.
+      The 3-pouch cap — not the price — is what makes expanders worth buying.
+- [ ] **Soft-lock check**: with no pouch, no expander and under $50, the Shipwright
+      shows "Harbourmaster's charity": claim it for a free pouch (plus a boat if you
+      have none). You can immediately buy goods and trade again.
+- [ ] The charity refuses if you are NOT destitute ("You'll manage"), and again
+      within 15 minutes of a claim ("Come back in N minutes").
+- [ ] Charity goods cannot be sold (unstamped), so repeat claims yield no money.
