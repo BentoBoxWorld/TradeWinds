@@ -71,6 +71,29 @@ class HoldServiceTest extends CommonTestSetup {
     }
 
     @Test
+    void testExpandersAreCargoWhereverCarried() {
+        // A cargo expander in the pack is hold: the sailor need not be sitting
+        // in a chest boat to have somewhere to put goods
+        ItemStack expander = mock(ItemStack.class);
+        when(expander.getType()).thenReturn(Material.SHULKER_BOX);
+        when(expander.hasItemMeta()).thenReturn(true);
+        org.bukkit.inventory.meta.ItemMeta meta = mock(org.bukkit.inventory.meta.ItemMeta.class);
+        org.bukkit.persistence.PersistentDataContainer pdc =
+                mock(org.bukkit.persistence.PersistentDataContainer.class);
+        when(pdc.has(org.bukkit.NamespacedKey.fromString("tradewinds:expander"),
+                org.bukkit.persistence.PersistentDataType.STRING)).thenReturn(true);
+        when(meta.getPersistentDataContainer()).thenReturn(pdc);
+        when(expander.getItemMeta()).thenReturn(meta);
+
+        PlayerInventory pockets = mock(PlayerInventory.class);
+        when(pockets.getContents()).thenReturn(new ItemStack[] { expander, null });
+        when(mockPlayer.getInventory()).thenReturn(pockets);
+        when(mockPlayer.getVehicle()).thenReturn(null);
+
+        assertEquals(1, service.expanders(mockPlayer).size());
+    }
+
+    @Test
     void testRemove() {
         assertEquals(25, service.remove(mockPlayer, Material.WHEAT, 25));
         assertEquals(15, wheat.getAmount());

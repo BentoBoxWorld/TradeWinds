@@ -3,6 +3,24 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## The hold is carried, not moored (2026-07-31)
+
+Ben bought a chest boat and found the hold still capped at his single pouch:
+a chest boat is unfillable as an inventory item, and a moored one could not
+be opened either - `Flags.CHEST` (MEMBER by default) guards chest boat
+inventories, so visitors could not open their own boat at a port. The whole
+"chest boat = bigger hold" step therefore did not work in practice.
+Redesigned per Ben: the hold is what the sailor CARRIES -
+  pouches (bundles, max 3) + cargo expanders wherever carried + the chest
+  boat's inventory while riding one.
+Expanders are now delivered to the pack instead of requiring a chest boat, so
+they can always be opened and filled; HoldService gained `expanders(player)`
+(pack + boat) and its add/remove/count/freeSpace all route through it, with
+expanders preferred for storage. Ports also now grant CHEST and SHULKER_BOX
+at visitor rank so sailors can open their own cargo at a dock.
+Principle 1 is intact: loose pocket items are still invisible to the market.
+Spec 4 updated. 142 tests green.
+
 ## Bug: no boat use at ANY trading island (2026-07-31)
 
 Third instance of the same class of bug, and the worst: `applyBandFlags` -

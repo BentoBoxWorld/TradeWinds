@@ -438,3 +438,14 @@ database (or use `/twadmin delete` on it), then restart.
 - [ ] An island registered by an older build (no name, no flags) is adopted on
       restart: it gains its name, band flags, and — for spawn — protection 400 /
       range 1000.
+
+### Stage 5d — the carried hold (playtest fix)
+- [ ] Buy a Cargo Expander: it lands in your PACK (no chest boat needed). Right-click
+      it anywhere to open and fill it - that is your hold.
+- [ ] Goods inside a carried expander are sellable, and count as fuel for warping.
+- [ ] Hold space shown in the market reflects pouches + expanders (+ chest boat when
+      riding one).
+- [ ] Riding a chest boat still adds its 27 slots to the hold; at a port you can
+      sneak-right-click your own chest boat to open it (CHEST flag now visitor rank).
+- [ ] Loose items in your inventory are still NOT sellable (they must be in a pouch,
+      an expander, or the boat).

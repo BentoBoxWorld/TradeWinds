@@ -19,12 +19,18 @@ import world.bentobox.tradewinds.TradeWinds;
 
 /**
  * The hold: the ONLY container trade transacts against (spec principle 1).
- * It is the chest boat's inventory, the contents of cargo-expander shulker
- * boxes stored in that inventory, and up to max-bundles trading bundles in
- * the player's own inventory. Pocket items are invisible to the market.
+ * It is what the sailor carries as cargo -
+ * <ul>
+ * <li>trading bundles (pouches), up to max-bundles,</li>
+ * <li>cargo expanders (shulker boxes) - wherever they are carried,</li>
+ * <li>and the chest boat's own inventory while riding one.</li>
+ * </ul>
+ * Loose items in pockets are invisible to the market: goods must be stowed in
+ * a pouch, an expander or the boat to be cargo. That keeps the fuel/cargo
+ * tension (principle 1) while leaving the hold always openable - a chest boat
+ * moored ashore, or sitting as an item in the pack, cannot be filled.
  * <p>
- * The cargo progression IS this definition: bundle(s) -> chest boat ->
- * expanders in the chest boat.
+ * The cargo progression: pouch -> more pouches -> expanders -> chest boat.
  *
  * @author tastybento
  */
@@ -80,11 +86,11 @@ public class HoldService {
         int free = 0;
         if (player.getVehicle() instanceof ChestBoat boat) {
             free += freeIn(boat.getInventory());
-            for (ItemStack stack : boat.getInventory().getContents()) {
-                if (isExpander(stack) && stack.getItemMeta() instanceof BlockStateMeta meta
-                        && meta.getBlockState() instanceof ShulkerBox box) {
-                    free += freeIn(box.getInventory());
-                }
+        }
+        for (ItemStack expander : expanders(player)) {
+            if (expander.getItemMeta() instanceof BlockStateMeta meta
+                    && meta.getBlockState() instanceof ShulkerBox box) {
+                free += freeIn(box.getInventory());
             }
         }
         for (ItemStack bundleItem : bundles(player)) {
@@ -134,17 +140,21 @@ public class HoldService {
                 if (stack == null) {
                     continue;
                 }
-                if (stack.getType() == material && filter.test(stack)) {
+                if (stack.getType() == material && !isExpander(stack) && filter.test(stack)) {
                     int take = Math.min(left[0], stack.getAmount());
                     stack.setAmount(stack.getAmount() - take);
                     if (stack.getAmount() <= 0) {
                         inv.remove(stack);
                     }
                     left[0] -= take;
-                } else if (isExpander(stack)) {
-                    left[0] -= removeFromShulker(stack, material, left[0], filter);
                 }
             }
+        }
+        for (ItemStack expander : expanders(player)) {
+            if (left[0] <= 0) {
+                break;
+            }
+            left[0] -= removeFromShulker(expander, material, left[0], filter);
         }
         for (ItemStack bundleItem : bundles(player)) {
             if (left[0] <= 0) {
@@ -163,23 +173,18 @@ public class HoldService {
      */
     public int add(Player player, ItemStack items) {
         int remaining = items.getAmount();
-        if (player.getVehicle() instanceof ChestBoat boat) {
+        // Expanders first: they are the purpose-built cargo space
+        for (ItemStack expander : expanders(player)) {
+            if (remaining <= 0) {
+                break;
+            }
+            remaining -= addToShulker(expander, items, remaining);
+        }
+        if (remaining > 0 && player.getVehicle() instanceof ChestBoat boat) {
             ItemStack toAdd = items.clone();
             toAdd.setAmount(remaining);
             Map<Integer, ItemStack> leftover = boat.getInventory().addItem(toAdd);
             remaining = leftover.values().stream().mapToInt(ItemStack::getAmount).sum();
-            if (remaining <= 0) {
-                return items.getAmount();
-            }
-            // Try expanders in the boat
-            for (ItemStack stack : boat.getInventory().getContents()) {
-                if (remaining <= 0) {
-                    break;
-                }
-                if (isExpander(stack)) {
-                    remaining -= addToShulker(stack, items, remaining);
-                }
-            }
         }
         // Bundles: only simple stackables, vanilla capacity 64
         for (ItemStack bundleItem : bundles(player)) {
@@ -219,19 +224,37 @@ public class HoldService {
         return result;
     }
 
-    private void forEachHoldStack(Player player, java.util.function.Consumer<ItemStack> consumer) {
+    /**
+     * Every cargo expander the sailor carries: in the pack, or stowed in the
+     * chest boat they are riding.
+     */
+    public List<ItemStack> expanders(Player player) {
+        List<ItemStack> result = new ArrayList<>();
+        for (ItemStack stack : player.getInventory().getContents()) {
+            if (isExpander(stack)) {
+                result.add(stack);
+            }
+        }
         if (player.getVehicle() instanceof ChestBoat boat) {
             for (ItemStack stack : boat.getInventory().getContents()) {
-                if (stack == null || stack.getType().isAir()) {
-                    continue;
-                }
                 if (isExpander(stack)) {
-                    shulkerContents(stack).forEach(consumer);
-                } else {
-                    consumer.accept(stack);
+                    result.add(stack);
                 }
             }
         }
+        return result;
+    }
+
+    private void forEachHoldStack(Player player, java.util.function.Consumer<ItemStack> consumer) {
+        if (player.getVehicle() instanceof ChestBoat boat) {
+            for (ItemStack stack : boat.getInventory().getContents()) {
+                if (stack == null || stack.getType().isAir() || isExpander(stack)) {
+                    continue;
+                }
+                consumer.accept(stack);
+            }
+        }
+        expanders(player).forEach(expander -> shulkerContents(expander).forEach(consumer));
         for (ItemStack bundleItem : bundles(player)) {
             if (bundleItem.getItemMeta() instanceof BundleMeta bundle) {
                 bundle.getItems().stream().filter(i -> i != null && !i.getType().isAir()).forEach(consumer);

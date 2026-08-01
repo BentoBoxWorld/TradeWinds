@@ -131,7 +131,12 @@ public class GalaxyIslandRegistrar implements Listener {
                 Flags.CRAFTING, 0,
                 // Doors and gates around the market stalls
                 Flags.DOOR, 0,
-                Flags.GATE, 0));
+                Flags.GATE, 0,
+                // Sailors must be able to open their OWN cargo at a port: a
+                // chest boat's inventory is guarded by CHEST, an expander by
+                // SHULKER_BOX
+                Flags.CHEST, 0,
+                Flags.SHULKER_BOX, 0));
     }
 
     /**

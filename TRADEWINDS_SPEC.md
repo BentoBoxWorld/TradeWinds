@@ -89,7 +89,7 @@ Free. The border (Border addon in passable/visual mode, or protection-range visu
 
 - **Start kit:** boat + 1 **trading bundle** (a bundle = one stack's worth of capacity, vanilla bundle rules).
 - **Progression:** up to 3 bundles → chest boat → **cargo expanders**: lore-renamed shulker boxes, purchase-only (no End → no crafting), price ~doubling per unit, configurable cap. Expanders live in the chest boat's inventory; their contents count as hold.
-- **Hold definition (canonical):** the player's trading bundles + the chest-boat inventory + expander contents. All trade and fuel transactions resolve against the hold only.
+- **Hold definition (canonical, revised 2026-07-31):** the player's trading bundles (pouches) + **cargo expanders wherever they are carried** + the chest-boat inventory while riding one. All trade and fuel transactions resolve against the hold only; loose pocket items never count. The hold is *carried*, not moored: a chest boat sitting as an item, or bobbing at a dock, cannot be filled, so the expanders (openable anywhere) are the backbone of cargo capacity and the chest boat is a bonus while sailing.
 - **Boat ownership:** owner UUID in boat entity PDC from day one (theft/persistence/bounty questions hang off it).
 
 ## 5. Economy

@@ -306,14 +306,11 @@ public class MarketService {
             thud(player);
             return false;
         }
-        // An expander IS hold - it can only be stowed in a chest boat
-        int added = addon.getHoldService().add(player, expanderItem());
-        if (added <= 0) {
-            user.sendMessage("tradewinds.trade.needs-chest-boat");
-            thud(player);
-            return false;
-        }
+        // An expander IS cargo space - it is carried, so it can always be
+        // opened and filled (a moored or pocketed chest boat cannot be)
         vault.get().withdraw(user, price);
+        player.getInventory().addItem(expanderItem()).values()
+                .forEach(left -> player.getWorld().dropItem(player.getLocation(), left));
         var data = addon.getPlayerDataManager().get(player.getUniqueId());
         data.setExpandersPurchased(owned + 1);
         addon.getPlayerDataManager().save(player.getUniqueId());
