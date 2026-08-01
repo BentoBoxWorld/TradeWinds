@@ -23,18 +23,21 @@ import java.util.stream.Collectors;
  *        total falls back to the built-in defaults
  * @param spawnIslandType economy of the trading island reserved at the origin
  *        (null = seeded roll like any other island)
- * @param wildIsletChance chance (0-1) that an empty cell hosts a wild islet
+ * @param wildIsletChance chance (0-1) that a wild-islet grid cell hosts one
  * @param wildIsletRadius terrain radius of wild islets (0 = none)
+ * @param wildIsletGrid grid size in blocks for wild islets - much finer than the
+ *        trading island grid, so the open sea is dotted with land to land on
  *
  * @author tastybento
  */
 public record GalaxyConfig(long seed, int minSeparation, int terrainRadius, int landLift, double density,
         int starterMinIslands, int bandRadius, int seaLevel, Map<IslandType, Integer> typeWeights,
-        IslandType spawnIslandType, double wildIsletChance, int wildIsletRadius) {
+        IslandType spawnIslandType, double wildIsletChance, int wildIsletRadius, int wildIsletGrid) {
 
-    /** Default wild islet chance / radius. */
+    /** Default wild islet chance / radius / grid. */
     public static final double DEFAULT_WILD_CHANCE = 0.3;
     public static final int DEFAULT_WILD_RADIUS = 70;
+    public static final int DEFAULT_WILD_GRID = 1200;
 
     public GalaxyConfig {
         if (typeWeights == null || typeWeights.values().stream().mapToInt(w -> Math.max(0, w)).sum() <= 0) {
@@ -49,7 +52,17 @@ public record GalaxyConfig(long seed, int minSeparation, int terrainRadius, int 
             int starterMinIslands, int bandRadius, int seaLevel, Map<IslandType, Integer> typeWeights,
             IslandType spawnIslandType) {
         this(seed, minSeparation, terrainRadius, landLift, density, starterMinIslands, bandRadius, seaLevel,
-                typeWeights, spawnIslandType, DEFAULT_WILD_CHANCE, DEFAULT_WILD_RADIUS);
+                typeWeights, spawnIslandType, DEFAULT_WILD_CHANCE, DEFAULT_WILD_RADIUS, DEFAULT_WILD_GRID);
+    }
+
+    /**
+     * Convenience constructor with the default wild islet grid.
+     */
+    public GalaxyConfig(long seed, int minSeparation, int terrainRadius, int landLift, double density,
+            int starterMinIslands, int bandRadius, int seaLevel, Map<IslandType, Integer> typeWeights,
+            IslandType spawnIslandType, double wildIsletChance, int wildIsletRadius) {
+        this(seed, minSeparation, terrainRadius, landLift, density, starterMinIslands, bandRadius, seaLevel,
+                typeWeights, spawnIslandType, wildIsletChance, wildIsletRadius, DEFAULT_WILD_GRID);
     }
 
     /**
@@ -67,7 +80,7 @@ public record GalaxyConfig(long seed, int minSeparation, int terrainRadius, int 
     public GalaxyConfig(long seed, int minSeparation, int terrainRadius, int landLift, double density,
             int starterMinIslands, int bandRadius, int seaLevel) {
         this(seed, minSeparation, terrainRadius, landLift, density, starterMinIslands, bandRadius, seaLevel,
-                defaultTypeWeights(), null, DEFAULT_WILD_CHANCE, DEFAULT_WILD_RADIUS);
+                defaultTypeWeights(), null, DEFAULT_WILD_CHANCE, DEFAULT_WILD_RADIUS, DEFAULT_WILD_GRID);
     }
 
     /**

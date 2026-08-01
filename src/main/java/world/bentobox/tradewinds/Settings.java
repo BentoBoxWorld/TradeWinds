@@ -102,10 +102,16 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "galaxy.spawn-island-type", needsReset = true)
     private String spawnIslandType = "FISHING";
 
-    @ConfigComment("Chance (0-1) that a galaxy cell WITHOUT a trading island hosts a wild islet -")
-    @ConfigComment("small unnamed islands, unprotected: mine, farm, build, live. Minecraft-stuff land.")
+    @ConfigComment("Chance (0-1) that a wild-islet grid cell hosts one - small unnamed islands,")
+    @ConfigComment("unprotected: mine, farm, build, live. Minecraft-stuff land.")
     @ConfigEntry(path = "galaxy.wild-islet-chance", needsReset = true)
     private double wildIsletChance = 0.3;
+
+    @ConfigComment("Grid size in blocks for wild islets. Much finer than the trading island grid,")
+    @ConfigComment("so the open sea is dotted with land: at 1200 with chance 0.3 there is usually")
+    @ConfigComment("an islet within a couple of thousand blocks of anywhere.")
+    @ConfigEntry(path = "galaxy.wild-islet-grid", needsReset = true)
+    private int wildIsletGrid = 1200;
 
     @ConfigComment("Terrain radius of wild islets. 0 disables them.")
     @ConfigEntry(path = "galaxy.wild-islet-radius", needsReset = true)
@@ -195,6 +201,12 @@ public class Settings implements WorldSettings {
     @ConfigComment("Maximum holograms shown at once (nearest islands first).")
     @ConfigEntry(path = "chart.hologram-max")
     private int chartHologramMax = 12;
+
+    @ConfigComment("How close a sailor must pass an island to chart it, in blocks. Slightly beyond")
+    @ConfigComment("island waters (distance-between-islands) so islands are charted as they are")
+    @ConfigComment("sighted. Only charted islands can be warped to.")
+    @ConfigEntry(path = "chart.sighting-range")
+    private int chartSightingRange = 1200;
 
     @ConfigComment("Show the hologram chart automatically whenever a player boards a boat -")
     @ConfigComment("new players see where to go the moment they set sail, untold.")
@@ -2380,6 +2392,8 @@ public class Settings implements WorldSettings {
     public void setWildIsletChance(double wildIsletChance) { this.wildIsletChance = wildIsletChance; }
     public int getWildIsletRadius() { return wildIsletRadius; }
     public void setWildIsletRadius(int wildIsletRadius) { this.wildIsletRadius = wildIsletRadius; }
+    public int getWildIsletGrid() { return wildIsletGrid; }
+    public void setWildIsletGrid(int wildIsletGrid) { this.wildIsletGrid = wildIsletGrid; }
     public Map<String, Integer> getTypeWeights() { return typeWeights; }
     public void setTypeWeights(Map<String, Integer> typeWeights) { this.typeWeights = typeWeights; }
     public double getFuelPerBlock() { return fuelPerBlock; }
@@ -2424,6 +2438,8 @@ public class Settings implements WorldSettings {
     public void setChartHologramSeconds(int chartHologramSeconds) { this.chartHologramSeconds = chartHologramSeconds; }
     public int getChartHologramMax() { return chartHologramMax; }
     public void setChartHologramMax(int chartHologramMax) { this.chartHologramMax = chartHologramMax; }
+    public int getChartSightingRange() { return chartSightingRange; }
+    public void setChartSightingRange(int chartSightingRange) { this.chartSightingRange = chartSightingRange; }
     public boolean isChartOnBoarding() { return chartOnBoarding; }
     public void setChartOnBoarding(boolean chartOnBoarding) { this.chartOnBoarding = chartOnBoarding; }
     public int getStarChartBlocksPerPixel() { return starChartBlocksPerPixel; }

@@ -279,18 +279,26 @@ public class GalaxyEngine {
      * @return {centerX, centerZ} or empty
      */
     public Optional<int[]> wildIsletInCell(int cellX, int cellZ) {
-        if (config.wildIsletChance() <= 0 || islandInCell(cellX, cellZ).isPresent()) {
+        if (config.wildIsletChance() <= 0 || config.wildIsletRadius() <= 0) {
             return Optional.empty();
         }
         if (Hashing.toUnit(Hashing.cellHash(config.seed(), cellX, cellZ, SALT_WILD)) >= config.wildIsletChance()) {
             return Optional.empty();
         }
-        int size = config.cellSize();
-        int jitter = config.jitter();
+        int size = config.wildIsletGrid();
+        int jitter = size / 4;
         double jx = Hashing.toUnit(Hashing.cellHash(config.seed(), cellX, cellZ, SALT_WILD_X)) * 2 - 1;
         double jz = Hashing.toUnit(Hashing.cellHash(config.seed(), cellX, cellZ, SALT_WILD_Z)) * 2 - 1;
-        return Optional.of(new int[] { (int) Math.round((cellX + 0.5) * size + jx * jitter),
-                (int) Math.round((cellZ + 0.5) * size + jz * jitter) });
+        int x = (int) Math.round((cellX + 0.5) * size + jx * jitter);
+        int z = (int) Math.round((cellZ + 0.5) * size + jz * jitter);
+        // Never crowd a trading island: its terrain, its dock and a margin
+        int clearance = config.terrainRadius() + config.wildIsletRadius() + 80;
+        for (IslandSpec spec : islandsNear(x, z, clearance)) {
+            if (spec.distanceSquared(x, z) < (long) clearance * clearance) {
+                return Optional.empty();
+            }
+        }
+        return Optional.of(new int[] { x, z });
     }
 
     /**
@@ -305,7 +313,7 @@ public class GalaxyEngine {
         if (radius <= 0) {
             return Optional.empty();
         }
-        int size = config.cellSize();
+        int size = config.wildIsletGrid();
         int cellX = Math.floorDiv(blockX, size);
         int cellZ = Math.floorDiv(blockZ, size);
         for (int cx = cellX - 1; cx <= cellX + 1; cx++) {
@@ -327,7 +335,7 @@ public class GalaxyEngine {
      * A wild islet's whole-island biome (seeded from its cell).
      */
     public String wildIsletBiome(int centerX, int centerZ) {
-        int size = config.cellSize();
+        int size = config.wildIsletGrid();
         long hash = Hashing.cellHash(config.seed(), Math.floorDiv(centerX, size), Math.floorDiv(centerZ, size),
                 SALT_WILD_BIOME);
         return WILD_BIOMES.get((int) Math.floorMod(hash, WILD_BIOMES.size()));

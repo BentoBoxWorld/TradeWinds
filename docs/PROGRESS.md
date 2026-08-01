@@ -3,6 +3,26 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## Playtest fixes: empty ocean, unopenable expanders (2026-07-31)
+
+Ben teleported to 10000,10000 and found nothing at all. Measured: nearest
+trading island 7329 blocks, and ZERO wild islets in a 6000x6000 area. Cause:
+islets shared the trading-island grid (5000-block cells, and only in cells
+with no island), averaging ~9000 blocks apart. They now have their own finer
+grid (galaxy.wild-islet-grid, 1200) with a clearance test against trading
+islands, giving an islet within ~500-1700 blocks of anywhere (tested).
+
+Also, and worse: **Java Edition cannot open a shulker box from the
+inventory**, so the "carried hold" I had just designed could not be filled or
+emptied by hand at all - Ben found this trying to read the lore on stamped
+goods. `ExpanderListener` now opens an expander on right-click (27-slot view,
+written back into the item on close), refuses nesting, and never lets an
+expander be placed as a block (it is cargo, not a chest to be robbed).
+
+Charting range is now config (`chart.sighting-range`, 1200 - slightly beyond
+island waters) so islands chart as they are sighted rather than only when
+entering their waters. 145 tests green.
+
 ## Playtest fix: respawn in the treetops (2026-07-31)
 
 Ben died and respawned on top of a tree at the island centre. SpawnRespawnListener

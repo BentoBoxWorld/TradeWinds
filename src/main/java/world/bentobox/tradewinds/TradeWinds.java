@@ -48,6 +48,7 @@ import world.bentobox.tradewinds.travel.BoatPickupListener;
 import world.bentobox.tradewinds.travel.BorderPromptListener;
 import world.bentobox.tradewinds.travel.ChartHolograms;
 import world.bentobox.tradewinds.travel.ChartingListener;
+import world.bentobox.tradewinds.travel.ExpanderListener;
 import world.bentobox.tradewinds.travel.FuelService;
 import world.bentobox.tradewinds.travel.IntersticeService;
 import world.bentobox.tradewinds.travel.HoldService;
@@ -235,6 +236,9 @@ public class TradeWinds extends GameModeAddon {
         registerListener(new BorderPromptListener(this));
         // Teleporting while boated brings the boat (and cargo) along
         registerListener(new BoatPickupListener(this));
+        // Cargo expanders open in the hand (Java cannot open shulkers in an
+        // inventory, and a carried hold has to be openable)
+        registerListener(new ExpanderListener(this));
         // Risk at sea: the interstice for warpers, encounters for rowers
         intersticeService = new IntersticeService(this);
         intersticeService.start();
@@ -496,7 +500,7 @@ public class TradeWinds extends GameModeAddon {
             galaxyEngine = new GalaxyEngine(new GalaxyConfig(seed, s.getGalaxyMinSeparation(),
                     s.getIslandTerrainRadius(), s.getLandLift(), s.getGalaxyDensity(),
                     s.getStarterClusterMinIslands(), s.getBandRadius(), s.getSeaHeight(), typeWeights(),
-                    spawnIslandType(), s.getWildIsletChance(), s.getWildIsletRadius()));
+                    spawnIslandType(), s.getWildIsletChance(), s.getWildIsletRadius(), s.getWildIsletGrid()));
             log("TradeWinds galaxy seed: " + seed);
         }
         return galaxyEngine;

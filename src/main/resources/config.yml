@@ -33,9 +33,12 @@ galaxy:
   # where players spawn and respawn. A working port: dock, plaza, market, warp zone.
   # AGRICULTURAL, FOREST, FISHING, MINING, INDUSTRIAL, LUXURY, FROZEN, or RANDOM.
   spawn-island-type: FISHING
-  # Chance (0-1) that a galaxy cell WITHOUT a trading island hosts a wild islet -
-  # small unnamed islands, unprotected: mine, farm, build, live.
+  # Chance (0-1) that a wild-islet grid cell hosts one - small unnamed islands,
+  # unprotected: mine, farm, build, live.
   wild-islet-chance: 0.3
+  # Grid size in blocks for wild islets - much finer than the trading island grid,
+  # so the open sea is dotted with land you can put ashore on.
+  wild-islet-grid: 1200
   # Terrain radius of wild islets. 0 disables them.
   wild-islet-radius: 70
   # Relative spawn weight per island type. Higher = more common; 0 disables a type.
@@ -131,6 +134,9 @@ chart:
   hologram-duration-seconds: 15
   # Maximum holograms shown at once (nearest islands first).
   hologram-max: 12
+  # How close a sailor must pass an island to chart it. Slightly beyond island waters,
+  # so islands are charted as they are sighted. Only charted islands can be warped to.
+  sighting-range: 1200
   # Show the hologram chart automatically whenever a player boards a boat.
   show-on-boarding: true
   # Star Chart map scale: blocks per map pixel. 64 shows ~8km across.

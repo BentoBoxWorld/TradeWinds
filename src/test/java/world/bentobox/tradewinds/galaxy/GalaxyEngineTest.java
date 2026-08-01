@@ -267,15 +267,43 @@ class GalaxyEngineTest {
         // Terrain rises there, with a vanilla wild biome
         assertEquals(45, engine.landLiftAt(sample[0], sample[1]));
         assertTrue(engine.biomeKeyAt(sample[0], sample[1]).orElseThrow().startsWith("minecraft:"));
-        // Never inside a trading island's cell
+        // Islets keep well clear of trading islands (terrain + islet + margin)
         GalaxyEngine dense = new GalaxyEngine(config(SEED, 1.0));
-        for (int cx = -5; cx <= 5; cx++) {
-            for (int cz = -5; cz <= 5; cz++) {
-                if (dense.islandInCell(cx, cz).isPresent()) {
-                    assertTrue(dense.wildIsletInCell(cx, cz).isEmpty(),
-                            "Cell with a trading island must not also host a wild islet");
+        for (int cx = -20; cx <= 20; cx++) {
+            for (int cz = -20; cz <= 20; cz++) {
+                java.util.Optional<int[]> islet = dense.wildIsletInCell(cx, cz);
+                if (islet.isEmpty()) {
+                    continue;
+                }
+                for (IslandSpec spec : dense.islandsNear(islet.get()[0], islet.get()[1], 2000)) {
+                    double d = Math.sqrt(spec.distanceSquared(islet.get()[0], islet.get()[1]));
+                    assertTrue(d >= 160 + 70,
+                            "Islet at " + islet.get()[0] + "," + islet.get()[1] + " crowds " + spec.name());
                 }
             }
+        }
+    }
+
+    @Test
+    void testIsletsAreFindable() {
+        // The open sea must not be empty: an islet within a short row of
+        // anywhere (playtest: 6000x6000 blocks of nothing at 10000,10000)
+        GalaxyEngine engine = new GalaxyEngine(config(SEED, 0.5));
+        for (int[] point : new int[][] { { 10000, 10000 }, { -5000, 15000 }, { 30000, -20000 } }) {
+            double nearest = Double.MAX_VALUE;
+            int grid = GalaxyConfig.DEFAULT_WILD_GRID;
+            int cx = Math.floorDiv(point[0], grid);
+            int cz = Math.floorDiv(point[1], grid);
+            for (int i = cx - 4; i <= cx + 4; i++) {
+                for (int j = cz - 4; j <= cz + 4; j++) {
+                    java.util.Optional<int[]> islet = engine.wildIsletInCell(i, j);
+                    if (islet.isPresent()) {
+                        nearest = Math.min(nearest,
+                                Math.hypot(islet.get()[0] - point[0], islet.get()[1] - point[1]));
+                    }
+                }
+            }
+            assertTrue(nearest < 2500, "No islet within 2500 blocks of " + point[0] + "," + point[1]);
         }
     }
 

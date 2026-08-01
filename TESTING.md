@@ -462,3 +462,15 @@ database (or use `/twadmin delete` on it), then restart.
 - [ ] `/tw spawn` puts you in the same place.
 - [ ] After `/twadmin setspawnpoint` somewhere else on the island, respawns and
       `/tw spawn` both honour the new point.
+
+### Stage 5f — findable islets, openable expanders, charting range
+- [ ] Row (or teleport) into open ocean far from any island: wild islets are now
+      within ~500-1700 blocks of anywhere — you should meet one within a short row.
+      They keep clear of trading islands.
+- [ ] **Right-click a Cargo Expander in hand** to open it — this is the only way
+      (Java cannot open shulker boxes from the inventory). Put items in, close, and
+      they are still there when you reopen; they count as hold for trading and fuel.
+- [ ] An expander cannot be placed as a block, and cannot be stowed inside another.
+- [ ] Rowing within ~1200 blocks of an uncharted island charts it ("Charted <name>!"
+      on the action bar) and it then appears in /tw chart, the warp dialog and the
+      star chart. `chart.sighting-range` tunes this.
