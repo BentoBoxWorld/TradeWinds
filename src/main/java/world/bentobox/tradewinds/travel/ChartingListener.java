@@ -10,7 +10,7 @@ import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.vehicle.VehicleEnterEvent;
 
-import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import world.bentobox.bentobox.api.user.User;
 import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.api.events.IslandChartedEvent;
@@ -80,7 +80,9 @@ public class ChartingListener implements Listener {
                 .filter(data::chart)
                 .forEach(spec -> {
                     User user = User.getInstance(player);
-                    player.sendActionBar(Component.text(
+                    // Locale strings are MiniMessage: deserialize rather than
+                    // wrapping raw text, or the tags would print literally
+                    player.sendActionBar(MiniMessage.miniMessage().deserialize(
                             user.getTranslation("tradewinds.chart.charted", "[name]", spec.name())));
                     addon.getPlayerDataManager().save(player.getUniqueId());
                     Bukkit.getPluginManager().callEvent(new IslandChartedEvent(player.getUniqueId(), spec));

@@ -3,6 +3,16 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## Locale converted to MiniMessage (2026-07-31)
+
+Ben: MiniMessage is the standard from now on. en-US.yml converted from legacy
+ampersand codes to closed MiniMessage tags, matching core's own locale style
+(`<red>text</red>`). Also fixed ChartingListener, which wrapped a translated
+string in `Component.text` for the action bar - that would have printed the
+tags literally; it now deserializes with MiniMessage. Convention recorded in
+CLAUDE.md: locale strings are MiniMessage, and any Component-taking sink
+(action bars, titles, holograms) must deserialize rather than wrap.
+
 ## The nautilus is a mount, and swimmers were spawning in the air (2026-07-31)
 
 Ben reported the "sea horror" encounter swimming harmlessly away - and he had

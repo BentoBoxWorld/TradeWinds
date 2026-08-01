@@ -74,3 +74,10 @@ Follow BentoBox conventions: `Config<Settings>` + `@ConfigEntry`/`@StoreAt`,
 `Database<DataObject>` + cache managers, `FlagListener`, `DefaultPlayerCommand`
 /`DefaultAdminCommand`, locale keys under `tradewinds.`, every gameplay number
 in config from the stage it's introduced — no hardcoded gameplay values.
+
+**Locale formatting is MiniMessage** (`<red>text</red>`, `<gold>…</gold>`) —
+the BentoBox standard; legacy `&` codes are deprecated, never add new ones.
+When sending a translated string somewhere that takes a Component (action
+bars, titles, holograms), deserialize it with
+`MiniMessage.miniMessage().deserialize(...)` rather than `Component.text(...)`,
+or the tags print literally.
