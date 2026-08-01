@@ -3,6 +3,31 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## Star chart: fuel range ring, reachability, readable names (2026-08-01)
+
+Three playtest asks, all about the chart telling a sailor what they can
+actually do rather than only where things are.
+
+**The fuel range ring.** A warp costs fuel per block of route, so the reachable
+set genuinely is a circle - which is a thing a chart can draw and a number
+cannot. Dashed, so it reads as an annotation rather than a wall, and drawn
+before the islands so dots and names stay on top of it. It is skipped entirely
+when the radius runs off the canvas: a ring clamped to the edge would be a lie
+about your range, and worse than no ring at all.
+
+**Reachability in `/tw chart list`.** A list of places you cannot afford to go
+is a list of disappointments. Each entry now carries its fuel cost, green when
+reachable and greyed with "(not enough fuel)" when not, under a "Fuel aboard"
+line. Standing at a port the figure is the exact route price, lane overrides
+included; adrift it is the same distance-based estimate measured from the
+player, which is close enough to plan by.
+
+**White names.** `MapCanvas` takes its text colour from a
+section-sign/palette-index/semicolon prefix, and with no prefix the default was
+a mid grey that all but vanished against the ocean blue.
+
+209 tests green.
+
 ## /tw go: a door into the ocean, not a teleport (2026-08-01)
 
 Ben spotted it: "Now that Spawn is a trading post, which is a good thing...

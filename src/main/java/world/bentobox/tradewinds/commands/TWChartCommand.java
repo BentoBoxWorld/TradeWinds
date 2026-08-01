@@ -60,12 +60,47 @@ public class TWChartCommand extends CompositeCommand {
             user.sendMessage("tradewinds.chart.empty");
             return true;
         }
+        // What the fuel aboard can actually reach. A list of places you cannot
+        // afford to go is a list of disappointments, so say which is which.
+        double fuelAboard = addon.getFuelService().holdFuel(user.getPlayer());
+        IslandSpec origin = portAt(engine, x, z).orElse(null);
         user.sendMessage("tradewinds.chart.header", TextVariables.NUMBER, String.valueOf(charted.size()));
-        charted.forEach(spec -> user.sendMessage("tradewinds.chart.entry",
-                TextVariables.NAME, spec.name(),
-                "[type]", spec.type().name(),
-                "[band]", spec.band().getDisplayName(),
-                "[distance]", String.valueOf((int) Math.sqrt(spec.distanceSquared(x, z)))));
+        user.sendMessage("tradewinds.chart.fuel-aboard", "[amount]", String.valueOf((int) fuelAboard));
+        charted.forEach(spec -> {
+            int cost = routeCost(addon, origin, spec, x, z);
+            boolean reachable = cost <= fuelAboard;
+            user.sendMessage(reachable ? "tradewinds.chart.entry-reachable" : "tradewinds.chart.entry-far",
+                    TextVariables.NAME, spec.name(),
+                    "[type]", spec.type().name(),
+                    "[band]", user.getTranslation(spec.band().getLocaleKey()),
+                    "[distance]", String.valueOf((int) Math.sqrt(spec.distanceSquared(x, z))),
+                    "[fuel]", String.valueOf(cost));
+        });
         return true;
+    }
+
+    /**
+     * The trading island the player is standing in the waters of, if any -
+     * warps launch from an island, so that is the origin a cost is measured
+     * from when there is one.
+     */
+    private java.util.Optional<IslandSpec> portAt(GalaxyEngine engine, int x, int z) {
+        int range = ((TradeWinds) getAddon()).getSettings().getIslandProtectionRange();
+        return engine.islandsNear(x, z, range).stream()
+                .filter(s -> s.distanceSquared(x, z) <= (long) range * range).findFirst();
+    }
+
+    /**
+     * The fuel a warp to this island would cost. From a port that is the exact
+     * route price, honouring any lane overrides; adrift it is the same
+     * distance-based estimate the route graph would charge, measured from the
+     * player - close enough to plan by, which is what a chart is for.
+     */
+    private int routeCost(TradeWinds addon, IslandSpec origin, IslandSpec target, int x, int z) {
+        if (origin != null) {
+            return origin.equals(target) ? 0 : addon.getRouteGraph().cost(origin, target);
+        }
+        double distance = Math.sqrt(target.distanceSquared(x, z));
+        return Math.max(1, (int) Math.ceil(distance * addon.getSettings().getFuelPerBlock()));
     }
 }

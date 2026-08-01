@@ -191,7 +191,9 @@ tradewinds:
     starchart-given: "<aqua>The Star Chart is yours - hold it to see your world.</aqua>"
     empty: "<red>Your chart is empty - row into an island's waters to chart it.</red>"
     header: "<aqua>Your chart ([number] islands):</aqua>"
-    entry: "<yellow>[name] </yellow><gray>- [type], [band], [distance] blocks</gray>"
+    fuel-aboard: "<gray>Fuel aboard: </gray><aqua>[amount] units</aqua><gray>. Reachable destinations are marked.</gray>"
+    entry-reachable: "<green>[fuel] fuel </green><yellow>[name] </yellow><gray>- [type], </gray>[band]<gray>, [distance] blocks</gray>"
+    entry-far: "<dark_gray>[fuel] fuel </dark_gray><gray>[name] - [type], </gray>[band]<gray>, [distance] blocks </gray><red>(not enough fuel)</red>"
   restart:
     confirm: "<red>Restart your career? Balance and kit reset; your chart is kept.</red>"
     none-left: "<red>No restarts left (maximum [number]).</red>"

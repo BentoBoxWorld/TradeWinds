@@ -24,6 +24,28 @@ class ChartNavigationTest {
     private final GalaxyEngine engine = new GalaxyEngine(new GalaxyConfig(77L, 2500, 160, 45, 1.0, 0, 5000, 70));
 
     @Test
+    void testFuelRangeIsWhatTheFuelActuallyBuys() {
+        // The chart draws the reachable set as a ring, so the radius has to be
+        // the real thing: fuel divided by the per-block cost
+        assertEquals(1000L, StarChartRenderer.fuelRangeBlocks(10, 0.01));
+        assertEquals(0L, StarChartRenderer.fuelRangeBlocks(0, 0.01));
+        // Floor, never round up - a ring you cannot quite reach is worse than none
+        assertEquals(1L, StarChartRenderer.fuelRangeBlocks(1.99, 1.0));
+        // Free warps are not a circle at all, so draw nothing
+        assertEquals(0L, StarChartRenderer.fuelRangeBlocks(50, 0));
+        assertEquals(0L, StarChartRenderer.fuelRangeBlocks(-5, 0.01));
+    }
+
+    @Test
+    void testMapTextIsColouredWhite() {
+        // MapCanvas takes its text colour from a palette-index prefix; without
+        // one the names are a mid grey that vanishes against the ocean
+        String coloured = StarChartRenderer.colored("Spawn");
+        assertTrue(coloured.startsWith("\u00A7"), "Missing the map colour prefix");
+        assertTrue(coloured.endsWith(";Spawn"), "The name must follow the prefix: " + coloured);
+    }
+
+    @Test
     void testDockMarkerPointsAtThePier() {
         // The chart answered "where is everywhere else" and said nothing about
         // the one bearing a sailor in these waters actually needs

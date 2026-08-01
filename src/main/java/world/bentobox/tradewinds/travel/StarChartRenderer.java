@@ -11,6 +11,7 @@ import org.bukkit.map.MapCursor;
 import org.bukkit.map.MapCursorCollection;
 import org.bukkit.map.MapRenderer;
 import org.bukkit.map.MapView;
+import org.bukkit.map.MapPalette;
 import org.bukkit.map.MinecraftFont;
 
 import world.bentobox.tradewinds.TradeWinds;
@@ -31,6 +32,10 @@ public class StarChartRenderer extends MapRenderer {
 
     private static final Color OCEAN = new Color(12, 44, 84);
     private static final Color EDGE = new Color(120, 120, 120);
+    /** The fuel-range ring: pale enough to read over, solid enough to see. */
+    private static final Color RANGE_RING = new Color(120, 220, 235);
+    /** Names are drawn white: anything darker vanishes against the ocean. */
+    private static final Color NAME = new Color(255, 255, 255);
 
     private final TradeWinds addon;
     private final Map<UUID, Long> lastDraw = new HashMap<>();
@@ -39,6 +44,22 @@ public class StarChartRenderer extends MapRenderer {
     public StarChartRenderer(TradeWinds addon) {
         super(true); // contextual: rendered per player
         this.addon = addon;
+    }
+
+    /**
+     * How far this much fuel will carry a sailor, in blocks. The warp costs
+     * fuel per block of route, so the reachable set really is a circle - which
+     * is exactly the thing a chart can draw and a number cannot.
+     *
+     * @param fuelAboard fuel units in the hold
+     * @param fuelPerBlock fuel cost per block of route
+     * @return range in blocks, 0 if fuel buys nothing
+     */
+    static long fuelRangeBlocks(double fuelAboard, double fuelPerBlock) {
+        if (fuelPerBlock <= 0 || fuelAboard <= 0) {
+            return 0;
+        }
+        return (long) Math.floor(fuelAboard / fuelPerBlock);
     }
 
     /**
@@ -86,6 +107,9 @@ public class StarChartRenderer extends MapRenderer {
                 canvas.setPixelColor(x, z, OCEAN);
             }
         }
+        // How far the fuel aboard will carry them - drawn before the islands so
+        // island dots and names stay on top of it
+        drawFuelRange(canvas, addon.getFuelService().holdFuel(player), bpp);
         // Charted islands
         GalaxyEngine engine = addon.getGalaxyEngine(addon.getOverWorld().getSeed());
         int islandPixelRadius = Math.max(1, engine.getConfig().terrainRadius() / bpp);
@@ -111,6 +135,32 @@ public class StarChartRenderer extends MapRenderer {
         canvas.setCursors(cursors);
     }
 
+    /**
+     * A dashed ring at the edge of the fuel's reach. Dashed so it reads as an
+     * annotation rather than a wall, and skipped entirely when the range runs
+     * off the chart - a ring you cannot see is just a lie about your range.
+     */
+    private void drawFuelRange(MapCanvas canvas, double fuelAboard, int bpp) {
+        long range = fuelRangeBlocks(fuelAboard, addon.getSettings().getFuelPerBlock());
+        int radius = (int) (range / bpp);
+        if (radius < 4 || radius > 62) {
+            return;
+        }
+        // Step by roughly one pixel of arc, and draw two thirds of each turn
+        int steps = Math.max(48, radius * 6);
+        for (int i = 0; i < steps; i++) {
+            if (i % 3 == 2) {
+                continue; // the gaps in the dashes
+            }
+            double angle = 2 * Math.PI * i / steps;
+            int x = 64 + (int) Math.round(Math.cos(angle) * radius);
+            int z = 64 + (int) Math.round(Math.sin(angle) * radius);
+            if (x >= 0 && x < 128 && z >= 0 && z < 128) {
+                canvas.setPixelColor(x, z, RANGE_RING);
+            }
+        }
+    }
+
     private void fillDot(MapCanvas canvas, int cx, int cz, int radius, Color color) {
         for (int x = -radius; x <= radius; x++) {
             for (int z = -radius; z <= radius; z++) {
@@ -125,11 +175,26 @@ public class StarChartRenderer extends MapRenderer {
         }
     }
 
+    /**
+     * Island names, in white. MapCanvas takes its text colour from a
+     * "section-sign, palette index, semicolon" prefix; the default was a mid
+     * grey that all but disappeared against the ocean.
+     */
     private void drawName(MapCanvas canvas, int x, int z, String name) {
         int width = MinecraftFont.Font.getWidth(name);
         int textX = Math.clamp(x - width / 2, 1, 127 - width);
         int textZ = Math.clamp(z + 3, 1, 119);
-        canvas.drawText(textX, textZ, MinecraftFont.Font, name);
+        canvas.drawText(textX, textZ, MinecraftFont.Font, colored(name));
+    }
+
+    /**
+     * Prefix a string with the map-palette colour code for white.
+     *
+     * @param text the text
+     * @return the text with a colour prefix
+     */
+    static String colored(String text) {
+        return "\u00A7" + MapPalette.matchColor(NAME) + ";" + text;
     }
 
     static Color bandColor(SecurityBand band) {

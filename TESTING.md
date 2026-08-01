@@ -873,3 +873,22 @@ two rules.
 - [ ] With an empty chart but inside an island's waters, the dock marker still
       appears on its own. (Previously an empty chart showed nothing at all.)
 - [ ] The label is translatable: `tradewinds.hologram.dock`.
+
+## Star chart: fuel range, reachability, readable names
+
+- [ ] Hold the Star Chart: island names are **white** and clearly readable against
+      the blue ocean (they were a mid grey that all but vanished).
+- [ ] A **dashed ring** is drawn around you at the limit of your fuel range. Burn or
+      buy fuel and it shrinks/grows on the next redraw (about a second).
+- [ ] With no fuel there is no ring; with a huge amount the ring is off the chart and
+      is simply not drawn, rather than being clamped to the edge and lying about it.
+- [ ] Islands inside the ring are the ones you can afford to warp to - cross-check
+      against `/tw chart list`.
+- [ ] `/tw chart list` shows **Fuel aboard: N units** and marks every entry with its
+      fuel cost: green and plain when reachable, greyed with "(not enough fuel)" when
+      it is not.
+- [ ] Standing at a port, the quoted cost matches the warp dialog exactly (it uses
+      the same route price, including any lane overrides in
+      `travel.warp.edge-overrides`).
+- [ ] Adrift between islands the cost is an estimate from your position - close
+      enough to plan by. It should still fall as you approach a destination.
