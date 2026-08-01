@@ -176,6 +176,8 @@ tradewinds:
       body: "<gray>Dark water, and something screaming above it. Your course is still paid for.</gray>"
       re-engage: "<aqua>Re-engage the warp to [name]</aqua>"
       re-engage-tooltip: "<gray>Free - the fuel was spent when you first engaged</gray>"
+      stay: "<gray>Stay a while</gray>"
+      stay-tooltip: "<gray>Close this. The offer comes round again, and the fuel is already spent.</gray>"
   item:
     pouch: "<gold>Trading Pouch</gold>"
     pouch-lore: "<gray>Cargo space. Stow goods to sell them.</gray>"

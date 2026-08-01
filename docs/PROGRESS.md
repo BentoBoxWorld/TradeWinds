@@ -21,6 +21,19 @@ sometimes-nothing roll still doing the work of making arrival survivable.
 A good reminder that "far enough away to be fair" has an upper bound set by what
 the client is ever told about.
 
+**Still too far (same day).** Two more faults behind that. The spawn code added
+`random * 30` blocks on top of the configured distance, which quietly undid the
+setting - a base of 44 was arriving as far out as 74. It is now a tight band
+around the value (0.85-1.15x), and the default is 28. And nothing ever re-aimed
+the ghasts: spawning them without a target stopped arrival being an ambush, but
+they then drifted and the encounter simply never happened. Once the arrival
+grace expires, anything nearby now acquires the castaway - the free way out is
+always on offer, so staying is the choice that carries consequences.
+
+The re-engage dialog also gained a **"Stay a while"** exit. It had exactly one
+button, so the only way to put it down was to take the warp - and a player who
+wants to look at the sea first should be able to.
+
 **And the dark.** An open black sky over a black sea reads as unfinished rather
 than hostile, so the interstice now has a **ceiling** (netherrack under bedrock,
 48 blocks up) and **braziers**: netherrack outcrops rising out of the water with

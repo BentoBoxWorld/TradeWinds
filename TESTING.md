@@ -933,10 +933,14 @@ two rules.
 **Needs fresh interstice chunks** - delete `world/dimensions/minecraft/tradewinds_world_nether`.
 Use `/twadmin warpfail <you>` then `/tw warp` to get there on demand.
 
-- [ ] **The ghasts are visible.** They were always spawning; at 90 blocks they were
-      beyond the monster entity-tracking-range (48 on a default spigot.yml, 96 here)
-      so the client was never sent them. Now ~44 blocks: you see them, hear them, and
-      choose whether to engage.
+- [ ] **The ghasts are visible and close enough to identify** - about 28 blocks, in
+      a tight band (the spread used to add up to 30 blocks on top of the setting,
+      which quietly undid it: a base of 44 arrived as far out as 74).
+- [ ] **They come for you when the grace runs out.** They arrive without a target so
+      landing is not an ambush, but after 20 seconds anything nearby acquires you.
+      Previously they never re-aimed at all, so they drifted and nothing happened.
+- [ ] The re-engage dialog has a **"Stay a while"** exit button. Declining costs
+      nothing - the offer comes round again and the fuel is already spent.
 - [ ] Some failures still bring nothing at all (`ghast-chance: 0.6`).
 - [ ] The 20-second arrival grace still holds - nothing targets or hurts you while
       you read the dialog.

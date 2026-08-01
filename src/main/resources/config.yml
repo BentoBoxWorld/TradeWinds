@@ -317,12 +317,12 @@ interstice:
   # are just dark water and a long silence - unsettling in its own right, and it
   # means a failed warp is not automatically a fight.
   ghast-chance: 0.6
-  # How far away ghasts appear, in blocks. They are not given a target, so this is
-  # how far off they hang until the player does something about them. Keep it well
-  # under the server's monster entity-tracking-range (48 on a default spigot.yml) or
-  # the client is never sent them at all - at 90 they were real, present and
-  # completely invisible.
-  ghast-distance: 44
+  # How far away ghasts appear, in blocks - close enough to see and identify, far
+  # enough to decide about. They arrive without a target and acquire one only when
+  # the arrival grace runs out, so a castaway can always leave before it starts.
+  # Keep it under the server's monster entity-tracking-range (48 on a default
+  # spigot.yml) or the client is never sent them at all.
+  ghast-distance: 28
   # Give the interstice a ceiling this many blocks above its sea. A lid makes it feel
   # like somewhere you are trapped rather than an empty void. 0 leaves it open.
   ceiling-height: 48

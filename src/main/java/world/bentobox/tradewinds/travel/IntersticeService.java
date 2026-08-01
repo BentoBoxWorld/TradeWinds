@@ -192,8 +192,11 @@ public class IntersticeService {
         double near = addon.getSettings().getIntersticeGhastDistance();
         for (int i = 0; i < count; i++) {
             double angle = Math.random() * Math.PI * 2;
-            double distance = near + Math.random() * 30;
-            Location spot = around.clone().add(Math.cos(angle) * distance, 10 + Math.random() * 10,
+            // A tight band around the configured distance. This used to add up
+            // to 30 blocks on top of it, which quietly undid the setting: at a
+            // base of 44 they were arriving as far out as 74.
+            double distance = near * (0.85 + Math.random() * 0.3);
+            Location spot = around.clone().add(Math.cos(angle) * distance, 6 + Math.random() * 8,
                     Math.sin(angle) * distance);
             Entity ghast = around.getWorld().spawnEntity(spot, EntityType.GHAST);
             if (ghast instanceof Ghast g) {
@@ -239,6 +242,29 @@ public class IntersticeService {
             lastPrompt.put(player.getUniqueId(), now);
             openReEngageDialog(player);
         }
+        hunt();
+    }
+
+    /**
+     * Once a castaway's grace has run out, whatever is out there notices them.
+     * <p>
+     * Ghasts are spawned without a target so that arriving is not an ambush,
+     * but nothing ever re-aimed them - so they drifted, and the encounter
+     * simply never happened. The free way out is always on offer; staying is
+     * the choice that has consequences.
+     */
+    private void hunt() {
+        for (Player player : addon.getNetherWorld().getPlayers()) {
+            if (isInGrace(player.getUniqueId()) || player.isDead()
+                    || player.getGameMode() != org.bukkit.GameMode.SURVIVAL) {
+                continue;
+            }
+            double radius = addon.getSettings().getIntersticeGhastDistance() * 2;
+            player.getNearbyEntities(radius, radius, radius).stream()
+                    .filter(Ghast.class::isInstance).map(Ghast.class::cast)
+                    .filter(ghast -> ghast.getTarget() == null)
+                    .forEach(ghast -> ghast.setTarget(player));
+        }
     }
 
     /**
@@ -264,7 +290,17 @@ public class IntersticeService {
                         .body(java.util.List.of(DialogBody.plainMessage(
                                 user.getTranslationAsComponent("tradewinds.ui.interstice.body", NO_VARS))))
                         .build())
-                .type(DialogType.multiAction(java.util.List.of(engage)).columns(1).build()));
+                // A way to put the dialog down. The offer repeats every
+                // prompt-seconds and the fuel is already spent, so declining
+                // costs nothing - but without an exit the only way to look at
+                // the sea was to take the warp.
+                .type(DialogType.multiAction(java.util.List.of(engage))
+                        .exitAction(ActionButton.builder(
+                                user.getTranslationAsComponent("tradewinds.ui.interstice.stay", NO_VARS))
+                                .tooltip(user.getTranslationAsComponent(
+                                        "tradewinds.ui.interstice.stay-tooltip", NO_VARS))
+                                .width(320).build())
+                        .columns(1).build()));
         player.showDialog(dialog);
     }
 

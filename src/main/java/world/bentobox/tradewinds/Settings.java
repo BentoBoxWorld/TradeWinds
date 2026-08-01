@@ -599,13 +599,14 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "interstice.ghast-chance")
     private double intersticeGhastChance = 0.6;
 
-    @ConfigComment("How far away ghasts appear, in blocks. They are not given a target, so this is")
-    @ConfigComment("how far off they hang until the player does something about them.")
+    @ConfigComment("How far away ghasts appear, in blocks - close enough to see and identify, far")
+    @ConfigComment("enough to decide about. They arrive without a target and acquire one only when")
+    @ConfigComment("the arrival grace runs out, so a castaway can always leave before it starts.")
     @ConfigComment("Keep it well under the server's monster entity-tracking-range (48 on a default")
     @ConfigComment("spigot.yml) or the client is never sent them at all: the first cut used 90 and")
     @ConfigComment("the ghasts were real, present, and completely invisible.")
     @ConfigEntry(path = "interstice.ghast-distance")
-    private double intersticeGhastDistance = 44;
+    private double intersticeGhastDistance = 28;
 
     @ConfigComment("Seconds after a failed warp during which nothing in the interstice may target")
     @ConfigComment("or hurt the player - long enough to read the dialog and take the free way out.")
