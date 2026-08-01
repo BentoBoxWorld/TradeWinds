@@ -102,6 +102,7 @@ tradewinds:
     flagged: "<dark_red>[name] remembers you. No inspection this time - the patrol is already coming.</dark_red>"
     jettisoned: "<green>Your cargo goes over the side. The patrol turns back - nothing to find.</green>"
     escaped: "<gold>Open water. [name] loses you - but its harbourmaster will not forget.</gold>"
+    called-off: "<gray>[name]'s patrol gives up the search and turns for home. You still have the cargo.</gray>"
     caught: "<dark_red>Boarded. [number] items seized, [amount] in fines, and [name] has your name.</dark_red>"
   band:
     safe: "<blue>Safe</blue>"

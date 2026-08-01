@@ -75,9 +75,11 @@ travel:
     # Half-width of the offer ring around an island's visible border (the protection edge,
     # where 'Now leaving...' appears): boated players crossing it get the warp dialog.
     trigger-distance: 30
-    # How far from the destination island's CENTER a warp arrival lands. Default 130:
-    # inside the default view distance, so you materialize seeing your destination.
-    arrival-distance: 130
+    # How far from the destination island's CENTRE a warp arrival lands. This wants
+    # to be at the island's visible border - the same place the warp dialog offers
+    # itself on the way out - so arriving is the mirror of leaving. 130 put sailors
+    # inside the island's own 160-block terrain footprint, on its underwater shelf.
+    arrival-distance: 400
     # Seconds between automatic warp-dialog offers at the same island's border.
     prompt-cooldown-seconds: 30
     # Maximum destinations listed in the warp dialog (nearest first).
@@ -412,10 +414,13 @@ illegal-trade:
     FRONTIER: 2
     LAWLESS: 1
     ANARCHIC: 0
-  # How far off a customs patrol surfaces, in blocks. Must clear a guardian's
-  # 15-block laser by a margin or the chase is an ambush - at 22 they were firing
-  # before the warning had finished printing. A decision window needs a decision.
-  patrol-distance: 45.0
+  # The furthest a customs patrol may be from the smuggler when it launches. They
+  # set out from the island's pier, but a patrol beyond the server's simulation
+  # distance (10 chunks = 160 blocks by default) never ticks - it does not swim,
+  # does not chase, and does nothing at all - so the launch point is pulled along
+  # the line toward the smuggler until it is close enough to be alive. Keep this
+  # under the monster entity-tracking-range too, or it is invisible as well as inert.
+  patrol-distance: 80.0
   # How close a patrol unit must get to make the arrest, in blocks.
   caught-radius: 4.0
   # How far beyond the protection range a smuggler must get to shake the chase, and

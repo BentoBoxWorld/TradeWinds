@@ -3,6 +3,37 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## Patrols that never ticked, and a false escape (2026-08-01)
+
+The dispatch logging earned its place immediately - one paste of console output
+answered three questions at once.
+
+**"The mobs spawned but nothing happened."** Not BentoBox protection, which was
+the natural suspect: they spawned fine, 200 blocks away at the pier, and
+`simulation-distance=10` means anything past 160 blocks **never ticks**. They
+did not swim, chase or do anything at all. Launching literally from the quay
+was right in spirit and wrong in practice. The launch point is now pulled along
+the line from pier to smuggler until it is close enough to be alive
+(`patrol-distance`, now 80 - inside both the simulation distance and the
+96-block entity tracking range). It reads as a patrol that has already rowed
+most of the way out.
+
+**"I was next to the dock and it said I'd reached open water."** The 120-second
+chase timeout called the same `escaped()` as a genuine border crossing - same
+message, same flee flag. So a player who never ran was told they had escaped
+and was flagged at the port for it. Timeout is now its own outcome: the patrol
+gives up and turns for home, and nothing is remembered against you.
+
+**"I arrived too close - I'd expect to be near where the warp dialog pops up."**
+Correct, and the number was indefensible: 130 blocks is *inside* the island's
+own 160-block terrain radius, on its underwater shelf. Arrival is now 400, the
+island's visible border - the same place the dialog offers itself on the way
+out, so arriving mirrors leaving. (The 130 came from earlier feedback that the
+paddle in was too long; the navigation bar and the dock hologram have since
+solved being lost, which was the real complaint.)
+
+211 tests green.
+
 ## Patrols launch from the dock, and leave bystanders alone (2026-08-01)
 
 "Again instant ambush." Twice now I had answered that by moving the spawn

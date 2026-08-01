@@ -387,10 +387,14 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "travel.warp.trigger-distance")
     private int warpTriggerDistance = 30;
 
-    @ConfigComment("How far from the destination island's CENTER a warp arrival lands. Default 130:")
-    @ConfigComment("inside the default view distance, so you materialize seeing your destination.")
+    @ConfigComment("How far from the destination island's CENTRE a warp arrival lands.")
+    @ConfigComment("This wants to be at the island's visible border - the same place the warp")
+    @ConfigComment("dialog offers itself on the way out - so arriving is the mirror of leaving.")
+    @ConfigComment("130 put sailors inside the island's own 160-block terrain footprint, on its")
+    @ConfigComment("underwater shelf: too close to feel like a voyage, and too close for a")
+    @ConfigComment("customs patrol to have anywhere to come from.")
     @ConfigEntry(path = "travel.warp.arrival-distance")
-    private int warpArrivalDistance = 130;
+    private int warpArrivalDistance = 400;
 
     @ConfigComment("Seconds between automatic warp-dialog offers at the same island's border.")
     @ConfigEntry(path = "travel.warp.prompt-cooldown-seconds")
@@ -731,11 +735,14 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "illegal-trade.patrol-size")
     private Map<String, Integer> patrolSize = defaultPatrolSize();
 
-    @ConfigComment("How far off a customs patrol surfaces, in blocks. Must clear a guardian's")
-    @ConfigComment("15-block laser by a margin or the chase is an ambush - at 22 they were firing")
-    @ConfigComment("before the warning had finished printing. The decision window needs a decision.")
+    @ConfigComment("The furthest a customs patrol may be from the smuggler when it launches. They")
+    @ConfigComment("set out from the island's pier, but a patrol beyond the server's simulation")
+    @ConfigComment("distance (10 chunks = 160 blocks by default) never ticks - it does not swim,")
+    @ConfigComment("does not chase, and does nothing at all - so the launch point is pulled along")
+    @ConfigComment("the line toward the smuggler until it is close enough to be alive. Keep it")
+    @ConfigComment("under the monster entity-tracking-range too, or it is invisible as well.")
     @ConfigEntry(path = "illegal-trade.patrol-distance")
-    private double patrolDistance = 45.0;
+    private double patrolDistance = 80.0;
 
     @ConfigComment("How close a patrol unit must get to make the arrest, in blocks.")
     @ConfigEntry(path = "illegal-trade.caught-radius")

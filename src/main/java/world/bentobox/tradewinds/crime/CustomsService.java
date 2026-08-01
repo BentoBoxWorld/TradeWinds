@@ -268,7 +268,11 @@ public class CustomsService {
                 return;
             }
             if (System.currentTimeMillis() - chase.started() > addon.getSettings().getChaseSeconds() * 1000L) {
-                escaped(player, chase);
+                // Timed out, not outrun. Reporting this as an escape told a
+                // player standing beside the dock that they had reached open
+                // water, and flagged them at the port for running - when they
+                // had done nothing of the sort.
+                calledOff(player, chase);
                 end(id, chase);
             }
         });
@@ -339,6 +343,14 @@ public class CustomsService {
 
     private String format(double amount) {
         return addon.getPlugin().getVault().map(v -> v.format(amount)).orElse(String.valueOf(amount));
+    }
+
+    /**
+     * The patrol gave up without ever catching them - the chase simply ran out
+     * of time. No flee flag: nobody ran, so the port has nothing to remember.
+     */
+    private void calledOff(Player player, Chase chase) {
+        User.getInstance(player).sendMessage("tradewinds.customs.called-off", "[name]", chase.island().name());
     }
 
     /**

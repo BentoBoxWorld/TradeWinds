@@ -24,7 +24,10 @@ class SeaArrivalTest {
 
     private static final long SEED = 20260729L;
     private static final int SEA = 70;
-    private static final int ARRIVAL_DISTANCE = 130;
+    /** The configured warp arrival distance - the island's visible border. */
+    private static final int ARRIVAL_DISTANCE = 400;
+    /** The distance that used to be used, and which the quay reaches past. */
+    private static final int OLD_ARRIVAL_DISTANCE = 130;
 
     private GalaxyEngine engine() {
         return new GalaxyEngine(new GalaxyConfig(SEED, 2500, 160, 45, 0.5, 6, 5000, SEA));
@@ -51,7 +54,7 @@ class SeaArrivalTest {
                         island.centerX() + (int) Math.round(Math.cos(rad) * 5000),
                         island.centerZ() + (int) Math.round(Math.sin(rad) * 5000), island.type(),
                         island.band(), island.biomeKey(), "approach");
-                int[] arrive = RouteGraph.arrivalPoint(from, island, ARRIVAL_DISTANCE);
+                int[] arrive = RouteGraph.arrivalPoint(from, island, OLD_ARRIVAL_DISTANCE);
                 tested++;
                 if (engine.columnPlanAt(arrive[0], arrive[1])
                         .filter(plan -> plan.feature() == ColumnPlan.Feature.DOCK).isPresent()) {

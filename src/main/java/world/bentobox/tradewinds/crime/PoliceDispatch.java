@@ -74,10 +74,10 @@ public class PoliceDispatch {
         // patrol that has to row out from the pier is one you can see coming
         // and outrun, which is the whole point of the decision window.
         Location pier = pierOf(island, from.getWorld());
-        Location launch = openWater(pier, from, minimumStandoff());
+        Location launch = openWater(launchPoint(pier, from), from, minimumStandoff());
         if (launch == null) {
-            addon.log("Customs at " + island.name() + ": no open water at the pier ("
-                    + describe(pier) + ") - confiscating instead of chasing");
+            addon.log("Customs at " + island.name() + ": no open water to launch from near "
+                    + describe(pier) + " - confiscating instead of chasing");
             return units;
         }
         addon.log("Customs at " + island.name() + ": player at " + describe(from) + ", pier at "
@@ -95,6 +95,41 @@ public class PoliceDispatch {
             }
         }
         return units;
+    }
+
+    /**
+     * Where the patrol actually appears: from the pier if the smuggler is near
+     * it, otherwise as far along the way from the pier as the server will
+     * actually simulate.
+     * <p>
+     * Launching literally from the quay was right in spirit and wrong in
+     * practice. A patrol dispatched 200 blocks away sits outside the
+     * simulation distance (10 chunks, 160 blocks, by default) and never ticks
+     * - so it does not swim, does not chase, and does nothing at all. The
+     * player watches four mobs spawn in the log and meets none of them. So the
+     * launch point is pulled along the line from pier to smuggler until it is
+     * close enough to be alive, which reads as a patrol that has already rowed
+     * most of the way out.
+     *
+     * @param pier the island's quay end
+     * @param player where the smuggler is
+     * @return the point to launch from
+     */
+    private Location launchPoint(Location pier, Location player) {
+        double max = addon.getSettings().getPatrolDistance();
+        double distance = pier.distance(player);
+        if (distance <= max) {
+            return pier;
+        }
+        // Along the line from the player toward the pier, at the maximum range
+        // that still ticks and can still be seen
+        Vector toward = pier.toVector().subtract(player.toVector()).setY(0);
+        if (toward.lengthSquared() < 0.01) {
+            toward = new Vector(1, 0, 0);
+        }
+        Location spot = player.clone().add(toward.normalize().multiply(max));
+        spot.setY(addon.getSettings().getSeaHeight() - 1.0);
+        return spot;
     }
 
     /**

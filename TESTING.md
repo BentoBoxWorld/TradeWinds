@@ -987,3 +987,20 @@ point, and each unit's distance.
 - [ ] **A second, innocent player standing nearby is never hurt by the patrol** -
       not by a guardian beam, not by a trident. Try mooring next to the smuggler.
 - [ ] The patrol still switches back to the smuggler if it wanders.
+
+## Warp arrival distance and patrol reachability
+
+- [ ] A warp now lands you at the island's **visible border** (~400 blocks from the
+      centre), where the warp dialog offers itself on the way out - not on the
+      island's underwater shelf. The nav bar and dock hologram give you the heading.
+- [ ] A customs patrol launches from the pier if you are near it, otherwise from as
+      far along the way as the server will simulate (~80 blocks). Check the console
+      line: the launch point should never be more than that from you.
+- [ ] **The patrol actually moves.** Anything beyond ~160 blocks (simulation
+      distance) never ticks at all, which is what "they spawned but nothing
+      happened" was.
+- [ ] Let a chase run past 2 minutes without leaving island space: you are told the
+      patrol **gives up and turns for home** - not that you reached open water - and
+      you are NOT flagged at that port.
+- [ ] Genuinely outrun a chase across the border: you still get the open-water
+      message and you ARE flagged.
