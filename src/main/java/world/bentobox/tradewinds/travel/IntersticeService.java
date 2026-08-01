@@ -49,6 +49,9 @@ public class IntersticeService {
      */
     private static final String[] NO_VARS = new String[0];
 
+    /** Room a ghast needs under the interstice ceiling - they are 4 blocks tall. */
+    private static final int GHAST_CLEARANCE = 6;
+
     /** Player -> the destination cell they are still owed, free of charge. */
     private final Map<UUID, String> pendingDestination = new ConcurrentHashMap<>();
     private final Map<UUID, Long> lastPrompt = new ConcurrentHashMap<>();
@@ -154,7 +157,26 @@ public class IntersticeService {
         if (vehicle != null) {
             player.leaveVehicle();
         }
-        Util.teleportAsync(player, target).thenRun(() -> {
+        // Everything after the teleport runs on the MAIN THREAD, explicitly.
+        // A teleport future's continuation is not guaranteed to, and spawning
+        // an entity off-thread throws "Asynchronous entity add!" - an exception
+        // a CompletableFuture then swallows whole. That is why the arrival
+        // sound played and the ghasts never appeared: the throw took out
+        // everything after it, silently, including the warp-failed event.
+        Util.teleportAsync(player, target)
+                .thenRun(() -> Bukkit.getScheduler().runTask(addon.getPlugin(),
+                        () -> onArrival(player, vehicle, target, from, to)))
+                .exceptionally(error -> {
+                    addon.logError("Interstice teleport failed for " + player.getName() + ": " + error);
+                    return null;
+                });
+    }
+
+    /**
+     * The arrival itself, on the main thread.
+     */
+    private void onArrival(Player player, Entity vehicle, Location target, IslandSpec from, IslandSpec to) {
+        try {
             if (vehicle instanceof Boat boat && boat.isValid()) {
                 boat.teleportAsync(target).thenRun(() -> Bukkit.getScheduler().runTask(addon.getPlugin(),
                         () -> boat.addPassenger(player)));
@@ -165,7 +187,11 @@ public class IntersticeService {
             arrivals.put(player.getUniqueId(), System.currentTimeMillis());
             spawnGhasts(player, target);
             Bukkit.getPluginManager().callEvent(new TWWarpFailedEvent(player, from, to));
-        });
+        } catch (Exception e) {
+            // Never let an arrival fail silently again
+            addon.logError("Interstice arrival failed for " + player.getName() + ": " + e);
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -184,12 +210,15 @@ public class IntersticeService {
      */
     private void spawnGhasts(Player player, Location around) {
         if (Math.random() >= addon.getSettings().getIntersticeGhastChance()) {
+            addon.log("Interstice: " + player.getName() + " stranded at " + describe(around)
+                    + " - nothing came (ghast-chance roll)");
             return; // Dark water and nothing in it. The interstice is unsettling enough.
         }
         int min = addon.getSettings().getIntersticeGhastsMin();
         int count = min + (int) (Math.random() * Math.max(1,
                 addon.getSettings().getIntersticeGhastsMax() - min + 1));
         double near = addon.getSettings().getIntersticeGhastDistance();
+        int spawned = 0;
         for (int i = 0; i < count; i++) {
             double angle = Math.random() * Math.PI * 2;
             // A tight band around the configured distance. This used to add up
@@ -198,13 +227,34 @@ public class IntersticeService {
             double distance = near * (0.85 + Math.random() * 0.3);
             Location spot = around.clone().add(Math.cos(angle) * distance, 6 + Math.random() * 8,
                     Math.sin(angle) * distance);
+            // A ghast is 4 blocks across, and the interstice now has a lid:
+            // keep it clear of both the ceiling and the water
+            int ceiling = addon.getSettings().getIntersticeCeilingHeight();
+            int sea = addon.getSettings().getIntersticeSeaHeight();
+            if (ceiling > 0) {
+                spot.setY(Math.min(spot.getY(), (double) sea + ceiling - GHAST_CLEARANCE));
+            }
+            spot.setY(Math.max(spot.getY(), sea + 3.0));
             Entity ghast = around.getWorld().spawnEntity(spot, EntityType.GHAST);
             if (ghast instanceof Ghast g) {
                 // Deliberately NOT targeted: let the player decide whether this
                 // is a fight
                 g.setRemoveWhenFarAway(true);
+                spawned++;
             }
+            addon.log("Interstice: ghast spawned at " + describe(spot) + " ("
+                    + (int) spot.distance(around) + " blocks from the player, alive="
+                    + (ghast != null && ghast.isValid()) + ")");
         }
+        addon.log("Interstice: " + player.getName() + " stranded at " + describe(around) + " in "
+                + around.getWorld().getName() + " - " + spawned + " of " + count + " ghasts spawned");
+    }
+
+    /**
+     * Compact coordinates for the console.
+     */
+    private static String describe(Location location) {
+        return location.getBlockX() + "," + location.getBlockY() + "," + location.getBlockZ();
     }
 
     /**
