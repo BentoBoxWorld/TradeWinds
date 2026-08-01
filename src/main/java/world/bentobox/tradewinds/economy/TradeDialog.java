@@ -243,6 +243,13 @@ public class TradeDialog {
         // Traders only buy customs-stamped goods (plus the illegal exceptions)
         for (Map.Entry<Material, Integer> entry : addon.getHoldService()
                 .contents(player, addon.getMarketService().sellableFilter()).entrySet()) {
+            // Do not quote a price for something this port will refuse at the
+            // counter: the sell page used to offer a dollar for contraband that
+            // a safe island would then decline, which reads as a broken market
+            if (addon.getCustomsService() != null && addon.getCustomsService().isContraband(entry.getKey())
+                    && !addon.getCustomsService().buysContraband(spec.band())) {
+                continue;
+            }
             addon.getMarketService().playerSellsAt(spec, entry.getKey())
                     .ifPresent(unit -> offers.add(new SellOffer(entry.getKey(), entry.getValue(), unit,
                             PriceModel.round2(unit * entry.getValue()))));

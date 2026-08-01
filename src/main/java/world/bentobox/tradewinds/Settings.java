@@ -622,6 +622,18 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "illegal-trade.safest-contraband-buyer")
     private String safestContrabandBuyer = "FRONTIER";
 
+    @ConfigComment("What a black market pays for contraband, as a multiplier on its ordinary price.")
+    @ConfigComment("This is the reward half of high-risk/high-reward, and the main lever on how")
+    @ConfigComment("profitable smuggling is. Contraband is priced from its crafting recipe like")
+    @ConfigComment("everything else, and sugar's recipe price is about one unit - so without this")
+    @ConfigComment("a smuggler runs a customs patrol and is offered a dollar for the cargo.")
+    @ConfigComment("Ports that deal in it always want it, so the band demand bonus applies too:")
+    @ConfigComment("the rougher the port, the better it pays. Raise with care - contraband is")
+    @ConfigComment("farmable, and this is the one price in the game that is not paid for by a")
+    @ConfigComment("purchase somewhere else.")
+    @ConfigEntry(path = "illegal-trade.contraband-price-multiplier")
+    private double contrabandPriceMultiplier = 8.0;
+
     @ConfigComment("Chance (0-1) that entering an island's space triggers a customs scan, per band.")
     @ConfigComment("Safe space searches everyone; out in the lawless bands nobody is looking.")
     @ConfigEntry(path = "illegal-trade.scan-chance")
@@ -2848,6 +2860,8 @@ public class Settings implements WorldSettings {
     public void setBootyTable(List<String> bootyTable) { this.bootyTable = bootyTable; }
     public String getSafestContrabandBuyer() { return safestContrabandBuyer; }
     public void setSafestContrabandBuyer(String v) { this.safestContrabandBuyer = v; }
+    public double getContrabandPriceMultiplier() { return contrabandPriceMultiplier; }
+    public void setContrabandPriceMultiplier(double v) { this.contrabandPriceMultiplier = v; }
     public Map<String, Double> getScanChance() { return scanChance; }
     public void setScanChance(Map<String, Double> v) { this.scanChance = v; }
     public double getScanUpstandingFactor() { return scanUpstandingFactor; }

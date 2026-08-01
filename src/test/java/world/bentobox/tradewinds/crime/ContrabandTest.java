@@ -8,6 +8,7 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
+import world.bentobox.tradewinds.economy.PriceModel;
 import world.bentobox.tradewinds.galaxy.SecurityBand;
 
 /**
@@ -61,6 +62,45 @@ class ContrabandTest {
             assertTrue(scans.get(band) <= previous, "Scan chance rose at " + band);
             previous = scans.get(band);
         }
+    }
+
+    @Test
+    void testContrabandActuallyPaysForTheRisk() {
+        // Playtest: "sugar trading should be high risk, high reward - but the
+        // trader only offered ~$1 for it". Contraband is priced from its
+        // crafting recipe like everything else, and sugar's recipe price is
+        // about one unit, so the risk was built and the reward was not.
+        PriceModel model = new PriceModel(0.6, 1.4, 0.125, 1.15, 0.85, 500, 0.7, 1.3);
+        double premium = 8.0;
+        double sugarBase = 1.0;
+
+        // A port that deals in contraband always wants it, so the band bonus
+        // applies: the rougher the port, the better it pays
+        double frontier = model.playerSellsAt(sugarBase * premium,
+                model.economicFactor(false, true, SecurityBand.FRONTIER.ordinal(), 0));
+        double lawless = model.playerSellsAt(sugarBase * premium,
+                model.economicFactor(false, true, SecurityBand.LAWLESS.ordinal(), 0));
+        double anarchic = model.playerSellsAt(sugarBase * premium,
+                model.economicFactor(false, true, SecurityBand.ANARCHIC.ordinal(), 0));
+        assertTrue(lawless > frontier, "Running further out must pay more");
+        assertTrue(anarchic > lawless, "Running further out must pay more");
+
+        // ... and it must beat honest trading per unit of hold space, or there
+        // is no reason to take the risk at all. Compare against the margin on a
+        // mid-value good bought where it is produced and sold where it is wanted.
+        double honestBase = 8.0;
+        double honestMargin = model.playerSellsAt(honestBase,
+                model.economicFactor(false, true, SecurityBand.FRONTIER.ordinal(), 0))
+                - model.playerBuysAt(honestBase,
+                        model.economicFactor(true, false, SecurityBand.FRONTIER.ordinal(), 0));
+        assertTrue(frontier > honestMargin,
+                "Contraband pays " + frontier + "/item against an honest margin of " + honestMargin);
+
+        // Without the premium it is worth less than the honest margin, which is
+        // exactly the bug that was reported
+        double unpriced = model.playerSellsAt(sugarBase,
+                model.economicFactor(false, true, SecurityBand.FRONTIER.ordinal(), 0));
+        assertTrue(unpriced < honestMargin);
     }
 
     @Test

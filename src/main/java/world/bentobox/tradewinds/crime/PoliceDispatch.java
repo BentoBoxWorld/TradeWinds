@@ -62,7 +62,8 @@ public class PoliceDispatch {
         if (toIsland.lengthSquared() < 0.01) {
             toIsland = new Vector(1, 0, 0);
         }
-        Location spot = openWater(from.clone().add(toIsland.normalize().multiply(INTERCEPT_DISTANCE)), from);
+        Location spot = openWater(from.clone().add(toIsland.normalize().multiply(INTERCEPT_DISTANCE)), from,
+                minimumStandoff());
         if (spot == null) {
             // Ashore in the market: there is no water to launch a patrol from,
             // and a guardian spawned on a plaza just flops about. The caller
@@ -70,7 +71,8 @@ public class PoliceDispatch {
             return units;
         }
         for (int i = 0; i < count; i++) {
-            Location at = openWater(spot.clone().add(Math.random() * 6 - 3, 0, Math.random() * 6 - 3), from);
+            Location at = openWater(spot.clone().add(Math.random() * 6 - 3, 0, Math.random() * 6 - 3), from,
+                    minimumStandoff());
             Entity unit = at == null ? null : spawn(at, i % 3 == 0 ? EntityType.GUARDIAN : EntityType.DROWNED,
                     player);
             if (unit != null) {
@@ -81,26 +83,51 @@ public class PoliceDispatch {
     }
 
     /**
+     * How close a patrol may surface to its quarry. This must stay comfortably
+     * beyond the arrest radius: the first cut let the water search fall back to
+     * the player's own position, so patrols materialised alongside the boat,
+     * opened fire, and the chase tick registered an arrest before the player
+     * had read the warning. A chase you cannot run from is not a chase.
+     *
+     * @return the minimum spawn distance in blocks
+     */
+    private double minimumStandoff() {
+        return Math.max(12.0, addon.getSettings().getCaughtRadius() * 3);
+    }
+
+    /**
      * The nearest sea-level water column to a spot, searching outward, or null
      * if there is none within reach. Police are sailors: they need somewhere to
-     * be.
+     * be - but never within {@code standoff} blocks of the player.
      *
      * @param spot the preferred position
-     * @param fallbackToward searched around as well, so a patrol still launches
-     *        when the ideal intercept point happens to be inland
+     * @param player where the quarry is, which the patrol must not spawn on top of
+     * @param standoff minimum distance from the player
      * @return a water location, or null
      */
-    private Location openWater(Location spot, Location fallbackToward) {
+    private Location openWater(Location spot, Location player, double standoff) {
         int seaY = addon.getSettings().getSeaHeight();
-        for (Location candidate : new Location[] { spot, fallbackToward }) {
-            for (int radius = 0; radius <= 24; radius += 4) {
-                for (int attempt = 0; attempt < 8; attempt++) {
-                    double angle = attempt * Math.PI / 4;
-                    Location at = candidate.clone().add(Math.cos(angle) * radius, 0, Math.sin(angle) * radius);
-                    at.setY(seaY - 1.0);
-                    if (at.getBlock().getType() == org.bukkit.Material.WATER) {
-                        return at;
-                    }
+        double standoffSquared = standoff * standoff;
+        // Widen the ring around the intended spot until water turns up, then
+        // fall back to a ring around the player at the standoff distance
+        for (int radius = 0; radius <= 32; radius += 4) {
+            for (int attempt = 0; attempt < 12; attempt++) {
+                double angle = attempt * Math.PI / 6;
+                Location at = spot.clone().add(Math.cos(angle) * radius, 0, Math.sin(angle) * radius);
+                at.setY(seaY - 1.0);
+                if (at.distanceSquared(player) >= standoffSquared
+                        && at.getBlock().getType() == org.bukkit.Material.WATER) {
+                    return at;
+                }
+            }
+        }
+        for (int radius = (int) standoff; radius <= standoff + 32; radius += 4) {
+            for (int attempt = 0; attempt < 12; attempt++) {
+                double angle = attempt * Math.PI / 6;
+                Location at = player.clone().add(Math.cos(angle) * radius, 0, Math.sin(angle) * radius);
+                at.setY(seaY - 1.0);
+                if (at.getBlock().getType() == org.bukkit.Material.WATER) {
+                    return at;
                 }
             }
         }

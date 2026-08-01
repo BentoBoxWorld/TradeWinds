@@ -328,6 +328,15 @@ illegal-trade:
   # what pushes smuggling runs outward - crime pays, into danger.
   # SAFE, POLICED, FRONTIER, LAWLESS or ANARCHIC.
   safest-contraband-buyer: FRONTIER
+  # What a black market pays for contraband, as a multiplier on its ordinary price.
+  # This is the reward half of high-risk/high-reward and the main lever on how
+  # profitable smuggling is. Contraband is priced from its crafting recipe like
+  # everything else, and sugar's recipe price is about one unit - so without this a
+  # smuggler runs a customs patrol and is offered a dollar for the cargo.
+  # Ports that deal in it always want it, so the band demand bonus applies too: the
+  # rougher the port, the better it pays. Raise with care - contraband is farmable,
+  # and this is the one price in the game not paid for by a purchase somewhere else.
+  contraband-price-multiplier: 8.0
   # Chance (0-1) that entering an island's space triggers a customs scan, per band.
   # Safe space searches everyone; out in the lawless bands nobody is looking. Note
   # these are deliberately the inverse of who will BUY contraband: nowhere both

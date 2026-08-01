@@ -669,6 +669,27 @@ cooldowns are invisible, so guessing from behaviour alone is a trap.
       patrol to launch from, so customs simply seize the cargo and fine you, with a
       message saying so — rather than spawning guardians that flop about on land.
 
+### 6b-0b — Fixes from the second playtest
+- [ ] **Contraband actually pays.** Sell sugar at a FRONTIER/LAWLESS/ANARCHIC port:
+      roughly $12-14 an item, not $1. It pays more the rougher the port.
+      (`illegal-trade.contraband-price-multiplier`, default 8.0 — the main balance
+      lever, and the one price in the game not funded by a purchase elsewhere.)
+- [ ] The sell page **no longer quotes a price for contraband at a port that will
+      refuse it** — sugar simply is not listed at SAFE/POLICED islands, instead of
+      being offered for a dollar and then declined at the counter. This is what made
+      `/twadmin customs` look like it was lying: it said "buys contraband: false"
+      while the dialog was showing an offer.
+- [ ] **No trader stocks contraband.** Check the buy page at an AGRICULTURAL island:
+      no sugar. (If they sold it you could buy at the honest price and sell at the
+      black-market premium with no farming and no risk.)
+- [ ] **A patrol never spawns on top of you.** It surfaces at least ~12 blocks away,
+      well beyond the 4-block arrest radius, so there is always a chase to run.
+      Previously the water search fell back to the player's own position: patrols
+      materialised alongside the boat, opened fire, and the arrest registered before
+      the warning had been read — "I got instantly hurt and lost the sugar".
+- [ ] Note that warp arrival damage (`travel.warp.damage`, default 2.0) is separate
+      and intended — warping hurts. Do not confuse it with a patrol.
+
 ### 6b-i — The scan
 - [ ] Row or warp into a **SAFE** island's protection range carrying no contraband:
       "Customs board you, look through the hold, and wave you on." (Set

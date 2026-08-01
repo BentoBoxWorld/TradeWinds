@@ -53,7 +53,12 @@ public class MarketService {
      * What this island trades: its type's produce catalog.
      */
     public java.util.List<Material> saleCatalog(IslandSpec spec) {
-        return TypeEconomy.catalog(spec.type());
+        // Traders never stock contraband. If they did, a smuggler could buy it
+        // over the counter at the honest price and sell it back at the black
+        // market premium with no farming and no risk at all.
+        return TypeEconomy.catalog(spec.type()).stream()
+                .filter(m -> addon.getCustomsService() == null || !addon.getCustomsService().isContraband(m))
+                .toList();
     }
 
     /**
@@ -189,20 +194,48 @@ public class MarketService {
      * What a player pays this island per unit, or empty if not tradeable.
      */
     public Optional<Double> playerBuysAt(IslandSpec spec, Material material) {
-        return basePrice(material).map(base -> model().playerBuysAt(base, factor(spec, material)));
+        return basePrice(material)
+                .map(base -> model().playerBuysAt(base * contrabandPremium(material), factor(spec, material)));
     }
 
     /**
      * What this island pays a player per unit, or empty if not tradeable.
      */
     public Optional<Double> playerSellsAt(IslandSpec spec, Material material) {
-        return basePrice(material).map(base -> model().playerSellsAt(base, factor(spec, material)));
+        return basePrice(material)
+                .map(base -> model().playerSellsAt(base * contrabandPremium(material), factor(spec, material)));
+    }
+
+    /**
+     * The smuggler's premium.
+     * <p>
+     * Contraband is priced from its crafting recipe like everything else, and
+     * sugar's recipe price is about one currency unit - so the first playtest
+     * ran cargo past a customs patrol and was offered a dollar for it. The risk
+     * was built and the reward was not. This is the reward: what a black market
+     * pays over the honest price of the same goods, and the main lever for how
+     * profitable smuggling is.
+     *
+     * @param material the material
+     * @return the multiplier, 1.0 for anything legal
+     */
+    public double contrabandPremium(Material material) {
+        if (addon.getCustomsService() == null || !addon.getCustomsService().isContraband(material)) {
+            return 1.0;
+        }
+        return Math.max(1.0, addon.getSettings().getContrabandPriceMultiplier());
     }
 
     private double factor(IslandSpec spec, Material material) {
         TradeCategory category = TradeCategory.of(material);
-        return model().economicFactor(TypeEconomy.produces(spec.type()).contains(category),
-                TypeEconomy.demands(spec.type()).contains(category), spec.band().ordinal(),
+        boolean contraband = addon.getCustomsService() != null
+                && addon.getCustomsService().isContraband(material);
+        // A port that deals in contraband always wants it - it is not on
+        // anybody's official produce list, and demand is what makes the band
+        // bonus apply, so the rougher the port the better it pays
+        boolean demands = contraband || TypeEconomy.demands(spec.type()).contains(category);
+        boolean produces = !contraband && TypeEconomy.produces(spec.type()).contains(category);
+        return model().economicFactor(produces, demands, spec.band().ordinal(),
                 addon.getIslandDataManager().getStock(spec, category));
     }
 

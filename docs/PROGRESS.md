@@ -64,10 +64,35 @@ radius, 400-block break-off, 120-second chase cap.
    straight confiscation, which is what being caught ashore in a market should
    mean anyway.
 
+**Second playtest: the reward half was missing, and the chase was unrunnable.**
+- "Sugar trading should be high risk, high reward - but the trader only offered
+  ~$1 for it." Correct, and a design hole rather than a tuning nit: contraband
+  was priced from its crafting recipe like every other good, and sugar's recipe
+  price is about one currency unit. The risk was built; the reward never was.
+  Contraband now carries a **black-market premium**
+  (`illegal-trade.contraband-price-multiplier`, default 8.0) and counts as
+  *demanded* at any port that deals in it, so the existing band bonus applies
+  and running further out pays more. Measured: $11.90 at FRONTIER rising to
+  $14.28 at ANARCHIC, against an honest margin of $6.38 per item on a mid-value
+  good - roughly double the return per hold slot, with no capital outlay, which
+  is what "high risk, high reward" has to mean. A test pins the shape.
+- Traders no longer **stock** contraband. If they did, a player could buy it
+  over the counter at the honest price and sell it back at the premium with no
+  farming and no risk - a money printer hiding behind the new premium.
+- "`/twadmin customs` reports that the port does not buy it, but they did." The
+  report was right and the dialog was wrong: the sell page quoted a price for
+  contraband at ports that would refuse it at the counter. It now omits them.
+- "When I arrived, I got instantly hurt and lost the sugar. No idea what
+  happened." The water search for a patrol spawn fell back to the player's own
+  position with no minimum distance, so patrols materialised alongside the boat,
+  opened fire, and the chase tick registered an arrest within one tick. Patrols
+  now keep a standoff of at least three times the arrest radius. A chase you
+  cannot run from is not a chase.
+
 Also added `/twadmin customs`: contraband aboard, standing, band, effective scan
 chance, patrol size, chase state. Scans are probabilistic and cooldowns are
 invisible, so "is it working?" was not answerable from behaviour alone - that
-was the real complaint, and a diagnostic is the answer to it. 189 tests green.
+was the real complaint, and a diagnostic is the answer to it. 190 tests green.
 
 ## Stage 6a — the law: port flags, reputation, fines (2026-07-31)
 
