@@ -3,6 +3,19 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## Pouches for sale, white expanders (2026-07-31)
+
+Completing the carried-hold progression: the shipwright now sells Trading
+Pouches (economy.pouch-price, 250) up to max-bundles, refusing beyond the cap
+(HoldService.pouchCount counts past the cap so the shop can tell). At default
+prices a pouch is ~$3.90/item against the expander's ~$2.89/item - the early
+rung is deliberately the worse deal, so expanders stay the goal.
+Expanders are now WHITE_SHULKER_BOX so they never read as a vanilla purple
+shulker; isExpander accepts any *SHULKER_BOX carrying the PDC key, so purple
+ones bought by earlier builds keep working. StarterKit reuses
+MarketService.pouchItem() so the starting pouch and shop pouches are
+identical. 143 tests green.
+
 ## The hold is carried, not moored (2026-07-31)
 
 Ben bought a chest boat and found the hold still capped at his single pouch:

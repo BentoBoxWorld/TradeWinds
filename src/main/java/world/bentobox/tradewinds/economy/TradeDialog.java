@@ -184,12 +184,24 @@ public class TradeDialog {
                         openShipwright(player, spec);
                     })));
         }
+        int pouches = addon.getHoldService().pouchCount(player);
+        int maxPouches = addon.getSettings().getMaxBundles();
+        if (pouches < maxPouches) {
+            buttons.add(button(String.format("Trading Pouch - $%.0f", addon.getSettings().getPouchPrice()),
+                    NamedTextColor.GOLD,
+                    "Holds 64 items (" + pouches + "/" + maxPouches + " carried). Cheap to start with; a "
+                            + "cargo expander is far better value once you can afford one.",
+                    () -> {
+                        addon.getMarketService().buyPouch(player);
+                        openShipwright(player, spec);
+                    }));
+        }
         int owned = addon.getPlayerDataManager().get(player.getUniqueId()).getExpandersPurchased();
         if (owned < addon.getSettings().getExpanderCap()) {
             double price = PriceModel.expanderPrice(addon.getSettings().getExpanderBasePrice(), owned);
             buttons.add(button(String.format("Cargo Expander - $%.0f", price), NamedTextColor.GOLD,
-                    "Shulker hold expansion (" + owned + "/" + addon.getSettings().getExpanderCap()
-                            + " owned). Price doubles each time. Stowed into your chest boat.",
+                    "27 stacks of cargo space (" + owned + "/" + addon.getSettings().getExpanderCap()
+                            + " owned). Price doubles each time. Carried in your pack - open it anywhere.",
                     () -> {
                         addon.getMarketService().buyExpander(player);
                         openShipwright(player, spec);

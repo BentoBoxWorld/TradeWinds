@@ -439,7 +439,12 @@ database (or use `/twadmin delete` on it), then restart.
       restart: it gains its name, band flags, and — for spawn — protection 400 /
       range 1000.
 
-### Stage 5d — the carried hold (playtest fix)
+### Stage 5d — the carried hold, pouches and white expanders
+- [ ] The Shipwright sells **Trading Pouches** ($250) up to the 3-pouch limit, then
+      refuses ("cannot carry any more"). A pouch is deliberately poorer value per item
+      than an expander — the early rung, not the destination.
+- [ ] Cargo expanders are **white** shulker boxes named "Cargo Expander" (vanilla
+      purple ones from earlier builds still work as cargo).
 - [ ] Buy a Cargo Expander: it lands in your PACK (no chest boat needed). Right-click
       it anywhere to open and fill it - that is your hold.
 - [ ] Goods inside a carried expander are sellable, and count as fuel for warping.

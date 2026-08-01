@@ -67,7 +67,9 @@ tradewinds:
     cannot-afford: "&c You cannot afford that."
     no-hold-space: "&c No room in your hold - stow cargo in your chest boat, expanders or bundles."
     needs-chest-boat: "&c Expanders are stowed in a chest boat - buy one from the shipwright first."
-    expander-bought: "&6 Cargo expander purchased for $[price] - stowed in your hold."
+    expander-bought: "&6 Cargo expander purchased for $[price] - carried in your pack."
+    pouch-bought: "&6 Trading pouch purchased for $[price]."
+    pouch-cap: "&c You cannot carry any more trading pouches."
     expander-cap: "&c Your boat cannot take any more expanders."
   interstice:
     stranded: "&4 The warp collapses! Dark water, and screaming above it."

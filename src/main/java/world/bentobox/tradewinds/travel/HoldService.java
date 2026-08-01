@@ -200,10 +200,26 @@ public class HoldService {
      * Is this item a TradeWinds cargo expander (lore-renamed shulker box)?
      */
     public boolean isExpander(ItemStack stack) {
-        return stack != null && stack.getType() == Material.SHULKER_BOX && stack.hasItemMeta()
+        // Any shulker box colour: expanders ship white to tell them apart from
+        // vanilla purple, but older purple ones stay valid
+        return stack != null && stack.getType().name().endsWith("SHULKER_BOX") && stack.hasItemMeta()
                 && stack.getItemMeta().getPersistentDataContainer().has(
                         org.bukkit.NamespacedKey.fromString("tradewinds:expander"),
                         org.bukkit.persistence.PersistentDataType.STRING);
+    }
+
+    /**
+     * How many trading pouches the player carries, counting past the cap - the
+     * shipwright needs the true number to refuse selling more.
+     */
+    public int pouchCount(Player player) {
+        int count = 0;
+        for (ItemStack stack : player.getInventory().getContents()) {
+            if (stack != null && stack.getItemMeta() instanceof BundleMeta) {
+                count += stack.getAmount();
+            }
+        }
+        return count;
     }
 
     /**

@@ -324,7 +324,8 @@ public class MarketService {
      * no End there are no shulker shells to craft one (spec principle 7).
      */
     public ItemStack expanderItem() {
-        ItemStack item = new ItemStack(Material.SHULKER_BOX);
+        // White, so it never reads as a vanilla purple shulker box
+        ItemStack item = new ItemStack(Material.WHITE_SHULKER_BOX);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
             meta.displayName(Component.text("Cargo Expander", NamedTextColor.GOLD));
@@ -334,6 +335,52 @@ public class MarketService {
             item.setItemMeta(meta);
         }
         return item;
+    }
+
+    /**
+     * A trading pouch: the first rung of cargo space, and the only hold a new
+     * sailor has.
+     */
+    public ItemStack pouchItem() {
+        ItemStack pouch = new ItemStack(Material.BUNDLE);
+        ItemMeta meta = pouch.getItemMeta();
+        if (meta != null) {
+            meta.displayName(Component.text("Trading Pouch", NamedTextColor.GOLD));
+            meta.lore(java.util.List.of(Component.text("Cargo space. Stow goods to sell them.",
+                    NamedTextColor.GRAY)));
+            pouch.setItemMeta(meta);
+        }
+        return pouch;
+    }
+
+    /**
+     * Buy a trading pouch, up to the hold's pouch limit.
+     *
+     * @return true if bought
+     */
+    public boolean buyPouch(Player player) {
+        Optional<VaultHook> vault = addon.getPlugin().getVault();
+        if (vault.isEmpty()) {
+            return false;
+        }
+        User user = User.getInstance(player);
+        if (addon.getHoldService().pouchCount(player) >= addon.getSettings().getMaxBundles()) {
+            user.sendMessage("tradewinds.trade.pouch-cap");
+            thud(player);
+            return false;
+        }
+        double price = addon.getSettings().getPouchPrice();
+        if (!vault.get().has(user, price)) {
+            user.sendMessage("tradewinds.trade.cannot-afford");
+            thud(player);
+            return false;
+        }
+        vault.get().withdraw(user, price);
+        player.getInventory().addItem(pouchItem()).values()
+                .forEach(left -> player.getWorld().dropItem(player.getLocation(), left));
+        user.sendMessage("tradewinds.trade.pouch-bought", "[price]", String.format("%.2f", price));
+        chime(player);
+        return true;
     }
 
     static String pretty(Material material) {

@@ -344,9 +344,15 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "economy.expander-cap")
     private int expanderCap = 4;
 
-    @ConfigComment("Maximum trading bundles that count as hold space.")
+    @ConfigComment("Maximum trading pouches (bundles) that count as hold space.")
     @ConfigEntry(path = "economy.max-bundles")
     private int maxBundles = 3;
+
+    @ConfigComment("Price of a trading pouch from the shipwright. A pouch holds 64 items, so at")
+    @ConfigComment("the default prices it is deliberately worse value per item than a cargo")
+    @ConfigComment("expander (27 stacks for 5000) - pouches are the early rung, expanders the goal.")
+    @ConfigEntry(path = "economy.pouch-price")
+    private double pouchPrice = 250.0;
 
     @ConfigComment("Give customs-stamped goods an enchantment glint as well as their lore line.")
     @ConfigEntry(path = "economy.stamp-glint")
@@ -2452,6 +2458,8 @@ public class Settings implements WorldSettings {
     public void setExpanderCap(int expanderCap) { this.expanderCap = expanderCap; }
     public int getMaxBundles() { return maxBundles; }
     public void setMaxBundles(int maxBundles) { this.maxBundles = maxBundles; }
+    public double getPouchPrice() { return pouchPrice; }
+    public void setPouchPrice(double pouchPrice) { this.pouchPrice = pouchPrice; }
     public boolean isStampGlint() { return stampGlint; }
     public void setStampGlint(boolean stampGlint) { this.stampGlint = stampGlint; }
     public List<String> getUnstampedSellables() { return unstampedSellables; }

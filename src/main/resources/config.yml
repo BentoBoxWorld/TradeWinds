@@ -161,8 +161,11 @@ economy:
   # Cargo expanders: first price, doubling each purchase, hard cap per player.
   expander-base-price: 5000.0
   expander-cap: 4
-  # Maximum trading bundles that count as hold space.
+  # Maximum trading pouches (bundles) that count as hold space.
   max-bundles: 3
+  # Price of a trading pouch. A pouch holds 64 items, so at the default prices it is
+  # deliberately worse value per item than an expander - pouches are the early rung.
+  pouch-price: 250.0
   # Give customs-stamped goods an enchantment glint as well as their lore line.
   stamp-glint: false
   # Materials traders buy even WITHOUT a customs stamp - the contraband exceptions.

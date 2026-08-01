@@ -1,6 +1,8 @@
 package world.bentobox.tradewinds.travel;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -91,6 +93,28 @@ class HoldServiceTest extends CommonTestSetup {
         when(mockPlayer.getVehicle()).thenReturn(null);
 
         assertEquals(1, service.expanders(mockPlayer).size());
+    }
+
+    @Test
+    void testExpandersAreRecognisedByAnyShulkerColour() {
+        // Expanders ship WHITE to differentiate them from vanilla purple, but
+        // purple ones bought by earlier builds must keep working
+        for (Material colour : new Material[] { Material.WHITE_SHULKER_BOX, Material.SHULKER_BOX }) {
+            ItemStack expander = mock(ItemStack.class);
+            when(expander.getType()).thenReturn(colour);
+            when(expander.hasItemMeta()).thenReturn(true);
+            org.bukkit.inventory.meta.ItemMeta meta = mock(org.bukkit.inventory.meta.ItemMeta.class);
+            org.bukkit.persistence.PersistentDataContainer pdc =
+                    mock(org.bukkit.persistence.PersistentDataContainer.class);
+            when(pdc.has(org.bukkit.NamespacedKey.fromString("tradewinds:expander"),
+                    org.bukkit.persistence.PersistentDataType.STRING)).thenReturn(true);
+            when(meta.getPersistentDataContainer()).thenReturn(pdc);
+            when(expander.getItemMeta()).thenReturn(meta);
+            assertTrue(service.isExpander(expander), colour + " should be a valid expander");
+        }
+        // A plain shulker box with no stamp is not cargo space
+        ItemStack plain = new ItemStack(Material.WHITE_SHULKER_BOX);
+        assertFalse(service.isExpander(plain));
     }
 
     @Test
