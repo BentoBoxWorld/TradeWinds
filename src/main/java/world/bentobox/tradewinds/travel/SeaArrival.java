@@ -5,21 +5,24 @@ import java.util.Comparator;
 import java.util.List;
 
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.World;
+
+import world.bentobox.tradewinds.galaxy.GalaxyEngine;
 
 /**
  * Finds open water to arrive on.
  * <p>
  * A warp used to land the player at a fixed distance from the island centre,
- * at sea level, without ever asking what was there. That was survivable while
- * coastlines were perfect circles of a known radius - and then ragged coasts
- * arrived, headlands started reaching past the arrival ring, and a warp could
- * materialise a sailor inside a hillside. The death message reads "suffocated
- * in a wall", which is not a sentence any player should have to interpret.
+ * at sea level, without ever asking what was there - and the quay reaches past
+ * that ring with its deck at exactly that height, so an unlucky bearing
+ * materialised a sailor inside the decking ("suffocated in a wall").
  * <p>
- * Arrivals are by boat, so the rule is simple: put them on open water, as near
- * the intended spot as possible.
+ * The search asks the <b>galaxy</b>, not the world. Everything about the sea
+ * floor and the island masks is a pure function of (seed, position), so
+ * "is this open water?" can be answered by arithmetic - no block reads, and
+ * therefore no chunk loading. The first cut did read blocks, which meant a
+ * spiral scan out to 160 blocks could force the main thread to <em>generate</em>
+ * dozens of chunks one after another before the teleport could even begin.
  *
  * @author tastybento
  */
@@ -57,41 +60,48 @@ public final class SeaArrival {
     }
 
     /**
-     * Whether a column is open water a boat can float on: water at sea level,
-     * and clear air above it for the sailor's head.
+     * Whether a column is open water, from the galaxy alone.
+     * <p>
+     * Two ways a column can fail: the sea floor plus any island lift reaches
+     * the surface, or a dock or plaza has been terraformed over it - the quay
+     * is solid to a block above sea level, which is exactly where an arrival
+     * lands.
      *
-     * @param world the world
+     * @param engine the galaxy
      * @param x block x
      * @param z block z
-     * @param seaHeight the sea surface Y
+     * @param seaLevel the sea surface Y
      * @return true if it is somewhere to arrive
      */
-    public static boolean isOpenSea(World world, int x, int z, int seaHeight) {
-        return world.getBlockAt(x, seaHeight, z).getType() == Material.WATER
-                && world.getBlockAt(x, seaHeight + 1, z).isEmpty()
-                && world.getBlockAt(x, seaHeight + 2, z).isEmpty();
+    public static boolean isOpenSea(GalaxyEngine engine, int x, int z, int seaLevel) {
+        return engine.surfaceHeightAt(x, z) < seaLevel && engine.columnPlanAt(x, z).isEmpty();
     }
 
     /**
      * The nearest open water to an intended arrival point.
      *
+     * @param engine the galaxy, or null for a world it does not describe (the
+     *        interstice, which has no islands and no docks - its floor can
+     *        never reach the surface, so the intended point always serves)
      * @param world the world to arrive in
      * @param x intended block x
      * @param z intended block z
-     * @param seaHeight the sea surface Y
-     * @return a location on open water, or the intended point raised above the
-     *         terrain if this whole area is somehow solid
+     * @param seaLevel the sea surface Y
+     * @return a location on open water
      */
-    public static Location openSeaNear(World world, int x, int z, int seaHeight) {
+    public static Location openSeaNear(GalaxyEngine engine, World world, int x, int z, int seaLevel) {
+        if (engine == null) {
+            return new Location(world, x + 0.5, seaLevel + 1.0, z + 0.5);
+        }
         for (int[] offset : searchOffsets(SEARCH_RADIUS, STEP)) {
             int cx = x + offset[0];
             int cz = z + offset[1];
-            if (isOpenSea(world, cx, cz, seaHeight)) {
-                return new Location(world, cx + 0.5, seaHeight + 1.0, cz + 0.5);
+            if (isOpenSea(engine, cx, cz, seaLevel)) {
+                return new Location(world, cx + 0.5, seaLevel + 1.0, cz + 0.5);
             }
         }
-        // Nothing but land for 160 blocks: put them on top of it rather than
-        // inside it. Better a strange arrival than a suffocation.
-        return new Location(world, x + 0.5, world.getHighestBlockYAt(x, z) + 1.0, z + 0.5);
+        // Nothing but land for 160 blocks: arrive above it rather than inside
+        // it. Better a strange arrival than a suffocation.
+        return new Location(world, x + 0.5, engine.surfaceHeightAt(x, z) + 1.0, z + 0.5);
     }
 }

@@ -235,8 +235,8 @@ public class WarpService {
         // from the island centre, and since coastlines gained headlands it can
         // fall on land - which used to materialise the sailor inside a hillside
         // and kill them ("suffocated in a wall").
-        Location target = SeaArrival.openSeaNear(addon.getOverWorld(), arrive[0], arrive[1],
-                addon.getSettings().getSeaHeight());
+        Location target = SeaArrival.openSeaNear(addon.getGalaxyEngine(addon.getOverWorld().getSeed()),
+                addon.getOverWorld(), arrive[0], arrive[1], addon.getSettings().getSeaHeight());
 
         // Dismount -> teleport player and boat -> re-seat (AcidIsland /ai pattern)
         Entity vehicle = player.getVehicle();

@@ -1,6 +1,7 @@
 package world.bentobox.tradewinds.travel;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
@@ -8,6 +9,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import world.bentobox.tradewinds.galaxy.ColumnPlan;
+import world.bentobox.tradewinds.galaxy.DockPlan;
 import world.bentobox.tradewinds.galaxy.GalaxyConfig;
 import world.bentobox.tradewinds.galaxy.GalaxyEngine;
 import world.bentobox.tradewinds.galaxy.IslandSpec;
@@ -85,6 +87,28 @@ class SeaArrivalTest {
         // Every candidate is inside the search radius
         offsets.forEach(o -> assertTrue(o[0] * o[0] + o[1] * o[1] <= 32 * 32));
         assertTrue(offsets.size() > 100, "Too few candidates to find water: " + offsets.size());
+    }
+
+    @Test
+    void testOpenSeaIsAnswerableFromTheGalaxyAlone() {
+        // The search must never read blocks. It used to, which meant a spiral
+        // scan out to 160 blocks could force the main thread to GENERATE dozens
+        // of chunks before a teleport could begin - and a chunk generation that
+        // fails takes the whole chunk system down with it.
+        GalaxyEngine engine = engine();
+        IslandSpec island = engine.islandsNear(0, 0, 12_000).iterator().next();
+        DockPlan plan = engine.dockPlan(island);
+
+        // Open water well off the island
+        assertTrue(SeaArrival.isOpenSea(engine, island.centerX() + 900, island.centerZ() + 900, SEA));
+        // The island itself is not
+        assertFalse(SeaArrival.isOpenSea(engine, island.centerX(), island.centerZ(), SEA));
+        // Nor is the quay - the deck sits at arrival height, which is the whole
+        // reason this check exists
+        int quayX = island.centerX() + (int) Math.round(Math.cos(plan.bearing()) * (plan.dockEnd() - 10));
+        int quayZ = island.centerZ() + (int) Math.round(Math.sin(plan.bearing()) * (plan.dockEnd() - 10));
+        assertFalse(SeaArrival.isOpenSea(engine, quayX, quayZ, SEA),
+                "The quay must never be treated as open water");
     }
 
     @Test

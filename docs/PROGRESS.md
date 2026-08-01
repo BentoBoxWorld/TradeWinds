@@ -3,6 +3,36 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## Server crash: hot-swapped jar, and a chunk-loading warp arrival (2026-08-01)
+
+`NoClassDefFoundError: IslandPalette` inside chunk generation, which Paper
+escalates to an unrecoverable chunk system failure and stops the server.
+
+**Cause: my deploy.** The jar was written at 09:30:56 and the class failed to
+load at 09:31:41, 45 seconds later, mid-session. The plugin classloader reads
+classes lazily out of the jar file, so overwriting it under a running server
+invalidates the handle and anything not already loaded is simply gone.
+`IslandPalette` is only touched when a column turns out to be dock or plaza or
+land, so it can go a long time unloaded - and then a warp arrival generated a
+chunk near an island and it was needed. `scripts/deploy.sh` now refuses to
+install while the server is up, and CLAUDE.md says why.
+
+**And a real bug it exposed.** The crash landed in chunk generation *triggered
+by* `SeaArrival.openSeaNear`, which read blocks - `world.getBlockAt(...)` -
+spiralling out to 160 blocks. Reading a block in an ungenerated chunk forces a
+synchronous load, so a single warp arrival could make the main thread generate
+dozens of chunks in a row before the teleport even began. It also meant a
+generation failure anywhere in that spiral took the server with it.
+
+None of that was necessary: the sea floor and the island masks are pure
+functions of (seed, position), so "is this open water?" is arithmetic. The
+search now asks the galaxy - floor below sea level, and no dock or plaza
+terraformed over the column - and touches no blocks at all. The interstice
+passes a null engine: no islands, no docks, and a floor that cannot reach the
+surface, so the intended point always serves.
+
+210 tests green.
+
 ## The Star Chart is an instrument, not cargo (2026-08-01)
 
 Ben: "When I did starchart I got given another one. I fear these could end up

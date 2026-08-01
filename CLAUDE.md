@@ -10,8 +10,14 @@ mvn test                   # all tests
 mvn test -Dtest=ClassName  # one test class
 ```
 
-Deploy for in-game testing: copy `target/TradeWinds-*-LOCAL.jar` to
-`/Users/ben/Minecraft/26.2/plugins/BentoBox/addons/`.
+Deploy for in-game testing: `./scripts/deploy.sh` (builds, then installs to
+`/Users/ben/Minecraft/26.2/plugins/BentoBox/addons/`).
+
+**Never overwrite the jar while the server is running** - the deploy script
+refuses to. The plugin classloader reads classes lazily from the jar, so
+replacing it invalidates the handle and any not-yet-loaded class throws
+`NoClassDefFoundError`. When that lands inside chunk generation, Paper calls it
+an unrecoverable chunk system failure and stops the server.
 
 ## Project
 

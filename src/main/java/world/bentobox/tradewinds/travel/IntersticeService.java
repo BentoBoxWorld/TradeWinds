@@ -145,7 +145,9 @@ public class IntersticeService {
         int z = (int) Math.round(from.centerZ() + (to.centerZ() - from.centerZ()) * fraction);
         // Open water here too: the interstice has its own sea floor, and
         // dropping a castaway inside it would be the same suffocation bug
-        Location target = SeaArrival.openSeaNear(addon.getNetherWorld(), x, z,
+        // No galaxy in the interstice: no islands, no docks, and a floor that
+        // cannot reach the surface, so the intended point always serves
+        Location target = SeaArrival.openSeaNear(null, addon.getNetherWorld(), x, z,
                 addon.getSettings().getIntersticeSeaHeight());
 
         Entity vehicle = player.getVehicle();
