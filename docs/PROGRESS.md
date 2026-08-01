@@ -3,6 +3,16 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## Playtest fix: respawn in the treetops (2026-07-31)
+
+Ben died and respawned on top of a tree at the island centre. SpawnRespawnListener
+was still using `getHighestBlockYAt(0, 0)` from the bare-islet days - the island
+CENTRE, which on a real trading island is wooded ground. It now uses
+`IslandsManager.getSpawnPoint(world)` (the plaza, and wherever an admin later
+moves it with /twadmin setspawnpoint), falling back to the world spawn.
+The spawn point itself moved 3 blocks off the plaza centre so players do not
+materialise inside the bell that stands there. 144 tests green.
+
 ## Pouches for sale, white expanders (2026-07-31)
 
 Completing the carried-hold progression: the shipwright now sells Trading

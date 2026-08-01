@@ -385,8 +385,10 @@ public class TradeWinds extends GameModeAddon {
         world.bentobox.tradewinds.galaxy.IslandSpec spec = engine.spawnIsland();
         // The plaza is deterministic geometry - no chunk needs to be loaded
         world.bentobox.tradewinds.galaxy.DockPlan plan = engine.dockPlan(spec);
-        org.bukkit.Location plaza = new org.bukkit.Location(islandWorld, plan.plazaX() + 0.5,
-                getSettings().getSeaHeight() + GalaxyEngine.PLAZA_RISE + 1.0, plan.plazaZ() + 0.5);
+        // Three blocks off the plaza centre: clear of the bell that stands
+        // there, and well inside the stall ring
+        org.bukkit.Location plaza = new org.bukkit.Location(islandWorld, plan.plazaX() + 3.5,
+                getSettings().getSeaHeight() + GalaxyEngine.PLAZA_RISE + 1.0, plan.plazaZ() + 3.5);
         islandWorld.setSpawnLocation(plaza);
 
         GalaxyIslandRegistrar registrar = new GalaxyIslandRegistrar(this);

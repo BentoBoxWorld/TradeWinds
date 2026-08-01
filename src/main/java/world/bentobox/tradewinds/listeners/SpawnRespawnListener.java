@@ -38,8 +38,10 @@ public class SpawnRespawnListener implements Listener {
         if (overworld == null) {
             return;
         }
-        int top = overworld.getHighestBlockYAt(0, 0);
-        event.setRespawnLocation(new Location(overworld, 0.5,
-                Math.max(top + 1, addon.getSettings().getSeaHeight() + 1), 0.5));
+        // The spawn island's own spawn point - the market plaza, and wherever
+        // an admin has since moved it. The island CENTRE is wooded ground and
+        // must not be used: players were respawning in the treetops.
+        Location point = addon.getIslands().getSpawnPoint(overworld);
+        event.setRespawnLocation(point != null ? point : overworld.getSpawnLocation());
     }
 }

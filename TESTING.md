@@ -454,3 +454,11 @@ database (or use `/twadmin delete` on it), then restart.
       sneak-right-click your own chest boat to open it (CHEST flag now visitor rank).
 - [ ] Loose items in your inventory are still NOT sellable (they must be in a pouch,
       an expander, or the boat).
+
+### Stage 5e — respawn on the plaza (playtest fix)
+- [ ] Die without a bed: you respawn ON the spawn island's market plaza, standing on
+      flat ground beside the stalls — not in the treetops at the island centre, and
+      not inside the bell.
+- [ ] `/tw spawn` puts you in the same place.
+- [ ] After `/twadmin setspawnpoint` somewhere else on the island, respawns and
+      `/tw spawn` both honour the new point.

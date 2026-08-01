@@ -32,19 +32,32 @@ class SpawnRespawnListenerTest extends CommonTestSetup {
         addon = mock(TradeWinds.class);
         when(addon.getSettings()).thenReturn(new Settings());
         when(addon.getOverWorld()).thenReturn(world);
-        when(world.getHighestBlockYAt(0, 0)).thenReturn(95);
+        when(addon.getIslands()).thenReturn(im);
+        // The spawn island's spawn point: the market plaza
+        when(im.getSpawnPoint(world)).thenReturn(new Location(world, 72.5, 73, 72.5));
         when(mockPlayer.getWorld()).thenReturn(world);
         listener = new SpawnRespawnListener(addon);
         deathBed = new Location(world, 500, 42, 500);
     }
 
     @Test
-    void testBedlessRespawnGoesToIslet() {
+    void testBedlessRespawnGoesToThePlaza() {
+        // NOT the island centre (wooded - players were respawning in treetops)
         PlayerRespawnEvent event = new PlayerRespawnEvent(mockPlayer, deathBed, false, false);
         listener.onRespawn(event);
-        assertEquals(96, event.getRespawnLocation().getBlockY());
-        assertEquals(0, event.getRespawnLocation().getBlockX());
-        assertEquals(0, event.getRespawnLocation().getBlockZ());
+        assertEquals(73, event.getRespawnLocation().getBlockY());
+        assertEquals(72, event.getRespawnLocation().getBlockX());
+        assertEquals(72, event.getRespawnLocation().getBlockZ());
+    }
+
+    @Test
+    void testFallsBackToWorldSpawnWithoutASpawnIsland() {
+        when(im.getSpawnPoint(world)).thenReturn(null);
+        Location worldSpawn = new Location(world, 10, 72, 10);
+        when(world.getSpawnLocation()).thenReturn(worldSpawn);
+        PlayerRespawnEvent event = new PlayerRespawnEvent(mockPlayer, deathBed, false, false);
+        listener.onRespawn(event);
+        assertEquals(worldSpawn, event.getRespawnLocation());
     }
 
     @Test
