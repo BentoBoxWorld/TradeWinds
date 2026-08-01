@@ -27,6 +27,8 @@ tradewinds:
       description: "open the island market (within its protection range)"
     restart:
       description: "restart your trading career (limited uses)"
+    fine:
+      description: "settle your criminal record at a port (returns you to Clean)"
     admin:
       help:
         description: "admin command for TradeWinds"
@@ -47,6 +49,27 @@ tradewinds:
     teleported: "<aqua>You set sail on the open ocean.</aqua>"
   starter-kit:
     given: "<gold>Your trading career begins: a boat, a trading pouch, and a little coal. Buy low, sell high.</gold>"
+  standing:
+    upstanding: "<green>Upstanding</green>"
+    clean: "<white>Clean</white>"
+    offender: "<yellow>Offender</yellow>"
+    wanted: "<red>Wanted</red>"
+    fugitive: "<dark_red>Fugitive</dark_red>"
+    changed: "[title]<gray>Your standing:</gray><newline>[subtitle][standing]"
+  crime:
+    hurt-villager: "<red>The market saw that. Reputation -[number].</red>"
+    kill-villager: "<red>A trader is dead. Reputation -[number], and there is money on your head.</red>"
+    kill-police: "<red>You killed a patrol. Reputation -[number].</red>"
+    kill-innocent: "<dark_red>Murder. Reputation -[number], and a price on your head.</dark_red>"
+    smuggling: "<red>Caught with contraband. Reputation -[number].</red>"
+    passenger-trade: "<red>Word travels. Reputation -[number].</red>"
+    bounty-paid: "<gold>Bounty collected on [name]: [amount].</gold>"
+    fine-none: "<green>You have nothing to answer for.</green>"
+    fine-quote: "<yellow>The harbourmaster totals your record: [amount] to settle it.</yellow>"
+    fine-paid: "<green>Fine paid. Your record is clear - your name is another matter.</green>"
+    fine-cannot-afford: "<red>You cannot afford the fine ([amount]).</red>"
+    fine-no-market: "<red>Fines are paid at a trading island, not out here.</red>"
+    fine-barred: "<red>'We don't take money from your sort.' Try a rougher port.</red>"
   status:
     clean: "Clean"
   hud:

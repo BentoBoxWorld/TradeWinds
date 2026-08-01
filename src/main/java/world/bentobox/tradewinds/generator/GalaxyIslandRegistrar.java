@@ -115,28 +115,12 @@ public class GalaxyIslandRegistrar implements Listener {
                 addon.getSettings().getBandPvp().getOrDefault(band, spec.band().isPvp()));
         island.setSettingsFlag(Flags.MONSTER_NATURAL_SPAWN,
                 addon.getSettings().getBandMonsterSpawn().getOrDefault(band, true));
-        setRanks(island, java.util.Map.of(
-                Flags.HURT_VILLAGERS, addon.getSettings().getBandHurtVillagersRank().getOrDefault(band, 0),
-                // Everyone may drop and pick up items on trading islands - trade,
-                // jettisoned cargo, and plain convenience all depend on it
-                Flags.ITEM_DROP, 0,
-                Flags.ITEM_PICKUP, 0,
-                // Every trading island is a PORT: visitors must be able to
-                // moor, board and launch boats, defend themselves from
-                // whatever wandered in, and use a workbench. Without BOAT at
-                // visitor rank a sailor cannot get back into their own boat
-                // after shopping.
-                Flags.BOAT, 0,
-                Flags.HURT_MONSTERS, 0,
-                Flags.CRAFTING, 0,
-                // Doors and gates around the market stalls
-                Flags.DOOR, 0,
-                Flags.GATE, 0,
-                // Sailors must be able to open their OWN cargo at a port: a
-                // chest boat's inventory is guarded by CHEST, an expander by
-                // SHULKER_BOX
-                Flags.CHEST, 0,
-                Flags.SHULKER_BOX, 0));
+        // A port is a public market: everything is allowed at visitor rank
+        // except an explicit deny list. See PortFlags - enumerating what IS
+        // allowed meant finding the gaps one bug report at a time.
+        setRanks(island, PortFlags.ranks(addon.getSettings().getBandHurtVillagersRank().getOrDefault(band, 0),
+                Set.copyOf(addon.getSettings().getPortDeniedFlags()),
+                Set.copyOf(addon.getSettings().getPortAllowedFlags())));
     }
 
     /**

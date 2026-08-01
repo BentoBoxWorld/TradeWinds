@@ -586,3 +586,59 @@ The test server's config has already been updated to the new defaults.
 - [ ] Trading islands still sit properly in the water, docks still run unbroken from
       plaza to pier end, and the spawn island is unchanged — an island over a deep
       basin must look the same as one over a shelf.
+
+## Stage 6a — The law: port flags and reputation
+
+**Flag policy changed for ALL trading islands.** Existing islands are re-flagged on
+chunk load, but run `/twadmin reflag` after starting to be sure, then test as a
+**non-op player** — every flag bug so far was invisible to an operator.
+
+### 6a-i — Port flags (the audit)
+A trading island is now a public market: every protection flag is allowed at visitor
+rank *except* an explicit deny list.
+- [ ] **Things that must work** as a non-op visitor at any trading island: board and
+      leave a boat, open a chest boat and a cargo expander, use a crafting table,
+      anvil, furnace, grindstone, smithing table, loom, stonecutter, cartography
+      table and brewing stand, open doors/gates/trapdoors, press buttons, ring the
+      plaza bell, sleep in a bed, drop and pick up items, hit hostile mobs, fish,
+      throw an ender pearl.
+- [ ] **Things that must NOT work**: break or place any block, use flint and steel,
+      prime TNT, empty a bucket, break an item frame or armour stand, edit a sign.
+- [ ] **Things that must NOT work, because they would mint money outside the market**
+      (spec 5.0 — money enters the game only through trade margins): harvest or
+      trample the island's crops, open its barrels/containers/hoppers, take honey
+      from a hive, shear/milk/breed/kill its livestock.
+- [ ] **Right-clicking a villager must NOT open a vanilla trade screen** — trading
+      goes through the market dialog and the hold only (principle 1).
+- [ ] Hurting villagers is still refused on SAFE islands and allowed on rougher ones.
+- [ ] `bands.port-denied-flags` / `port-allowed-flags` in config override both ways
+      (add `HARVEST` to allowed, reflag, and confirm you can now harvest).
+
+### 6a-ii — Reputation
+- [ ] The navigation boss bar shows your standing, and it changes as you earn one.
+- [ ] Punch a villager on a non-SAFE island: "The market saw that. Reputation -5."
+- [ ] Kill a villager: bigger loss, and the message mentions money on your head.
+- [ ] Kill an iron golem: reputation loss for killing police.
+- [ ] Crossing a band boundary shows a title with your new standing.
+- [ ] Commit enough crime to reach **Wanted** (−200 by default; one murder plus
+      change, or eight villager kills). Then **Fugitive** at −500.
+- [ ] Reputation decays back toward zero by 1 point per 15 minutes of play — and
+      **only while online and in a TradeWinds world**. Log out for a while and
+      confirm your reputation is exactly where you left it.
+- [ ] `/tw fine` out at sea is refused ("paid at a trading island"). At a port it
+      quotes a price, asks for confirmation, charges you, and returns you to Clean —
+      **never above it**. Check the balance actually moved.
+- [ ] With nothing to answer for, `/tw fine` says so and charges nothing.
+- [ ] As a Fugitive, `/tw fine` at a **SAFE** island is refused; at a rougher port it
+      works. (Crime pays, into danger — and buying your way back costs you the same.)
+- [ ] `crime.enabled: false` stops all of it: no penalties, no messages, standing
+      reads Clean for everyone.
+
+### 6a-iii — PvP and bounties (partial; police land in 6c)
+- [ ] Killing a player who is **not** a lawful target costs the killer 100 reputation
+      ("Murder").
+- [ ] But if the victim hit you first (within 30s), there is **no** penalty — the
+      anti-bait guard. Verify both ways round; a wanted player being able to farm
+      reputation loss off innocents by attacking them would be a weapon.
+- [ ] Killing a **Wanted or Fugitive** player pays their bounty to the killer with no
+      penalty, and the bounty is cleared — kill them again and it pays **nothing**.

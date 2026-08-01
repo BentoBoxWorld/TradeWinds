@@ -4,6 +4,7 @@ import java.util.EnumMap;
 import java.util.Map;
 import java.util.Objects;
 
+import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.World.Environment;
 import org.bukkit.WorldCreator;
@@ -28,11 +29,15 @@ import world.bentobox.tradewinds.commands.AdminIslandsCommand;
 import world.bentobox.tradewinds.commands.AdminReflagCommand;
 import world.bentobox.tradewinds.commands.AdminTpIslandCommand;
 import world.bentobox.tradewinds.commands.TWChartCommand;
+import world.bentobox.tradewinds.commands.TWFineCommand;
 import world.bentobox.tradewinds.commands.TWRestartCommand;
 import world.bentobox.tradewinds.commands.TWSpawnCommand;
 import world.bentobox.tradewinds.commands.TWStarChartCommand;
 import world.bentobox.tradewinds.commands.TWTradeCommand;
 import world.bentobox.tradewinds.commands.TWWarpCommand;
+import world.bentobox.tradewinds.crime.CrimeListener;
+import world.bentobox.tradewinds.crime.ReputationService;
+import world.bentobox.tradewinds.crime.Standing;
 import world.bentobox.tradewinds.dataobjects.IslandDataManager;
 import world.bentobox.tradewinds.dataobjects.PlayerDataManager;
 import world.bentobox.tradewinds.economy.MarketService;
@@ -97,6 +102,9 @@ public class TradeWinds extends GameModeAddon {
     private StarChartService starChartService;
     private IntersticeService intersticeService;
     private @Nullable EncounterService encounterService;
+    private ReputationService reputationService;
+    private CrimeListener crimeListener;
+    private NamespacedKey policeKey;
     private @Nullable ResidentAuditTask residentAuditTask;
     private @Nullable NavigationBarTask navigationBarTask;
 
@@ -155,6 +163,7 @@ public class TradeWinds extends GameModeAddon {
                 new TWStarChartCommand(this);
                 new TWTradeCommand(this);
                 new TWRestartCommand(this);
+                new TWFineCommand(this);
                 new IslandInfoCommand(this);
                 new IslandSettingsCommand(this);
                 new IslandLanguageCommand(this);
@@ -248,6 +257,11 @@ public class TradeWinds extends GameModeAddon {
         encounterService = new EncounterService(this);
         encounterService.start();
         registerListener(new EncounterListener(this));
+        // The law: reputation, and the listeners that notice a crime
+        reputationService = new ReputationService(this);
+        reputationService.start();
+        crimeListener = new CrimeListener(this);
+        registerListener(crimeListener);
         // Residents survive the night: no mob targeting, tether, respawn
         registerListener(new ResidentProtectionListener());
         residentAuditTask = new ResidentAuditTask(this);
@@ -273,6 +287,9 @@ public class TradeWinds extends GameModeAddon {
         }
         if (encounterService != null) {
             encounterService.stop();
+        }
+        if (reputationService != null) {
+            reputationService.stop();
         }
         if (chartHolograms != null) {
             chartHolograms.clearAll();
@@ -477,15 +494,39 @@ public class TradeWinds extends GameModeAddon {
         return encounterService;
     }
 
+    public ReputationService getReputationService() {
+        return reputationService;
+    }
+
+    public CrimeListener getCrimeListener() {
+        return crimeListener;
+    }
+
     /**
-     * The player's legal standing, for HUDs. Until the reputation system
-     * (Stage 6) lands, everyone is Clean.
+     * The PDC key marking an entity as a police unit: dispatched by the law,
+     * never drops loot, and killing one is a crime.
      *
-     * @param playerId the player
+     * @return the police tag key
+     */
+    public NamespacedKey getPoliceKey() {
+        if (policeKey == null) {
+            policeKey = new NamespacedKey(getPlugin(), "police");
+        }
+        return policeKey;
+    }
+
+    /**
+     * The player's legal standing, for HUDs - translated for the viewer.
+     *
+     * @param user the viewer
+     * @param playerId the player whose standing is wanted
      * @return display name of the player's standing
      */
-    public String getPlayerStanding(java.util.UUID playerId) {
-        return "Clean";
+    public String getPlayerStanding(User user, java.util.UUID playerId) {
+        if (reputationService == null || !getSettings().isCrimeEnabled()) {
+            return user.getTranslation(Standing.CLEAN.getLocaleKey());
+        }
+        return user.getTranslation(reputationService.standing(playerId).getLocaleKey());
     }
 
     /**

@@ -3,6 +3,60 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## Stage 6a — the law: port flags, reputation, fines (2026-07-31)
+
+**The flag audit, finally done properly.** Three separate playtest bugs (no boat
+interaction, no chest boat, no workbench) had the same root cause: BentoBox
+protection flags default to MEMBER rank, and **nobody is ever a member of an
+unowned island**. Counting it out: of 96 protection flags only 6 default to
+visitor rank, so 90 things were denied to everyone on every trading island, and
+I had been allow-listing them one bug report at a time.
+
+So `PortFlags` inverts the policy. A trading island is a **public market**:
+everything is allowed at visitor rank except an explicit deny list, and that
+list is now the design statement, grouped by why -
+1. anti-grief (the plaza and dock are the only hand-built terrain in the world),
+2. **the two economies** - an island's crops, stores, hive and livestock are
+   denied because harvesting them would mint money outside trade margins
+   (spec 5.0), which no amount of playtesting would have surfaced as a *bug*,
+3. `TRADING`, so a right-click on a villager cannot bypass the market and the
+   hold (principle 1) - the one I am most glad the audit caught,
+4. livestock and residents, 5. portals.
+
+It walks `Flags.values()` at runtime rather than naming an allow list, so a flag
+added by a future BentoBox is open at a port on day one instead of silently
+locking something. Admins get `bands.port-denied-flags` / `port-allowed-flags`
+either way.
+
+**Reputation core.** `ReputationScale` (pure, headless) owns the number line and
+the bands; `Standing` owns what each band *means* to the world - hunted, lawful
+target, barred from safe trade - so nothing downstream tests thresholds by hand.
+`ReputationService` records crimes, fires `TWReputationChangeEvent`, and runs
+decay. Decay is credited only while **online and in a TradeWinds world**, so a
+week offline does not launder a reputation, and it walks toward zero from either
+side without overshooting.
+
+Three speeds of recovery, per spec section 7: slow decay, `/tw fine` at a port,
+and positive acts later. A fine returns you to **Clean and no further** - money
+buys you out of Wanted, not into virtue - and a Fugitive is refused at SAFE
+ports, so buying your way back costs you a trip into danger. Principle 4 in
+reverse.
+
+`CrimeListener` carries the anti-bait guard: the innocent-kill penalty is
+forfeit if the victim struck first within 30s, or standing near a wanted player
+and dying at them would be a weapon.
+
+**Pitfalls:**
+- I audited the flag list against BentoBox **HEAD**, but the compile target is
+  3.18.1, which has a different flag set (no `FISHING`). Runtime iteration over
+  `Flags.values()` handles the drift; naming flags in code does not. Check the
+  jar, not the source, before naming a constant.
+- `getPlayerStanding` had to take a `User` - a standing is player-facing text
+  and must be translated for the *viewer*, not the subject.
+- 182 tests green. 6b (customs/contraband) and 6c (police/bounty payout,
+  nameplates) still to come; the bounty ledger already clears on payout so it
+  can only ever pay once.
+
 ## The sea itself: seabed shape, vanilla structures, denser islets (2026-07-31)
 
 Ben, after covering 130 regions: "I have not found a single islet. Nothing...

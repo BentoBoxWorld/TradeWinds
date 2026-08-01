@@ -104,9 +104,10 @@ public class NavigationBarTask implements Runnable {
     }
 
     private void show(Player player, Reading reading) {
-        Component name = User.getInstance(player).getTranslationAsComponent("tradewinds.hud.navigation",
+        User user = User.getInstance(player);
+        Component name = user.getTranslationAsComponent("tradewinds.hud.navigation",
                 "[name]", reading.island().name(),
-                "[standing]", addon.getPlayerStanding(player.getUniqueId()),
+                "[standing]", addon.getPlayerStanding(user, player.getUniqueId()),
                 "[distance]", String.valueOf(reading.dockDistance()));
         BossBar bar = bars.computeIfAbsent(player.getUniqueId(),
                 id -> BossBar.bossBar(name, reading.progress(), color(reading.island().band()),

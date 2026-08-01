@@ -20,6 +20,8 @@ import world.bentobox.bentobox.api.configuration.ConfigEntry;
 import world.bentobox.bentobox.api.configuration.StoreAt;
 import world.bentobox.bentobox.api.configuration.WorldSettings;
 import world.bentobox.bentobox.api.flags.Flag;
+import world.bentobox.tradewinds.crime.Crime;
+import world.bentobox.tradewinds.crime.ReputationScale;
 import world.bentobox.bentobox.database.objects.adapters.Adapter;
 import world.bentobox.bentobox.database.objects.adapters.FlagBooleanSerializer;
 
@@ -193,6 +195,112 @@ public class Settings implements WorldSettings {
         map.put("LAWLESS", 0);
         map.put("ANARCHIC", 0);
         return map;
+    }
+
+    @ConfigComment("Trading islands are public markets: EVERY protection flag is allowed at visitor")
+    @ConfigComment("rank except a built-in deny list (anti-grief, the island's own crops, stores and")
+    @ConfigComment("livestock, and direct villager trading - which would bypass the hold).")
+    @ConfigComment("BentoBox flags default to member rank and nobody is ever a member of an unowned")
+    @ConfigComment("island, so allow-listing instead meant finding each missing permission in play.")
+    @ConfigComment("List extra flag IDs here to deny them as well, e.g. [BED, ENDER_PEARL].")
+    @ConfigEntry(path = "bands.port-denied-flags")
+    private List<String> portDeniedFlags = new ArrayList<>();
+
+    @ConfigComment("Flag IDs to force back to visitor rank, overriding the built-in deny list above.")
+    @ConfigComment("Use this to open up something the deny list closes, e.g. [HARVEST].")
+    @ConfigEntry(path = "bands.port-allowed-flags")
+    private List<String> portAllowedFlags = new ArrayList<>();
+
+    /*      CRIME AND REPUTATION      */
+    @ConfigComment("Master switch for the whole law layer: reputation, customs scans, police and")
+    @ConfigComment("bounties. False makes the world lawless in the sense of 'nothing is tracked'.")
+    @ConfigEntry(path = "crime.enabled")
+    private boolean crimeEnabled = true;
+
+    @ConfigComment("The reputation number line. Positive is good; the bands hang off these.")
+    @ConfigEntry(path = "crime.reputation.floor")
+    private int reputationFloor = -1000;
+    @ConfigEntry(path = "crime.reputation.ceiling")
+    private int reputationCeiling = 1000;
+    @ConfigComment("At or above this score a player is UPSTANDING: better prices, fewer scans.")
+    @ConfigEntry(path = "crime.reputation.upstanding")
+    private int reputationUpstanding = 250;
+    @ConfigComment("Below this a player is an OFFENDER - and this is where a paid fine returns you.")
+    @ConfigEntry(path = "crime.reputation.offender")
+    private int reputationOffender = 0;
+    @ConfigComment("At or below this a player is WANTED: police respond, and killing them is lawful.")
+    @ConfigEntry(path = "crime.reputation.wanted")
+    private int reputationWanted = -200;
+    @ConfigComment("At or below this a player is a FUGITIVE: shot on sight, barred from safe trade.")
+    @ConfigEntry(path = "crime.reputation.fugitive")
+    private int reputationFugitive = -500;
+
+    @ConfigComment("Minutes of online play per decay tick, and points moved toward zero each tick.")
+    @ConfigComment("Credited only while online and in a TradeWinds world, so logging out for a week")
+    @ConfigComment("does not launder a reputation. Crimes should shadow you for sessions.")
+    @ConfigEntry(path = "crime.reputation.decay-minutes")
+    private int reputationDecayMinutes = 15;
+    @ConfigEntry(path = "crime.reputation.decay-points")
+    private int reputationDecayPoints = 1;
+
+    @ConfigComment("Currency charged per point of reputation debt when paying a fine. A fine can")
+    @ConfigComment("only ever take you back to Clean - money buys you out of Wanted, not into virtue.")
+    @ConfigEntry(path = "crime.fine-per-point")
+    private double finePerPoint = 2.0;
+
+    @ConfigComment("Reputation lost per crime (negative numbers).")
+    @ConfigEntry(path = "crime.penalties")
+    private Map<String, Integer> crimePenalties = defaultCrimePenalties();
+
+    @ConfigComment("Money added to the offender's bounty per crime. Paid once, to whoever kills")
+    @ConfigComment("them while they are a lawful target.")
+    @ConfigEntry(path = "crime.bounties")
+    private Map<String, Double> crimeBounties = defaultCrimeBounties();
+
+    private static Map<String, Integer> defaultCrimePenalties() {
+        Map<String, Integer> map = new HashMap<>();
+        for (Crime crime : Crime.values()) {
+            map.put(crime.name(), crime.getDefaultPenalty());
+        }
+        return map;
+    }
+
+    private static Map<String, Double> defaultCrimeBounties() {
+        Map<String, Double> map = new HashMap<>();
+        for (Crime crime : Crime.values()) {
+            map.put(crime.name(), (double) crime.getDefaultBounty());
+        }
+        return map;
+    }
+
+    /**
+     * The configured reputation number line.
+     *
+     * @return the scale
+     */
+    public ReputationScale reputationScale() {
+        return new ReputationScale(reputationFloor, reputationCeiling, reputationUpstanding, reputationOffender,
+                reputationWanted, reputationFugitive);
+    }
+
+    /**
+     * Reputation cost of a crime, from config.
+     *
+     * @param crime the crime
+     * @return points lost, negative
+     */
+    public int penaltyFor(Crime crime) {
+        return crimePenalties.getOrDefault(crime.name(), crime.getDefaultPenalty());
+    }
+
+    /**
+     * Bounty added by a crime, from config.
+     *
+     * @param crime the crime
+     * @return money added to the bounty
+     */
+    public double bountyFor(Crime crime) {
+        return crimeBounties.getOrDefault(crime.name(), (double) crime.getDefaultBounty());
     }
 
     /*      RESIDENTS      */
@@ -2539,6 +2647,34 @@ public class Settings implements WorldSettings {
     public void setBandMonsterSpawn(Map<String, Boolean> bandMonsterSpawn) { this.bandMonsterSpawn = bandMonsterSpawn; }
     public Map<String, Boolean> getBandPvp() { return bandPvp; }
     public void setBandPvp(Map<String, Boolean> bandPvp) { this.bandPvp = bandPvp; }
+    public boolean isCrimeEnabled() { return crimeEnabled; }
+    public void setCrimeEnabled(boolean crimeEnabled) { this.crimeEnabled = crimeEnabled; }
+    public int getReputationFloor() { return reputationFloor; }
+    public void setReputationFloor(int v) { this.reputationFloor = v; }
+    public int getReputationCeiling() { return reputationCeiling; }
+    public void setReputationCeiling(int v) { this.reputationCeiling = v; }
+    public int getReputationUpstanding() { return reputationUpstanding; }
+    public void setReputationUpstanding(int v) { this.reputationUpstanding = v; }
+    public int getReputationOffender() { return reputationOffender; }
+    public void setReputationOffender(int v) { this.reputationOffender = v; }
+    public int getReputationWanted() { return reputationWanted; }
+    public void setReputationWanted(int v) { this.reputationWanted = v; }
+    public int getReputationFugitive() { return reputationFugitive; }
+    public void setReputationFugitive(int v) { this.reputationFugitive = v; }
+    public int getReputationDecayMinutes() { return reputationDecayMinutes; }
+    public void setReputationDecayMinutes(int v) { this.reputationDecayMinutes = v; }
+    public int getReputationDecayPoints() { return reputationDecayPoints; }
+    public void setReputationDecayPoints(int v) { this.reputationDecayPoints = v; }
+    public double getFinePerPoint() { return finePerPoint; }
+    public void setFinePerPoint(double finePerPoint) { this.finePerPoint = finePerPoint; }
+    public Map<String, Integer> getCrimePenalties() { return crimePenalties; }
+    public void setCrimePenalties(Map<String, Integer> m) { this.crimePenalties = m; }
+    public Map<String, Double> getCrimeBounties() { return crimeBounties; }
+    public void setCrimeBounties(Map<String, Double> m) { this.crimeBounties = m; }
+    public List<String> getPortDeniedFlags() { return portDeniedFlags; }
+    public void setPortDeniedFlags(List<String> portDeniedFlags) { this.portDeniedFlags = portDeniedFlags; }
+    public List<String> getPortAllowedFlags() { return portAllowedFlags; }
+    public void setPortAllowedFlags(List<String> portAllowedFlags) { this.portAllowedFlags = portAllowedFlags; }
     public Map<String, Integer> getBandHurtVillagersRank() { return bandHurtVillagersRank; }
     public void setBandHurtVillagersRank(Map<String, Integer> bandHurtVillagersRank) { this.bandHurtVillagersRank = bandHurtVillagersRank; }
     public int getResidentTetherRadius() { return residentTetherRadius; }

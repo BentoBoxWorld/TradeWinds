@@ -52,6 +52,27 @@ public class TWPlayerData implements DataObject {
     @Expose
     private long lastCharity;
 
+    /**
+     * Reputation score - one global number, positive is good. The standing
+     * bands derive from it (see ReputationScale).
+     */
+    @Expose
+    private int reputation;
+
+    /**
+     * Money on this player's head, paid once to whoever kills them while they
+     * are a lawful target.
+     */
+    @Expose
+    private double bounty;
+
+    /**
+     * Epoch millis when clean play last paid a decay tick, so time offline does
+     * not launder a reputation.
+     */
+    @Expose
+    private long lastDecay;
+
     public TWPlayerData() {
         // Required by the database
     }
@@ -130,5 +151,29 @@ public class TWPlayerData implements DataObject {
 
     public void setChartedIslands(Set<String> chartedIslands) {
         this.chartedIslands = chartedIslands;
+    }
+
+    public int getReputation() {
+        return reputation;
+    }
+
+    public void setReputation(int reputation) {
+        this.reputation = reputation;
+    }
+
+    public double getBounty() {
+        return bounty;
+    }
+
+    public void setBounty(double bounty) {
+        this.bounty = bounty;
+    }
+
+    public long getLastDecay() {
+        return lastDecay;
+    }
+
+    public void setLastDecay(long lastDecay) {
+        this.lastDecay = lastDecay;
     }
 }

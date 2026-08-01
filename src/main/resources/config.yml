@@ -133,6 +133,56 @@ bands:
     FRONTIER: 0
     LAWLESS: 0
     ANARCHIC: 0
+  # Trading islands are public markets: EVERY protection flag is allowed at visitor
+  # rank except a built-in deny list (anti-grief; the island's own crops, stores and
+  # livestock; and direct villager trading, which would bypass the hold).
+  # BentoBox flags default to member rank and nobody is ever a member of an unowned
+  # island, so allow-listing instead meant finding each missing permission in play.
+  # Add flag IDs here to deny them too, e.g. [BED, ENDER_PEARL].
+  port-denied-flags: []
+  # Flag IDs forced back to visitor rank, overriding the deny list, e.g. [HARVEST].
+  port-allowed-flags: []
+crime:
+  # Master switch for the whole law layer: reputation, customs scans, police and
+  # bounties. False makes the world lawless in the sense of 'nothing is tracked'.
+  enabled: true
+  reputation:
+    floor: -1000
+    ceiling: 1000
+    # At or above this a player is UPSTANDING: better prices, fewer scans.
+    upstanding: 250
+    # Below this a player is an OFFENDER - and where a paid fine returns you.
+    offender: 0
+    # At or below this a player is WANTED: police respond, killing them is lawful.
+    wanted: -200
+    # At or below this a player is a FUGITIVE: shot on sight, barred from safe trade.
+    fugitive: -500
+    # Minutes of ONLINE play per decay tick, and points moved toward zero each
+    # tick. Credited only while online and in a TradeWinds world, so logging out
+    # for a week does not launder a reputation.
+    decay-minutes: 15
+    decay-points: 1
+  # Currency charged per point of reputation debt when paying a fine (/tw fine).
+  # A fine can only ever take you back to Clean - money buys you out of Wanted,
+  # not into virtue.
+  fine-per-point: 2.0
+  # Reputation lost per crime.
+  penalties:
+    HURT_VILLAGER: -5
+    KILL_VILLAGER: -25
+    KILL_POLICE: -15
+    KILL_INNOCENT: -100
+    SMUGGLING: -30
+    PASSENGER_TRADE: -20
+  # Money added to the offender's bounty per crime, paid once to whoever kills
+  # them while they are a lawful target.
+  bounties:
+    HURT_VILLAGER: 0.0
+    KILL_VILLAGER: 100.0
+    KILL_POLICE: 150.0
+    KILL_INNOCENT: 500.0
+    SMUGGLING: 200.0
+    PASSENGER_TRADE: 150.0
 residents:
   # Distance from the plaza center beyond which a resident is teleported home.
   tether-radius: 24
