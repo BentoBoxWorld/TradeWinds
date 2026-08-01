@@ -1,5 +1,6 @@
 package world.bentobox.tradewinds.travel;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -7,6 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.NamespacedKey;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.entity.Boat;
@@ -14,6 +16,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Ghast;
 import org.bukkit.entity.Player;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitTask;
 
 import io.papermc.paper.dialog.Dialog;
@@ -49,6 +52,9 @@ public class IntersticeService {
      */
     private static final String[] NO_VARS = new String[0];
 
+    /** Ghasts spawned by the current stranding, for the follow-up head count. */
+    private final List<Ghast> spawnedGhasts = new java.util.ArrayList<>();
+
     /** Room a ghast needs under the interstice ceiling - they are 4 blocks tall. */
     private static final int GHAST_CLEARANCE = 6;
 
@@ -62,6 +68,7 @@ public class IntersticeService {
 
     private final TradeWinds addon;
     private BukkitTask task;
+    private NamespacedKey intersticeKey;
 
     public IntersticeService(TradeWinds addon) {
         this.addon = addon;
@@ -238,16 +245,60 @@ public class IntersticeService {
             Entity ghast = around.getWorld().spawnEntity(spot, EntityType.GHAST);
             if (ghast instanceof Ghast g) {
                 // Deliberately NOT targeted: let the player decide whether this
-                // is a fight
-                g.setRemoveWhenFarAway(true);
+                // is a fight. But they must NOT despawn: they arrive right at
+                // the 32-block random-despawn boundary, so removeWhenFarAway
+                // was quietly deleting them moments after they appeared.
+                // Cleanup is ours instead - see sweep().
+                g.setRemoveWhenFarAway(false);
+                g.getPersistentDataContainer().set(intersticeKey(), PersistentDataType.BYTE, (byte) 1);
                 spawned++;
+                spawnedGhasts.add(g);
             }
             addon.log("Interstice: ghast spawned at " + describe(spot) + " ("
-                    + (int) spot.distance(around) + " blocks from the player, alive="
-                    + (ghast != null && ghast.isValid()) + ")");
+                    + (int) spot.distance(around) + " blocks from the player)");
         }
         addon.log("Interstice: " + player.getName() + " stranded at " + describe(around) + " in "
                 + around.getWorld().getName() + " - " + spawned + " of " + count + " ghasts spawned");
+        // Check again shortly: "spawned" only means the call returned. Anything
+        // that removes them does so afterwards, and silently.
+        List<Ghast> watch = List.copyOf(spawnedGhasts);
+        spawnedGhasts.clear();
+        Bukkit.getScheduler().runTaskLater(addon.getPlugin(), () -> {
+            long alive = watch.stream().filter(Entity::isValid).count();
+            addon.log("Interstice: " + alive + " of " + watch.size()
+                    + " ghasts still present 5s after spawning");
+        }, 100L);
+    }
+
+    /**
+     * Marks a mob as one the interstice put there, so it can be cleaned up.
+     *
+     * @return the PDC key
+     */
+    private NamespacedKey intersticeKey() {
+        if (intersticeKey == null) {
+            intersticeKey = new NamespacedKey(addon.getPlugin(), "interstice");
+        }
+        return intersticeKey;
+    }
+
+    /**
+     * Clear out ghasts nobody is left to be menaced by.
+     * <p>
+     * They no longer despawn on their own - being spawned right at the
+     * 32-block random-despawn boundary was deleting them moments after they
+     * appeared - so the tidying is ours to do.
+     */
+    private void sweep() {
+        for (Entity entity : addon.getNetherWorld().getEntities()) {
+            if (!entity.getPersistentDataContainer().has(intersticeKey(), PersistentDataType.BYTE)) {
+                continue;
+            }
+            boolean watched = entity.getNearbyEntities(160, 160, 160).stream().anyMatch(Player.class::isInstance);
+            if (!watched) {
+                entity.remove();
+            }
+        }
     }
 
     /**
@@ -293,6 +344,7 @@ public class IntersticeService {
             openReEngageDialog(player);
         }
         hunt();
+        sweep();
     }
 
     /**
