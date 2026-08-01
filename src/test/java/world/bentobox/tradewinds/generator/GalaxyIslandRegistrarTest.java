@@ -20,6 +20,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
+import world.bentobox.bentobox.database.objects.Island;
 import world.bentobox.bentobox.lists.Flags;
 import world.bentobox.tradewinds.CommonTestSetup;
 import world.bentobox.tradewinds.Settings;
@@ -72,6 +73,7 @@ class GalaxyIslandRegistrarTest extends CommonTestSetup {
         when(im.getIslandAt(any())).thenReturn(Optional.empty());
         when(im.createIsland(any(), isNull())).thenReturn(island);
         when(island.getMetaData()).thenReturn(Optional.of(new HashMap<>()));
+        when(island.getFlags()).thenReturn(new HashMap<>());
 
         registrar.onChunkLoad(chunkLoad(spec.centerX() >> 4, spec.centerZ() >> 4));
 
@@ -86,8 +88,25 @@ class GalaxyIslandRegistrarTest extends CommonTestSetup {
                 settings.getBandPvp().get(spec.band().name()));
         verify(island).setSettingsFlag(Flags.MONSTER_NATURAL_SPAWN,
                 settings.getBandMonsterSpawn().get(spec.band().name()));
-        verify(island).setFlag(Flags.HURT_VILLAGERS,
-                settings.getBandHurtVillagersRank().get(spec.band().name()));
+        // Rank flags go through setFlags: core's setFlag ignores absent keys
+        ArgumentCaptor<java.util.Map<String, Integer>> flags = ArgumentCaptor.forClass(java.util.Map.class);
+        verify(island).setFlags(flags.capture());
+        assertEquals(settings.getBandHurtVillagersRank().get(spec.band().name()),
+                flags.getValue().get(Flags.HURT_VILLAGERS.getID()));
+        assertEquals(0, flags.getValue().get(Flags.ITEM_DROP.getID()));
+        assertEquals(0, flags.getValue().get(Flags.ITEM_PICKUP.getID()));
+    }
+
+    @Test
+    void testRankFlagsSurviveAnEmptyFlagMap() {
+        // The bug: islands are created with an empty flag map, and core's
+        // Island.setFlag silently drops writes for keys that are not present
+        Island fresh = mock(Island.class);
+        when(fresh.getFlags()).thenReturn(new HashMap<>());
+        GalaxyIslandRegistrar.setRanks(fresh, java.util.Map.of(Flags.BOAT, 0));
+        ArgumentCaptor<java.util.Map<String, Integer>> flags = ArgumentCaptor.forClass(java.util.Map.class);
+        verify(fresh).setFlags(flags.capture());
+        assertEquals(0, flags.getValue().get(Flags.BOAT.getID()));
     }
 
     @Test

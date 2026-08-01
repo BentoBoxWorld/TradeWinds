@@ -3,6 +3,32 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## Bug: rank flags were being silently dropped (2026-07-31)
+
+"No boat usage at spawn" - and the same cause behind every rank flag we have
+ever set. BentoBox core:
+
+    public void setFlag(Flag flag, int value, boolean doSubflags) {
+        if (flags.containsKey(flag.getID()) && flags.get(flag.getID()) != value) {
+
+`setFlag` is a NO-OP when the flag is not already a key in the island's map -
+and islands created via `IslandsManager.createIsland` start with an empty map
+(the live spawn island's JSON had `"flags": {}`). So BOAT, CRAFTING,
+HURT_MONSTERS, HURT_VILLAGERS, ITEM_DROP and ITEM_PICKUP were all discarded,
+leaving each flag at its default rank (MEMBER for BOAT) - i.e. visitors
+locked out. `setSettingsFlag` uses put() directly, which is why PvP and
+monster-spawn settings always worked and masked the problem.
+Fix on our side: `GalaxyIslandRegistrar.setRanks(island, Map<Flag,Integer>)`
+copies the flag map, writes the ranks and calls `setFlags` (which replaces the
+map and marks the island changed). All rank setting now goes through it.
+Also: `register()` used to return a pre-existing island untouched, so islands
+from earlier builds never got names or flags - it now adopts them (name if
+blank, band flags always), and spawn adoption additionally fixes protection
+(400) and range (1000) left over from the old small-island bootstrap.
+NOTE FOR CORE: `Island.setFlag` arguably should put unconditionally, or
+`createIsland` should call `setFlagsDefaults()`. Worth a BentoBox fix.
+141 tests green.
+
 ## Trade feedback sounds (2026-07-31)
 
 Dialogs blur and cover the chat box, so refusal messages went unseen: every

@@ -393,15 +393,21 @@ public class TradeWinds extends GameModeAddon {
         }
         if (!spawn.isSpawn()) {
             spawn.setSpawnPoint(Environment.NORMAL, plaza);
+            // Adopting an island from an older build: give it the full trading
+            // island geometry it should have had
+            spawn.setProtectionRange(getSettings().getIslandProtectionRange());
+            spawn.setRange(getSettings().getIslandDistance());
+            spawn.setName(spec.name());
             getIslands().setSpawn(spawn);
             log("Designated " + spec.name() + " (" + spec.type() + ") as the spawn island");
         }
         // Spawn-port allowances, re-asserted every enable: it is a harbor, so
         // boats, self-defense and workbenches are everyone's right, and
         // nothing hostile spawns or explodes here
-        spawn.setFlag(Flags.BOAT, 0);
-        spawn.setFlag(Flags.HURT_MONSTERS, 0);
-        spawn.setFlag(Flags.CRAFTING, 0);
+        GalaxyIslandRegistrar.setRanks(spawn, java.util.Map.of(
+                Flags.BOAT, 0,
+                Flags.HURT_MONSTERS, 0,
+                Flags.CRAFTING, 0));
         spawn.setSettingsFlag(Flags.MONSTER_NATURAL_SPAWN, false);
         spawn.setSettingsFlag(Flags.TNT_DAMAGE, false);
         spawn.setSettingsFlag(Flags.BLOCK_EXPLODE_DAMAGE, false);

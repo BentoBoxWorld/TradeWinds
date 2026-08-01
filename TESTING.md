@@ -422,3 +422,12 @@ database (or use `/twadmin delete` on it), then restart.
 - [ ] Admin control works as normal BentoBox: `/twadmin setname`, `/twadmin
       setspawnpoint`, `/twadmin settings` on the spawn island.
 - [ ] No other island is closer than 2500 blocks to spawn (nothing crowds the port).
+
+### Stage 5c — rank-flag application (core setFlag pitfall)
+- [ ] Non-op at spawn: **place and ride a boat**, use a crafting table, hit a monster.
+      (Rank flags were silently dropped before — see PROGRESS.md.)
+- [ ] Non-op anywhere: drop and pick up items on trading islands.
+- [ ] `/tw settings` at spawn shows BOAT/CRAFTING/HURT_MONSTERS at Visitor rank.
+- [ ] An island registered by an older build (no name, no flags) is adopted on
+      restart: it gains its name, band flags, and — for spawn — protection 400 /
+      range 1000.

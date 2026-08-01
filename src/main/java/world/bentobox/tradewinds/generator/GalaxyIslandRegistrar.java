@@ -77,6 +77,12 @@ public class GalaxyIslandRegistrar implements Listener {
                 addon.getSettings().getSeaHeight() + 1.0, spec.centerZ() + 0.5);
         Island existing = addon.getIslands().getIslandAt(center).orElse(null);
         if (existing != null) {
+            // Adopt an island from an earlier session: it may predate these
+            // rules (or a config change), so re-apply name and flags
+            if (existing.getName() == null || existing.getName().isBlank()) {
+                existing.setName(spec.name());
+            }
+            applyBandFlags(existing, spec);
             return existing;
         }
         Island island = addon.getIslands().createIsland(center, null);
@@ -109,10 +115,29 @@ public class GalaxyIslandRegistrar implements Listener {
                 addon.getSettings().getBandPvp().getOrDefault(band, spec.band().isPvp()));
         island.setSettingsFlag(Flags.MONSTER_NATURAL_SPAWN,
                 addon.getSettings().getBandMonsterSpawn().getOrDefault(band, true));
-        island.setFlag(Flags.HURT_VILLAGERS, addon.getSettings().getBandHurtVillagersRank().getOrDefault(band, 0));
-        // Everyone may drop and pick up items on trading islands - trade,
-        // jettisoned cargo, and plain convenience all depend on it
-        island.setFlag(Flags.ITEM_DROP, 0);
-        island.setFlag(Flags.ITEM_PICKUP, 0);
+        setRanks(island, java.util.Map.of(
+                Flags.HURT_VILLAGERS, addon.getSettings().getBandHurtVillagersRank().getOrDefault(band, 0),
+                // Everyone may drop and pick up items on trading islands - trade,
+                // jettisoned cargo, and plain convenience all depend on it
+                Flags.ITEM_DROP, 0,
+                Flags.ITEM_PICKUP, 0));
+    }
+
+    /**
+     * Set protection-flag ranks on an island.
+     * <p>
+     * NOTE: {@code Island.setFlag} silently does nothing when the flag is not
+     * already present in the island's flag map, and islands we create start
+     * with an empty map - so every rank we set that way was being discarded.
+     * Writing through the map and calling {@code setFlags} is the reliable
+     * route.
+     *
+     * @param island the island
+     * @param ranks flag to minimum rank
+     */
+    public static void setRanks(Island island, java.util.Map<world.bentobox.bentobox.api.flags.Flag, Integer> ranks) {
+        java.util.Map<String, Integer> flags = new HashMap<>(island.getFlags());
+        ranks.forEach((flag, rank) -> flags.put(flag.getID(), rank));
+        island.setFlags(flags);
     }
 }
