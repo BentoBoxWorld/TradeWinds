@@ -188,7 +188,7 @@ tradewinds:
     charted: "[actionbar]<aqua>Charted <white>[name]</white>!</aqua>"
     port-scan: "<aqua>You copy the harbour charts: [number] islands added to yours.</aqua>"
     holograms-shown: "<aqua>Your chart shimmers into the air - row toward a name.</aqua>"
-    starchart-given: "<aqua>The Star Chart is yours - hold it to see your world.</aqua>"
+    starchart-given: "<aqua>You unroll the Star Chart.</aqua><gray> Put it away and it is stowed - run the command again whenever you need it.</gray>"
     empty: "<red>Your chart is empty - row into an island's waters to chart it.</red>"
     header: "<aqua>Your chart ([number] islands):</aqua>"
     fuel-aboard: "<gray>Fuel aboard: </gray><aqua>[amount] units</aqua><gray>. Reachable destinations are marked.</gray>"

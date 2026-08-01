@@ -913,3 +913,17 @@ two rules.
       exemption and it matters: it is the way out of somewhere dangerous, and gating
       it would strand players.
 - [ ] `travel.warp.enemy-radius: 0` disables the gate (dialogs still close on damage).
+
+## Star Chart is ephemeral
+
+- [ ] `/tw starchart` puts the chart straight **into your hand** (a free hotbar slot,
+      selected for you) rather than somewhere you have to hunt for.
+- [ ] **Switch to another hotbar slot: the chart is gone.** Run the command again to
+      consult it - it is an instrument, not cargo.
+- [ ] Run `/tw starchart` twice: you end up with **one** chart, not two.
+- [ ] Try to drop it: it vanishes rather than bobbing in the sea.
+- [ ] Die holding it: it is **not** in your death drops, and nobody can salvage one.
+- [ ] Log out holding it, log back in: gone, and the command still works.
+- [ ] Sanity check the point of all this: after a dozen `/tw starchart` calls there
+      are no stray maps in your inventory, on the ground, or in your hold.
+- [ ] With a completely full hotbar it is added anywhere it fits rather than refused.

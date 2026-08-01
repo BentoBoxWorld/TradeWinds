@@ -3,6 +3,28 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## The Star Chart is an instrument, not cargo (2026-08-01)
+
+Ben: "When I did starchart I got given another one. I fear these could end up
+littering."
+
+Right on both counts, and the old `give()` was worse than described - it
+dropped any inventory overflow on the ground, so a full pack meant a map
+floating in the sea. Rather than making the command idempotent and leaving a
+permanent item to manage, the chart is now **ephemeral**: it exists only while
+you are looking at it.
+
+It goes straight into a free hotbar slot which is then selected, so the
+"put it away and it is gone" rule applies from the moment it arrives. Switching
+slots reclaims it, dropping it destroys it, dying does not yield it, and
+logging out takes it with you. Running the command twice reclaims the first, so
+there is exactly one ever.
+
+The slot-change rule only fires when the slot being *left* held a chart, so a
+chart sitting elsewhere is never snatched before its owner has looked at it.
+
+209 tests green.
+
 ## Dialogs close under attack, and no warping out of a fight (2026-08-01)
 
 Ben: a dialog should exit if you are being attacked, with a bed-style action
