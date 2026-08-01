@@ -75,9 +75,14 @@ Follow BentoBox conventions: `Config<Settings>` + `@ConfigEntry`/`@StoreAt`,
 /`DefaultAdminCommand`, locale keys under `tradewinds.`, every gameplay number
 in config from the stage it's introduced — no hardcoded gameplay values.
 
-**Locale formatting is MiniMessage** (`<red>text</red>`, `<gold>…</gold>`) —
-the BentoBox standard; legacy `&` codes are deprecated, never add new ones.
-When sending a translated string somewhere that takes a Component (action
-bars, titles, holograms), deserialize it with
-`MiniMessage.miniMessage().deserialize(...)` rather than `Component.text(...)`,
-or the tags print literally.
+**All player-facing text lives in the locale** — never build strings or
+Components in code, or the game mode cannot be translated. Locale formatting
+is MiniMessage (`<red>text</red>`); legacy `&` codes are deprecated.
+Never call MiniMessage yourself: use the `User` API, which is locale-aware —
+`user.sendMessage(key, vars...)` for chat, and
+`user.getTranslationAsComponent(key, vars...)` wherever a Component is needed
+(dialogs, boss bars, holograms, item names, inventory titles). The no-variable
+call is ambiguous between overloads, so pass `new String[0]`.
+Locale strings can also carry `[actionbar]`, `[title]`, `[subtitle]` and
+`[sound:...]` markers — BentoBox routes and formats those itself, so prefer
+them over calling `sendActionBar`/`playSound` around a message.

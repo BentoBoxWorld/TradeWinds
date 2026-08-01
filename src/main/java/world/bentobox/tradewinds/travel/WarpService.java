@@ -86,14 +86,16 @@ public class WarpService {
         double fuelAboard = addon.getFuelService().holdFuel(player);
         List<Destination> destinations = destinations(player, origin, fuelAboard);
         if (destinations.isEmpty()) {
-            player.sendMessage(user(player).getTranslation("tradewinds.warp.no-destinations"));
+            user(player).sendMessage("tradewinds.warp.no-destinations");
             return;
         }
         List<ActionButton> buttons = destinations.stream().map(dest -> button(player, origin, dest)).toList();
         Dialog dialog = Dialog.create(factory -> factory.empty()
-                .base(DialogBase.builder(Component.text("Warp - " + origin.name()))
-                        .body(List.of(DialogBody.plainMessage(Component
-                                .text("Fuel aboard: " + (int) fuelAboard + " units", NamedTextColor.AQUA))))
+                .base(DialogBase.builder(user(player).getTranslationAsComponent("tradewinds.ui.warp.title",
+                        "[name]", origin.name()))
+                        .body(List.of(DialogBody.plainMessage(
+                                user(player).getTranslationAsComponent("tradewinds.ui.warp.fuel", "[amount]",
+                                        String.valueOf((int) fuelAboard)))))
                         .build())
                 .type(DialogType.multiAction(buttons).columns(1).build()));
         player.showDialog(dialog);
@@ -101,16 +103,18 @@ public class WarpService {
 
     private ActionButton button(Player player, IslandSpec origin, Destination dest) {
         IslandSpec spec = dest.island();
-        Component label = Component.text(spec.name() + " - " + dest.fuelCost() + " fuel",
-                dest.affordable() ? NamedTextColor.WHITE : NamedTextColor.DARK_GRAY);
-        Component tooltip = Component.text(spec.type().name() + ", " + spec.band().getDisplayName() + ", "
-                + (int) Math.sqrt(spec.distanceSquared(origin.centerX(), origin.centerZ())) + " blocks");
+        Component label = user(player).getTranslationAsComponent(
+                dest.affordable() ? "tradewinds.ui.warp.destination" : "tradewinds.ui.warp.destination-poor",
+                "[name]", spec.name(), "[fuel]", String.valueOf(dest.fuelCost()));
+        Component tooltip = user(player).getTranslationAsComponent("tradewinds.ui.warp.destination-tooltip",
+                "[type]", spec.type().name(), "[band]", spec.band().getDisplayName(), "[distance]",
+                String.valueOf((int) Math.sqrt(spec.distanceSquared(origin.centerX(), origin.centerZ()))));
         DialogAction action = DialogAction.customClick(
                 (response, audience) -> {
                     if (dest.affordable()) {
                         warp(player, origin, spec, dest.fuelCost());
                     } else {
-                        player.sendMessage(user(player).getTranslation("tradewinds.warp.not-enough-fuel"));
+                        user(player).sendMessage("tradewinds.warp.not-enough-fuel");
                     }
                 }, ClickCallback.Options.builder().build());
         return ActionButton.create(label, tooltip, 250, action);
@@ -128,7 +132,7 @@ public class WarpService {
             return;
         }
         if (!addon.getFuelService().consume(player, fuelCost)) {
-            player.sendMessage(user(player).getTranslation("tradewinds.warp.not-enough-fuel"));
+            user(player).sendMessage("tradewinds.warp.not-enough-fuel");
             return;
         }
         standStillThen(player, () -> jump(player, from, to, fuelCost), fuelCost);
@@ -224,7 +228,7 @@ public class WarpService {
                         () -> boat.addPassenger(player)));
             }
             arrivalEffects(player, target);
-            player.sendMessage(user(player).getTranslation("tradewinds.warp.arrived", "[name]", to.name()));
+            user(player).sendMessage("tradewinds.warp.arrived", "[name]", to.name());
             Bukkit.getPluginManager().callEvent(new TWWarpCompletedEvent(player, bearingFrom, to, fuelCost));
         });
     }

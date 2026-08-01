@@ -3,7 +3,26 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
-## Locale converted to MiniMessage (2026-07-31)
+## All player-facing text moved into the locale (2026-07-31)
+
+Ben's correction: never do MiniMessage conversion by hand - BentoBox's User
+API is locale-aware and does it (`getTranslationAsComponent`,
+`sendMessage`). Auditing for that exposed a bigger problem of my own making:
+dialog titles, buttons and tooltips, boss bar text, hologram labels, item
+names and lore were all HARDCODED ENGLISH in code, so none of it could ever
+be translated.
+Everything now goes through the locale: ~50 new `tradewinds.ui.*`,
+`tradewinds.hud.*`, `tradewinds.hologram.*` and `tradewinds.item.*` keys,
+fetched with `user.getTranslationAsComponent(...)`. The charted action bar
+uses the locale's `[actionbar]` marker so BentoBox delivers it, rather than
+calling sendActionBar around a manually parsed string.
+Audit is clean: no `Component.text("...")` literals and no MiniMessage
+references remain in src/main. Gotcha: the no-variable
+`getTranslationAsComponent(key)` call is ambiguous between the String... and
+TagResolver... overloads - pass `new String[0]`.
+Convention recorded in CLAUDE.md, including the [actionbar]/[title]/[sound]
+markers, which also offer a tidier route for the trade sounds later.
+154 tests green.
 
 Ben: MiniMessage is the standard from now on. en-US.yml converted from legacy
 ampersand codes to closed MiniMessage tags, matching core's own locale style

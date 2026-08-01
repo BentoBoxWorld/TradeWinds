@@ -16,7 +16,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.entity.TextDisplay;
 
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
+import world.bentobox.bentobox.api.user.User;
 import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.galaxy.IslandSpec;
 
@@ -92,7 +92,7 @@ public class ChartHolograms {
         // Boarding or charting at a port copies its harbour charts
         List<IslandSpec> scanned = addon.getPlayerDataManager().portScan(player);
         if (!scanned.isEmpty()) {
-            world.bentobox.bentobox.api.user.User.getInstance(player).sendMessage("tradewinds.chart.port-scan",
+            User.getInstance(player).sendMessage("tradewinds.chart.port-scan",
                     world.bentobox.bentobox.api.localization.TextVariables.NUMBER,
                     String.valueOf(scanned.size()));
         }
@@ -106,7 +106,7 @@ public class ChartHolograms {
         List<TextDisplay> spawned = new ArrayList<>();
         for (Marker marker : markers) {
             TextDisplay display = eye.getWorld().spawn(eye.clone().add(0, 1.0, 0), TextDisplay.class);
-            display.text(label(marker));
+            display.text(label(player, marker));
             display.setBillboard(Billboard.CENTER);
             display.setSeeThrough(true);
             display.setBackgroundColor(Color.fromARGB(120, 0, 20, 40));
@@ -133,14 +133,13 @@ public class ChartHolograms {
                 addon.getSettings().getChartHologramSeconds() * 20L);
     }
 
-    private Component label(Marker marker) {
+    private Component label(Player player, Marker marker) {
         IslandSpec spec = marker.island();
-        return Component.text(spec.name(), NamedTextColor.AQUA)
-                .append(Component.newline())
-                .append(Component.text(spec.type().name() + ", " + spec.band().getDisplayName(),
-                        NamedTextColor.GRAY))
-                .append(Component.newline())
-                .append(Component.text(marker.distance() + "m", NamedTextColor.YELLOW));
+        return User.getInstance(player).getTranslationAsComponent("tradewinds.hologram.island",
+                "[name]", spec.name(),
+                "[type]", spec.type().name(),
+                "[band]", spec.band().getDisplayName(),
+                "[distance]", String.valueOf(marker.distance()));
     }
 
     private List<IslandSpec> chartedIslands(Player player) {

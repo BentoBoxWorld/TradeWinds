@@ -43,6 +43,12 @@ import world.bentobox.tradewinds.galaxy.IslandSpec;
  */
 public class IntersticeService {
 
+    /**
+     * Disambiguates User#getTranslationAsComponent, whose no-variable call is
+     * ambiguous between the String... and TagResolver... overloads.
+     */
+    private static final String[] NO_VARS = new String[0];
+
     /** Player -> the destination cell they are still owed, free of charge. */
     private final Map<UUID, String> pendingDestination = new ConcurrentHashMap<>();
     private final Map<UUID, Long> lastPrompt = new ConcurrentHashMap<>();
@@ -150,16 +156,17 @@ public class IntersticeService {
         if (target == null) {
             return;
         }
+        User user = User.getInstance(player);
         ActionButton engage = ActionButton.create(
-                Component.text("Re-engage the warp to " + target.name(), NamedTextColor.AQUA),
-                Component.text("Free - the fuel was spent when you first engaged"), 320,
+                user.getTranslationAsComponent("tradewinds.ui.interstice.re-engage", "[name]", target.name()),
+                user.getTranslationAsComponent("tradewinds.ui.interstice.re-engage-tooltip", NO_VARS), 320,
                 DialogAction.customClick((response, audience) -> reEngage(player, target),
                         ClickCallback.Options.builder().build()));
         Dialog dialog = Dialog.create(factory -> factory.empty()
-                .base(DialogBase.builder(Component.text("The Interstice"))
-                        .body(java.util.List.of(DialogBody.plainMessage(Component.text(
-                                "Dark water, and something screaming above it. Your course is still paid for.",
-                                NamedTextColor.GRAY))))
+                .base(DialogBase.builder(
+                        user.getTranslationAsComponent("tradewinds.ui.interstice.title", NO_VARS))
+                        .body(java.util.List.of(DialogBody.plainMessage(
+                                user.getTranslationAsComponent("tradewinds.ui.interstice.body", NO_VARS))))
                         .build())
                 .type(DialogType.multiAction(java.util.List.of(engage)).columns(1).build()));
         player.showDialog(dialog);

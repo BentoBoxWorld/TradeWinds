@@ -138,7 +138,7 @@ public class MarketService {
         meta.getPersistentDataContainer().set(STAMP_KEY, PersistentDataType.STRING, "stamped");
         java.util.List<Component> lore = meta.lore() == null ? new java.util.ArrayList<>()
                 : new java.util.ArrayList<>(meta.lore());
-        lore.add(Component.text("\u2693 Customs Stamped", NamedTextColor.DARK_AQUA));
+        lore.add(text("tradewinds.item.stamp"));
         meta.lore(lore);
         if (addon.getSettings().isStampGlint()) {
             meta.setEnchantmentGlintOverride(true);
@@ -328,13 +328,21 @@ public class MarketService {
         ItemStack item = new ItemStack(Material.WHITE_SHULKER_BOX);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.displayName(Component.text("Cargo Expander", NamedTextColor.GOLD));
-            meta.lore(java.util.List.of(Component.text("Expands your boat's hold.", NamedTextColor.GRAY),
-                    Component.text("Stow in a chest boat.", NamedTextColor.GRAY)));
+            meta.displayName(text("tradewinds.item.expander"));
+            meta.lore(java.util.List.of(text("tradewinds.item.expander-lore")));
             meta.getPersistentDataContainer().set(EXPANDER_KEY, PersistentDataType.STRING, "expander");
             item.setItemMeta(meta);
         }
         return item;
+    }
+
+    /**
+     * A translated component from the console locale - for item names and lore,
+     * which belong to the item rather than to any one viewer.
+     */
+    private Component text(String key) {
+        return User.getInstance(org.bukkit.Bukkit.getConsoleSender()).getTranslationAsComponent(key,
+                new String[0]);
     }
 
     /**
@@ -345,9 +353,8 @@ public class MarketService {
         ItemStack pouch = new ItemStack(Material.BUNDLE);
         ItemMeta meta = pouch.getItemMeta();
         if (meta != null) {
-            meta.displayName(Component.text("Trading Pouch", NamedTextColor.GOLD));
-            meta.lore(java.util.List.of(Component.text("Cargo space. Stow goods to sell them.",
-                    NamedTextColor.GRAY)));
+            meta.displayName(text("tradewinds.item.pouch"));
+            meta.lore(java.util.List.of(text("tradewinds.item.pouch-lore")));
             pouch.setItemMeta(meta);
         }
         return pouch;

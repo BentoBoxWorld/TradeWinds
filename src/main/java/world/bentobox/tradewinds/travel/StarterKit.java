@@ -71,18 +71,15 @@ public class StarterKit {
     }
 
     private ItemStack tradingBundle() {
-        ItemStack bundle = addon.getMarketService().pouchItem();
-        ItemMeta meta = bundle.getItemMeta();
-        if (meta != null) {
-            // A little coal in the bundle: it is hold cargo, so the first
-            // island hop can be a warp instead of a long row
-            int coal = addon.getSettings().getStarterCoal();
-            if (coal > 0 && meta instanceof org.bukkit.inventory.meta.BundleMeta bundleMeta) {
-                bundleMeta.setItems(java.util.List.of(new ItemStack(Material.COAL, coal)));
-            }
-            bundle.setItemMeta(meta);
+        ItemStack pouch = addon.getMarketService().pouchItem();
+        // A little coal in the pouch: it is hold cargo, so the first island hop
+        // can be a warp instead of a long row
+        int coal = addon.getSettings().getStarterCoal();
+        if (coal > 0 && pouch.getItemMeta() instanceof org.bukkit.inventory.meta.BundleMeta bundleMeta) {
+            bundleMeta.setItems(java.util.List.of(new ItemStack(Material.COAL, coal)));
+            pouch.setItemMeta(bundleMeta);
         }
-        return bundle;
+        return pouch;
     }
 
     private void launchBoat(Player player, Location spawn, Material boatMaterial) {

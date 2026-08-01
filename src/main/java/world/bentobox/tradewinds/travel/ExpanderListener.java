@@ -20,8 +20,6 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BlockStateMeta;
 
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import world.bentobox.tradewinds.TradeWinds;
 
 /**
@@ -60,8 +58,8 @@ public class ExpanderListener implements Listener {
                 || !(meta.getBlockState() instanceof ShulkerBox box)) {
             return;
         }
-        Inventory view = Bukkit.createInventory(null, 27,
-                Component.text("Cargo Expander", NamedTextColor.DARK_AQUA));
+        Inventory view = Bukkit.createInventory(null, 27, world.bentobox.bentobox.api.user.User
+                .getInstance(player).getTranslationAsComponent("tradewinds.item.expander-view", new String[0]));
         view.setContents(box.getInventory().getContents());
         open.put(player.getUniqueId(), player.getInventory().getHeldItemSlot());
         player.openInventory(view);

@@ -11,7 +11,7 @@ import org.bukkit.scheduler.BukkitTask;
 
 import net.kyori.adventure.bossbar.BossBar;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
+import world.bentobox.bentobox.api.user.User;
 import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.galaxy.DockPlan;
 import world.bentobox.tradewinds.galaxy.GalaxyEngine;
@@ -104,10 +104,10 @@ public class NavigationBarTask implements Runnable {
     }
 
     private void show(Player player, Reading reading) {
-        Component name = Component.text(reading.island().name(), NamedTextColor.AQUA)
-                .append(Component.text("  |  " + addon.getPlayerStanding(player.getUniqueId()),
-                        NamedTextColor.WHITE))
-                .append(Component.text("  |  Dock " + reading.dockDistance() + "m", NamedTextColor.YELLOW));
+        Component name = User.getInstance(player).getTranslationAsComponent("tradewinds.hud.navigation",
+                "[name]", reading.island().name(),
+                "[standing]", addon.getPlayerStanding(player.getUniqueId()),
+                "[distance]", String.valueOf(reading.dockDistance()));
         BossBar bar = bars.computeIfAbsent(player.getUniqueId(),
                 id -> BossBar.bossBar(name, reading.progress(), color(reading.island().band()),
                         BossBar.Overlay.PROGRESS));

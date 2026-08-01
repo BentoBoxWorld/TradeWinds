@@ -10,8 +10,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.MapMeta;
 import org.bukkit.map.MapView;
 
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
+import world.bentobox.bentobox.api.user.User;
 import world.bentobox.bentobox.database.Database;
 import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.dataobjects.TWWorldData;
@@ -47,7 +46,8 @@ public class StarChartService implements Listener {
         ItemStack item = new ItemStack(Material.FILLED_MAP);
         if (item.getItemMeta() instanceof MapMeta meta) {
             meta.setMapView(chartView());
-            meta.displayName(Component.text("Star Chart", NamedTextColor.AQUA));
+            meta.displayName(User.getInstance(player).getTranslationAsComponent("tradewinds.item.starchart",
+                    new String[0]));
             item.setItemMeta(meta);
         }
         player.getInventory().addItem(item).values()

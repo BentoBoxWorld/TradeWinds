@@ -31,6 +31,9 @@ import world.bentobox.tradewinds.galaxy.IslandSpec;
  */
 public class TradeDialog {
 
+    /** Disambiguates the no-variable getTranslationAsComponent overloads. */
+    private static final String[] NO_VARS = new String[0];
+
     /** Sell/buy quantity steps shown side by side per cargo row. */
     private static final int MID_BATCH = 16;
     private static final int BIG_BATCH = 64;
@@ -50,20 +53,20 @@ public class TradeDialog {
         List<ActionButton> buttons = new ArrayList<>();
         // No sell button when the hold has nothing this island pays for
         if (!sellOffers(player, spec).isEmpty()) {
-            buttons.add(button("Sell cargo", NamedTextColor.YELLOW, "Sell your hold's goods here",
-                    () -> openSell(player, spec)));
+            buttons.add(button(player, "market.sell", "market.sell-tooltip", () -> openSell(player, spec)));
         }
         if (!addon.getMarketService().saleCatalog(spec).isEmpty()) {
-            buttons.add(button("Buy goods", NamedTextColor.AQUA, "Buy this island's trade goods into your hold",
-                    () -> openBuy(player, spec, addon.getMarketService().saleCatalog(spec), " - Buying")));
+            buttons.add(button(player, "market.buy", "market.buy-tooltip",
+                    () -> openBuy(player, spec, addon.getMarketService().saleCatalog(spec), "buying")));
         }
-        buttons.add(button("Outfitter", NamedTextColor.GREEN, "Food, fuel and gear - straight to your pack",
+        buttons.add(button(player, "market.outfitter", "market.outfitter-tooltip",
                 () -> openOutfitter(player, spec)));
-        buttons.add(button("Shipwright", NamedTextColor.GOLD, "Boats, chest boats and cargo expanders",
+        buttons.add(button(player, "market.shipwright", "market.shipwright-tooltip",
                 () -> openShipwright(player, spec)));
-        show(player, spec.name() + " Market",
-                List.of(spec.type().name() + ", " + spec.band().getDisplayName(), statusLine(player)), buttons,
-                closeButton(), 1);
+        show(player, ui(player, "market.title", "[name]", spec.name()),
+                List.of(ui(player, "market.subtitle", "[type]", spec.type().name(), "[band]",
+                        spec.band().getDisplayName()), statusLine(player)),
+                buttons, closeButton(player), 1);
     }
 
     /**
@@ -79,20 +82,24 @@ public class TradeDialog {
         List<ActionButton> buttons = new ArrayList<>();
         for (SellOffer offer : offers.subList(0, Math.min(MAX_ROWS, offers.size()))) {
             String name = MarketService.pretty(offer.material());
-            String each = String.format("$%.2f each", offer.unitPrice());
-            buttons.add(button(name + " x1", NamedTextColor.YELLOW, each,
+            Component each = ui(player, "market.sell-tooltip-each", "[price]",
+                    String.format("%.2f", offer.unitPrice()));
+            buttons.add(button(ui(player, "market.sell-one", "[material]", name), each,
                     () -> sellThenReopen(player, spec, offer.material(), 1)));
-            buttons.add(button(name + " x" + MID_BATCH, NamedTextColor.YELLOW,
-                    String.format("%s - up to $%.2f", each, offer.unitPrice() * MID_BATCH),
+            buttons.add(button(ui(player, "market.sell-batch", "[material]", name, "[amount]",
+                    String.valueOf(MID_BATCH)), each,
                     () -> sellThenReopen(player, spec, offer.material(), MID_BATCH)));
-            buttons.add(button(String.format("All %d - $%.2f", offer.amount(), offer.total()), NamedTextColor.GOLD,
-                    each, () -> sellThenReopen(player, spec, offer.material(), Integer.MAX_VALUE)));
+            buttons.add(button(ui(player, "market.sell-all", "[amount]", String.valueOf(offer.amount()),
+                    "[price]", String.format("%.2f", offer.total())), each,
+                    () -> sellThenReopen(player, spec, offer.material(), Integer.MAX_VALUE)));
         }
-        List<String> body = new ArrayList<>(List.of("The island pays for goods in your hold", statusLine(player)));
+        List<Component> body = new ArrayList<>(List.of(ui(player, "market.selling-body", NO_VARS),
+                statusLine(player)));
         if (offers.size() > MAX_ROWS) {
-            body.add("(showing the first " + MAX_ROWS + " cargo types - sell some to see the rest)");
+            body.add(ui(player, "market.selling-truncated", "[number]", String.valueOf(MAX_ROWS)));
         }
-        show(player, spec.name() + " - Selling", body, buttons, backButton(player, spec), 3);
+        show(player, ui(player, "market.selling-title", "[name]", spec.name()), body, buttons,
+                backButton(player, spec), 3);
     }
 
     private void sellThenReopen(Player player, IslandSpec spec, Material material, int amount) {
@@ -103,19 +110,22 @@ public class TradeDialog {
     /**
      * The buy page: the island's catalog in batches.
      */
-    public void openBuy(Player player, IslandSpec spec, List<Material> catalog, String titleSuffix) {
+    public void openBuy(Player player, IslandSpec spec, List<Material> catalog, String page) {
         List<ActionButton> buttons = new ArrayList<>();
         for (Material material : catalog) {
             Optional<Double> price = addon.getMarketService().playerBuysAt(spec, material);
             price.ifPresent(unit -> {
                 String name = MarketService.pretty(material);
-                String each = String.format("$%.2f each; limited by balance and hold space", unit);
-                buttons.add(button(String.format("%s x1 - $%.2f", name, unit), NamedTextColor.AQUA, each,
-                        () -> buyThenReopen(player, spec, material, 1, catalog, titleSuffix)));
-                buttons.add(button(String.format("x%d - $%.2f", MID_BATCH, unit * MID_BATCH), NamedTextColor.AQUA,
-                        each, () -> buyThenReopen(player, spec, material, MID_BATCH, catalog, titleSuffix)));
-                buttons.add(button(String.format("x%d - $%.2f", BIG_BATCH, unit * BIG_BATCH), NamedTextColor.AQUA,
-                        each, () -> buyThenReopen(player, spec, material, BIG_BATCH, catalog, titleSuffix)));
+                Component each = ui(player, "market.buy-tooltip-each", "[price]", String.format("%.2f", unit));
+                buttons.add(button(ui(player, "market.buy-one", "[material]", name, "[price]",
+                        String.format("%.2f", unit)), each,
+                        () -> buyThenReopen(player, spec, material, 1, catalog, page)));
+                buttons.add(button(ui(player, "market.buy-batch", "[amount]", String.valueOf(MID_BATCH),
+                        "[price]", String.format("%.2f", unit * MID_BATCH)), each,
+                        () -> buyThenReopen(player, spec, material, MID_BATCH, catalog, page)));
+                buttons.add(button(ui(player, "market.buy-batch", "[amount]", String.valueOf(BIG_BATCH),
+                        "[price]", String.format("%.2f", unit * BIG_BATCH)), each,
+                        () -> buyThenReopen(player, spec, material, BIG_BATCH, catalog, page)));
             });
         }
         if (buttons.isEmpty()) {
@@ -123,15 +133,15 @@ public class TradeDialog {
             openMain(player, spec);
             return;
         }
-        show(player, spec.name() + titleSuffix,
-                List.of("Goods sold into your hold - customs stamped", statusLine(player)), buttons,
+        show(player, ui(player, "market." + page + "-title", "[name]", spec.name()),
+                List.of(ui(player, "market." + page + "-body", NO_VARS), statusLine(player)), buttons,
                 backButton(player, spec), 3);
     }
 
     private void buyThenReopen(Player player, IslandSpec spec, Material material, int amount, List<Material> catalog,
-            String titleSuffix) {
+            String page) {
         addon.getMarketService().buy(player, spec, material, amount);
-        openBuy(player, spec, catalog, titleSuffix);
+        openBuy(player, spec, catalog, page);
     }
 
     /**
@@ -144,12 +154,13 @@ public class TradeDialog {
         for (Material material : addon.getMarketService().outfitterCatalog(spec)) {
             addon.getMarketService().playerBuysAt(spec, material).ifPresent(unit -> {
                 String name = MarketService.pretty(material);
-                String each = String.format("$%.2f each - carried in your pack, not the hold", unit);
-                buttons.add(button(String.format("%s x1 - $%.2f", name, unit), NamedTextColor.GREEN, each,
+                Component each = ui(player, "market.outfit-tooltip", "[price]", String.format("%.2f", unit));
+                buttons.add(button(ui(player, "market.outfit-one", "[material]", name, "[price]",
+                        String.format("%.2f", unit)), each,
                         () -> outfitThenReopen(player, spec, material, 1)));
                 if (new org.bukkit.inventory.ItemStack(material).getMaxStackSize() > 1) {
-                    buttons.add(button(String.format("x%d - $%.2f", MID_BATCH, unit * MID_BATCH),
-                            NamedTextColor.GREEN, each,
+                    buttons.add(button(ui(player, "market.outfit-batch", "[amount]", String.valueOf(MID_BATCH),
+                            "[price]", String.format("%.2f", unit * MID_BATCH)), each,
                             () -> outfitThenReopen(player, spec, material, MID_BATCH)));
                 }
             });
@@ -159,8 +170,8 @@ public class TradeDialog {
             openMain(player, spec);
             return;
         }
-        show(player, spec.name() + " - Outfitter",
-                List.of("Stores for the sailing life - food, fuel and gear", statusLine(player)), buttons,
+        show(player, ui(player, "market.outfitter-title", "[name]", spec.name()),
+                List.of(ui(player, "market.outfitter-body", NO_VARS), statusLine(player)), buttons,
                 backButton(player, spec), 2);
     }
 
@@ -177,8 +188,9 @@ public class TradeDialog {
         List<ActionButton> buttons = new ArrayList<>();
         for (Material hull : addon.getMarketService().shipwrightCatalog()) {
             addon.getMarketService().playerBuysAt(spec, hull).ifPresent(unit -> buttons.add(button(
-                    String.format("%s - $%.2f", MarketService.pretty(hull), unit), NamedTextColor.GOLD,
-                    "Delivered to your inventory - place it at the dock",
+                    ui(player, "market.hull", "[material]", MarketService.pretty(hull), "[price]",
+                            String.format("%.2f", unit)),
+                    ui(player, "market.hull-tooltip", NO_VARS),
                     () -> {
                         addon.getMarketService().buyToInventory(player, spec, hull, 1);
                         openShipwright(player, spec);
@@ -187,10 +199,10 @@ public class TradeDialog {
         int pouches = addon.getHoldService().pouchCount(player);
         int maxPouches = addon.getSettings().getMaxBundles();
         if (pouches < maxPouches) {
-            buttons.add(button(String.format("Trading Pouch - $%.0f",
-                    addon.getMarketService().pouchPrice(player)), NamedTextColor.GOLD,
-                    "Holds 64 items (" + pouches + "/" + maxPouches + " carried). Cargo expanders carry "
-                            + "27 stacks each - the way to a real hold.",
+            buttons.add(button(ui(player, "market.pouch", "[price]",
+                    String.format("%.0f", addon.getMarketService().pouchPrice(player))),
+                    ui(player, "market.pouch-tooltip", "[owned]", String.valueOf(pouches), "[cap]",
+                            String.valueOf(maxPouches)),
                     () -> {
                         addon.getMarketService().buyPouch(player);
                         openShipwright(player, spec);
@@ -199,27 +211,24 @@ public class TradeDialog {
         int owned = addon.getPlayerDataManager().get(player.getUniqueId()).getExpandersPurchased();
         if (owned < addon.getSettings().getExpanderCap()) {
             double price = PriceModel.expanderPrice(addon.getSettings().getExpanderBasePrice(), owned);
-            buttons.add(button(String.format("Cargo Expander - $%.0f", price), NamedTextColor.GOLD,
-                    "27 stacks of cargo space (" + owned + "/" + addon.getSettings().getExpanderCap()
-                            + " owned). Price doubles each time. Carried in your pack - open it anywhere.",
+            buttons.add(button(ui(player, "market.expander", "[price]", String.format("%.0f", price)),
+                    ui(player, "market.expander-tooltip", "[owned]", String.valueOf(owned), "[cap]",
+                            String.valueOf(addon.getSettings().getExpanderCap())),
                     () -> {
                         addon.getMarketService().buyExpander(player);
                         openShipwright(player, spec);
                     }));
         }
         if (addon.getMarketService().isDestitute(player)) {
-            buttons.add(button("Harbourmaster's charity", NamedTextColor.GREEN,
-                    "Shipwrecked and penniless? Take a pouch, and a boat if you need one. "
-                            + "Nobody starves in this port.",
+            buttons.add(button(player, "market.charity", "market.charity-tooltip",
                     () -> {
                         addon.getMarketService().claimCharity(player);
                         openShipwright(player, spec);
                     }));
         }
-        show(player, spec.name() + " - Shipwright",
-                List.of("Hulls and holds. Smart sailors craft their own boats from wild timber.",
-                        statusLine(player)),
-                buttons, backButton(player, spec), 1);
+        show(player, ui(player, "market.shipwright-title", "[name]", spec.name()),
+                List.of(ui(player, "market.shipwright-body", NO_VARS), statusLine(player)), buttons,
+                backButton(player, spec), 1);
     }
 
     /**
@@ -245,34 +254,44 @@ public class TradeDialog {
      * Balance and hold space - shown on every market screen so traders always
      * know what they can afford and what they can carry.
      */
-    private String statusLine(Player player) {
+    /**
+     * A translated UI component. All dialog text goes through the locale so it
+     * can be translated - never build player-facing strings in code.
+     */
+    private Component ui(Player player, String key, String... variables) {
+        return User.getInstance(player).getTranslationAsComponent("tradewinds.ui." + key, variables);
+    }
+
+    private Component statusLine(Player player) {
         double balance = addon.getPlugin().getVault().map(v -> v.getBalance(User.getInstance(player))).orElse(0.0);
-        return String.format("Balance: $%.2f  |  Hold space: ~%d items", balance,
-                addon.getHoldService().freeSpace(player));
+        return ui(player, "market.status", "[balance]", String.format("%.2f", balance), "[space]",
+                String.valueOf(addon.getHoldService().freeSpace(player)));
     }
 
     private ActionButton backButton(Player player, IslandSpec spec) {
-        return button("< Back", NamedTextColor.GRAY, "Back to the market menu", () -> openMain(player, spec));
+        return button(player, "market.back", "market.back-tooltip", () -> openMain(player, spec));
     }
 
-    private ActionButton closeButton() {
+    private ActionButton closeButton(Player player) {
         // No action: clicking simply closes the dialog
-        return ActionButton.builder(Component.text("Close", NamedTextColor.GRAY)).width(300).build();
+        return ActionButton.builder(ui(player, "market.close", NO_VARS)).width(300).build();
     }
 
-    private ActionButton button(String label, NamedTextColor color, String tooltip, Runnable action) {
-        return ActionButton.create(Component.text(label, color), Component.text(tooltip), 140,
+    private ActionButton button(Player player, String labelKey, String tooltipKey, Runnable action) {
+        return button(ui(player, labelKey, NO_VARS), ui(player, tooltipKey, NO_VARS), action);
+    }
+
+    private ActionButton button(Component label, Component tooltip, Runnable action) {
+        return ActionButton.create(label, tooltip, 140,
                 DialogAction.customClick((response, audience) -> action.run(),
                         ClickCallback.Options.builder().build()));
     }
 
-    private void show(Player player, String title, List<String> bodyLines, List<ActionButton> buttons,
+    private void show(Player player, Component title, List<Component> bodyLines, List<ActionButton> buttons,
             ActionButton exitButton, int columns) {
-        List<DialogBody> body = bodyLines.stream()
-                .map(line -> (DialogBody) DialogBody.plainMessage(Component.text(line, NamedTextColor.GRAY)))
-                .toList();
+        List<DialogBody> body = bodyLines.stream().map(line -> (DialogBody) DialogBody.plainMessage(line)).toList();
         Dialog dialog = Dialog.create(factory -> factory.empty()
-                .base(DialogBase.builder(Component.text(title)).body(body).build())
+                .base(DialogBase.builder(title).body(body).build())
                 .type(DialogType.multiAction(buttons).exitAction(exitButton).columns(columns).build()));
         player.showDialog(dialog);
     }

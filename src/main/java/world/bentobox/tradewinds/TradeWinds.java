@@ -22,6 +22,7 @@ import world.bentobox.bentobox.api.commands.island.IslandLanguageCommand;
 import world.bentobox.bentobox.api.commands.island.IslandSettingsCommand;
 import world.bentobox.bentobox.api.configuration.Config;
 import world.bentobox.bentobox.api.configuration.WorldSettings;
+import world.bentobox.bentobox.api.user.User;
 import world.bentobox.bentobox.lists.Flags;
 import world.bentobox.tradewinds.commands.AdminIslandsCommand;
 import world.bentobox.tradewinds.commands.AdminReflagCommand;
