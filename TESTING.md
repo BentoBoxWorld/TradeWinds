@@ -927,3 +927,26 @@ two rules.
 - [ ] Sanity check the point of all this: after a dozen `/tw starchart` calls there
       are no stray maps in your inventory, on the ground, or in your hold.
 - [ ] With a completely full hotbar it is added anywhere it fits rather than refused.
+
+## The interstice: lit, lidded, and ghasts you can actually see
+
+**Needs fresh interstice chunks** - delete `world/dimensions/minecraft/tradewinds_world_nether`.
+Use `/twadmin warpfail <you>` then `/tw warp` to get there on demand.
+
+- [ ] **The ghasts are visible.** They were always spawning; at 90 blocks they were
+      beyond the monster entity-tracking-range (48 on a default spigot.yml, 96 here)
+      so the client was never sent them. Now ~44 blocks: you see them, hear them, and
+      choose whether to engage.
+- [ ] Some failures still bring nothing at all (`ghast-chance: 0.6`).
+- [ ] The 20-second arrival grace still holds - nothing targets or hurts you while
+      you read the dialog.
+- [ ] **There is a ceiling** about 48 blocks above the sea: netherrack with bedrock
+      on top. Fly up and confirm you cannot leave.
+- [ ] **Burning braziers** - netherrack outcrops rising out of the water with fire on
+      top - appear across the sea, roughly one chunk in six. They light the place and
+      give you something to steer by.
+- [ ] The fires stay lit (netherrack burns forever) and do not spread - there is
+      nothing out there to catch.
+- [ ] Some braziers have glowstone at their base, visible from underwater.
+- [ ] Overall: the interstice reads as somewhere hostile you are trapped in, rather
+      than an unfinished black void.

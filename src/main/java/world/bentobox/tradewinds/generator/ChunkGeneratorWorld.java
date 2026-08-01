@@ -67,6 +67,8 @@ public class ChunkGeneratorWorld extends ChunkGenerator {
     private static final int CRUST_THICKNESS = 5;
     /** Soil depth under a land surface before it turns to stone. */
     private static final int SOIL_THICKNESS = 4;
+    /** Layers of rock under the interstice's bedrock lid. */
+    private static final int ROOF_THICKNESS = 4;
 
     private final TradeWinds addon;
     private final Map<Environment, WorldConfig> seaConfig = new EnumMap<>(Environment.class);
@@ -158,6 +160,27 @@ public class ChunkGeneratorWorld extends ChunkGenerator {
                         baseTop, floorTops[(x << 4) | z]);
             }
         }
+        if (!overworld) {
+            roofOver(chunkData, worldInfo, wc);
+        }
+    }
+
+    /**
+     * Lid the interstice.
+     * <p>
+     * An open sky over a black sea reads as an empty void - somewhere the game
+     * forgot to finish - rather than somewhere you are trapped. A ceiling gives
+     * it a shape, and stops anything leaving upward.
+     */
+    private void roofOver(ChunkData chunkData, WorldInfo worldInfo, WorldConfig wc) {
+        int height = addon.getSettings().getIntersticeCeilingHeight();
+        if (height <= 0) {
+            return;
+        }
+        int roof = Math.min(worldInfo.getMaxHeight() - 1, wc.seaHeight() + height);
+        int underside = Math.max(wc.seaHeight() + 1, roof - ROOF_THICKNESS);
+        chunkData.setRegion(0, underside, 0, 16, roof, 16, Material.NETHERRACK);
+        chunkData.setRegion(0, roof, 0, 16, roof + 1, 16, Material.BEDROCK);
     }
 
     /**
@@ -387,7 +410,8 @@ public class ChunkGeneratorWorld extends ChunkGenerator {
     @Override
     public List<BlockPopulator> getDefaultPopulators(World world) {
         if (world.getEnvironment() != Environment.NORMAL) {
-            return List.of();
+            // The interstice gets braziers - the only light in the place
+            return List.of(new IntersticeDecorator(addon));
         }
         if (decorator == null) {
             decorator = new IslandDecorator(addon);

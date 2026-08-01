@@ -3,6 +3,38 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## The interstice: lit, lidded, and ghasts you can see (2026-08-01)
+
+Ben: "very dark and dim... the ghast(s) I hear spawn when I failed - I never see
+them, are they really there, or was it just the sound?"
+
+**They were really there, and I had made them invisible.** Yesterday's fix for
+players dying on arrival pushed the spawn distance out to 90 blocks so engaging
+would be a choice. But the monster **entity-tracking-range** is 48 on a default
+spigot.yml (96 on this server), so a ghast at 90-120 blocks is never sent to the
+client at all - and since the same fix stopped giving them a target, they had no
+reason to close the distance either. The result was a scream (which I play
+myself on arrival) and nothing else, forever. Distance is now 44, comfortably
+inside tracking range on any server, with the grace window and the
+sometimes-nothing roll still doing the work of making arrival survivable.
+
+A good reminder that "far enough away to be fair" has an upper bound set by what
+the client is ever told about.
+
+**And the dark.** An open black sky over a black sea reads as unfinished rather
+than hostile, so the interstice now has a **ceiling** (netherrack under bedrock,
+48 blocks up) and **braziers**: netherrack outcrops rising out of the water with
+fire burning on top, roughly one chunk in six. Fire on netherrack burns forever
+and there is nothing out there for it to spread to. They are the only light in
+the place, and they double as landmarks - somewhere featureless is disorienting
+in a way that somewhere dangerous is not.
+
+**Pitfall:** a careless string replace turned the live config's
+`ghast-distance: 90.0` into a stray `.0` appended to the next key
+(`brazier-chance: 0.18.0`). Parse the YAML after editing it, every time.
+
+210 tests green.
+
 ## Server crash: hot-swapped jar, and a chunk-loading warp arrival (2026-08-01)
 
 `NoClassDefFoundError: IslandPalette` inside chunk generation, which Paper

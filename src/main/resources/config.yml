@@ -317,10 +317,18 @@ interstice:
   # are just dark water and a long silence - unsettling in its own right, and it
   # means a failed warp is not automatically a fight.
   ghast-chance: 0.6
-  # How far away ghasts appear, in blocks. Keep ABOVE a ghast's own 64-block
-  # detection range: they are not told where the player is, so at this distance
-  # engaging is the player's choice rather than something done to them.
-  ghast-distance: 90
+  # How far away ghasts appear, in blocks. They are not given a target, so this is
+  # how far off they hang until the player does something about them. Keep it well
+  # under the server's monster entity-tracking-range (48 on a default spigot.yml) or
+  # the client is never sent them at all - at 90 they were real, present and
+  # completely invisible.
+  ghast-distance: 44
+  # Give the interstice a ceiling this many blocks above its sea. A lid makes it feel
+  # like somewhere you are trapped rather than an empty void. 0 leaves it open.
+  ceiling-height: 48
+  # Chance per chunk of a burning netherrack brazier rising out of the interstice
+  # sea. They are the only light out there - without them it is a flat black nothing.
+  brazier-chance: 0.18
   # Seconds after a failed warp during which nothing in the interstice may target or
   # hurt the player - long enough to read the dialog and take the free way out.
   grace-seconds: 20

@@ -599,16 +599,30 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "interstice.ghast-chance")
     private double intersticeGhastChance = 0.6;
 
-    @ConfigComment("How far away ghasts appear, in blocks. Keep this ABOVE a ghast's own 64-block")
-    @ConfigComment("detection range: they are not told where the player is, so at this distance")
-    @ConfigComment("engaging is the player's choice rather than something done to them.")
+    @ConfigComment("How far away ghasts appear, in blocks. They are not given a target, so this is")
+    @ConfigComment("how far off they hang until the player does something about them.")
+    @ConfigComment("Keep it well under the server's monster entity-tracking-range (48 on a default")
+    @ConfigComment("spigot.yml) or the client is never sent them at all: the first cut used 90 and")
+    @ConfigComment("the ghasts were real, present, and completely invisible.")
     @ConfigEntry(path = "interstice.ghast-distance")
-    private double intersticeGhastDistance = 90;
+    private double intersticeGhastDistance = 44;
 
     @ConfigComment("Seconds after a failed warp during which nothing in the interstice may target")
     @ConfigComment("or hurt the player - long enough to read the dialog and take the free way out.")
     @ConfigEntry(path = "interstice.grace-seconds")
     private int intersticeGraceSeconds = 20;
+
+    @ConfigComment("Give the interstice a ceiling this many blocks above its sea. A lid makes the")
+    @ConfigComment("place feel like somewhere you are trapped rather than an empty void, and stops")
+    @ConfigComment("anything escaping upward. 0 leaves it open.")
+    @ConfigEntry(path = "interstice.ceiling-height", needsReset = true)
+    private int intersticeCeilingHeight = 48;
+
+    @ConfigComment("Chance (0-1) per chunk of a burning netherrack brazier rising out of the")
+    @ConfigComment("interstice sea. They are the only light out there - without them it is a flat")
+    @ConfigComment("black nothing, and a player cannot see what is coming.")
+    @ConfigEntry(path = "interstice.brazier-chance", needsReset = true)
+    private double intersticeBrazierChance = 0.18;
 
     @ConfigComment("Ghasts spawned around a stranded sailor in the interstice.")
     @ConfigEntry(path = "interstice.ghasts-min")
@@ -2925,6 +2939,10 @@ public class Settings implements WorldSettings {
     public void setIntersticeGhastChance(double v) { this.intersticeGhastChance = v; }
     public double getIntersticeGhastDistance() { return intersticeGhastDistance; }
     public void setIntersticeGhastDistance(double v) { this.intersticeGhastDistance = v; }
+    public int getIntersticeCeilingHeight() { return intersticeCeilingHeight; }
+    public void setIntersticeCeilingHeight(int v) { this.intersticeCeilingHeight = v; }
+    public double getIntersticeBrazierChance() { return intersticeBrazierChance; }
+    public void setIntersticeBrazierChance(double v) { this.intersticeBrazierChance = v; }
     public int getIntersticeGraceSeconds() { return intersticeGraceSeconds; }
     public void setIntersticeGraceSeconds(int v) { this.intersticeGraceSeconds = v; }
     public int getIntersticeGhastsMin() { return intersticeGhastsMin; }
