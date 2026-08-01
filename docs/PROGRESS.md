@@ -3,6 +3,41 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## Low fuel warning, and the band on the boss bar (2026-08-01)
+
+Two playtest asks, both about the player not being told something they needed.
+
+**Low fuel.** Running dry at a port is not a soft failure - the only way onward
+is rowing - and it is only fixable while the sailor is still standing next to
+the fuel. So the check happens at the port: fuel aboard against the *cheapest*
+charted route out, since affording the far island is irrelevant if you cannot
+afford the near one.
+
+Ben's own caveat drove the design: "for kids, they won't read it if it isn't
+obvious". So it is told three times, in three different lifetimes:
+- the **action bar** repeats every 8s while ashore and short (a one-shot would
+  be missed by exactly the players this is for),
+- a **chat line** fires once per port and *stays* in the log, with how much more
+  fuel is needed,
+- the **market dialog** relabels whichever button actually sells fuel to
+  "BUY FUEL HERE" - the outfitter normally, or the buy page at islands whose own
+  catalog stocks fuel, since the outfitter only carries charcoal when the trade
+  catalog does not.
+
+No warning when nothing is charted: being unable to warp is not a fuel problem
+then, and saying so would be a lie.
+
+**The band on the boss bar.** "I arrived in an anarchy and I couldn't remember
+what kind of island it was, and couldn't work out how to tell." The bar colour
+already tracked the band, but a colour with no label is a puzzle. The bar now
+reads *name | band | standing | dock*, with the band coloured in the locale
+(blue Safe through bold dark-red ANARCHIC) - and the same coloured name now
+appears on chart holograms and the market subtitle. Worth noting the bar's
+"Clean" was the *player's standing* all along, which is easy to misread as
+something about the island.
+
+205 tests green.
+
 ## "Suffocated in a wall": warp arrivals landing inside the quay (2026-08-01)
 
 Ben's death screen: *"BoxManager suffocated in a wall whilst fighting Ghast"*,

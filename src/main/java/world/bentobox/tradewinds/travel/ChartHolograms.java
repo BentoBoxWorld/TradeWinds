@@ -138,7 +138,7 @@ public class ChartHolograms {
         return User.getInstance(player).getTranslationAsComponent("tradewinds.hologram.island",
                 "[name]", spec.name(),
                 "[type]", spec.type().name(),
-                "[band]", spec.band().getDisplayName(),
+                "[band]", User.getInstance(player).getTranslation(spec.band().getLocaleKey()),
                 "[distance]", String.valueOf(marker.distance()));
     }
 

@@ -814,3 +814,26 @@ out. Set `travel.warp.failure-chance: 1.0` temporarily to test this repeatedly.
       again on the same player to clear it. Check the console/chat feedback both ways.
 - [ ] After a rigged failure, the flag is gone: the next warp behaves normally.
 - [ ] Interstice arrivals also land on open water, not inside the interstice floor.
+
+## Low fuel warning, and reading the boss bar
+
+- [ ] Stand at a port with less fuel than the cheapest charted warp costs: a **LOW
+      FUEL** action bar appears and **repeats** every 8 seconds while you are there.
+- [ ] A **chat line** also arrives, once per port visit, saying how much more fuel
+      you need. It stays in the chat log — this is the one a child will still find
+      after looking away.
+- [ ] Open the market: the body says LOW FUEL, and the button that actually sells
+      fuel is relabelled **"BUY FUEL HERE"** — the Outfitter normally, or the Buy
+      Goods button at islands whose own catalog stocks fuel.
+- [ ] Buy fuel: all three warnings stop.
+- [ ] With nothing charted to warp to, there is **no** warning — being unable to
+      warp is not a fuel problem then.
+- [ ] Out at sea (not at a port), no warning. It is only raised where it is fixable.
+- [ ] `travel.fuel-warning.margin: 1.5` warns while you can still just about leave;
+      `enabled: false` removes all of it including the dialog highlight.
+
+- [ ] The navigation boss bar now reads **name | band | standing | dock distance**,
+      with the band coloured — blue Safe, green Policed, yellow Frontier, red
+      Lawless, bold dark-red ANARCHIC. Sail into each and confirm you can tell at a
+      glance what kind of water you are in.
+- [ ] The same coloured band appears on the chart holograms and the market subtitle.

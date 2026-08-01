@@ -25,6 +25,17 @@ public enum SecurityBand {
     }
 
     /**
+     * The locale key for this band's name. Bands are coloured in the locale so
+     * a sailor can read where they are at a glance - arriving in anarchic water
+     * and having no way to tell is how people lose cargo.
+     *
+     * @return locale key
+     */
+    public String getLocaleKey() {
+        return "tradewinds.band." + name().toLowerCase(java.util.Locale.ENGLISH);
+    }
+
+    /**
      * @return true if PvP is live on this island's space
      */
     public boolean isPvp() {

@@ -20,9 +20,14 @@ import world.bentobox.tradewinds.galaxy.SecurityBand;
 
 /**
  * The navigation boss bar: while in an island's waters it shows the island
- * name, the player's standing, and the distance to the dock - steer toward the
- * dock and watch the number fall. Bar color tracks the security band, and the
- * bar fills as you close on the pier.
+ * name, its <b>security band</b>, the player's standing, and the distance to
+ * the dock - steer toward the dock and watch the number fall. Bar color tracks
+ * the band too, and the bar fills as you close on the pier.
+ * <p>
+ * The band is spelled out because the bar colour alone was not enough in play:
+ * "I arrived in an anarchy and I couldn't remember what kind of island it was,
+ * and couldn't work out how to tell." Whether the law is watching is the single
+ * most consequential fact about where you are.
  *
  * @author tastybento
  */
@@ -107,6 +112,7 @@ public class NavigationBarTask implements Runnable {
         User user = User.getInstance(player);
         Component name = user.getTranslationAsComponent("tradewinds.hud.navigation",
                 "[name]", reading.island().name(),
+                "[band]", user.getTranslation(reading.island().band().getLocaleKey()),
                 "[standing]", addon.getPlayerStanding(user, player.getUniqueId()),
                 "[distance]", String.valueOf(reading.dockDistance()));
         BossBar bar = bars.computeIfAbsent(player.getUniqueId(),

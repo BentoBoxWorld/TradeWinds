@@ -101,14 +101,23 @@ tradewinds:
     jettisoned: "<green>Your cargo goes over the side. The patrol turns back - nothing to find.</green>"
     escaped: "<gold>Open water. [name] loses you - but its harbourmaster will not forget.</gold>"
     caught: "<dark_red>Boarded. [number] items seized, [amount] in fines, and [name] has your name.</dark_red>"
+  band:
+    safe: "<blue>Safe</blue>"
+    policed: "<green>Policed</green>"
+    frontier: "<yellow>Frontier</yellow>"
+    lawless: "<red>Lawless</red>"
+    anarchic: "<dark_red><bold>ANARCHIC</bold></dark_red>"
+  fuel:
+    low-actionbar: "[actionbar]<gold>LOW FUEL</gold><gray> - [fuel]/[needed] to warp out. Buy fuel at the market.</gray>"
+    low-chat: "<gold>Low fuel at this port.</gold><gray> You have [fuel] units; the cheapest warp from here needs [needed]. Buy at least [number] more from the market before you leave, or you will be rowing.</gray>"
   hud:
-    navigation: "<aqua>[name]</aqua><white> | [standing] | </white><yellow>Dock [distance]m</yellow>"
+    navigation: "<aqua>[name]</aqua><white> | </white>[band]<white> | [standing] | </white><yellow>Dock [distance]m</yellow>"
   hologram:
-    island: "<aqua>[name]</aqua><newline><gray>[type], [band]</gray><newline><yellow>[distance]m</yellow>"
+    island: "<aqua>[name]</aqua><newline><gray>[type], </gray>[band]<newline><yellow>[distance]m</yellow>"
   ui:
     market:
       title: "<dark_aqua>[name] Market</dark_aqua>"
-      subtitle: "<gray>[type], [band]</gray>"
+      subtitle: "<gray>[type], </gray>[band]"
       status: "<gray>Balance: $[balance]  |  Hold space: ~[space] items</gray>"
       sell: "<yellow>Sell cargo</yellow>"
       sell-tooltip: "<gray>Sell your hold's goods here</gray>"
@@ -116,6 +125,11 @@ tradewinds:
       buy-tooltip: "<gray>Buy this island's trade goods into your hold</gray>"
       outfitter: "<green>Outfitter</green>"
       outfitter-tooltip: "<gray>Food, fuel and gear - straight to your pack</gray>"
+      outfitter-fuel: "<gold><bold>BUY FUEL HERE</bold></gold><green> - Outfitter</green>"
+      outfitter-fuel-tooltip: "<yellow>You cannot warp anywhere without more fuel. Buy charcoal here.</yellow>"
+      buy-fuel: "<gold><bold>BUY FUEL HERE</bold></gold><aqua> - Buy goods</aqua>"
+      buy-fuel-tooltip: "<yellow>You cannot warp anywhere without more fuel. This island sells it.</yellow>"
+      low-fuel: "<gold>LOW FUEL - not enough to warp anywhere from here.</gold>"
       shipwright: "<gold>Shipwright</gold>"
       shipwright-tooltip: "<gray>Boats, chest boats and cargo expanders</gray>"
       back: "<gray>< Back</gray>"

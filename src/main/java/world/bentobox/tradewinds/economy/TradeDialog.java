@@ -20,6 +20,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import world.bentobox.bentobox.api.user.User;
 import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.galaxy.IslandSpec;
+import world.bentobox.tradewinds.travel.FuelWarning;
 
 /**
  * The market dialogs: a main menu (sell / buy / shipwright), a sell page
@@ -55,23 +56,57 @@ public class TradeDialog {
             User.getInstance(player).sendMessage("tradewinds.trade.barred");
             return;
         }
+        // Too poor in fuel to warp anywhere from here? Then the most useful
+        // thing this screen can do is point at where the fuel is sold. An
+        // action bar fades; a button that says "buy fuel here" does not.
+        boolean lowFuel = isLowOnFuel(player, spec);
+        boolean fuelInTradeCatalog = lowFuel && sellsFuel(addon.getMarketService().saleCatalog(spec));
+
         List<ActionButton> buttons = new ArrayList<>();
         // No sell button when the hold has nothing this island pays for
         if (!sellOffers(player, spec).isEmpty()) {
             buttons.add(button(player, "market.sell", "market.sell-tooltip", () -> openSell(player, spec)));
         }
         if (!addon.getMarketService().saleCatalog(spec).isEmpty()) {
-            buttons.add(button(player, "market.buy", "market.buy-tooltip",
+            buttons.add(button(player, fuelInTradeCatalog ? "market.buy-fuel" : "market.buy",
+                    fuelInTradeCatalog ? "market.buy-fuel-tooltip" : "market.buy-tooltip",
                     () -> openBuy(player, spec, addon.getMarketService().saleCatalog(spec), "buying")));
         }
-        buttons.add(button(player, "market.outfitter", "market.outfitter-tooltip",
+        // The outfitter only stocks charcoal when the trade catalog has no fuel
+        // of its own, so highlight whichever one can actually help
+        boolean fuelAtOutfitter = lowFuel && !fuelInTradeCatalog;
+        buttons.add(button(player, fuelAtOutfitter ? "market.outfitter-fuel" : "market.outfitter",
+                fuelAtOutfitter ? "market.outfitter-fuel-tooltip" : "market.outfitter-tooltip",
                 () -> openOutfitter(player, spec)));
         buttons.add(button(player, "market.shipwright", "market.shipwright-tooltip",
                 () -> openShipwright(player, spec)));
-        show(player, ui(player, "market.title", "[name]", spec.name()),
-                List.of(ui(player, "market.subtitle", "[type]", spec.type().name(), "[band]",
-                        spec.band().getDisplayName()), statusLine(player)),
-                buttons, closeButton(player), 1);
+        List<Component> body = new ArrayList<>(List.of(
+                ui(player, "market.subtitle", "[type]", spec.type().name(), "[band]",
+                        User.getInstance(player).getTranslation(spec.band().getLocaleKey())),
+                statusLine(player)));
+        if (lowFuel) {
+            body.add(ui(player, "market.low-fuel", NO_VARS));
+        }
+        show(player, ui(player, "market.title", "[name]", spec.name()), body, buttons, closeButton(player), 1);
+    }
+
+    /**
+     * Whether the player cannot afford to warp anywhere from this island.
+     */
+    private boolean isLowOnFuel(Player player, IslandSpec spec) {
+        if (!addon.getSettings().isFuelWarningEnabled()) {
+            return false;
+        }
+        double fuel = addon.getFuelService().holdFuel(player);
+        int cheapest = FuelWarning.cheapestRoute(addon.getWarpService().destinations(player, spec, fuel));
+        return FuelWarning.isLow(fuel, cheapest, addon.getSettings().getFuelWarningMargin());
+    }
+
+    /**
+     * Whether a catalog contains anything that burns.
+     */
+    private boolean sellsFuel(List<Material> catalog) {
+        return catalog.stream().anyMatch(m -> addon.getSettings().getFuelValues().getOrDefault(m.name(), 0.0) > 0);
     }
 
     /**

@@ -54,6 +54,7 @@ import world.bentobox.tradewinds.economy.TradeListener;
 import world.bentobox.tradewinds.galaxy.RouteGraph;
 import world.bentobox.tradewinds.listeners.IntersticePortalListener;
 import world.bentobox.tradewinds.listeners.ResidentProtectionListener;
+import world.bentobox.tradewinds.tasks.FuelWarningTask;
 import world.bentobox.tradewinds.tasks.NavigationBarTask;
 import world.bentobox.tradewinds.tasks.ResidentAuditTask;
 import world.bentobox.tradewinds.travel.BoatPickupListener;
@@ -116,6 +117,7 @@ public class TradeWinds extends GameModeAddon {
     private NamespacedKey policeKey;
     private @Nullable ResidentAuditTask residentAuditTask;
     private @Nullable NavigationBarTask navigationBarTask;
+    private @Nullable FuelWarningTask fuelWarningTask;
 
     /**
      * This addon uses the new chunk generation API for the sea bottom
@@ -292,6 +294,9 @@ public class TradeWinds extends GameModeAddon {
         // Navigation boss bar: island, standing, distance to dock
         navigationBarTask = new NavigationBarTask(this);
         navigationBarTask.start();
+        // "You cannot afford to leave" - said at the port, where it is fixable
+        fuelWarningTask = new FuelWarningTask(this);
+        fuelWarningTask.start();
         // Spawn (and bed-less respawn) is the spawn island's market plaza.
         // The island itself is adopted in allLoaded() - see below.
         registerListener(new world.bentobox.tradewinds.listeners.SpawnRespawnListener(this));
@@ -304,6 +309,9 @@ public class TradeWinds extends GameModeAddon {
         }
         if (navigationBarTask != null) {
             navigationBarTask.stop();
+        }
+        if (fuelWarningTask != null) {
+            fuelWarningTask.stop();
         }
         if (intersticeService != null) {
             intersticeService.stop();

@@ -92,6 +92,18 @@ travel:
     damage: 2.0
     # Per-edge fuel cost overrides ('cx,cz>cx,cz' smaller cell first -> absolute fuel units).
     edge-overrides: {}
+  fuel-warning:
+    # Warn a sailor standing at a port when they cannot afford to warp anywhere from
+    # it. Running dry at a port is not a soft failure - the only way onward is rowing
+    # - and it is only fixable while they are still standing next to the fuel.
+    enabled: true
+    # Seconds between repeats of the action bar while ashore and short. It repeats
+    # because an action bar fades and a one-shot is missed by exactly the players
+    # this is for; the chat line and the highlighted shop button are the other two.
+    repeat-seconds: 8
+    # Warn when fuel is below this multiple of the cheapest route out. 1.0 warns only
+    # when genuinely stuck; raise it to warn with something still in reserve.
+    margin: 1.0
   # Fuel unit value per material. Fuel is consumed from the hold only: the chest
   # boat's inventory and trading bundles - never loose pockets.
   fuel-values:

@@ -418,6 +418,23 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "travel.warp.damage")
     private double warpDamage = 2.0;
 
+    @ConfigComment("Warn a sailor standing at a port when they cannot afford to warp anywhere from")
+    @ConfigComment("it. Running dry at a port is not a soft failure - the only way onward is rowing -")
+    @ConfigComment("and it is only fixable while they are still standing next to the fuel.")
+    @ConfigEntry(path = "travel.fuel-warning.enabled")
+    private boolean fuelWarningEnabled = true;
+
+    @ConfigComment("Seconds between repeats of the low-fuel action bar while ashore. It repeats")
+    @ConfigComment("because an action bar fades and a one-shot is missed by exactly the players this")
+    @ConfigComment("is for; the chat line and the highlighted shop button are the other two tellings.")
+    @ConfigEntry(path = "travel.fuel-warning.repeat-seconds")
+    private int fuelWarningSeconds = 8;
+
+    @ConfigComment("Warn when fuel is below this multiple of the cheapest route out. 1.0 warns only")
+    @ConfigComment("when genuinely stuck; raise it to warn with something still in reserve.")
+    @ConfigEntry(path = "travel.fuel-warning.margin")
+    private double fuelWarningMargin = 1.0;
+
     @ConfigComment("Fuel unit value per material. Fuel is consumed from the hold only:")
     @ConfigComment("the chest boat's inventory and trading bundles - never loose pockets.")
     @ConfigComment("Lava buckets leave their empty bucket behind. Non-stackable but potent: deliberate tension.")
@@ -2768,6 +2785,12 @@ public class Settings implements WorldSettings {
     public void setWarpBlindnessSeconds(int warpBlindnessSeconds) { this.warpBlindnessSeconds = warpBlindnessSeconds; }
     public double getWarpDamage() { return warpDamage; }
     public void setWarpDamage(double warpDamage) { this.warpDamage = warpDamage; }
+    public boolean isFuelWarningEnabled() { return fuelWarningEnabled; }
+    public void setFuelWarningEnabled(boolean v) { this.fuelWarningEnabled = v; }
+    public int getFuelWarningSeconds() { return fuelWarningSeconds; }
+    public void setFuelWarningSeconds(int v) { this.fuelWarningSeconds = v; }
+    public double getFuelWarningMargin() { return fuelWarningMargin; }
+    public void setFuelWarningMargin(double v) { this.fuelWarningMargin = v; }
     public Map<String, Double> getFuelValues() { return fuelValues; }
     public void setFuelValues(Map<String, Double> fuelValues) { this.fuelValues = fuelValues; }
     public Map<String, Double> getEdgeOverrides() { return edgeOverrides; }
