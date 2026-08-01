@@ -14,10 +14,10 @@ permissions:
     default: true
   tradewinds.island.spawn:
     description: >
-      Unused: the spawn command is not registered. Spawn is a working trading
-      post, so /tw spawn would be a free warp back to a market from anywhere.
-      Kept so servers that re-enable the command have the node ready.
-    default: false
+      Allow /tw go - the door into the ocean. It refuses while the player is
+      already at sea and returns them to the water they left, so it is not a
+      free warp home.
+    default: true
   tradewinds.island.warp:
     description: >
       Shortcut: open the warp dialog from anywhere in island waters. Off by

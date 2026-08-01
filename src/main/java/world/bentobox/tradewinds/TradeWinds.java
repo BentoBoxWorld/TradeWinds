@@ -33,6 +33,7 @@ import world.bentobox.tradewinds.commands.AdminWarpFailCommand;
 import world.bentobox.tradewinds.commands.TWChartCommand;
 import world.bentobox.tradewinds.commands.TWFineCommand;
 import world.bentobox.tradewinds.commands.TWRestartCommand;
+import world.bentobox.tradewinds.commands.TWSpawnCommand;
 import world.bentobox.tradewinds.commands.TWStarChartCommand;
 import world.bentobox.tradewinds.commands.TWTradeCommand;
 import world.bentobox.tradewinds.commands.TWWarpCommand;
@@ -64,6 +65,7 @@ import world.bentobox.tradewinds.travel.ExpanderListener;
 import world.bentobox.tradewinds.travel.FuelService;
 import world.bentobox.tradewinds.travel.IntersticeService;
 import world.bentobox.tradewinds.travel.HoldService;
+import world.bentobox.tradewinds.travel.SeaPositionTracker;
 import world.bentobox.tradewinds.travel.StarChartService;
 import world.bentobox.tradewinds.travel.StarterKit;
 import world.bentobox.tradewinds.travel.WarpService;
@@ -117,6 +119,7 @@ public class TradeWinds extends GameModeAddon {
     private @Nullable ResidentAuditTask residentAuditTask;
     private @Nullable NavigationBarTask navigationBarTask;
     private @Nullable FuelWarningTask fuelWarningTask;
+    private SeaPositionTracker seaPositionTracker;
 
     /**
      * This addon uses the new chunk generation API for the sea bottom
@@ -167,11 +170,11 @@ public class TradeWinds extends GameModeAddon {
                 setDescription("tradewinds.commands.help.description");
                 setOnlyPlayer(true);
                 setPermission("island");
-                // NOTE: TWSpawnCommand is deliberately NOT registered. Now that
-                // spawn is a working trading post, /tw spawn would be a free
-                // warp back to a market from anywhere - travel is the game.
-                // Death still respawns there (SpawnRespawnListener), and
-                // /tw restart still returns a destitute player there.
+                new TWSpawnCommand(this);
+                // /tw go is the door into the ocean and nothing more: it
+                // refuses when you are already at sea, and returns you to the
+                // water you left rather than to spawn, so neither it nor a
+                // hop through another game mode is a free ride to a market.
                 new TWWarpCommand(this);
                 new TWChartCommand(this);
                 new TWStarChartCommand(this);
@@ -264,6 +267,9 @@ public class TradeWinds extends GameModeAddon {
         registerListener(new BorderPromptListener(this));
         // Teleporting while boated brings the boat (and cargo) along
         registerListener(new BoatPickupListener(this));
+        // Where a sailor left the ocean, so coming back is not a teleport
+        seaPositionTracker = new SeaPositionTracker(this);
+        registerListener(seaPositionTracker);
         // Cargo expanders open in the hand (Java cannot open shulkers in an
         // inventory, and a carried hold has to be openable)
         registerListener(new ExpanderListener(this));
@@ -547,6 +553,10 @@ public class TradeWinds extends GameModeAddon {
 
     public CustomsService getCustomsService() {
         return customsService;
+    }
+
+    public SeaPositionTracker getSeaPositionTracker() {
+        return seaPositionTracker;
     }
 
     public PoliceService getPoliceService() {

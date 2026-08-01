@@ -29,10 +29,9 @@ class SettingsTest extends CommonTestSetup {
     void testCommands() {
         assertEquals("tw tradewinds", settings.getPlayerCommandAliases());
         assertEquals("twadmin", settings.getAdminCommandAliases());
-        // 'spawn' is not a registered player command - it would be a free warp
-        // back to the spawn trading post - so bare /tw lists the commands
-        assertEquals("help", settings.getDefaultNewPlayerAction());
-        assertEquals("help", settings.getDefaultPlayerAction());
+        // 'go' is the door into the ocean, and refuses once you are at sea
+        assertEquals("go", settings.getDefaultNewPlayerAction());
+        assertEquals("go", settings.getDefaultPlayerAction());
     }
 
     @Test

@@ -53,6 +53,13 @@ public class TWPlayerData implements DataObject {
     private long lastCharity;
 
     /**
+     * Where this sailor last was in a TradeWinds world, so leaving the world
+     * and coming back does not move them. Empty until they first set sail.
+     */
+    @Expose
+    private String lastSeaPosition;
+
+    /**
      * Reputation score - one global number, positive is good. The standing
      * bands derive from it (see ReputationScale).
      */
@@ -151,6 +158,14 @@ public class TWPlayerData implements DataObject {
 
     public void setChartedIslands(Set<String> chartedIslands) {
         this.chartedIslands = chartedIslands;
+    }
+
+    public String getLastSeaPosition() {
+        return lastSeaPosition;
+    }
+
+    public void setLastSeaPosition(String lastSeaPosition) {
+        this.lastSeaPosition = lastSeaPosition;
     }
 
     public int getReputation() {

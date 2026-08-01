@@ -838,13 +838,23 @@ out. Set `travel.warp.failure-chance: 1.0` temporarily to test this repeatedly.
       glance what kind of water you are in.
 - [ ] The same coloured band appears on the chart holograms and the market subtitle.
 
-## /tw spawn removed (free warp home)
+## /tw go - the door into the ocean, and nothing more
 
-- [ ] `/tw spawn` is **gone** - it is not in `/tw help` and running it is unknown.
-      Now that spawn is a working trading post it was a free warp back to a market
-      from anywhere, which undercuts the whole point of travelling.
-- [ ] Bare `/tw` shows the command list rather than teleporting anywhere.
-- [ ] Dying still respawns you at the spawn plaza (that is not a cheat - you lost
-      your cargo to get there).
+`/tw spawn` was a free warp back to a market once spawn became a working trading
+post. But deleting it locked new players out entirely, so it is now a door with
+two rules.
+
+- [ ] **From another world** (or on first ever join): `/tw` or `/tw go` puts you
+      into the ocean. A brand new player arrives at the spawn port with a starter kit.
+- [ ] **A returning player arrives where they LEFT the ocean**, not at spawn. Sail
+      a long way out, `/mv tp world` (or `/acid`), then `/tw` - you should be back
+      in the same stretch of water, not at a market.
+- [ ] **Already at sea**: `/tw go` refuses ("You are already at sea..."). This is the
+      exploit that had to close - there is no commanding your way to a market.
+- [ ] Log out at sea, log back in: you are where you left off, and `/tw go` still
+      refuses.
+- [ ] Dying still respawns you at the spawn plaza (not a cheat - you lost your cargo
+      to get there).
 - [ ] `/tw restart` still returns a destitute player to spawn with a fresh kit,
       capped by `player.max-restarts`.
+- [ ] The old `/tw spawn` label still works as an alias, and does the same thing.

@@ -3,7 +3,7 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
-## /tw spawn removed: it had become a free warp home (2026-08-01)
+## /tw go: a door into the ocean, not a teleport (2026-08-01)
 
 Ben spotted it: "Now that Spawn is a trading post, which is a good thing...
 the /tw spawn command is a free way to warp back there!" Exactly right, and it
@@ -12,15 +12,26 @@ became a real port so new players would trade there, and the free teleport that
 was harmless when spawn was an empty islet turned into a free ride to a market
 from anywhere in the galaxy.
 
-Unregistered rather than permission-gated, as asked - a command that exists and
-is denied still shows up and still invites "can I have this?". `TWSpawnCommand`
-stays in the tree for whenever it is wanted again.
+First cut simply unregistered it. Ben caught the hole immediately: *"so if I'm
+in another world and I run /tw, how do I start?"* Deleting the exploit had
+deleted the front door - a new player, or anyone standing in another game
+mode's world, had no way into the ocean at all.
 
-The catch: `new-player-action` and `default-action` both pointed at `spawn`, so
-bare `/tw` would have fallen through to a non-existent sub-command. Both now
-default to `help`, which is the most useful thing to hand someone anyway. The
-live server config had the old values too - stored config beats changed
-defaults, as always.
+So it is a door with two rules instead. It **refuses while you are already at
+sea** - that is the exploit, and the whole of it. And coming in from outside
+returns you to the water you **left**, not to spawn. That second rule matters
+more than it looks: this server runs several game modes, so a spawn-anchored
+door would have re-opened the same free ride through the side - `/acid`, then
+`/tw`, and you are standing in a market. `SeaPositionTracker` records the spot
+on quit and on any teleport out of a TradeWinds world, and only a sailor who
+has never set out starts at the spawn port.
+
+Recording uses `PlayerTeleportEvent`, not `PlayerChangedWorldEvent`: by the
+time the latter fires the player has already moved, so their location is the
+destination - the one position that is no use.
+
+Labelled `go` (aliases `spawn`, `sail`), and both default actions point at it,
+so bare `/tw` is the natural entry.
 
 Death still respawns at the spawn plaza (you paid for that trip with your
 cargo), and `/tw restart` still returns a destitute player there, capped.

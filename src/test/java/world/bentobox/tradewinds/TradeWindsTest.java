@@ -140,10 +140,11 @@ class TradeWindsTest extends CommonTestSetup {
         assertTrue(addon.getAdminCommand().isPresent());
         assertNotNull(addon.getBiomeProvider());
         // Players CANNOT create free islands - player islands are purchased
-        // (Stage 7) - and cannot command their way home either: spawn is a
-        // working trading post, so /tw spawn would be a free warp to a market
-        // from anywhere. Travel is the game.
-        assertTrue(addon.getPlayerCommand().get().getSubCommand("spawn").isEmpty());
+        // (Stage 7). /tw go is the door into the ocean, and the old 'spawn'
+        // label still reaches it, but it refuses once you are at sea: spawn is
+        // a working trading post, so a teleport there would be a free warp to a
+        // market from anywhere. Travel is the game.
+        assertTrue(addon.getPlayerCommand().get().getSubCommand("go").isPresent());
         assertTrue(addon.getPlayerCommand().get().getSubCommand("create").isEmpty());
         assertTrue(addon.getPlayerCommand().get().getSubCommand("reset").isEmpty());
         // The commands that remain are the ones that require being somewhere

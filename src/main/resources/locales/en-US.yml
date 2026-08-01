@@ -16,7 +16,7 @@ tradewinds:
     help:
       description: "TradeWinds trading command"
     spawn:
-      description: "teleport to the ocean spawn"
+      description: "set sail - enter the ocean where you left it"
     warp:
       description: "open the warp dialog (in a boat, at an island)"
     chart:
@@ -65,6 +65,8 @@ tradewinds:
         done: "<green>Re-applied band flags to [number] trading islands.</green>"
   spawn:
     teleported: "<aqua>You set sail on the open ocean.</aqua>"
+    resumed: "<aqua>You take up your voyage where you left it.</aqua>"
+    already-at-sea: "<red>You are already at sea. There is no commanding your way across it - row, or warp from an island's border.</red>"
   starter-kit:
     given: "<gold>Your trading career begins: a boat, a trading pouch, and a little coal. Buy low, sell high.</gold>"
   standing:

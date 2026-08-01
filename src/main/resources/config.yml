@@ -6,11 +6,12 @@ tradewinds:
     # The admin command.
     admin: twadmin
     # The default action for new player command call.
-    # 'spawn' is deliberately NOT registered as a player command - it would be a free
-    # warp back to the spawn trading post - so bare /tw shows the command list.
-    new-player-action: help
+    # 'go' is the door into the ocean: it refuses if you are already at sea, and
+    # returns you to the water you left rather than to spawn, so it is not a free
+    # warp home. Only a sailor who has never set out starts at the spawn port.
+    new-player-action: go
     # The default action for player command.
-    default-action: help
+    default-action: go
 galaxy:
   # The galaxy seed. Every island position, type, security band, biome, name and
   # route cost derives deterministically from this one number - share it and another
