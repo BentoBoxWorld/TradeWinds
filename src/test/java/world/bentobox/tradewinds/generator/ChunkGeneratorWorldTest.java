@@ -115,6 +115,20 @@ class ChunkGeneratorWorldTest extends CommonTestSetup {
         return recorder;
     }
 
+    /**
+     * The Y of the topmost solid floor block in a column, found by sounding
+     * down from the sea surface the way a lead line would.
+     */
+    private int floorTop(RecordingChunkData r, int x, int z, int seaHeight) {
+        for (int y = seaHeight; y > -64; y--) {
+            Material m = r.get(x, y, z);
+            if (m != Material.WATER && m != Material.AIR) {
+                return y;
+            }
+        }
+        return -64;
+    }
+
     @Test
     void testOceanShape() {
         // Far from the origin: the spawn island occupies 0,0
@@ -124,18 +138,40 @@ class ChunkGeneratorWorldTest extends CommonTestSetup {
             for (int z = 0; z < 16; z++) {
                 // Bedrock at the bottom
                 assertEquals(Material.BEDROCK, r.get(x, -64, z));
-                // Solid stone base below the sea floor
+                // Solid stone base under the whole floor
                 assertEquals(Material.STONE, r.get(x, 0, z));
                 // Water at sea level
                 assertEquals(Material.WATER, r.get(x, settings.getSeaHeight(), z));
                 // Air above sea level
                 assertEquals(Material.AIR, r.get(x, settings.getSeaHeight() + 1, z));
-                // Floor surface starts at or above the sea floor
-                Material atFloor = r.get(x, settings.getSeaFloor(), z);
-                assertTrue(atFloor == Material.SAND || atFloor == Material.SANDSTONE || atFloor == Material.WATER,
+                // The floor is sediment or rock, and it is under water
+                int top = floorTop(r, x, z, settings.getSeaHeight());
+                assertTrue(top < settings.getSeaHeight(), "Open sea floor broke the surface at y=" + top);
+                Material atFloor = r.get(x, top, z);
+                assertTrue(
+                        atFloor == Material.SAND || atFloor == Material.GRAVEL || atFloor == Material.CLAY
+                                || atFloor == Material.STONE || atFloor == Material.TUFF,
                         "Unexpected material at sea floor: " + atFloor);
             }
         }
+    }
+
+    @Test
+    void testSeaFloorIsNotFlat() {
+        // The playtest complaint: "the sea floor is really barren and
+        // repetitive". Sound a long transect and check it actually moves.
+        ChunkGeneratorWorld gen = new ChunkGeneratorWorld(addon);
+        int shallowest = Integer.MIN_VALUE;
+        int deepest = Integer.MAX_VALUE;
+        for (int chunk = 20; chunk < 160; chunk += 7) {
+            RecordingChunkData r = generate(gen, Environment.NORMAL, SEED, chunk, 40);
+            for (int x = 0; x < 16; x += 4) {
+                int top = floorTop(r, x, 8, settings.getSeaHeight());
+                shallowest = Math.max(shallowest, top);
+                deepest = Math.min(deepest, top);
+            }
+        }
+        assertTrue(shallowest - deepest > 25, "Sea floor barely varies: y " + deepest + " to " + shallowest);
     }
 
     @Test
@@ -145,14 +181,14 @@ class ChunkGeneratorWorldTest extends CommonTestSetup {
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
                 assertEquals(Material.BEDROCK, r.get(x, -64, z));
-                // Netherrack base below the sea floor
+                // Netherrack base under the floor
                 assertEquals(Material.NETHERRACK, r.get(x, 0, z));
                 // Water sea at interstice sea level
                 assertEquals(Material.WATER, r.get(x, settings.getIntersticeSeaHeight(), z));
                 assertEquals(Material.AIR, r.get(x, settings.getIntersticeSeaHeight() + 1, z));
                 // Floor palette is nether-flavored
-                Material atFloor = r.get(x, settings.getIntersticeSeaFloor(), z);
-                assertTrue(atFloor == Material.SOUL_SAND || atFloor == Material.BASALT || atFloor == Material.WATER,
+                Material atFloor = r.get(x, floorTop(r, x, z, settings.getIntersticeSeaHeight()), z);
+                assertTrue(atFloor == Material.SOUL_SAND || atFloor == Material.BASALT,
                         "Unexpected material at interstice floor: " + atFloor);
             }
         }
@@ -164,8 +200,13 @@ class ChunkGeneratorWorldTest extends CommonTestSetup {
         RecordingChunkData a = generate(new ChunkGeneratorWorld(addon), Environment.NORMAL, SEED, 3, -7);
         RecordingChunkData b = generate(new ChunkGeneratorWorld(addon), Environment.NORMAL, SEED, 3, -7);
         assertEquals(a.blocks, b.blocks);
-        // Different seed -> different floor
-        RecordingChunkData c = generate(new ChunkGeneratorWorld(addon), Environment.NORMAL, SEED + 1, 3, -7);
+        // A different galaxy seed -> a different sea floor. The seabed hangs off
+        // the galaxy seed, not the world seed, so that one number still decides
+        // the whole world (spec principle 5).
+        when(addon.getGalaxyEngine(org.mockito.ArgumentMatchers.anyLong()))
+                .thenReturn(new GalaxyEngine(new GalaxyConfig(SEED + 1, 2500, 160, 45, 0.0, 0, 5000, 70,
+                        GalaxyConfig.defaultTypeWeights(), null)));
+        RecordingChunkData c = generate(new ChunkGeneratorWorld(addon), Environment.NORMAL, SEED, 3, -7);
         assertFalse(a.blocks.equals(c.blocks));
     }
 
@@ -263,9 +304,36 @@ class ChunkGeneratorWorldTest extends CommonTestSetup {
         // Vanilla terrain off: land only ever comes from island masks
         assertFalse(gen.shouldGenerateNoise());
         assertFalse(gen.shouldGenerateSurface());
+        // Everything else vanilla offers stays on - its carvers cut the caves
+        // under the sea floor and its structures furnish the sea
         assertTrue(gen.shouldGenerateMobs());
-        assertFalse(gen.shouldGenerateCaves());
+        assertTrue(gen.shouldGenerateCaves());
         assertTrue(gen.shouldGenerateDecorations());
-        assertFalse(gen.shouldGenerateStructures());
+        assertTrue(gen.shouldGenerateStructures());
+    }
+
+    @Test
+    void testStructuresAreKeptOffTradingIslands() {
+        GalaxyEngine denseEngine = new GalaxyEngine(new GalaxyConfig(SEED, 2500, 160, 45, 1.0, 0, 5000, 70));
+        when(addon.getGalaxyEngine(org.mockito.ArgumentMatchers.anyLong())).thenReturn(denseEngine);
+        ChunkGeneratorWorld gen = new ChunkGeneratorWorld(addon);
+        IslandSpec spec = denseEngine.islandInCell(0, 0).orElseThrow();
+        WorldInfo wi = worldInfo(Environment.NORMAL, SEED);
+        Random random = new Random(SEED);
+
+        // No vanilla structure may generate on the island itself: a monument
+        // through the market plaza would wreck the hand-built part of the world
+        assertFalse(gen.shouldGenerateStructures(wi, random, spec.centerX() >> 4, spec.centerZ() >> 4));
+        // ... but the open sea is fair game
+        assertTrue(gen.shouldGenerateStructures(wi, random, (spec.centerX() + 2000) >> 4, spec.centerZ() >> 4));
+        // The interstice never gets any
+        assertFalse(gen.shouldGenerateStructures(worldInfo(Environment.NETHER, SEED), random, 100, 100));
+
+        // Turning the guard off lets vanilla place them anywhere
+        settings.setKeepStructuresOffIslands(false);
+        assertTrue(gen.shouldGenerateStructures(wi, random, spec.centerX() >> 4, spec.centerZ() >> 4));
+        // And turning structures off means none at all
+        settings.setMakeStructures(false);
+        assertFalse(gen.shouldGenerateStructures(wi, random, 500, 500));
     }
 }

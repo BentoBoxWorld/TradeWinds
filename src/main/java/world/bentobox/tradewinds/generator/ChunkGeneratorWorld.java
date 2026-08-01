@@ -12,30 +12,33 @@ import org.bukkit.generator.BiomeProvider;
 import org.bukkit.generator.BlockPopulator;
 import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.generator.WorldInfo;
-import org.bukkit.util.noise.PerlinOctaveGenerator;
 import org.eclipse.jdt.annotation.NonNull;
 
 import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.galaxy.ColumnPlan;
+import world.bentobox.tradewinds.galaxy.GalaxyEngine;
+import world.bentobox.tradewinds.galaxy.Seabed;
+import world.bentobox.tradewinds.galaxy.SeabedConfig;
+import world.bentobox.tradewinds.galaxy.SurfaceKind;
 
 /**
- * Generates the TradeWinds ocean: a noised ocean floor under open sea, everywhere.
+ * Generates the TradeWinds ocean: a sea floor of shelves, basins, rifts and
+ * seamounts under open water, everywhere.
  * <p>
- * Both the overworld and the interstice (NETHER environment) use this generator;
- * only the sea levels, water block and floor palette differ. Vanilla noise is off
- * so no vanilla continents can appear: from Stage 1 the only land in the world
- * comes from the seeded galaxy's radial island masks via {@link #terrainScale}.
+ * Vanilla noise is off so no vanilla continents can appear - the only land in
+ * the world comes from the seeded galaxy's radial island masks. Everything
+ * else vanilla offers is left switched on: its carvers cut the caves under the
+ * sea floor, and its structure placement supplies the shipwrecks, ocean ruins,
+ * monuments and trial chambers, guided entirely by the biomes the galaxy hands
+ * out. That is the hybrid: we own the shape of the floor, vanilla furnishes it.
+ * <p>
+ * Both the overworld and the interstice (NETHER environment) use this
+ * generator; the interstice gets its own drab, shallow sea floor and none of
+ * the galaxy.
  *
  * @author tastybento
  */
 public class ChunkGeneratorWorld extends ChunkGenerator {
-
-    /**
-     * Floor palette: base fill under the surface layer, and the two materials the
-     * noised floor surface is randomly built from.
-     */
-    private record FloorMats(Material deepBase, Material base, Material top) {
-    }
 
     /**
      * Per-environment sea shape.
@@ -43,20 +46,26 @@ public class ChunkGeneratorWorld extends ChunkGenerator {
     private record WorldConfig(int seaHeight, int seaFloor, Material waterBlock) {
     }
 
-    /** Maximum height variation of the ocean floor noise, in blocks. */
-    private static final int NOISE_MAX = 25;
-    private static final double NOISE_SCALE = 1.0 / 30.0;
-    private static final int NOISE_OCTAVES = 8;
+    /**
+     * The interstice's sea floor: shallower, tighter, and no seamounts - it is
+     * meant to feel like a dead end, not a place to explore.
+     */
+    private static final SeabedConfig INTERSTICE_SEABED = new SeabedConfig(10, 26, 10, 6, 12, 0.85, 0);
+    /** Salt so the interstice floor does not mirror the overworld's. */
+    private static final long INTERSTICE_SALT = 0x1E7E2571CEL;
+
+    /** Depth below sea level at which sediment gives way to bare rock. */
+    private static final int ROCK_DEPTH = 34;
+    /** Thickness of the sediment layer over the rock, in blocks. */
+    private static final int SEDIMENT_THICKNESS = 4;
+    /** How far the varied rock reaches below the floor before it is all stone. */
+    private static final int ROCK_BAND = 8;
+    /** Soil depth under a land surface before it turns to stone. */
+    private static final int SOIL_THICKNESS = 4;
 
     private final TradeWinds addon;
     private final Map<Environment, WorldConfig> seaConfig = new EnumMap<>(Environment.class);
-    private static final Map<Environment, FloorMats> FLOOR_MATS = Map.of(
-            Environment.NORMAL, new FloorMats(Material.STONE, Material.SANDSTONE, Material.SAND),
-            Environment.NETHER, new FloorMats(Material.NETHERRACK, Material.BASALT, Material.SOUL_SAND));
-
-    private final Map<Environment, PerlinOctaveGenerator> noiseGens = new EnumMap<>(Environment.class);
-    // Deterministic palette randomness; re-seeded per chunk from (world seed, chunk coords)
-    private final Random rand = new Random();
+    private final Map<Environment, Seabed> seabeds = new EnumMap<>(Environment.class);
     private IslandDecorator decorator;
 
     public ChunkGeneratorWorld(TradeWinds addon) {
@@ -86,6 +95,23 @@ public class ChunkGeneratorWorld extends ChunkGenerator {
         return addon.getGalaxyEngine(worldInfo.getSeed()).landLiftAt(worldX, worldZ);
     }
 
+    /**
+     * The sea floor field for an environment. The overworld shares the galaxy's
+     * so terrain and biomes agree on where the deep water is; the interstice
+     * gets its own.
+     */
+    private Seabed seabed(WorldInfo worldInfo) {
+        return seabeds.computeIfAbsent(worldInfo.getEnvironment(), env -> {
+            if (env == Environment.NORMAL) {
+                return addon.getGalaxyEngine(worldInfo.getSeed()).getSeabed();
+            }
+            return new Seabed(worldInfo.getSeed() ^ INTERSTICE_SALT,
+                    seaConfig.get(Environment.NETHER).seaHeight(),
+                    addon.getSettings().isVarySeabed() ? INTERSTICE_SEABED
+                            : SeabedConfig.flat(INTERSTICE_SEABED.shelfDepth()));
+        });
+    }
+
     @Override
     public void generateNoise(@NonNull WorldInfo worldInfo, @NonNull Random random, int chunkX, int chunkZ,
             @NonNull ChunkData chunkData) {
@@ -93,76 +119,157 @@ public class ChunkGeneratorWorld extends ChunkGenerator {
         if (wc == null) {
             return; // Only NORMAL and NETHER are ever created
         }
-        FloorMats mats = FLOOR_MATS.get(worldInfo.getEnvironment());
-        PerlinOctaveGenerator gen = noiseGens.computeIfAbsent(worldInfo.getEnvironment(), env -> {
-            PerlinOctaveGenerator g = new PerlinOctaveGenerator(worldInfo.getSeed(), NOISE_OCTAVES);
-            g.setScale(NOISE_SCALE);
-            return g;
-        });
-        // Deterministic per-chunk palette randomness so regeneration is identical
-        rand.setSeed(worldInfo.getSeed() ^ (chunkX * 341873128712L + chunkZ * 132897987541L));
+        boolean overworld = worldInfo.getEnvironment() == Environment.NORMAL;
+        Seabed floor = seabed(worldInfo);
+        GalaxyEngine engine = overworld ? addon.getGalaxyEngine(worldInfo.getSeed()) : null;
 
         int minHeight = worldInfo.getMinHeight();
         // Bedrock floor
         chunkData.setRegion(0, minHeight, 0, 16, minHeight + 1, 16, Material.BEDROCK);
-        // Solid base up to the sea floor
-        if (wc.seaFloor() > minHeight + 1) {
-            chunkData.setRegion(0, minHeight + 1, 0, 16, wc.seaFloor(), 16, mats.deepBase());
-        }
-        // Noised floor surface (plus island lift), then water up to sea level
+
+        // Sound the whole chunk first, so the solid rock underneath everything
+        // can go in as one region fill rather than block by block - with rifts
+        // reaching this far down, that is the difference between 256 columns of
+        // a few blocks each and 256 columns of sixty
+        int[] floorTops = new int[256];
+        int lowest = Integer.MAX_VALUE;
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
-                int worldX = (chunkX << 4) + x;
-                int worldZ = (chunkZ << 4) + z;
-                double noiseVal = gen.noise(worldX, worldZ, 0.5, 0.5, true);
-                int lift = terrainLift(worldInfo, worldX, worldZ);
-                int floorTop = wc.seaFloor() + (int) (NOISE_MAX + NOISE_MAX * noiseVal) + lift;
-                // Dock quay and market plaza terraforming (overworld only)
-                ColumnPlan plan = worldInfo.getEnvironment() == Environment.NORMAL
-                        ? addon.getGalaxyEngine(worldInfo.getSeed()).columnPlanAt(worldX, worldZ).orElse(null)
-                        : null;
-                if (plan != null) {
-                    int wanted = plan.surfaceY() + 1;
-                    floorTop = plan.blend() >= 1.0 ? wanted
-                            : (int) Math.round(floorTop + (wanted - floorTop) * plan.blend());
-                }
-                floorTop = Math.min(floorTop, worldInfo.getMaxHeight() - 1);
-                boolean land = floorTop > wc.seaHeight() + 1;
-                for (int y = wc.seaFloor(); y < floorTop; y++) {
-                    chunkData.setBlock(x, y, z, columnMaterial(mats, y, floorTop, land, plan));
-                }
-                // Water column above the floor
-                for (int y = Math.max(floorTop, wc.seaFloor()); y <= wc.seaHeight(); y++) {
-                    chunkData.setBlock(x, y, z, wc.waterBlock());
-                }
+                int top = floorTopAt(worldInfo, wc, floor, engine, (chunkX << 4) + x, (chunkZ << 4) + z);
+                floorTops[(x << 4) | z] = top;
+                lowest = Math.min(lowest, top);
+            }
+        }
+        Material deepBase = overworld ? Material.STONE : Material.NETHERRACK;
+        // Stop the bulk fill short of the shallowest column so every column
+        // still lays its own surface layers - a flat chunk (a market plaza, or
+        // dead level sea floor) would otherwise come out as bare base rock
+        int baseTop = Math.max(minHeight + 1, lowest - ROCK_BAND);
+        chunkData.setRegion(0, minHeight + 1, 0, 16, baseTop, 16, deepBase);
+
+        for (int x = 0; x < 16; x++) {
+            for (int z = 0; z < 16; z++) {
+                generateColumn(chunkData, worldInfo, wc, floor, engine, x, z, (chunkX << 4) + x, (chunkZ << 4) + z,
+                        baseTop, floorTops[(x << 4) | z]);
             }
         }
     }
 
     /**
-     * Material for one block of a floor column. Underwater columns are the
-     * sea-floor palette; island columns that clear the sea get a soil profile
-     * (stone core, dirt subsoil, grass on top) so vanilla decoration can plant
-     * on them. Dock columns are a stone-brick quay with a plank deck; fully
-     * flattened plaza columns get a path surface.
+     * The Y of the topmost floor block in a column: the sea floor, plus the
+     * galaxy's island lift, overridden by any dock or plaza terraforming.
      */
-    private Material columnMaterial(FloorMats mats, int y, int floorTop, boolean land, ColumnPlan plan) {
+    private int floorTopAt(WorldInfo worldInfo, WorldConfig wc, Seabed floor, GalaxyEngine engine, int worldX,
+            int worldZ) {
+        double shelfBlend = engine == null ? 0 : engine.shelfBlendAt(worldX, worldZ);
+        int floorTop = floor.heightAt(worldX, worldZ, shelfBlend) + terrainLift(worldInfo, worldX, worldZ);
+        ColumnPlan plan = engine == null ? null : engine.columnPlanAt(worldX, worldZ).orElse(null);
+        if (plan != null) {
+            int wanted = plan.surfaceY() + 1;
+            floorTop = plan.blend() >= 1.0 ? wanted : (int) Math.round(floorTop + (wanted - floorTop) * plan.blend());
+        }
+        return Math.clamp(floorTop, worldInfo.getMinHeight() + 2, worldInfo.getMaxHeight() - 1);
+    }
+
+    /**
+     * Lay down one column: floor material up to its top, then water to the sea
+     * surface.
+     */
+    private void generateColumn(ChunkData chunkData, WorldInfo worldInfo, WorldConfig wc, Seabed floor,
+            GalaxyEngine engine, int x, int z, int worldX, int worldZ, int baseTop, int floorTop) {
+        ColumnPlan plan = engine == null ? null : engine.columnPlanAt(worldX, worldZ).orElse(null);
+        boolean land = floorTop > wc.seaHeight() + 1;
+        int depth = wc.seaHeight() - floorTop;
+        double sediment = floor.sedimentAt(worldX, worldZ);
+        SurfaceKind surface = land && engine != null ? engine.surfaceKindAt(worldX, worldZ) : SurfaceKind.GRASS;
+
+        for (int y = baseTop; y < floorTop; y++) {
+            chunkData.setBlock(x, y, z,
+                    columnMaterial(worldInfo, y, floorTop, land, depth, sediment, plan, surface));
+        }
+        for (int y = Math.max(floorTop, baseTop); y <= wc.seaHeight(); y++) {
+            chunkData.setBlock(x, y, z, wc.waterBlock());
+        }
+    }
+
+    /**
+     * Material for one block of a floor column.
+     * <p>
+     * Underwater, the floor reads its own depth: sunlit banks are sand, the
+     * middle depths are gravel and clay in broad patches, and the deep basins
+     * and rift floors are bare rock. Island columns that clear the sea get a
+     * soil profile so vanilla decoration can plant on them - grass normally,
+     * sand along an islet's shoreline, mycelium on a mushroom island. Dock
+     * columns are a stone-brick quay with a plank deck; fully flattened plaza
+     * columns get a path surface.
+     */
+    private Material columnMaterial(WorldInfo worldInfo, int y, int floorTop, boolean land, int depth,
+            double sediment, ColumnPlan plan, SurfaceKind surface) {
         if (plan != null && plan.feature() == ColumnPlan.Feature.DOCK) {
             return y == floorTop - 1 ? IslandPalette.planks(plan.island().type()) : Material.STONE_BRICKS;
         }
         if (plan != null && plan.feature() == ColumnPlan.Feature.PLAZA && plan.blend() >= 1.0 && y == floorTop - 1) {
             return IslandPalette.plazaSurface(plan.island().type());
         }
-        if (!land) {
-            return rand.nextBoolean() ? mats.top() : mats.base();
+        if (worldInfo.getEnvironment() != Environment.NORMAL) {
+            return intersticeMaterial(y, floorTop, sediment);
         }
-        if (y == floorTop - 1) {
-            return Material.GRASS_BLOCK;
+        if (land) {
+            if (y == floorTop - 1) {
+                return IslandPalette.surface(surface);
+            }
+            if (y >= floorTop - SOIL_THICKNESS) {
+                return IslandPalette.subsoil(surface);
+            }
+            return Material.STONE;
         }
-        if (y >= floorTop - 4) {
-            return Material.DIRT;
+        // Sediment lies in a thin layer over rock; the deep basins and rift
+        // floors are scoured down to the rock itself
+        int fromTop = floorTop - 1 - y;
+        if (fromTop < SEDIMENT_THICKNESS && depth < ROCK_DEPTH) {
+            return sedimentMaterial(sediment, depth);
+        }
+        return fromTop < ROCK_BAND ? deepRock(sediment, depth) : Material.STONE;
+    }
+
+    /**
+     * Sediment for the shallow and middle depths: banks of sand giving way to
+     * gravel and the odd clay pan, in patches rather than block-by-block noise.
+     */
+    private static Material sedimentMaterial(double sediment, int depth) {
+        if (depth < 20) {
+            return sediment < 0.62 ? Material.SAND : Material.GRAVEL;
+        }
+        if (sediment < 0.34) {
+            return Material.SAND;
+        }
+        if (sediment < 0.78) {
+            return Material.GRAVEL;
+        }
+        return Material.CLAY;
+    }
+
+    /**
+     * The rock under the sediment, and the floor of the deep basins and rifts.
+     */
+    private static Material deepRock(double sediment, int depth) {
+        if (depth >= ROCK_DEPTH && sediment > 0.80) {
+            return Material.TUFF;
+        }
+        if (depth >= ROCK_DEPTH && sediment < 0.22) {
+            return Material.GRAVEL;
         }
         return Material.STONE;
+    }
+
+    /**
+     * The interstice's floor: basalt and soul sand, nothing worth mining.
+     */
+    private static Material intersticeMaterial(int y, int floorTop, double sediment) {
+        if (y >= floorTop - SEDIMENT_THICKNESS) {
+            return sediment < 0.5 ? Material.SOUL_SAND : Material.BASALT;
+        }
+        return Material.NETHERRACK;
     }
 
     @Override
@@ -194,6 +301,28 @@ public class ChunkGeneratorWorld extends ChunkGenerator {
     @Override
     public boolean shouldGenerateStructures() {
         return addon.getSettings().isMakeStructures();
+    }
+
+    /**
+     * Vanilla structures everywhere except on the trading islands themselves -
+     * a monument or a village dropped through a market plaza would wreck the
+     * one part of the world that is hand-built.
+     */
+    @Override
+    public boolean shouldGenerateStructures(@NonNull WorldInfo worldInfo, @NonNull Random random, int chunkX,
+            int chunkZ) {
+        if (!addon.getSettings().isMakeStructures() || worldInfo.getEnvironment() != Environment.NORMAL) {
+            return false;
+        }
+        if (!addon.getSettings().isKeepStructuresOffIslands()) {
+            return true;
+        }
+        int centerX = (chunkX << 4) + 8;
+        int centerZ = (chunkZ << 4) + 8;
+        // A chunk's worth of margin so a structure anchored just outside cannot
+        // reach in
+        return addon.getGalaxyEngine(worldInfo.getSeed())
+                .islandsNear(centerX, centerZ, addon.getSettings().getIslandTerrainRadius() + 16).isEmpty();
     }
 
     @Override

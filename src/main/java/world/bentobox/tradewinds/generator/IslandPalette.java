@@ -7,6 +7,7 @@ import org.bukkit.Material;
 import org.bukkit.entity.Villager;
 
 import world.bentobox.tradewinds.galaxy.IslandType;
+import world.bentobox.tradewinds.galaxy.SurfaceKind;
 
 /**
  * The Bukkit-material face of each island type: dock wood, plaza surface,
@@ -91,5 +92,31 @@ public final class IslandPalette {
 
     public static List<Material> workstations(IslandType type) {
         return PALETTES.get(type).workstations();
+    }
+
+    /**
+     * The top block of a land column. Vanilla decoration reads this to decide
+     * what will grow: grass gets trees and flowers, mycelium gets huge
+     * mushrooms, sand gets nothing much - which is what a beach should be.
+     *
+     * @param kind the surface kind
+     * @return the surface material
+     */
+    public static Material surface(SurfaceKind kind) {
+        return switch (kind) {
+        case SAND -> Material.SAND;
+        case MYCELIUM -> Material.MYCELIUM;
+        case GRASS -> Material.GRASS_BLOCK;
+        };
+    }
+
+    /**
+     * What sits under that surface, before the column turns to stone.
+     *
+     * @param kind the surface kind
+     * @return the subsoil material
+     */
+    public static Material subsoil(SurfaceKind kind) {
+        return kind == SurfaceKind.SAND ? Material.SANDSTONE : Material.DIRT;
     }
 }

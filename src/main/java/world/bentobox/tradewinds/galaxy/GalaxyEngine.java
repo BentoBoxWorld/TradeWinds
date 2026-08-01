@@ -44,6 +44,8 @@ public class GalaxyEngine {
     private static final long SALT_WILD_X = 0x317DBEA8L;
     private static final long SALT_WILD_Z = 0x317DBEA9L;
     private static final long SALT_WILD_BIOME = 0x317DBEAAL;
+    private static final long SALT_WILD_SIZE = 0x317DBEABL;
+    private static final long SALT_WILD_MUSHROOM = 0x317DBEACL;
     private static final long SALT_OCEAN_TEMP = 0x0CEA17E1L;
 
     /**
@@ -60,10 +62,37 @@ public class GalaxyEngine {
     private static final List<String> OCEAN_BIOMES = List.of("minecraft:frozen_ocean", "minecraft:cold_ocean",
             "minecraft:ocean", "minecraft:lukewarm_ocean", "minecraft:warm_ocean");
 
+    /**
+     * The deep-water counterpart of each entry in {@link #OCEAN_BIOMES}, in the
+     * same temperature order. Depth picks between the two lists, and that is
+     * what tells vanilla where ocean monuments belong - there is no deep warm
+     * ocean in Minecraft, so warm water deepens into lukewarm.
+     */
+    private static final List<String> DEEP_OCEAN_BIOMES = List.of("minecraft:deep_frozen_ocean",
+            "minecraft:deep_cold_ocean", "minecraft:deep_ocean", "minecraft:deep_lukewarm_ocean",
+            "minecraft:deep_lukewarm_ocean");
+
+    /**
+     * Where the shelf ends and deep water begins, as a fraction of the way from
+     * the shelf depth to the abyss depth.
+     */
+    private static final double DEEP_WATER_FRACTION = 0.6;
+
     /** Vanilla biomes wild islets draw from - Minecraft-stuff land. */
     private static final List<String> WILD_BIOMES = List.of("minecraft:plains", "minecraft:forest",
             "minecraft:birch_forest", "minecraft:jungle", "minecraft:savanna", "minecraft:swamp",
             "minecraft:flower_forest", "minecraft:dark_forest");
+
+    /** The rare islet biome - no hostile spawns, mycelium, mooshrooms. */
+    public static final String MUSHROOM_BIOME = "minecraft:mushroom_fields";
+    /** Sandy fringes: where beached shipwrecks and buried treasure belong. */
+    private static final String BEACH_BIOME = "minecraft:beach";
+    private static final String SNOWY_BEACH_BIOME = "minecraft:snowy_beach";
+    /** Half-width of an islet's beach ring, in blocks, either side of the shoreline. */
+    private static final int BEACH_RING = 7;
+    /** Smallest and largest islet radius as a fraction of the configured mean. */
+    private static final double ISLET_MIN_SCALE = 0.55;
+    private static final double ISLET_MAX_SCALE = 1.55;
 
     // Dock/plaza geometry, as fractions of the terrain radius. The plaza sits
     // at ~45% out (where natural terrain is already near sea level, so the
@@ -80,10 +109,21 @@ public class GalaxyEngine {
     private final GalaxyConfig config;
     private final Set<Long> starterCells;
     private final Map<Long, Optional<IslandSpec>> cache = new ConcurrentHashMap<>();
+    private final Seabed seabed;
 
     public GalaxyEngine(GalaxyConfig config) {
         this.config = config;
         this.starterCells = computeStarterCells();
+        this.seabed = new Seabed(config.seed(), config.seaLevel(), config.seabed());
+    }
+
+    /**
+     * The ocean floor field - basins, relief, rifts and seamounts.
+     *
+     * @return this galaxy's seabed
+     */
+    public Seabed getSeabed() {
+        return seabed;
     }
 
     public GalaxyConfig getConfig() {
@@ -275,25 +315,43 @@ public class GalaxyEngine {
                 best = Math.max(best, mask);
             }
         }
-        // Wild islets: free land between the trading islands
-        Optional<int[]> wild = wildIsletAt(blockX, blockZ);
+        // Wild islets: free land between the trading islands. Small islets are
+        // lower as well as narrower, so a sandbar is a sandbar and not a spike.
+        Optional<Islet> wild = isletAt(blockX, blockZ);
         if (wild.isPresent()) {
-            double d = Math.hypot((double) blockX - wild.get()[0], (double) blockZ - wild.get()[1]);
-            best = Math.max(best, 0.5 * (1 + Math.cos(Math.PI * d / config.wildIsletRadius())));
+            Islet islet = wild.get();
+            double d = Math.sqrt(islet.distanceSquared(blockX, blockZ));
+            double mask = 0.5 * (1 + Math.cos(Math.PI * d / islet.radius()));
+            return (int) Math.round(config.landLift() * mask * isletHeightScale(islet));
         }
         return (int) Math.round(config.landLift() * best);
     }
 
     /**
+     * How tall an islet stands relative to a trading island, from its size: big
+     * islets rise the full land lift, sandbars barely clear the water.
+     *
+     * @param islet the islet
+     * @return scale factor for the land lift
+     */
+    private double isletHeightScale(Islet islet) {
+        if (config.wildIsletRadius() <= 0) {
+            return 1.0;
+        }
+        return Math.clamp((double) islet.radius() / config.wildIsletRadius(), 0.5, 1.15);
+    }
+
+    /**
      * The wild islet hosted by a cell, if any: cells without a trading island
      * may roll a small unnamed island - free land for mining, farming and
-     * building ("Minecraft stuff"), and claim material for later stages.
+     * building ("Minecraft stuff"), and claim material for later stages. Each
+     * rolls its own radius and biome, so no two look alike.
      *
      * @param cellX cell x
      * @param cellZ cell z
-     * @return {centerX, centerZ} or empty
+     * @return the islet, or empty
      */
-    public Optional<int[]> wildIsletInCell(int cellX, int cellZ) {
+    public Optional<Islet> wildIsletInCell(int cellX, int cellZ) {
         if (config.wildIsletChance() <= 0 || config.wildIsletRadius() <= 0) {
             return Optional.empty();
         }
@@ -306,14 +364,30 @@ public class GalaxyEngine {
         double jz = Hashing.toUnit(Hashing.cellHash(config.seed(), cellX, cellZ, SALT_WILD_Z)) * 2 - 1;
         int x = (int) Math.round((cellX + 0.5) * size + jx * jitter);
         int z = (int) Math.round((cellZ + 0.5) * size + jz * jitter);
+        double scale = ISLET_MIN_SCALE + Hashing.toUnit(Hashing.cellHash(config.seed(), cellX, cellZ, SALT_WILD_SIZE))
+                * (ISLET_MAX_SCALE - ISLET_MIN_SCALE);
+        int radius = Math.max(20, (int) Math.round(config.wildIsletRadius() * scale));
         // Never crowd a trading island: its terrain, its dock and a margin
-        int clearance = config.terrainRadius() + config.wildIsletRadius() + 80;
+        int clearance = config.terrainRadius() + radius + 80;
         for (IslandSpec spec : islandsNear(x, z, clearance)) {
             if (spec.distanceSquared(x, z) < (long) clearance * clearance) {
                 return Optional.empty();
             }
         }
-        return Optional.of(new int[] { x, z });
+        return Optional.of(new Islet(x, z, radius, isletBiome(cellX, cellZ)));
+    }
+
+    /**
+     * A wild islet's whole-island biome (seeded from its cell). Mostly ordinary
+     * vanilla land; rarely, mushroom fields.
+     */
+    private String isletBiome(int cellX, int cellZ) {
+        if (Hashing.toUnit(Hashing.cellHash(config.seed(), cellX, cellZ,
+                SALT_WILD_MUSHROOM)) < config.mushroomIsletChance()) {
+            return MUSHROOM_BIOME;
+        }
+        long hash = Hashing.cellHash(config.seed(), cellX, cellZ, SALT_WILD_BIOME);
+        return WILD_BIOMES.get((int) Math.floorMod(hash, WILD_BIOMES.size()));
     }
 
     /**
@@ -321,23 +395,35 @@ public class GalaxyEngine {
      *
      * @param blockX block x
      * @param blockZ block z
-     * @return {centerX, centerZ} or empty
+     * @return the islet, or empty
      */
-    public Optional<int[]> wildIsletAt(int blockX, int blockZ) {
-        int radius = config.wildIsletRadius();
-        if (radius <= 0) {
+    public Optional<Islet> isletAt(int blockX, int blockZ) {
+        return isletNear(blockX, blockZ, 1.0);
+    }
+
+    /**
+     * The wild islet whose footprint - optionally widened - covers a column.
+     *
+     * @param blockX block x
+     * @param blockZ block z
+     * @param scale multiplier on the islet radius; 1.0 is the islet itself, 2.0
+     *        includes its surrounding shelf
+     * @return the islet, or empty
+     */
+    private Optional<Islet> isletNear(int blockX, int blockZ, double scale) {
+        if (config.wildIsletRadius() <= 0) {
             return Optional.empty();
         }
         int size = config.wildIsletGrid();
         int cellX = Math.floorDiv(blockX, size);
         int cellZ = Math.floorDiv(blockZ, size);
+        // A big islet's shelf can reach past its own cell, so check the ring
         for (int cx = cellX - 1; cx <= cellX + 1; cx++) {
             for (int cz = cellZ - 1; cz <= cellZ + 1; cz++) {
-                Optional<int[]> islet = wildIsletInCell(cx, cz);
+                Optional<Islet> islet = wildIsletInCell(cx, cz);
                 if (islet.isPresent()) {
-                    long dx = (long) blockX - islet.get()[0];
-                    long dz = (long) blockZ - islet.get()[1];
-                    if (dx * dx + dz * dz <= (long) radius * radius) {
+                    long reach = Math.round(islet.get().radius() * scale);
+                    if (islet.get().distanceSquared(blockX, blockZ) <= reach * reach) {
                         return islet;
                     }
                 }
@@ -347,13 +433,25 @@ public class GalaxyEngine {
     }
 
     /**
-     * A wild islet's whole-island biome (seeded from its cell).
+     * The distance from an islet's center at which its land meets the water -
+     * exactly, because the shelf under an islet is flat by construction. The
+     * beach ring and the sand surface hang off this.
+     *
+     * @param islet the islet
+     * @return shoreline radius in blocks, 0 if the islet never breaks the surface
      */
-    public String wildIsletBiome(int centerX, int centerZ) {
-        int size = config.wildIsletGrid();
-        long hash = Hashing.cellHash(config.seed(), Math.floorDiv(centerX, size), Math.floorDiv(centerZ, size),
-                SALT_WILD_BIOME);
-        return WILD_BIOMES.get((int) Math.floorMod(hash, WILD_BIOMES.size()));
+    public double isletShoreRadius(Islet islet) {
+        double lift = config.landLift() * isletHeightScale(islet);
+        if (lift <= 0) {
+            return 0;
+        }
+        // Land where lift * mask > shelf depth; invert the cosine mask for the
+        // exact crossing rather than sampling for it
+        double mask = config.seabed().islandShelfDepth() / lift;
+        if (mask >= 1.0) {
+            return 0;
+        }
+        return islet.radius() / Math.PI * Math.acos(Math.clamp(2 * mask - 1, -1.0, 1.0));
     }
 
     /**
@@ -431,16 +529,153 @@ public class GalaxyEngine {
      * @return an ocean biome key
      */
     public String oceanBiomeKeyAt(int blockX, int blockZ) {
+        int index = oceanTemperatureIndex(blockX, blockZ);
+        return isDeepWater(blockX, blockZ) ? DEEP_OCEAN_BIOMES.get(index) : OCEAN_BIOMES.get(index);
+    }
+
+    /**
+     * The sea's temperature step at a position: 0 frozen through to 4 warm.
+     * Because the field is continuous and this mapping is monotonic, adjacent
+     * water can only differ by one step.
+     *
+     * @param blockX block x
+     * @param blockZ block z
+     * @return index into the ordered ocean biome lists
+     */
+    public int oceanTemperatureIndex(int blockX, int blockZ) {
         double temperature = Noise.at(config.seed(), SALT_OCEAN_TEMP, blockX, blockZ, OCEAN_TEMPERATURE_SCALE);
-        int index = Math.clamp((int) (temperature * OCEAN_BIOMES.size()), 0, OCEAN_BIOMES.size() - 1);
-        return OCEAN_BIOMES.get(index);
+        return Math.clamp((int) (temperature * OCEAN_BIOMES.size()), 0, OCEAN_BIOMES.size() - 1);
+    }
+
+    /**
+     * Whether a column stands over deep water: dark, cold, and the only place
+     * vanilla will put an ocean monument.
+     *
+     * @param blockX block x
+     * @param blockZ block z
+     * @return true over the deep basins
+     */
+    public boolean isDeepWater(int blockX, int blockZ) {
+        SeabedConfig sb = config.seabed();
+        if (sb.abyssDepth() <= sb.shelfDepth()) {
+            return false; // A flat sea floor is never "deep" - it is all one shelf
+        }
+        double threshold = sb.shelfDepth() + (sb.abyssDepth() - sb.shelfDepth()) * DEEP_WATER_FRACTION;
+        return config.seaLevel() - seabedHeightAt(blockX, blockZ) >= threshold;
+    }
+
+    /**
+     * The Y of the topmost sea-floor block at a column, before any island lift:
+     * the natural floor in open water, eased toward the island shelf near land.
+     *
+     * @param blockX block x
+     * @param blockZ block z
+     * @return the floor's top Y
+     */
+    public int seabedHeightAt(int blockX, int blockZ) {
+        return seabed.heightAt(blockX, blockZ, shelfBlendAt(blockX, blockZ));
+    }
+
+    /**
+     * How much a column belongs to an island's shelf rather than the open sea:
+     * 1 inside a footprint, easing to 0 at twice its radius. This is what keeps
+     * an island that happens to sit over an abyssal plain in shallow water.
+     *
+     * @param blockX block x
+     * @param blockZ block z
+     * @return blend in [0, 1]
+     */
+    public double shelfBlendAt(int blockX, int blockZ) {
+        double best = 0;
+        int radius = config.terrainRadius();
+        for (IslandSpec s : islandsNear(blockX, blockZ, radius * 2)) {
+            best = Math.max(best, shelfTaper(Math.sqrt(s.distanceSquared(blockX, blockZ)), radius));
+        }
+        Optional<Islet> islet = isletNear(blockX, blockZ, 2.0);
+        if (islet.isPresent()) {
+            best = Math.max(best,
+                    shelfTaper(Math.sqrt(islet.get().distanceSquared(blockX, blockZ)), islet.get().radius()));
+        }
+        return best;
+    }
+
+    /**
+     * Full shelf inside the footprint, cosine-eased to open sea at twice it.
+     */
+    private static double shelfTaper(double distance, int radius) {
+        if (distance <= radius) {
+            return 1.0;
+        }
+        if (distance >= radius * 2.0) {
+            return 0.0;
+        }
+        return 0.5 * (1 + Math.cos(Math.PI * (distance - radius) / radius));
+    }
+
+    /**
+     * What the top block of a land column should be. Islets get a sandy fringe
+     * at the waterline (and mycelium all over, if they are mushroom islands);
+     * everything else is ordinary grass.
+     *
+     * @param blockX block x
+     * @param blockZ block z
+     * @return the surface kind
+     */
+    public SurfaceKind surfaceKindAt(int blockX, int blockZ) {
+        Optional<Islet> islet = isletAt(blockX, blockZ);
+        if (islet.isEmpty()) {
+            return SurfaceKind.GRASS;
+        }
+        if (islet.get().isMushroom()) {
+            return SurfaceKind.MYCELIUM;
+        }
+        double shore = isletShoreRadius(islet.get());
+        double d = Math.sqrt(islet.get().distanceSquared(blockX, blockZ));
+        return shore > 0 && d >= shore - BEACH_RING ? SurfaceKind.SAND : SurfaceKind.GRASS;
     }
 
     /**
      * Every ocean biome the sea can take - the world must declare them all.
      */
     public static List<String> oceanBiomes() {
+        List<String> all = new ArrayList<>(OCEAN_BIOMES);
+        DEEP_OCEAN_BIOMES.stream().filter(k -> !all.contains(k)).forEach(all::add);
+        all.add(BEACH_BIOME);
+        all.add(SNOWY_BEACH_BIOME);
+        all.add(MUSHROOM_BIOME);
+        return List.copyOf(all);
+    }
+
+    /**
+     * Every land biome a wild islet can take - the world must declare these too.
+     *
+     * @return the islet biomes
+     */
+    public static List<String> isletBiomes() {
+        List<String> all = new ArrayList<>(WILD_BIOMES);
+        all.add(MUSHROOM_BIOME);
+        all.add(BEACH_BIOME);
+        all.add(SNOWY_BEACH_BIOME);
+        return List.copyOf(all);
+    }
+
+    /**
+     * The ocean biomes in temperature order, shallow water only - the ordering
+     * the "never jump more than one step" invariant is checked against.
+     *
+     * @return the shallow ocean biomes, coldest first
+     */
+    public static List<String> shallowOceanBiomes() {
         return OCEAN_BIOMES;
+    }
+
+    /**
+     * The deep-water counterparts, in the same temperature order.
+     *
+     * @return the deep ocean biomes, coldest first
+     */
+    public static List<String> deepOceanBiomes() {
+        return DEEP_OCEAN_BIOMES;
     }
 
     /**
@@ -454,9 +689,9 @@ public class GalaxyEngine {
      * @return biome key, or empty for open ocean
      */
     public Optional<String> biomeKeyAt(int blockX, int blockZ) {
-        Optional<int[]> wild = wildIsletAt(blockX, blockZ);
+        Optional<Islet> wild = isletAt(blockX, blockZ);
         if (wild.isPresent()) {
-            return Optional.of(wildIsletBiome(wild.get()[0], wild.get()[1]));
+            return Optional.of(isletBiomeAt(wild.get(), blockX, blockZ));
         }
         int radius = config.terrainRadius();
         long r2 = (long) radius * radius;
@@ -472,5 +707,30 @@ public class GalaxyEngine {
             }
         }
         return ring;
+    }
+
+    /**
+     * The biome of one column of an islet: its own biome inland, and a beach at
+     * the waterline - which is what lets vanilla wash up beached shipwrecks and
+     * bury treasure there. Mushroom islands have no beach (nor does vanilla).
+     *
+     * @param islet the islet
+     * @param blockX block x
+     * @param blockZ block z
+     * @return the biome key
+     */
+    private String isletBiomeAt(Islet islet, int blockX, int blockZ) {
+        if (islet.isMushroom()) {
+            return islet.biomeKey();
+        }
+        double shore = isletShoreRadius(islet);
+        if (shore > 0) {
+            double d = Math.sqrt(islet.distanceSquared(blockX, blockZ));
+            if (d >= shore - BEACH_RING && d <= shore + BEACH_RING) {
+                // Cold seas get a snowy shore, so the shoreline matches its water
+                return oceanTemperatureIndex(blockX, blockZ) <= 1 ? SNOWY_BEACH_BIOME : BEACH_BIOME;
+            }
+        }
+        return islet.biomeKey();
     }
 }

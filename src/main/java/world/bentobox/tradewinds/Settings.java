@@ -105,17 +105,25 @@ public class Settings implements WorldSettings {
     @ConfigComment("Chance (0-1) that a wild-islet grid cell hosts one - small unnamed islands,")
     @ConfigComment("unprotected: mine, farm, build, live. Minecraft-stuff land.")
     @ConfigEntry(path = "galaxy.wild-islet-chance", needsReset = true)
-    private double wildIsletChance = 0.3;
+    private double wildIsletChance = 0.55;
 
     @ConfigComment("Grid size in blocks for wild islets. Much finer than the trading island grid,")
-    @ConfigComment("so the open sea is dotted with land: at 1200 with chance 0.3 there is usually")
-    @ConfigComment("an islet within a couple of thousand blocks of anywhere.")
+    @ConfigComment("so the open sea is dotted with land: at 900 with chance 0.55 there is usually")
+    @ConfigComment("an islet within a few hundred blocks of anywhere - close enough to row to")
+    @ConfigComment("without the sea feeling empty.")
     @ConfigEntry(path = "galaxy.wild-islet-grid", needsReset = true)
-    private int wildIsletGrid = 1200;
+    private int wildIsletGrid = 900;
 
-    @ConfigComment("Terrain radius of wild islets. 0 disables them.")
+    @ConfigComment("Mean terrain radius of wild islets. 0 disables them. Each islet rolls its own")
+    @ConfigComment("size between roughly half and one and a half times this, so the sea holds")
+    @ConfigComment("everything from sandbars to proper little islands.")
     @ConfigEntry(path = "galaxy.wild-islet-radius", needsReset = true)
-    private int wildIsletRadius = 70;
+    private int wildIsletRadius = 75;
+
+    @ConfigComment("Chance (0-1) that a wild islet is a mushroom island: mycelium, mooshrooms,")
+    @ConfigComment("and no hostile spawns. Rare enough to be worth the find.")
+    @ConfigEntry(path = "galaxy.mushroom-islet-chance", needsReset = true)
+    private double mushroomIsletChance = 0.06;
 
     @ConfigComment("Relative spawn weight per island type. Higher = more common; 0 disables a type.")
     @ConfigComment("Types: AGRICULTURAL, FOREST, FISHING, MINING, INDUSTRIAL, LUXURY, FROZEN.")
@@ -606,17 +614,68 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "world.water-block", needsReset = true)
     private Material waterBlock = Material.WATER;
 
-    @ConfigComment("Allow vanilla cave generation under the ocean floor.")
+    @ConfigComment("Allow vanilla cave generation: caves, ravines and cheese caverns under the")
+    @ConfigComment("sea floor, and inside the islands. Dry air pockets down there are a feature -")
+    @ConfigComment("they are somewhere to surface and something to mine.")
     @ConfigEntry(path = "world.make-caves")
-    private boolean makeCaves = false;
+    private boolean makeCaves = true;
 
-    @ConfigComment("Allow vanilla decoration (kelp, seagrass, trees on island land).")
+    @ConfigComment("Allow vanilla decoration (kelp, seagrass, coral, trees on island land).")
     @ConfigEntry(path = "world.make-decorations")
     private boolean makeDecorations = true;
 
-    @ConfigComment("Allow vanilla structure generation (shipwrecks, ruins...).")
+    @ConfigComment("Allow vanilla structure generation: shipwrecks, ocean ruins, ocean monuments,")
+    @ConfigComment("buried treasure and trial chambers. Which of them appear where is decided by")
+    @ConfigComment("the biomes the galaxy hands out, so deep basins get monuments, warm shallows")
+    @ConfigComment("get warm ruins, and islet beaches get treasure.")
     @ConfigEntry(path = "world.make-structures")
-    private boolean makeStructures = false;
+    private boolean makeStructures = true;
+
+    @ConfigComment("Keep vanilla structures off the trading islands themselves. A monument or a")
+    @ConfigComment("village dropped through a market plaza would wreck the one part of the world")
+    @ConfigComment("that is hand-built. Wild islets are fair game either way.")
+    @ConfigEntry(path = "world.keep-structures-off-islands")
+    private boolean keepStructuresOffIslands = true;
+
+    @ConfigComment("Vary the sea floor. False gives the old featureless flat floor at the shelf")
+    @ConfigComment("depth; true gives shelves, basins, rifts and seamounts.")
+    @ConfigEntry(path = "world.seabed.vary", needsReset = true)
+    private boolean varySeabed = true;
+
+    @ConfigComment("Depth in blocks below sea level of the shallowest open water - the sunlit")
+    @ConfigComment("banks where coral, kelp and ocean ruins sit.")
+    @ConfigEntry(path = "world.seabed.shelf-depth", needsReset = true)
+    private int seabedShelfDepth = 14;
+
+    @ConfigComment("Depth in blocks below sea level of the deepest basins. Deep water gets the")
+    @ConfigComment("deep ocean biomes, which is what lets vanilla place ocean monuments.")
+    @ConfigEntry(path = "world.seabed.abyss-depth", needsReset = true)
+    private int seabedAbyssDepth = 46;
+
+    @ConfigComment("Depth in blocks of the shelf every island and islet sits on. The natural floor")
+    @ConfigComment("is blended toward this near land, so an island over an abyssal plain still")
+    @ConfigComment("stands in shallow water and still breaks the surface by the same amount.")
+    @ConfigEntry(path = "world.seabed.island-shelf-depth", needsReset = true)
+    private int seabedIslandShelfDepth = 18;
+
+    @ConfigComment("Amplitude in blocks of the rolling hills on top of the basins - the difference")
+    @ConfigComment("between a dune field and a flat plain.")
+    @ConfigEntry(path = "world.seabed.relief", needsReset = true)
+    private int seabedRelief = 9;
+
+    @ConfigComment("How far below the surrounding floor a rift cuts at its deepest, in blocks.")
+    @ConfigComment("0 disables underwater canyons.")
+    @ConfigEntry(path = "world.seabed.rift-depth", needsReset = true)
+    private int seabedRiftDepth = 26;
+
+    @ConfigComment("How rare and narrow the rifts are (0-1). Higher means fewer, tighter canyons.")
+    @ConfigEntry(path = "world.seabed.rift-threshold", needsReset = true)
+    private double seabedRiftThreshold = 0.80;
+
+    @ConfigComment("How far a seamount rises above the floor at its peak, in blocks. They only")
+    @ConfigComment("grow on the deeper plains and never break the surface. 0 disables them.")
+    @ConfigEntry(path = "world.seabed.seamount-height", needsReset = true)
+    private int seabedSeamountHeight = 20;
 
     @ConfigComment("Maximum number of islands in the world. Set to -1 or 0 for unlimited.")
     @ConfigComment("If the number of islands is greater than this number, it will stop players from creating islands.")
@@ -2415,6 +2474,26 @@ public class Settings implements WorldSettings {
     public void setWildIsletRadius(int wildIsletRadius) { this.wildIsletRadius = wildIsletRadius; }
     public int getWildIsletGrid() { return wildIsletGrid; }
     public void setWildIsletGrid(int wildIsletGrid) { this.wildIsletGrid = wildIsletGrid; }
+    public double getMushroomIsletChance() { return mushroomIsletChance; }
+    public void setMushroomIsletChance(double mushroomIsletChance) { this.mushroomIsletChance = mushroomIsletChance; }
+    public boolean isVarySeabed() { return varySeabed; }
+    public void setVarySeabed(boolean varySeabed) { this.varySeabed = varySeabed; }
+    public int getSeabedShelfDepth() { return seabedShelfDepth; }
+    public void setSeabedShelfDepth(int seabedShelfDepth) { this.seabedShelfDepth = seabedShelfDepth; }
+    public int getSeabedAbyssDepth() { return seabedAbyssDepth; }
+    public void setSeabedAbyssDepth(int seabedAbyssDepth) { this.seabedAbyssDepth = seabedAbyssDepth; }
+    public int getSeabedIslandShelfDepth() { return seabedIslandShelfDepth; }
+    public void setSeabedIslandShelfDepth(int d) { this.seabedIslandShelfDepth = d; }
+    public int getSeabedRelief() { return seabedRelief; }
+    public void setSeabedRelief(int seabedRelief) { this.seabedRelief = seabedRelief; }
+    public int getSeabedRiftDepth() { return seabedRiftDepth; }
+    public void setSeabedRiftDepth(int seabedRiftDepth) { this.seabedRiftDepth = seabedRiftDepth; }
+    public double getSeabedRiftThreshold() { return seabedRiftThreshold; }
+    public void setSeabedRiftThreshold(double t) { this.seabedRiftThreshold = t; }
+    public int getSeabedSeamountHeight() { return seabedSeamountHeight; }
+    public void setSeabedSeamountHeight(int h) { this.seabedSeamountHeight = h; }
+    public boolean isKeepStructuresOffIslands() { return keepStructuresOffIslands; }
+    public void setKeepStructuresOffIslands(boolean k) { this.keepStructuresOffIslands = k; }
     public Map<String, Integer> getTypeWeights() { return typeWeights; }
     public void setTypeWeights(Map<String, Integer> typeWeights) { this.typeWeights = typeWeights; }
     public double getFuelPerBlock() { return fuelPerBlock; }

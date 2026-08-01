@@ -59,6 +59,7 @@ import world.bentobox.tradewinds.travel.WarpService;
 import world.bentobox.tradewinds.galaxy.GalaxyConfig;
 import world.bentobox.tradewinds.galaxy.GalaxyEngine;
 import world.bentobox.tradewinds.galaxy.IslandType;
+import world.bentobox.tradewinds.galaxy.SeabedConfig;
 import world.bentobox.tradewinds.generator.ChunkGeneratorWorld;
 import world.bentobox.tradewinds.generator.GalaxyIslandRegistrar;
 import world.bentobox.tradewinds.generator.TradeWindsBiomeProvider;
@@ -501,10 +502,25 @@ public class TradeWinds extends GameModeAddon {
             galaxyEngine = new GalaxyEngine(new GalaxyConfig(seed, s.getGalaxyMinSeparation(),
                     s.getIslandTerrainRadius(), s.getLandLift(), s.getGalaxyDensity(),
                     s.getStarterClusterMinIslands(), s.getBandRadius(), s.getSeaHeight(), typeWeights(),
-                    spawnIslandType(), s.getWildIsletChance(), s.getWildIsletRadius(), s.getWildIsletGrid()));
+                    spawnIslandType(), s.getWildIsletChance(), s.getWildIsletRadius(), s.getWildIsletGrid(),
+                    s.getMushroomIsletChance(), seabedConfig()));
             log("TradeWinds galaxy seed: " + seed);
         }
         return galaxyEngine;
+    }
+
+    /**
+     * The configured shape of the sea floor, or a flat floor at the shelf depth
+     * when {@code world.seabed.vary} is off.
+     */
+    private SeabedConfig seabedConfig() {
+        Settings s = getSettings();
+        if (!s.isVarySeabed()) {
+            return SeabedConfig.flat(s.getSeabedShelfDepth());
+        }
+        return new SeabedConfig(s.getSeabedShelfDepth(), s.getSeabedAbyssDepth(), s.getSeabedIslandShelfDepth(),
+                s.getSeabedRelief(), s.getSeabedRiftDepth(), s.getSeabedRiftThreshold(),
+                s.getSeabedSeamountHeight());
     }
 
     /**

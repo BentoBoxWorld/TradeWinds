@@ -35,12 +35,18 @@ galaxy:
   spawn-island-type: FISHING
   # Chance (0-1) that a wild-islet grid cell hosts one - small unnamed islands,
   # unprotected: mine, farm, build, live.
-  wild-islet-chance: 0.3
+  wild-islet-chance: 0.55
   # Grid size in blocks for wild islets - much finer than the trading island grid,
-  # so the open sea is dotted with land you can put ashore on.
-  wild-islet-grid: 1200
-  # Terrain radius of wild islets. 0 disables them.
-  wild-islet-radius: 70
+  # so the open sea is dotted with land you can put ashore on: at 900 with chance
+  # 0.55 there is usually one within a few hundred blocks of anywhere.
+  wild-islet-grid: 900
+  # Mean terrain radius of wild islets. 0 disables them. Each islet rolls its own
+  # size between roughly half and one and a half times this, so the sea holds
+  # everything from sandbars to proper little islands.
+  wild-islet-radius: 75
+  # Chance (0-1) that a wild islet is a mushroom island: mycelium, mooshrooms and
+  # no hostile spawns. Rare enough to be worth the find.
+  mushroom-islet-chance: 0.06
   # Relative spawn weight per island type. Higher = more common; 0 disables a type.
   type-weights:
     AGRICULTURAL: 10
@@ -283,12 +289,48 @@ world:
   vary-ocean-biomes: true
   # Water block for the overworld ocean.
   water-block: WATER
-  # Allow vanilla cave generation under the ocean floor.
-  make-caves: false
-  # Allow vanilla decoration (kelp, seagrass, trees on island land).
+  # Shape of the sea floor. The seabed is not scenery: its depth picks the ocean
+  # biome, and the biome is what tells vanilla where monuments, ruins and coral
+  # belong. Changing any of this needs a world reset to take effect everywhere.
+  seabed:
+    # False gives a featureless flat floor at the shelf depth; true gives shelves,
+    # basins, rifts and seamounts.
+    vary: true
+    # Depth below sea level of the shallowest open water - sunlit banks where
+    # coral, kelp and ocean ruins sit.
+    shelf-depth: 14
+    # Depth below sea level of the deepest basins. Deep water gets the deep ocean
+    # biomes, which is what lets vanilla place ocean monuments.
+    abyss-depth: 46
+    # Depth of the shelf every island and islet sits on. The natural floor blends
+    # toward this near land, so an island over an abyssal plain still stands in
+    # shallow water and still breaks the surface by the same amount.
+    island-shelf-depth: 18
+    # Amplitude of the rolling hills on top of the basins.
+    relief: 9
+    # How far below the surrounding floor a rift cuts at its deepest. 0 disables
+    # underwater canyons.
+    rift-depth: 26
+    # How rare and narrow the rifts are (0-1). Higher means fewer, tighter canyons.
+    rift-threshold: 0.8
+    # How far a seamount rises above the floor at its peak. They only grow on the
+    # deeper plains and never break the surface. 0 disables them.
+    seamount-height: 20
+  # Allow vanilla cave generation: caves, ravines and caverns under the sea floor
+  # and inside the islands. Dry air pockets down there are a feature - somewhere
+  # to surface, and something to mine.
+  make-caves: true
+  # Allow vanilla decoration (kelp, seagrass, coral, trees on island land).
   make-decorations: true
-  # Allow vanilla structure generation (shipwrecks, ruins...).
-  make-structures: false
+  # Allow vanilla structure generation: shipwrecks, ocean ruins, ocean monuments,
+  # buried treasure and trial chambers. Which appear where is decided by the biomes
+  # the galaxy hands out - deep basins get monuments, warm shallows get warm ruins,
+  # islet beaches get treasure.
+  make-structures: true
+  # Keep vanilla structures off the trading islands themselves. A monument dropped
+  # through a market plaza would wreck the one part of the world that is hand-built.
+  # Wild islets are fair game either way.
+  keep-structures-off-islands: true
   max-islands: -1
   default-game-mode: SURVIVAL
   nether:

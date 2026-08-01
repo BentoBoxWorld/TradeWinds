@@ -67,6 +67,9 @@ class TradeWindsBiomeProviderTest extends CommonTestSetup {
                 .map(key -> org.bukkit.Registry.BIOME.get(org.bukkit.NamespacedKey.fromString(key)))
                 .collect(java.util.stream.Collectors.toSet());
         for (int x = 100_000; x < 140_000; x += 500) {
+            if (emptyGalaxy.isletAt(x, 12_345).isPresent()) {
+                continue; // A wild islet is land, not sea - it has its own biome
+            }
             Biome biome = provider.getBiome(wi, x, settings.getSeaHeight(), 12_345);
             assertTrue(oceans.contains(biome), "Open sea should be an ocean biome, got " + biome.getKey());
             // The same column above water reads the same sea

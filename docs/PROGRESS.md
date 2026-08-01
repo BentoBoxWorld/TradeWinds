@@ -3,6 +3,76 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## The sea itself: seabed shape, vanilla structures, denser islets (2026-07-31)
+
+Ben, after covering 130 regions: "I have not found a single islet. Nothing...
+the sea floor is really barren and repetitive." Both were real, and they had
+different causes.
+
+**Islets were generating — just too rarely to meet.** The math was sound (a
+probe over the live seed found 357 in a 40,000-block square, the nearest 977
+blocks from spawn) but at grid 1200 x chance 0.3 the mean distance to one was
+well over a kilometre, and each was a fixed 70-block cone, so a whole voyage
+could pass between two of them and see neither. Now grid 900 x chance 0.55,
+and every islet rolls its own radius (0.55x-1.55x the mean) and its own
+height, so the sea holds sandbars through to proper little islands. Measured
+on the live seed: **mean 544 blocks to the nearest islet, worst case 1,376**
+(was well over 2,000). `testIsletsAreFindable` now asserts < 1,200 from four
+far-flung points; the old assertion allowed 2,500, which is why it never
+caught this.
+
+**The barren floor was one flat Perlin field**, and worse, it was the wrong
+tool: the floor is not scenery, its depth is what picks the ocean biome, and
+the biome is what tells vanilla where monuments, ruins and coral belong. So
+the seabed moved into the pure galaxy package (`Seabed`, `SeabedConfig`) where
+terrain and biome read the same field:
+- **Basins** (2,200-block lattice) take the floor from sunlit shelf to abyssal
+  plain. Depth over the deep-water threshold switches the biome to the
+  `deep_*` variants — which is the whole unlock for ocean monuments.
+- **Relief** (220) rolls dunes and hills over it.
+- **Rifts**: ridged noise (value noise folded about its midpoint) cuts narrow
+  wandering canyons up to 26 blocks below the surrounding floor.
+- **Seamounts** rise off the deeper plains only, and are capped so they never
+  break the surface — the galaxy's islands stay the world's only land.
+- **Island shelf blend**: near any island or islet the natural floor eases to
+  a standard 18-block shelf, so an island that lands over an abyss still sits
+  in shallow water and still clears the waves by the same amount. A bonus:
+  the shoreline radius is now exact rather than cut about by floor noise.
+
+Measured over 53,000 open-sea samples on the live seed: depths spread 8-63,
+**39.5% deep water**, and all nine ocean biomes present (frozen through warm,
+shallow and deep).
+
+**Vanilla now furnishes the sea.** `make-caves` and `make-structures` default
+true — carvers cut caves under the floor, and structure placement supplies
+shipwrecks, ocean ruins (warm and cold, by biome), monuments (deep basins),
+buried treasure and trial chambers (in the rock under everything). The hybrid
+is: we own the shape of the floor, vanilla furnishes it. Structures are
+suppressed per-chunk over trading islands via the per-chunk
+`shouldGenerateStructures(WorldInfo, Random, int, int)` overload, so nothing
+drops through a market plaza; wild islets are fair game.
+
+Islets also gained a sandy beach ring at the exact waterline (which is what
+lets vanilla beach shipwrecks and bury treasure) and a 6% chance of being
+**mushroom fields** — mycelium, mooshrooms, no hostile spawns.
+
+**Pitfalls:**
+- Stacked fbm octaves pull toward the middle: the first cut gave only 16
+  blocks of depth variation across a long transect — still barren. The basin
+  field is now stretched about its midpoint and eased, restoring real shelves
+  and real abyss.
+- Bulk-filling base rock up to the chunk's *lowest* floor top left dead flat
+  chunks (a market plaza, or level sea floor) as bare stone: every column's
+  surface loop had zero iterations. The fill now stops 8 blocks short. Caught
+  by `testPlazaAndDockTerraform` — worth having kept that test honest.
+- The seabed hangs off the **galaxy** seed, not the world seed, so one number
+  still decides the whole world (spec principle 5). `testDeterminism` had to
+  stub a second engine to prove it.
+- Stored config values beat changed code defaults *again* (third time):
+  `make-structures`/`make-caves` and the islet knobs on the test server were
+  still the old values. Live config updated by hand.
+- 164 tests green.
+
 ## All player-facing text moved into the locale (2026-07-31)
 
 Ben's correction: never do MiniMessage conversion by hand - BentoBox's User

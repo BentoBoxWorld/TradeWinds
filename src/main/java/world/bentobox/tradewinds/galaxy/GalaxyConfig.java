@@ -24,25 +24,47 @@ import java.util.stream.Collectors;
  * @param spawnIslandType economy of the trading island reserved at the origin
  *        (null = seeded roll like any other island)
  * @param wildIsletChance chance (0-1) that a wild-islet grid cell hosts one
- * @param wildIsletRadius terrain radius of wild islets (0 = none)
+ * @param wildIsletRadius mean terrain radius of wild islets (0 = none); each
+ *        islet rolls its own size around this, so the sea holds everything from
+ *        sandbars to proper little islands
  * @param wildIsletGrid grid size in blocks for wild islets - much finer than the
  *        trading island grid, so the open sea is dotted with land to land on
+ * @param mushroomIsletChance chance (0-1) that an islet is a mushroom island -
+ *        rare enough to be worth the find
+ * @param seabed shape of the ocean floor between the islands
  *
  * @author tastybento
  */
 public record GalaxyConfig(long seed, int minSeparation, int terrainRadius, int landLift, double density,
         int starterMinIslands, int bandRadius, int seaLevel, Map<IslandType, Integer> typeWeights,
-        IslandType spawnIslandType, double wildIsletChance, int wildIsletRadius, int wildIsletGrid) {
+        IslandType spawnIslandType, double wildIsletChance, int wildIsletRadius, int wildIsletGrid,
+        double mushroomIsletChance, SeabedConfig seabed) {
 
     /** Default wild islet chance / radius / grid. */
-    public static final double DEFAULT_WILD_CHANCE = 0.3;
-    public static final int DEFAULT_WILD_RADIUS = 70;
-    public static final int DEFAULT_WILD_GRID = 1200;
+    public static final double DEFAULT_WILD_CHANCE = 0.55;
+    public static final int DEFAULT_WILD_RADIUS = 75;
+    public static final int DEFAULT_WILD_GRID = 900;
+    /** Default chance that an islet is a mushroom island. */
+    public static final double DEFAULT_MUSHROOM_CHANCE = 0.06;
 
     public GalaxyConfig {
         if (typeWeights == null || typeWeights.values().stream().mapToInt(w -> Math.max(0, w)).sum() <= 0) {
             typeWeights = defaultTypeWeights();
         }
+        if (seabed == null) {
+            seabed = SeabedConfig.DEFAULT;
+        }
+    }
+
+    /**
+     * Convenience constructor with the default seabed and mushroom chance.
+     */
+    public GalaxyConfig(long seed, int minSeparation, int terrainRadius, int landLift, double density,
+            int starterMinIslands, int bandRadius, int seaLevel, Map<IslandType, Integer> typeWeights,
+            IslandType spawnIslandType, double wildIsletChance, int wildIsletRadius, int wildIsletGrid) {
+        this(seed, minSeparation, terrainRadius, landLift, density, starterMinIslands, bandRadius, seaLevel,
+                typeWeights, spawnIslandType, wildIsletChance, wildIsletRadius, wildIsletGrid,
+                DEFAULT_MUSHROOM_CHANCE, SeabedConfig.DEFAULT);
     }
 
     /**

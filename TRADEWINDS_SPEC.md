@@ -56,12 +56,14 @@ A sea-trading game mode: an endless procedurally generated ocean dotted with **N
 
 ### 2.3 Chunk generator
 
-`ChunkGeneratorWorld` derived from Poseidon (`PerlinOctaveGenerator(worldSeed, 8)`, scale 1/30, NOISE_MAX-style amplitude):
+`ChunkGeneratorWorld` owns the *shape* of the world; vanilla furnishes it. Vanilla noise and surface are off, so no vanilla continent can ever appear — but its carvers, decorators, mobs and structure placement all stay on.
 
-- Everywhere: ocean floor noise from sea floor, water up to sea height, air above.
-- Near an island center (from `GalaxyEngine` — O(1) neighbor-cell lookup per chunk): terrain amplitude is multiplied by a **radial falloff mask** `m(d)` (1 at center → 0 at island's terrain radius), lifting land above sea level at the center and shelving into ocean. Pure ocean elsewhere.
-- **Biome:** `BiomeProvider` returns the island's biome within its terrain radius (per column), ocean/air biomes elsewhere (Poseidon's y-split pattern for sea vs air).
-- Vanilla decoration on (`shouldGenerateDecorations`), caves/structures config, mobs on. Interstice variant: NETHER environment, sea of water over basalt/blackstone-ish floor, nether roof (AcidIsland `makeNetherRoof` pattern).
+- **The sea floor** (`galaxy.Seabed`, pure and unit-tested — it is not scenery, its depth picks the ocean biome): a broad **basin** field taking the floor from sunlit shelf (~14 blocks down) to abyssal plain (~46), **relief** rolling dunes over it, ridged-noise **rifts** cutting narrow canyons up to 26 blocks deeper, and **seamounts** rising off the deeper plains only. Seamounts are capped below the surface: the galaxy's islands stay the world's only land (principle 6). Floor material follows depth in patches — sand banks, gravel beds, clay pans, bare stone and tuff in the deeps.
+- **Island shelf:** near any island or islet the natural floor eases to a standard shelf depth, so an island that falls over an abyssal plain still stands in shallow water and clears the waves by the same amount. This also makes each island's shoreline radius exact rather than noise-dependent.
+- Near an island center (from `GalaxyEngine` — O(1) neighbor-cell lookup per chunk): the shelf is lifted by a **radial falloff mask** `m(d)` (1 at center → 0 at the island's terrain radius).
+- **Biome:** `BiomeProvider` returns the island's biome within its terrain radius (per column); islets return their own biome with a sandy **beach ring** at the waterline; open sea returns an ocean biome chosen by seeded temperature *and depth* — deep water gets the `deep_*` variants. That depth-to-biome mapping is what tells vanilla where **ocean monuments** belong; temperature is what separates warm from cold **ocean ruins**.
+- **Vanilla structures** (`world.make-structures`) supply shipwrecks, ocean ruins, monuments, buried treasure and trial chambers. They are suppressed per-chunk over trading islands (`world.keep-structures-off-islands`) so nothing drops through a hand-built plaza or dock; wild islets are fair game. **Vanilla caves** (`world.make-caves`) carve under the sea floor and inside the islands.
+- Interstice variant: NETHER environment, its own shallow drab sea floor over basalt/soul sand, no galaxy, no structures.
 - **Island registration:** on first generation of an island's center chunk (or first entry — listener on chunk load), register an **unowned BentoBox island** at the center with range/protection from config and flags per security band. Island name announced on entry (BentoBox island enter event → action bar/title).
 
 ## 3. Travel
@@ -103,10 +105,16 @@ TradeWinds runs **two parallel economies** connected at only three points:
   Traders buy ONLY stamped goods - money enters the game exclusively through
   trade margins on goods that money already bought. Farming cannot mint money.
 - **The vanilla survival economy (stuff).** **Wild islets** (small unnamed
-  islands seeded into empty galaxy cells; `galaxy.wild-islet-*`) are free
-  country: mine, farm, build, sleep. All protection flags default to allowed
-  outside named islands' protection ranges. Homemade goods are freely usable
-  (eat, wear, build, burn as warp fuel) but unsellable.
+  islands on their own fine grid; `galaxy.wild-islet-*`) are free country:
+  mine, farm, build, sleep. Each rolls its own size and biome, so they range
+  from sandbars to proper little islands, with a sandy shore and rarely
+  (`galaxy.mushroom-islet-chance`) mushroom fields. They must be **common
+  enough to meet by chance while sailing** — an empty sea is the failure mode.
+  The sea between them carries the vanilla furniture too: shipwrecks, ocean
+  ruins, monuments in the deep basins, buried treasure on the beaches, trial
+  chambers in the rock, and caves under the floor. All protection flags default
+  to allowed outside named islands' protection ranges. Homemade goods are
+  freely usable (eat, wear, build, burn as warp fuel) but unsellable.
 - **The connections:** buying (money->stuff, stamped); **contraband**
   (stuff->money: unstamped sugar - and later villagers - are the only
   farmable income, balanced by scan risk per principle 3); and self-supply

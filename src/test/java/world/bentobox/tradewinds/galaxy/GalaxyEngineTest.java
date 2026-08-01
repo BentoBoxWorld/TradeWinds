@@ -248,9 +248,9 @@ class GalaxyEngineTest {
     @Test
     void testWildIslets() {
         GalaxyEngine engine = new GalaxyEngine(config(SEED, 0.0));
-        // With density 0 almost every cell is empty: some roll wild islets
+        // With density 0 almost every cell is empty: most roll wild islets
         int found = 0;
-        int[] sample = null;
+        Islet sample = null;
         for (int cx = -10; cx <= 10; cx++) {
             for (int cz = -10; cz <= 10; cz++) {
                 if (engine.islandInCell(cx, cz).isEmpty() && engine.wildIsletInCell(cx, cz).isPresent()) {
@@ -259,74 +259,241 @@ class GalaxyEngineTest {
                 }
             }
         }
-        // ~30% of 441 cells
-        assertTrue(found > 60 && found < 200, "Wild islet count off: " + found);
+        // ~55% of 441 cells
+        assertTrue(found > 180 && found < 320, "Wild islet count off: " + found);
         // Deterministic across engines
         GalaxyEngine again = new GalaxyEngine(config(SEED, 0.0));
-        assertTrue(again.wildIsletAt(sample[0], sample[1]).isPresent());
+        assertEquals(sample, again.isletAt(sample.centerX(), sample.centerZ()).orElseThrow());
         // Terrain rises there, with a vanilla wild biome
-        assertEquals(45, engine.landLiftAt(sample[0], sample[1]));
-        assertTrue(engine.biomeKeyAt(sample[0], sample[1]).orElseThrow().startsWith("minecraft:"));
+        assertTrue(engine.landLiftAt(sample.centerX(), sample.centerZ()) > 20);
+        assertTrue(engine.biomeKeyAt(sample.centerX(), sample.centerZ()).orElseThrow().startsWith("minecraft:"));
         // Islets keep well clear of trading islands (terrain + islet + margin)
         GalaxyEngine dense = new GalaxyEngine(config(SEED, 1.0));
         for (int cx = -20; cx <= 20; cx++) {
             for (int cz = -20; cz <= 20; cz++) {
-                java.util.Optional<int[]> islet = dense.wildIsletInCell(cx, cz);
+                Optional<Islet> islet = dense.wildIsletInCell(cx, cz);
                 if (islet.isEmpty()) {
                     continue;
                 }
-                for (IslandSpec spec : dense.islandsNear(islet.get()[0], islet.get()[1], 2000)) {
-                    double d = Math.sqrt(spec.distanceSquared(islet.get()[0], islet.get()[1]));
-                    assertTrue(d >= 160 + 70,
-                            "Islet at " + islet.get()[0] + "," + islet.get()[1] + " crowds " + spec.name());
+                Islet i = islet.get();
+                for (IslandSpec spec : dense.islandsNear(i.centerX(), i.centerZ(), 2000)) {
+                    double d = Math.sqrt(spec.distanceSquared(i.centerX(), i.centerZ()));
+                    assertTrue(d >= 160 + i.radius(),
+                            "Islet at " + i.centerX() + "," + i.centerZ() + " crowds " + spec.name());
                 }
             }
         }
     }
 
     @Test
+    void testIsletsVaryInSize() {
+        // Sandbars and proper little islands, not one stamped shape
+        GalaxyEngine engine = new GalaxyEngine(config(SEED, 0.0));
+        int smallest = Integer.MAX_VALUE;
+        int largest = 0;
+        for (int cx = -12; cx <= 12; cx++) {
+            for (int cz = -12; cz <= 12; cz++) {
+                Optional<Islet> islet = engine.wildIsletInCell(cx, cz);
+                if (islet.isPresent()) {
+                    smallest = Math.min(smallest, islet.get().radius());
+                    largest = Math.max(largest, islet.get().radius());
+                }
+            }
+        }
+        assertTrue(largest > smallest * 1.8, "Islets are all much the same size: " + smallest + ".." + largest);
+    }
+
+    @Test
+    void testMushroomIsletsAreRareButReal() {
+        GalaxyEngine engine = new GalaxyEngine(config(SEED, 0.0));
+        int islets = 0;
+        int mushroom = 0;
+        for (int cx = -25; cx <= 25; cx++) {
+            for (int cz = -25; cz <= 25; cz++) {
+                Optional<Islet> islet = engine.wildIsletInCell(cx, cz);
+                if (islet.isPresent()) {
+                    islets++;
+                    if (islet.get().isMushroom()) {
+                        mushroom++;
+                        // A mushroom island is mycelium all over, with no beach
+                        assertEquals(SurfaceKind.MYCELIUM,
+                                engine.surfaceKindAt(islet.get().centerX(), islet.get().centerZ()));
+                        assertEquals(GalaxyEngine.MUSHROOM_BIOME,
+                                engine.biomeKeyAt(islet.get().centerX(), islet.get().centerZ()).orElseThrow());
+                    }
+                }
+            }
+        }
+        assertTrue(mushroom > 0, "No mushroom islets in " + islets + " islets");
+        assertTrue(mushroom < islets * 0.2, "Mushroom islets are meant to be rare: " + mushroom + "/" + islets);
+    }
+
+    @Test
+    void testIsletsHaveSandyShores() {
+        // The waterline is sand and beach biome - that is what lets vanilla
+        // wash up beached shipwrecks and bury treasure there
+        GalaxyEngine engine = new GalaxyEngine(config(SEED, 0.0));
+        Islet islet = null;
+        for (int cx = 0; cx <= 20 && islet == null; cx++) {
+            for (int cz = 0; cz <= 20 && islet == null; cz++) {
+                islet = engine.wildIsletInCell(cx, cz).filter(i -> !i.isMushroom()).orElse(null);
+            }
+        }
+        assertTrue(islet != null, "No ordinary islet found");
+        double shore = engine.isletShoreRadius(islet);
+        assertTrue(shore > 0 && shore < islet.radius(), "Shore radius out of range: " + shore);
+        // Inland is grass, the waterline is sand
+        assertEquals(SurfaceKind.GRASS, engine.surfaceKindAt(islet.centerX(), islet.centerZ()));
+        assertEquals(SurfaceKind.SAND, engine.surfaceKindAt(islet.centerX() + (int) shore, islet.centerZ()));
+        assertTrue(engine.biomeKeyAt(islet.centerX() + (int) shore, islet.centerZ()).orElseThrow().contains("beach"));
+    }
+
+    @Test
     void testIsletsAreFindable() {
         // The open sea must not be empty: an islet within a short row of
-        // anywhere (playtest: 6000x6000 blocks of nothing at 10000,10000)
+        // anywhere (playtest: 6000x6000 blocks of nothing at 10000,10000, and
+        // nothing found anywhere in 130 explored regions)
         GalaxyEngine engine = new GalaxyEngine(config(SEED, 0.5));
-        for (int[] point : new int[][] { { 10000, 10000 }, { -5000, 15000 }, { 30000, -20000 } }) {
+        for (int[] point : new int[][] { { 10000, 10000 }, { -5000, 15000 }, { 30000, -20000 },
+                { -120000, 90000 } }) {
             double nearest = Double.MAX_VALUE;
             int grid = GalaxyConfig.DEFAULT_WILD_GRID;
             int cx = Math.floorDiv(point[0], grid);
             int cz = Math.floorDiv(point[1], grid);
             for (int i = cx - 4; i <= cx + 4; i++) {
                 for (int j = cz - 4; j <= cz + 4; j++) {
-                    java.util.Optional<int[]> islet = engine.wildIsletInCell(i, j);
+                    Optional<Islet> islet = engine.wildIsletInCell(i, j);
                     if (islet.isPresent()) {
                         nearest = Math.min(nearest,
-                                Math.hypot(islet.get()[0] - point[0], islet.get()[1] - point[1]));
+                                Math.hypot(islet.get().centerX() - point[0], islet.get().centerZ() - point[1]));
                     }
                 }
             }
-            assertTrue(nearest < 2500, "No islet within 2500 blocks of " + point[0] + "," + point[1]);
+            assertTrue(nearest < 1200, "Nearest islet to " + point[0] + "," + point[1] + " is " + nearest);
         }
     }
 
     @Test
     void testOceanBiomesVaryButNeverJump() {
         GalaxyEngine engine = new GalaxyEngine(config(SEED, 0.5));
-        java.util.List<String> order = GalaxyEngine.oceanBiomes();
+        java.util.List<String> shallow = GalaxyEngine.shallowOceanBiomes();
+        java.util.List<String> deep = GalaxyEngine.deepOceanBiomes();
         java.util.Set<String> seen = new java.util.HashSet<>();
         int previous = -1;
         // Sail a long line, sampling every 50 blocks
         for (int x = -40_000; x <= 40_000; x += 50) {
             String key = engine.oceanBiomeKeyAt(x, 12_345);
-            int index = order.indexOf(key);
-            assertTrue(index >= 0, "Unknown ocean biome: " + key);
+            int index = engine.oceanTemperatureIndex(x, 12_345);
+            // Depth decides shallow or deep; temperature decides which of each
+            assertEquals(engine.isDeepWater(x, 12_345) ? deep.get(index) : shallow.get(index), key);
             seen.add(key);
             if (previous >= 0) {
                 assertTrue(Math.abs(index - previous) <= 1,
-                        "Ocean temperature jumped from " + order.get(previous) + " to " + key + " at x=" + x);
+                        "Ocean temperature jumped by more than one step at x=" + x);
             }
             previous = index;
         }
         // The voyage crosses genuinely different water
         assertTrue(seen.size() >= 3, "Ocean is too uniform: only " + seen);
+    }
+
+    @Test
+    void testDeepWaterExistsForMonuments() {
+        // Ocean monuments only generate in the deep ocean biomes, so if the sea
+        // never gets deep the whole vanilla structure set is unreachable
+        GalaxyEngine engine = new GalaxyEngine(config(SEED, 0.0));
+        int deep = 0;
+        int total = 0;
+        for (int x = -30_000; x <= 30_000; x += 250) {
+            for (int z = -2_000; z <= 2_000; z += 250) {
+                if (engine.isletAt(x, z).isPresent()) {
+                    continue;
+                }
+                total++;
+                if (engine.isDeepWater(x, z)) {
+                    deep++;
+                    assertTrue(engine.oceanBiomeKeyAt(x, z).startsWith("minecraft:deep_"));
+                }
+            }
+        }
+        // Deep basins are a real feature of the map, not a rounding error, and
+        // not so much of it that the shallows disappear
+        assertTrue(deep > total * 0.05, "Hardly any deep water: " + deep + "/" + total);
+        assertTrue(deep < total * 0.75, "Almost everything is deep water: " + deep + "/" + total);
+    }
+
+    @Test
+    void testSeabedVariesAndNeverBreaksTheSurface() {
+        GalaxyEngine engine = new GalaxyEngine(config(SEED, 0.0));
+        int shallowest = Integer.MIN_VALUE;
+        int deepest = Integer.MAX_VALUE;
+        for (int x = -20_000; x <= 20_000; x += 137) {
+            for (int z = -600; z <= 600; z += 137) {
+                int y = engine.seabedHeightAt(x, z);
+                // Open water everywhere: the galaxy's islands are the only land
+                assertTrue(y < 70, "Sea floor broke the surface at " + x + "," + z + " (y=" + y + ")");
+                shallowest = Math.max(shallowest, y);
+                deepest = Math.min(deepest, y);
+            }
+        }
+        // Sunlit banks and dark basins, not one flat plain
+        assertTrue(shallowest - deepest > 30,
+                "Sea floor is too flat: y " + deepest + " to " + shallowest);
+    }
+
+    @Test
+    void testRiftsCutDeepNarrowCanyons() {
+        Seabed seabed = new GalaxyEngine(config(SEED, 0.0)).getSeabed();
+        int cut = 0;
+        int deepCut = 0;
+        int samples = 0;
+        for (int x = -20_000; x <= 20_000; x += 53) {
+            for (int z = -300; z <= 300; z += 53) {
+                samples++;
+                double rift = seabed.riftCut(x, z);
+                if (rift > 0) {
+                    cut++;
+                }
+                if (rift > SeabedConfig.DEFAULT.riftDepth() * 0.5) {
+                    deepCut++;
+                }
+            }
+        }
+        assertTrue(deepCut > 0, "No rift ever cuts deep");
+        // Narrow: canyons are a feature of the floor, not most of it
+        assertTrue(cut < samples * 0.3, "Rifts are everywhere: " + cut + "/" + samples);
+    }
+
+    @Test
+    void testIslandsAlwaysStandOnTheirOwnShelf() {
+        // An island that happens to fall over an abyssal plain must still break
+        // the surface by the same amount as one over a shelf
+        GalaxyEngine engine = new GalaxyEngine(config(SEED, 1.0));
+        int shelf = SeabedConfig.DEFAULT.islandShelfDepth();
+        for (int cx = -3; cx <= 3; cx++) {
+            for (int cz = -3; cz <= 3; cz++) {
+                IslandSpec spec = engine.islandInCell(cx, cz).orElse(null);
+                if (spec == null) {
+                    continue;
+                }
+                assertEquals(1.0, engine.shelfBlendAt(spec.centerX(), spec.centerZ()), 1e-9);
+                assertEquals(70 - shelf, engine.seabedHeightAt(spec.centerX(), spec.centerZ()));
+                // ... and its shallows are shallows, whatever is underneath
+                assertFalse(engine.isDeepWater(spec.centerX(), spec.centerZ()));
+            }
+        }
+    }
+
+    @Test
+    void testFlatSeabedConfigRestoresTheOldOcean() {
+        GalaxyConfig flat = new GalaxyConfig(SEED, 2500, 160, 45, 0.0, 5, 5000, 70,
+                GalaxyConfig.defaultTypeWeights(), null, 0.0, 70, 1200, 0.0, SeabedConfig.flat(20));
+        GalaxyEngine engine = new GalaxyEngine(flat);
+        for (int x = -5_000; x <= 5_000; x += 311) {
+            assertEquals(50, engine.seabedHeightAt(x, 700));
+            // A floor with no basins has no deep water, so no monuments
+            assertFalse(engine.isDeepWater(x, 700));
+        }
     }
 
     @Test

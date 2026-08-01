@@ -518,3 +518,57 @@ database (or use `/twadmin delete` on it), then restart.
       (A test walks 80,000 blocks asserting the temperature never skips a step.)
 - [ ] The same seed gives the same seas; a different seed gives different ones.
 - [ ] `world.vary-ocean-biomes: false` returns the world to a single ocean biome.
+
+### Stage 5j — the sea itself: seabed, structures, islets
+**Needs a fresh world** — terrain and biomes are baked at generation, so delete
+`world/dimensions/minecraft/tradewinds_world` (and the nether one) before testing.
+The test server's config has already been updated to the new defaults.
+
+**Islets — the "I couldn't find a single one" fix**
+- [ ] Sail in any direction from anywhere: you meet an islet within a few hundred
+      blocks, not a few thousand. (Measured on the live seed: mean 544 blocks to the
+      nearest, worst case 1,376.)
+- [ ] Islets vary — sandbars barely clearing the water through to islands 140 blocks
+      across, and small ones are lower as well as narrower.
+- [ ] Every islet has a sandy shoreline ring with beach biome (snowy beach in cold
+      seas), and grass or its own biome inland.
+- [ ] Roughly 1 islet in 16 is **mushroom fields**: mycelium, mooshrooms, red and
+      brown mushrooms, and no hostile mobs spawning on it.
+
+**The sea floor**
+- [ ] Dive in open water in several places: the floor is genuinely different depths —
+      sunlit banks around 14 blocks down, dark basins over 45.
+- [ ] Find a **rift**: a narrow canyon wandering across the floor, dropping sharply
+      well below the surrounding seabed.
+- [ ] Find a **seamount**: an underwater peak rising off a deep plain — and confirm it
+      never breaks the surface. Nothing but islands and islets should be land.
+- [ ] The floor is patchy, not static: banks of sand, beds of gravel, clay pans, and
+      bare stone/tuff in the deeps — not alternating sand/sandstone every block.
+- [ ] Water colour changes with depth as well as temperature: deep basins read as
+      deep ocean biomes (`F3` shows `deep_ocean`, `deep_cold_ocean`, ...).
+
+**What vanilla now puts there** (`make-structures: true`)
+- [ ] **Shipwrecks** on the sea floor, and beached ones on islet shores.
+- [ ] **Ocean ruins** — warm (sandstone) in warm/lukewarm water, cold (stone) in
+      colder water. They should match the water they are in.
+- [ ] **Ocean monuments** in the deep basins, with guardians and elder guardians.
+      (Monuments only generate in deep ocean biomes, so this is the check that the
+      depth-to-biome mapping is working at all.)
+- [ ] **Buried treasure** on islet beaches — a treasure map from a shipwreck or ruin
+      should lead somewhere real.
+- [ ] **Trial chambers** in the rock under the sea floor: dig or cave down and find one.
+- [ ] **No structure of any kind on a trading island** — no monument, ruin or village
+      through a plaza, dock or market. Fly around several islands and confirm.
+      (`world.keep-structures-off-islands: true`.)
+
+**Caves** (`make-caves: true`)
+- [ ] Caves, ravines and caverns exist under the sea floor and inside the islands.
+- [ ] Judgement call to make in play: cave mouths opening into the ocean leave dry air
+      pockets rather than flooding. That is intended (somewhere to surface, something
+      to mine) — but if it looks wrong, `world.make-caves: false` turns it off.
+- [ ] Caves do not break into a market plaza or dock from below.
+
+**Regression**
+- [ ] Trading islands still sit properly in the water, docks still run unbroken from
+      plaza to pier end, and the spawn island is unchanged — an island over a deep
+      basin must look the same as one over a shelf.

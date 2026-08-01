@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
 
 import org.bukkit.NamespacedKey;
 import org.bukkit.Registry;
@@ -89,7 +90,11 @@ public class TradeWindsBiomeProvider extends BiomeProvider {
                 }
             });
         }
-        GalaxyEngine.oceanBiomes().forEach(key -> {
+        // Every biome the galaxy can hand out must be declared here or the
+        // server refuses to use it: the deep-water variants (which is what
+        // decides where ocean monuments go), the islet land biomes, and the
+        // beaches around them
+        Stream.concat(GalaxyEngine.oceanBiomes().stream(), GalaxyEngine.isletBiomes().stream()).forEach(key -> {
             Biome b = resolve(key);
             if (!biomes.contains(b)) {
                 biomes.add(b);
