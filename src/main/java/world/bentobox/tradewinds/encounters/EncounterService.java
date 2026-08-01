@@ -39,8 +39,13 @@ public class EncounterService {
     /** PDC key marking encounter mobs (booty, cleanup). */
     public static final NamespacedKey ENCOUNTER_KEY = NamespacedKey.fromString("tradewinds:encounter");
 
-    /** How close before a boated crew abandons ship to attack. */
-    private static final double BOARDING_RANGE = 14.0;
+    /**
+     * How close before a boated crew abandons ship. Wider than the spawn
+     * distance, so crews disembark as soon as they sight their quarry: a mob
+     * riding a boat cannot reposition, and a witch lobbing potions from a
+     * fixed drifting platform simply throws them over the target's head.
+     */
+    private static final double BOARDING_RANGE = 30.0;
     /** How far encounter mobs keep hunting. */
     private static final double HUNT_RANGE = 48.0;
 

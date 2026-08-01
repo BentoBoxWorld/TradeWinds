@@ -11,8 +11,12 @@ PIRATE_CREW - were ornaments), and the target was set once at spawn with
 nothing to re-assert it, so any mob that lost interest stayed lost.
 EncounterService now runs a 2s aggression pass over encounter-tagged mobs
 near players: re-target when the target is gone, and ABANDON SHIP (leaveVehicle)
-when the quarry is within 14 blocks - crews come over the side to fight,
-which is both functional and the right image. This also stiffens the swimming
+when the quarry is within 30 blocks - wider than the 28-block spawn distance,
+so crews disembark as soon as they sight you. Ben then reported the witch
+DOES throw potions but they sail over his head into the sea, which is the
+same root cause: a passenger cannot reposition, so her arc is fixed from a
+drifting platform. Swimming, she closes and aims normally. The abandoned
+boat is left floating - salvage for the victor. This also stiffens the swimming
 encounters (drowned, nautilus, guardians), which previously forgot their
 quarry after a short chase.
 
