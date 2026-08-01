@@ -734,3 +734,50 @@ cooldowns are invisible, so guessing from behaviour alone is a trap.
       `ANARCHIC` makes it almost unsellable.
 - [ ] `illegal-trade.enabled: false` removes all of it: no scans, no patrols, and
       sugar becomes an ordinary unsellable homemade good.
+
+## Stage 6c — Police, wanted response, bounties
+
+Get yourself **Wanted** (−200: one murder, or ~8 villager kills) with
+`/twadmin customs` to check your standing, then sail into a policed island's space.
+
+### 6c-i — The standing response
+- [ ] Enter a **SAFE** or **POLICED** island's protection range while Wanted: "…has
+      patrols out for you", and units appear — guardians, drowned and a **phantom**
+      if you are afloat; **iron golems** and a phantom if you are ashore.
+- [ ] The phantom is the only thing that can follow a boat. Row away and confirm it
+      keeps up while the swimmers fall behind. That is the point of the roster.
+- [ ] Phantoms **do not burn at dawn**. Trigger a response in daylight and watch.
+- [ ] A **FUGITIVE** draws a larger response than merely Wanted.
+- [ ] **LAWLESS** sends one unit; **ANARCHIC** sends nobody at all. Confirm you can
+      sit in anarchic water as a fugitive completely unmolested — that is the whole
+      reason to go out there.
+- [ ] Police ignore innocent bystanders: stand a second (clean) player next to the
+      patrol and confirm it stays on the wanted one.
+
+### 6c-ii — Break-off and no leaks
+- [ ] Cross the border and keep going: past ~400 blocks beyond the protection range
+      the patrol breaks off ("The patrol turns back at the border") and the units
+      are **removed**, not left drifting.
+- [ ] Pay your fine mid-pursuit (`/tw fine`): the patrol stands down immediately.
+- [ ] Log out mid-pursuit, log back in: no orphaned police anywhere.
+- [ ] Fly a long way off and come back: no accumulation of stray guardians or
+      phantoms. (`/twadmin customs` shows whether a chase is live.)
+- [ ] Kill police: still **no drops, no XP**, whatever the unit type.
+
+### 6c-iii — PvP override and bounties
+- [ ] A Wanted player can be attacked **even on a SAFE island** where the PvP flag is
+      off. A clean player in the same place still cannot be attacked. (Without this a
+      wanted player could moor in high security and be untouchable.)
+- [ ] Killing them pays their bounty to the killer, with no reputation penalty.
+- [ ] The bounty is cleared by the payout — kill them again and it pays **nothing**.
+- [ ] Their name shows the bounty beside it while it is above zero, and the tag
+      disappears once paid out. (`crime.bounty-nameplate: false` removes it.)
+- [ ] With PlaceholderAPI installed, `%tradewinds_bounty%`, `%tradewinds_standing%`,
+      `%tradewinds_reputation%` and `%tradewinds_wanted%` all resolve. Servers using
+      TAB should turn the nameplate off and use these instead.
+
+### 6c-iv — Fugitive trade bar
+- [ ] As a **Fugitive**, the market at a SAFE or POLICED island refuses to open at
+      all ("We know what you are").
+- [ ] At FRONTIER and beyond it opens normally. Merely **Wanted** is not barred —
+      only Fugitive. (`crime.safest-fugitive-trader`.)

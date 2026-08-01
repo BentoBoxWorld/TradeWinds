@@ -70,16 +70,85 @@ public class PoliceDispatch {
             // turns this into a straight confiscation instead.
             return units;
         }
-        for (int i = 0; i < count; i++) {
+        for (PoliceUnit kind : PoliceRoster.forCustoms(count)) {
             Location at = openWater(spot.clone().add(Math.random() * 6 - 3, 0, Math.random() * 6 - 3), from,
                     minimumStandoff());
-            Entity unit = at == null ? null : spawn(at, i % 3 == 0 ? EntityType.GUARDIAN : EntityType.DROWNED,
-                    player);
+            Entity unit = at == null ? null : spawn(at, entityType(kind), player);
             if (unit != null) {
                 units.add(unit);
             }
         }
         return units;
+    }
+
+    /**
+     * Send the standing response to a wanted player: whatever the band can
+     * field, picked for where the target is standing.
+     *
+     * @param player the wanted player
+     * @param island the island whose law is responding
+     * @param ashore whether the target is on land
+     * @param fugitive whether they are a fugitive rather than merely wanted
+     * @return the units dispatched
+     */
+    public List<Entity> dispatchWanted(Player player, IslandSpec island, boolean ashore, boolean fugitive) {
+        List<Entity> units = new ArrayList<>();
+        Location from = player.getLocation();
+        for (PoliceUnit kind : PoliceRoster.forWanted(island.band(), patrolSize(island.band()), ashore,
+                fugitive)) {
+            Location at = spawnPoint(kind, from);
+            Entity unit = at == null ? null : spawn(at, entityType(kind), player);
+            if (unit != null) {
+                units.add(unit);
+            }
+        }
+        return units;
+    }
+
+    /**
+     * Where a unit of this kind can stand: golems need ground, swimmers need
+     * water, phantoms need only air - and none of them may appear inside the
+     * arrest radius.
+     */
+    private Location spawnPoint(PoliceUnit kind, Location from) {
+        double standoff = minimumStandoff();
+        return switch (kind) {
+        case PHANTOM -> from.clone().add(offset(standoff), 12 + Math.random() * 6, offset(standoff));
+        case GOLEM -> ground(from, standoff);
+        default -> openWater(from.clone().add(offset(standoff * 1.5), 0, offset(standoff * 1.5)), from, standoff);
+        };
+    }
+
+    private static double offset(double standoff) {
+        double sign = Math.random() < 0.5 ? -1 : 1;
+        return sign * (standoff + Math.random() * standoff);
+    }
+
+    /**
+     * A solid footing near the target for a golem, or null if there is none -
+     * a golem dropped into deep water is just a drowning golem.
+     */
+    private Location ground(Location from, double standoff) {
+        for (int attempt = 0; attempt < 12; attempt++) {
+            double angle = attempt * Math.PI / 6;
+            double radius = standoff + Math.random() * standoff;
+            Location at = from.clone().add(Math.cos(angle) * radius, 0, Math.sin(angle) * radius);
+            at.setY(from.getWorld().getHighestBlockYAt(at) + 1.0);
+            if (at.getY() > addon.getSettings().getSeaHeight()
+                    && at.getBlock().getType() == org.bukkit.Material.AIR) {
+                return at;
+            }
+        }
+        return null;
+    }
+
+    private static EntityType entityType(PoliceUnit unit) {
+        return switch (unit) {
+        case GOLEM -> EntityType.IRON_GOLEM;
+        case GUARDIAN -> EntityType.GUARDIAN;
+        case DROWNED -> EntityType.DROWNED;
+        case PHANTOM -> EntityType.PHANTOM;
+        };
     }
 
     /**

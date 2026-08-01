@@ -50,6 +50,11 @@ public class TradeDialog {
      * Open the market's main menu.
      */
     public void openMain(Player player, IslandSpec spec) {
+        // A fugitive's money is no good in the safe bands at all
+        if (!addon.getMarketService().willTradeWith(player, spec)) {
+            User.getInstance(player).sendMessage("tradewinds.trade.barred");
+            return;
+        }
         List<ActionButton> buttons = new ArrayList<>();
         // No sell button when the hold has nothing this island pays for
         if (!sellOffers(player, spec).isEmpty()) {

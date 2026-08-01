@@ -3,6 +3,58 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## Stage 6c — police, wanted response, bounties (2026-08-01)
+
+Closes Stage 6. The law now answers for itself: while you are inside a policed
+island's waters and wanted, patrols come.
+
+`PoliceRoster` holds the decision and is pure, so the shape is testable without
+a server. Units are picked by **mobility**, because each denies a different
+escape (spec section 7): golems take anyone ashore, guardians hold the water,
+and **phantoms are the only thing that can follow a boat**. A sea response
+without a phantom is a response you simply row away from - there is a test
+asserting every roster can pursue.
+
+Three properties keep this from becoming a nuisance or a farm:
+- **Break off at the border.** Police give up ~400 blocks past the protection
+  range. Without it an escort would follow a player across the ocean and the
+  security bands would flatten into one difficulty everywhere - lawless water
+  has to be genuinely where the law is not. ANARCHIC sends nobody at all, which
+  is the entire reason to run out there.
+- **No leaks.** Units are recalled on break-off, on logout, on world change, on
+  paying a fine, and on ceasing to be wanted; they are non-persistent, so an
+  unloaded chunk takes them too.
+- **No drops.** Already enforced for every tagged unit since 6b.
+
+Police phantoms do not burn at dawn - a pursuit that ends because the sun came
+up is not a pursuit - and an `EntityTargetEvent` guard keeps patrols off
+innocent bystanders.
+
+**PvP override**: BentoBox's own PvP listener cancels player damage at LOW
+priority, so the override un-cancels it at NORMAL when the victim is a lawful
+target. Without it a wanted player could moor in a SAFE band and be
+untouchable, and bounty hunting would only work where it was least needed.
+
+**Bounties are visible now**: a scoreboard team suffix beside the name while the
+bounty is above zero. A bounty nobody can see is not a bounty. Because that
+fights TAB-style nametag plugins, it is config-gated and PlaceholderAPI
+placeholders are exposed alongside (`bounty`, `bounty_raw`, `standing`,
+`reputation`, `wanted`) so a server can render it wherever it already owns the
+name.
+
+**Fugitive trade bar** was specified in 6a (`Standing.isBarredFromSafeTrade`)
+but never actually enforced at a market - the method existed and nothing called
+it. Now the dialog refuses to open at safe ports for a fugitive, which is
+principle 4 arrived at from the other direction: smuggling pushes you outward,
+and so does burning your name.
+
+**Pitfall:** a `str.replace` on the locale for `"  customs:"` also matched the
+six-space-indented admin `customs:` block and corrupted the YAML. Anchor
+replacements on a newline plus the full indent, and re-parse the file
+afterwards - which is how it was caught.
+
+197 tests green.
+
 ## Stage 6b — customs and contraband (2026-07-31)
 
 The scan on entering island space, and the chase after it. Detection is

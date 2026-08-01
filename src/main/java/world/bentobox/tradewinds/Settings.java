@@ -248,6 +248,19 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "crime.fine-per-point")
     private double finePerPoint = 2.0;
 
+    @ConfigComment("The safest band that will still trade with a FUGITIVE. Safer ports refuse them")
+    @ConfigComment("outright: having burned your name, the only markets left are where the law is")
+    @ConfigComment("thin. One of SAFE, POLICED, FRONTIER, LAWLESS, ANARCHIC.")
+    @ConfigEntry(path = "crime.safest-fugitive-trader")
+    private String safestFugitiveTrader = "FRONTIER";
+
+    @ConfigComment("Show a player's bounty beside their name, via a scoreboard team suffix.")
+    @ConfigComment("A bounty nobody can see is not a bounty - a hunter has to be able to tell at a")
+    @ConfigComment("glance. Turn this OFF if the server runs TAB or another nametag plugin (they")
+    @ConfigComment("will fight over the team) and render %tradewinds_bounty% there instead.")
+    @ConfigEntry(path = "crime.bounty-nameplate")
+    private boolean bountyNameplate = true;
+
     @ConfigComment("Reputation lost per crime (negative numbers).")
     @ConfigEntry(path = "crime.penalties")
     private Map<String, Integer> crimePenalties = defaultCrimePenalties();
@@ -2764,6 +2777,25 @@ public class Settings implements WorldSettings {
     public void setReputationDecayMinutes(int v) { this.reputationDecayMinutes = v; }
     public int getReputationDecayPoints() { return reputationDecayPoints; }
     public void setReputationDecayPoints(int v) { this.reputationDecayPoints = v; }
+    public String getSafestFugitiveTrader() { return safestFugitiveTrader; }
+    public void setSafestFugitiveTrader(String v) { this.safestFugitiveTrader = v; }
+    public boolean isBountyNameplate() { return bountyNameplate; }
+    public void setBountyNameplate(boolean v) { this.bountyNameplate = v; }
+
+    /**
+     * The safest band that will still trade with a fugitive.
+     *
+     * @return the band
+     */
+    public world.bentobox.tradewinds.galaxy.SecurityBand safestFugitiveTrader() {
+        try {
+            return world.bentobox.tradewinds.galaxy.SecurityBand
+                    .valueOf(safestFugitiveTrader.toUpperCase(java.util.Locale.ENGLISH));
+        } catch (IllegalArgumentException e) {
+            return world.bentobox.tradewinds.galaxy.SecurityBand.FRONTIER;
+        }
+    }
+
     public double getFinePerPoint() { return finePerPoint; }
     public void setFinePerPoint(double finePerPoint) { this.finePerPoint = finePerPoint; }
     public Map<String, Integer> getCrimePenalties() { return crimePenalties; }

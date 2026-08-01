@@ -166,6 +166,15 @@ crime:
   # A fine can only ever take you back to Clean - money buys you out of Wanted,
   # not into virtue.
   fine-per-point: 2.0
+  # The safest band that will still trade with a FUGITIVE. Safer ports refuse them
+  # outright: having burned your name, the only markets left are where the law is
+  # thin. SAFE, POLICED, FRONTIER, LAWLESS or ANARCHIC.
+  safest-fugitive-trader: FRONTIER
+  # Show a player's bounty beside their name (scoreboard team suffix). A bounty
+  # nobody can see is not a bounty - a hunter has to be able to tell at a glance.
+  # Turn OFF if the server runs TAB or another nametag plugin (they will fight over
+  # the team) and render %tradewinds_bounty% there instead.
+  bounty-nameplate: true
   # Reputation lost per crime.
   penalties:
     HURT_VILLAGER: -5

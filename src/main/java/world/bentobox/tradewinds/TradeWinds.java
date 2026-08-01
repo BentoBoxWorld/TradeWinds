@@ -36,9 +36,11 @@ import world.bentobox.tradewinds.commands.TWSpawnCommand;
 import world.bentobox.tradewinds.commands.TWStarChartCommand;
 import world.bentobox.tradewinds.commands.TWTradeCommand;
 import world.bentobox.tradewinds.commands.TWWarpCommand;
+import world.bentobox.tradewinds.crime.BountyBoard;
 import world.bentobox.tradewinds.crime.CrimeListener;
 import world.bentobox.tradewinds.crime.CustomsListener;
 import world.bentobox.tradewinds.crime.CustomsService;
+import world.bentobox.tradewinds.crime.PoliceService;
 import world.bentobox.tradewinds.crime.ReputationService;
 import world.bentobox.tradewinds.crime.Standing;
 import world.bentobox.tradewinds.dataobjects.IslandDataManager;
@@ -108,6 +110,8 @@ public class TradeWinds extends GameModeAddon {
     private ReputationService reputationService;
     private CrimeListener crimeListener;
     private CustomsService customsService;
+    private PoliceService policeService;
+    private BountyBoard bountyBoard;
     private NamespacedKey policeKey;
     private @Nullable ResidentAuditTask residentAuditTask;
     private @Nullable NavigationBarTask navigationBarTask;
@@ -271,6 +275,12 @@ public class TradeWinds extends GameModeAddon {
         customsService = new CustomsService(this);
         customsService.start();
         registerListener(new CustomsListener(this));
+        // The standing response to a wanted player, and what they are worth
+        policeService = new PoliceService(this);
+        policeService.start();
+        registerListener(policeService);
+        bountyBoard = new BountyBoard(this);
+        bountyBoard.start();
         // Residents survive the night: no mob targeting, tether, respawn
         registerListener(new ResidentProtectionListener());
         residentAuditTask = new ResidentAuditTask(this);
@@ -302,6 +312,12 @@ public class TradeWinds extends GameModeAddon {
         }
         if (customsService != null) {
             customsService.stop();
+        }
+        if (policeService != null) {
+            policeService.stop();
+        }
+        if (bountyBoard != null) {
+            bountyBoard.stop();
         }
         if (chartHolograms != null) {
             chartHolograms.clearAll();
@@ -516,6 +532,14 @@ public class TradeWinds extends GameModeAddon {
 
     public CustomsService getCustomsService() {
         return customsService;
+    }
+
+    public PoliceService getPoliceService() {
+        return policeService;
+    }
+
+    public BountyBoard getBountyBoard() {
+        return bountyBoard;
     }
 
     /**

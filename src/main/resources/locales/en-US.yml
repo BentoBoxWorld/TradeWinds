@@ -83,6 +83,10 @@ tradewinds:
     fine-cannot-afford: "<red>You cannot afford the fine ([amount]).</red>"
     fine-no-market: "<red>Fines are paid at a trading island, not out here.</red>"
     fine-barred: "<red>'We don't take money from your sort.' Try a rougher port.</red>"
+  police:
+    responding: "<dark_red>[name] has patrols out for you. They will not follow you past the border.</dark_red>"
+    broken-off: "<gray>The patrol turns back at the border.</gray>"
+    bounty-tag: "<red> [[amount]]</red>"
   customs:
     clean: "<gray>Customs board you, look through the hold, and wave you on.</gray>"
     detected: "[title]<dark_red>CUSTOMS</dark_red>[subtitle]<red>Patrol dispatched from [name]</red>"
@@ -174,6 +178,7 @@ tradewinds:
     not-at-market: "<red>There is no market here - trade within an island's protection range.</red>"
     not-stamped: "<red>Traders only buy customs-stamped goods (or... certain other merchandise).</red>"
     contraband-refused: "<red>The trader looks at what you are offering, then at you. 'Not here. Try a rougher port.'</red>"
+    barred: "<dark_red>The market closes as you approach. 'We know what you are. Take it somewhere lawless.'</dark_red>"
     nothing-to-sell: "<red>Nothing in your hold that this island will pay for.</red>"
     nothing-for-sale: "<red>This island has nothing for sale - it only buys.</red>"
     sold: "<green>Sold [amount] x [material] for $[price].</green>"

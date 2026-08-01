@@ -207,6 +207,26 @@ public class MarketService {
     }
 
     /**
+     * Whether this island will deal with this player at all.
+     * <p>
+     * A fugitive is barred from the safe bands entirely (spec principle 4):
+     * crime pays, into danger. Having burned your name, the only markets left
+     * are the ones where the law is thin - which is the same journey outward
+     * that smuggling forces, arrived at from the other direction.
+     *
+     * @param player the player
+     * @param spec the island
+     * @return true if the market is open to them
+     */
+    public boolean willTradeWith(Player player, IslandSpec spec) {
+        if (addon.getReputationService() == null || !addon.getSettings().isCrimeEnabled()) {
+            return true;
+        }
+        return !addon.getReputationService().standing(player.getUniqueId()).isBarredFromSafeTrade()
+                || spec.band().ordinal() >= addon.getSettings().safestFugitiveTrader().ordinal();
+    }
+
+    /**
      * The smuggler's premium.
      * <p>
      * Contraband is priced from its crafting recipe like everything else, and
