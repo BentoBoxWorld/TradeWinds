@@ -412,6 +412,10 @@ illegal-trade:
     FRONTIER: 2
     LAWLESS: 1
     ANARCHIC: 0
+  # How far off a customs patrol surfaces, in blocks. Must clear a guardian's
+  # 15-block laser by a margin or the chase is an ambush - at 22 they were firing
+  # before the warning had finished printing. A decision window needs a decision.
+  patrol-distance: 45.0
   # How close a patrol unit must get to make the arrest, in blocks.
   caught-radius: 4.0
   # How far beyond the protection range a smuggler must get to shake the chase, and

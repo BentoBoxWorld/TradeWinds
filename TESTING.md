@@ -954,3 +954,19 @@ Use `/twadmin warpfail <you>` then `/tw warp` to get there on demand.
 - [ ] Some braziers have glowstone at their base, visible from underwater.
 - [ ] Overall: the interstice reads as somewhere hostile you are trapped in, rather
       than an unfinished black void.
+
+## Contraband: pockets count, and the patrol gives you room
+
+- [ ] **Sugar in your normal inventory slots is scanned too**, not just the hold.
+      Try the obvious dodge: move the sugar from a pouch into your pockets, cross a
+      border, stow it again. You are still caught. (Hold-only scanning made that a
+      free pass.)
+- [ ] Being caught seizes contraband from **both** the hold and the pockets - check
+      the item count in the message against everything you were carrying.
+- [ ] A patrol now surfaces about **45 blocks** away, comfortably beyond a guardian's
+      15-block laser, so there is a real moment to turn and run. They should not be
+      hitting you before the warning has finished printing.
+- [ ] Warp into an island: you arrive **clear of the shore**, not on the beach or in
+      a bay. (About 4% of approach bearings used to land on or beside land, because a
+      warped coastline can reach the arrival ring; arrivals now step outward along
+      the approach, never sideways or inward.)

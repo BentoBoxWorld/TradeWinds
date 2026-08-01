@@ -731,6 +731,12 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "illegal-trade.patrol-size")
     private Map<String, Integer> patrolSize = defaultPatrolSize();
 
+    @ConfigComment("How far off a customs patrol surfaces, in blocks. Must clear a guardian's")
+    @ConfigComment("15-block laser by a margin or the chase is an ambush - at 22 they were firing")
+    @ConfigComment("before the warning had finished printing. The decision window needs a decision.")
+    @ConfigEntry(path = "illegal-trade.patrol-distance")
+    private double patrolDistance = 45.0;
+
     @ConfigComment("How close a patrol unit must get to make the arrest, in blocks.")
     @ConfigEntry(path = "illegal-trade.caught-radius")
     private double caughtRadius = 4.0;
@@ -2982,6 +2988,8 @@ public class Settings implements WorldSettings {
     public void setFleeFlagMinutes(int v) { this.fleeFlagMinutes = v; }
     public Map<String, Integer> getPatrolSize() { return patrolSize; }
     public void setPatrolSize(Map<String, Integer> v) { this.patrolSize = v; }
+    public double getPatrolDistance() { return patrolDistance; }
+    public void setPatrolDistance(double v) { this.patrolDistance = v; }
     public double getCaughtRadius() { return caughtRadius; }
     public void setCaughtRadius(double v) { this.caughtRadius = v; }
     public int getChaseBreakOffDistance() { return chaseBreakOffDistance; }

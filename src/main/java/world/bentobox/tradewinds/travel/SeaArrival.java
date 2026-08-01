@@ -32,6 +32,8 @@ public final class SeaArrival {
     private static final int SEARCH_RADIUS = 160;
     /** Step between rings - a boat-width apart is fine and keeps this cheap. */
     private static final int STEP = 4;
+    /** How much clear water an arrival wants around it, in blocks. */
+    private static final int CLEARANCE = 8;
 
     private SeaArrival() {
         // Static use only
@@ -75,6 +77,63 @@ public final class SeaArrival {
      */
     public static boolean isOpenSea(GalaxyEngine engine, int x, int z, int seaLevel) {
         return engine.surfaceHeightAt(x, z) < seaLevel && engine.columnPlanAt(x, z).isEmpty();
+    }
+
+    /**
+     * Open water at or beyond an intended arrival distance, stepping outward
+     * along the approach bearing.
+     * <p>
+     * Warps arrive on a ring a fixed distance from the island centre, and a
+     * ragged coast can reach that far - so the nominal point can land on the
+     * beach. Searching in every direction would happily fix that by moving the
+     * sailor <em>inward</em> into a bay, which is how a warp ends up putting
+     * someone on top of an island. Outward is the only direction that helps.
+     *
+     * @param engine the galaxy
+     * @param world the world to arrive in
+     * @param centerX island centre x
+     * @param centerZ island centre z
+     * @param x intended block x
+     * @param z intended block z
+     * @param seaLevel the sea surface Y
+     * @return a location on open water
+     */
+    public static Location openSeaOutward(GalaxyEngine engine, World world, int centerX, int centerZ, int x,
+            int z, int seaLevel) {
+        double dx = (double) x - centerX;
+        double dz = (double) z - centerZ;
+        double length = Math.hypot(dx, dz);
+        if (engine == null || length < 1) {
+            return openSeaNear(engine, world, x, z, seaLevel);
+        }
+        double ux = dx / length;
+        double uz = dz / length;
+        for (int out = 0; out <= SEARCH_RADIUS; out += STEP) {
+            int cx = centerX + (int) Math.round(ux * (length + out));
+            int cz = centerZ + (int) Math.round(uz * (length + out));
+            if (isClearWater(engine, cx, cz, seaLevel)) {
+                return new Location(world, cx + 0.5, seaLevel + 1.0, cz + 0.5);
+            }
+        }
+        return openSeaNear(engine, world, x, z, seaLevel);
+    }
+
+    /**
+     * Open water with elbow room - not a one-block puddle between two
+     * headlands, which is technically water and no use to a boat.
+     */
+    private static boolean isClearWater(GalaxyEngine engine, int x, int z, int seaLevel) {
+        if (!isOpenSea(engine, x, z, seaLevel)) {
+            return false;
+        }
+        for (int dx = -CLEARANCE; dx <= CLEARANCE; dx += CLEARANCE) {
+            for (int dz = -CLEARANCE; dz <= CLEARANCE; dz += CLEARANCE) {
+                if (!isOpenSea(engine, x + dx, z + dz, seaLevel)) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     /**

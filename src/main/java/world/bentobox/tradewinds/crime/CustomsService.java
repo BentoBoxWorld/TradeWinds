@@ -115,19 +115,40 @@ public class CustomsService {
     }
 
     /**
-     * How much contraband a player is carrying in their hold. Loose pockets do
-     * not count: like everything else in this game, cargo means the hold
-     * (spec principle 1).
+     * How much contraband a player is carrying, anywhere on them.
+     * <p>
+     * Hold <em>and</em> pockets. Scanning only the hold looked principled -
+     * cargo means the hold everywhere else in this game - but it handed
+     * smugglers a free pass: tip the sugar into your pockets before the border,
+     * cross, and stow it again on the far side. A customs officer searches the
+     * sailor, not just the cargo manifest.
      *
      * @param player the player
-     * @return total contraband items aboard
+     * @return total contraband items on them
      */
     public int contrabandAboard(Player player) {
         int total = 0;
         for (String name : contrabandNames()) {
             Material material = Material.matchMaterial(name);
-            if (material != null) {
-                total += addon.getHoldService().count(player, material, stack -> true);
+            if (material == null) {
+                continue;
+            }
+            total += addon.getHoldService().count(player, material, stack -> true);
+            total += loose(player, material);
+        }
+        return total;
+    }
+
+    /**
+     * Contraband in the player's own inventory slots, ignoring the hold - the
+     * hold is counted separately, and a pouch sitting in a slot must not be
+     * counted twice.
+     */
+    private int loose(Player player, Material material) {
+        int total = 0;
+        for (ItemStack stack : player.getInventory().getContents()) {
+            if (stack != null && stack.getType() == material) {
+                total += stack.getAmount();
             }
         }
         return total;
@@ -281,8 +302,16 @@ public class CustomsService {
         int seized = 0;
         for (String name : contrabandNames()) {
             Material material = Material.matchMaterial(name);
-            if (material != null) {
-                seized += addon.getHoldService().remove(player, material, Integer.MAX_VALUE, stack -> true);
+            if (material == null) {
+                continue;
+            }
+            seized += addon.getHoldService().remove(player, material, Integer.MAX_VALUE, stack -> true);
+            // Pockets too, or the search that found it could not take it
+            for (ItemStack stack : player.getInventory().getContents()) {
+                if (stack != null && stack.getType() == material) {
+                    seized += stack.getAmount();
+                    stack.setAmount(0);
+                }
             }
         }
         return seized;

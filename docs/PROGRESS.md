@@ -3,6 +3,34 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## Contraband in pockets, and patrols that ambush (2026-08-01)
+
+Two from the same playtest.
+
+**"Will any sugar in any of my inventory slots be checked?"** It was not - only
+the hold. That read as principled, since cargo means the hold everywhere else
+in this game, but it handed smugglers a free pass: tip the sugar into your
+pockets before the border, cross, stow it again on the far side. The whole
+mechanic bypassed with two inventory clicks. Customs now search hold *and*
+pockets, and confiscation takes from both. A customs officer searches the
+sailor, not just the cargo manifest.
+
+**"The guardians were instantly on me."** The patrol surfaced 22 blocks away
+and a guardian's laser reaches 15, so it was firing before the warning had
+finished printing. That is an ambush, not the decision window section 6 asks
+for. Now 45 blocks (`illegal-trade.patrol-distance`), and the scatter around
+that point can no longer pull units back inside it either.
+
+**"I warped really close to the island too, which seems odd."** Measured: 37 of
+864 approach bearings (4.3%) put the arrival on or beside land, because a warped
+coastline can now reach the 130-block arrival ring. The fix from the
+suffocation bug searched for water in *every* direction, which happily corrects
+by moving the sailor inward into a bay - the exact symptom. Arrivals now step
+**outward** along the approach bearing only, and require elbow room rather than
+any single water block. Worst case push: 20 blocks.
+
+211 tests green.
+
 ## The interstice: lit, lidded, and ghasts you can see (2026-08-01)
 
 Ben: "very dark and dim... the ghast(s) I hear spawn when I failed - I never see

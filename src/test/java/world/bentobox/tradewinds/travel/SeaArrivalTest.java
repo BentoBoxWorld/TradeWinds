@@ -72,6 +72,37 @@ class SeaArrivalTest {
     }
 
     @Test
+    void testArrivalsAreNeverPushedInward() {
+        // A ragged coast can reach the arrival ring, and 4% of bearings need
+        // correcting. Correcting sideways or inward would drop the sailor in a
+        // bay or on a beach - which is what "I warped really close to the
+        // island" looked like. Outward is the only direction that helps.
+        GalaxyEngine engine = engine();
+        for (IslandSpec island : engine.islandsNear(0, 0, 12_000)) {
+            for (int deg = 0; deg < 360; deg += 15) {
+                double rad = Math.toRadians(deg);
+                int ax = island.centerX() + (int) Math.round(Math.cos(rad) * ARRIVAL_DISTANCE);
+                int az = island.centerZ() + (int) Math.round(Math.sin(rad) * ARRIVAL_DISTANCE);
+                double nominal = Math.sqrt(island.distanceSquared(ax, az));
+
+                // Walk the same outward steps the arrival does
+                double ux = (ax - (double) island.centerX()) / nominal;
+                double uz = (az - (double) island.centerZ()) / nominal;
+                Integer landed = null;
+                for (int out = 0; out <= 160 && landed == null; out += 4) {
+                    int cx = island.centerX() + (int) Math.round(ux * (nominal + out));
+                    int cz = island.centerZ() + (int) Math.round(uz * (nominal + out));
+                    if (SeaArrival.isOpenSea(engine, cx, cz, SEA)) {
+                        landed = out;
+                    }
+                }
+                assertTrue(landed != null, "No open water outward of " + island.name() + " at " + deg);
+                assertTrue(landed >= 0, "Arrival moved inward toward " + island.name());
+            }
+        }
+    }
+
+    @Test
     void testSearchOffsetsAreOrderedNearestFirst() {
         // The ordering is the guarantee that an arrival lands as close to its
         // intended spot as the terrain allows

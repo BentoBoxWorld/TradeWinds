@@ -35,14 +35,24 @@ import world.bentobox.tradewinds.galaxy.SecurityBand;
  */
 public class PoliceDispatch {
 
-    /** How far ahead of the smuggler the patrol surfaces, in blocks. */
-    private static final double INTERCEPT_DISTANCE = 22.0;
-
     private final TradeWinds addon;
 
     public PoliceDispatch(TradeWinds addon) {
         this.addon = addon;
     }
+
+    /**
+     * How far ahead of the smuggler the patrol surfaces, in blocks.
+     * <p>
+     * This has to clear a guardian's 15-block laser by a margin, or a
+     * "chase" is just an ambush: at 22 they were firing before the warning
+     * message had finished printing. The point of the decision window is that
+     * there is a decision.
+     */
+    private double interceptDistance() {
+        return Math.max(minimumStandoff(), addon.getSettings().getPatrolDistance());
+    }
+
 
     /**
      * Send a patrol after a player. Units surface between the smuggler and the
@@ -62,8 +72,8 @@ public class PoliceDispatch {
         if (toIsland.lengthSquared() < 0.01) {
             toIsland = new Vector(1, 0, 0);
         }
-        Location spot = openWater(from.clone().add(toIsland.normalize().multiply(INTERCEPT_DISTANCE)), from,
-                minimumStandoff());
+        Location spot = openWater(from.clone().add(toIsland.normalize().multiply(interceptDistance())), from,
+                interceptDistance() * 0.75);
         if (spot == null) {
             // Ashore in the market: there is no water to launch a patrol from,
             // and a guardian spawned on a plaza just flops about. The caller
@@ -72,7 +82,7 @@ public class PoliceDispatch {
         }
         for (PoliceUnit kind : PoliceRoster.forCustoms(count)) {
             Location at = openWater(spot.clone().add(Math.random() * 6 - 3, 0, Math.random() * 6 - 3), from,
-                    minimumStandoff());
+                    interceptDistance() * 0.75);
             Entity unit = at == null ? null : spawn(at, entityType(kind), player);
             if (unit != null) {
                 units.add(unit);
