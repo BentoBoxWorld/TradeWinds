@@ -197,7 +197,7 @@ public class WarpService {
         // inside view distance, so the island is right there in front of you
         // The warp does not always hold: a failure drops the sailor into the
         // interstice, still owed this destination (spec 3.3)
-        if (addon.getIntersticeService().rollFailure()) {
+        if (addon.getIntersticeService().rollFailure(player.getUniqueId())) {
             addon.getIntersticeService().strand(player, from, to);
             return;
         }
@@ -214,8 +214,12 @@ public class WarpService {
 
     private void deliver(Player player, IslandSpec to, IslandSpec bearingFrom, int fuelCost) {
         int[] arrive = RouteGraph.arrivalPoint(bearingFrom, to, addon.getSettings().getWarpArrivalDistance());
-        Location target = new Location(addon.getOverWorld(), arrive[0] + 0.5,
-                addon.getSettings().getSeaHeight() + 1.0, arrive[1] + 0.5);
+        // Arrive on open water. The nominal arrival ring is a fixed distance
+        // from the island centre, and since coastlines gained headlands it can
+        // fall on land - which used to materialise the sailor inside a hillside
+        // and kill them ("suffocated in a wall").
+        Location target = SeaArrival.openSeaNear(addon.getOverWorld(), arrive[0], arrive[1],
+                addon.getSettings().getSeaHeight());
 
         // Dismount -> teleport player and boat -> re-seat (AcidIsland /ai pattern)
         Entity vehicle = player.getVehicle();

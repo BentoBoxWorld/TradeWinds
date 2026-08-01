@@ -29,6 +29,7 @@ import world.bentobox.tradewinds.commands.AdminCustomsCommand;
 import world.bentobox.tradewinds.commands.AdminIslandsCommand;
 import world.bentobox.tradewinds.commands.AdminReflagCommand;
 import world.bentobox.tradewinds.commands.AdminTpIslandCommand;
+import world.bentobox.tradewinds.commands.AdminWarpFailCommand;
 import world.bentobox.tradewinds.commands.TWChartCommand;
 import world.bentobox.tradewinds.commands.TWFineCommand;
 import world.bentobox.tradewinds.commands.TWRestartCommand;
@@ -185,6 +186,7 @@ public class TradeWinds extends GameModeAddon {
                 new AdminTpIslandCommand(this);
                 new AdminReflagCommand(this);
                 new AdminCustomsCommand(this);
+                new AdminWarpFailCommand(this);
             }
         };
     }

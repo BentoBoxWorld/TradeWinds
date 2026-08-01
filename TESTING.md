@@ -801,3 +801,16 @@ out. Set `travel.warp.failure-chance: 1.0` temporarily to test this repeatedly.
       covers the arrival, not the visit.
 - [ ] A brand new player with a starter kit can survive a failed first warp without
       losing their boat and cargo. That is the actual bar here.
+
+## Warp arrivals must never land inside anything
+
+- [ ] Warp repeatedly to the same island from the same origin. You always arrive on
+      **open water**, never inside the quay decking. (The arrival ring is 130 blocks
+      from the centre; the quay reaches 136 with its deck at exactly arrival height,
+      so ~0.9% of bearings used to suffocate you on arrival.)
+- [ ] Arrivals still land close to the intended spot - the search takes the nearest
+      open water, so the island should still be in view.
+- [ ] `/twadmin warpfail <player>` rigs that player's next warp to fail. Run it
+      again on the same player to clear it. Check the console/chat feedback both ways.
+- [ ] After a rigged failure, the flag is gone: the next warp behaves normally.
+- [ ] Interstice arrivals also land on open water, not inside the interstice floor.

@@ -52,6 +52,8 @@ public class IntersticeService {
     /** Player -> the destination cell they are still owed, free of charge. */
     private final Map<UUID, String> pendingDestination = new ConcurrentHashMap<>();
     private final Map<UUID, Long> lastPrompt = new ConcurrentHashMap<>();
+    /** Players whose next warp is rigged to fail, consumed on use. */
+    private final java.util.Set<UUID> rigged = java.util.concurrent.ConcurrentHashMap.newKeySet();
     /** Player -> when they were stranded, for the arrival grace. */
     private final Map<UUID, Long> arrivals = new ConcurrentHashMap<>();
 
@@ -81,6 +83,55 @@ public class IntersticeService {
     }
 
     /**
+     * Does this player's warp fail? Honours a rigged failure first, consuming
+     * it, then falls back to the ordinary roll.
+     *
+     * @param playerId the warping player
+     * @return true if this warp drops them into the interstice
+     */
+    public boolean rollFailure(UUID playerId) {
+        if (rigged.remove(playerId)) {
+            return true;
+        }
+        return rollFailure();
+    }
+
+    /**
+     * Rig a player's next warp to fail.
+     * <p>
+     * Written for testing - a 5% failure is miserable to reproduce on demand -
+     * but it is also a live tool: an admin can put a specific sailor into the
+     * interstice to liven up a session. The flag is consumed by the next warp,
+     * so it can never sit forgotten on someone's account.
+     *
+     * @param playerId the player to rig
+     * @return true if they were not already rigged
+     */
+    public boolean rigNextWarp(UUID playerId) {
+        return rigged.add(playerId);
+    }
+
+    /**
+     * Clear a rigged failure without using it.
+     *
+     * @param playerId the player
+     * @return true if a rig was cleared
+     */
+    public boolean clearRig(UUID playerId) {
+        return rigged.remove(playerId);
+    }
+
+    /**
+     * Whether a player's next warp is rigged to fail.
+     *
+     * @param playerId the player
+     * @return true if rigged
+     */
+    public boolean isRigged(UUID playerId) {
+        return rigged.contains(playerId);
+    }
+
+    /**
      * Drop a player into the interstice partway along their route.
      */
     public void strand(Player player, IslandSpec from, IslandSpec to) {
@@ -92,8 +143,10 @@ public class IntersticeService {
         double fraction = 0.35 + Math.random() * 0.3;
         int x = (int) Math.round(from.centerX() + (to.centerX() - from.centerX()) * fraction);
         int z = (int) Math.round(from.centerZ() + (to.centerZ() - from.centerZ()) * fraction);
-        Location target = new Location(addon.getNetherWorld(), x + 0.5,
-                addon.getSettings().getIntersticeSeaHeight() + 1.0, z + 0.5);
+        // Open water here too: the interstice has its own sea floor, and
+        // dropping a castaway inside it would be the same suffocation bug
+        Location target = SeaArrival.openSeaNear(addon.getNetherWorld(), x, z,
+                addon.getSettings().getIntersticeSeaHeight());
 
         Entity vehicle = player.getVehicle();
         if (vehicle != null) {

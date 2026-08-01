@@ -55,6 +55,11 @@ tradewinds:
         buys: "<gray>This port buys contraband: </gray><white>[value]</white>"
         patrol: "<gray>Patrol it can field: </gray><white>[number]</white>"
         chased: "<gray>Chase in progress: </gray><white>[value]</white>"
+      warpfail:
+        description: "rig a player's next warp to fail (run again to clear)"
+        parameters: "<player>"
+        rigged: "<gold>[name]'s next warp will fail. Run this again to clear it.</gold>"
+        cleared: "<green>[name]'s warp is no longer rigged.</green>"
       reflag:
         description: "re-apply security-band flags to all trading islands"
         done: "<green>Re-applied band flags to [number] trading islands.</green>"

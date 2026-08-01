@@ -62,6 +62,9 @@ permissions:
   tradewinds.admin.customs:
     description: Show the customs state at your position (contraband, scan odds, patrol)
     default: op
+  tradewinds.admin.warpfail:
+    description: Rig a player's next warp to fail, dropping them into the interstice
+    default: op
   tradewinds.admin.reflag:
     description: Allow re-applying security-band flags to all islands
     default: op

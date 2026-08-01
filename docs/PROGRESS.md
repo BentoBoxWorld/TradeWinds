@@ -3,6 +3,45 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## "Suffocated in a wall": warp arrivals landing inside the quay (2026-08-01)
+
+Ben's death screen: *"BoxManager suffocated in a wall whilst fighting Ghast"*,
+with the overworld navigation bar showing **Edatge | Dock 136m**. The ghast was
+a red herring - it was the recent-damage attribution from the interstice, still
+credited a few seconds after he re-engaged the warp and left.
+
+Two hypotheses died before the real one. First: vanilla nether decoration
+scattering blocks in the interstice's open air. **Checked it** by parsing the
+interstice region files - 37,024 sections above y=72 and not one non-air block.
+Second: ragged coastlines reaching past the arrival ring. Also wrong - a sweep
+of every bearing around every island within 12,000 blocks found the arrival
+point never lands on natural terrain.
+
+The actual cause was in the nav bar all along. A warp arrives at a fixed 130
+blocks from the island centre at **sea level + 1**, and the quay runs out to 136
+blocks with its plank deck at **exactly that height**. Line the approach bearing
+up with the dock bearing - 0.9% of bearings do - and the warp materialises the
+sailor inside the decking. The arrival code never asked what was there.
+
+`SeaArrival` now finds the nearest **open water** to the intended point
+(searching outward, nearest first) and puts the arrival there, for both warp
+arrivals and interstice strandings. Arrivals are by boat; open water is the only
+sensible answer. The regression test asserts the quay collision exists *and*
+that natural land does not, so the next person to read it does not go re-fixing
+the coastline.
+
+Also added `/twadmin warpfail <player>`: rigs a player's next warp to fail.
+A 5% chance is miserable to reproduce on demand and the interstice needs testing
+far more often than that. It toggles, and the flag is consumed by the next warp
+either way, so it cannot sit forgotten on an account. Doubles as a live tool for
+spicing up a session.
+
+**Pitfall:** two plausible explanations, both wrong, and each would have led to a
+real but pointless change. Parsing the world file took a few minutes and settled
+it - measuring beat guessing again.
+
+200 tests green.
+
 ## Interstice: a failed warp was killing new players (2026-08-01)
 
 Playtest: "I was warping and got sent to the Nether. The ghasts immediately
