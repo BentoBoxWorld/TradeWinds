@@ -95,6 +95,13 @@ class GalaxyIslandRegistrarTest extends CommonTestSetup {
                 flags.getValue().get(Flags.HURT_VILLAGERS.getID()));
         assertEquals(0, flags.getValue().get(Flags.ITEM_DROP.getID()));
         assertEquals(0, flags.getValue().get(Flags.ITEM_PICKUP.getID()));
+        // Every trading island is a port: visitors must be able to use boats,
+        // or they cannot get back into their own boat after shopping
+        assertEquals(0, flags.getValue().get(Flags.BOAT.getID()));
+        assertEquals(0, flags.getValue().get(Flags.HURT_MONSTERS.getID()));
+        assertEquals(0, flags.getValue().get(Flags.CRAFTING.getID()));
+        assertEquals(0, flags.getValue().get(Flags.DOOR.getID()));
+        assertEquals(0, flags.getValue().get(Flags.GATE.getID()));
     }
 
     @Test

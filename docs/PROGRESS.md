@@ -3,6 +3,19 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## Bug: no boat use at ANY trading island (2026-07-31)
+
+Third instance of the same class of bug, and the worst: `applyBandFlags` -
+which runs on every trading island - never set BOAT at all; only the spawn
+island got that allowance. BOAT defaults to MEMBER rank, so on every island
+in the galaxy a visitor could moor but not re-board their own boat after
+shopping. Fatal for a boat game, and invisible while testing as op.
+The harbor allowances now live in applyBandFlags, so every port grants
+visitors BOAT, HURT_MONSTERS, CRAFTING, DOOR and GATE (plus the existing
+ITEM_DROP/ITEM_PICKUP); the spawn bootstrap no longer repeats them and just
+adds its no-hostiles/no-explosions settings. `/twadmin reflag` pushes them to
+islands registered before this build.
+
 ## Bug: spawn island bootstrapped before islands loaded (2026-07-31)
 
 Boats were STILL denied at spawn after the rank-flag fix. The server log gave

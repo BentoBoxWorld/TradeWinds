@@ -407,15 +407,10 @@ public class TradeWinds extends GameModeAddon {
             log("Designated " + spec.name() + " (" + spec.type() + ") as the spawn island");
         }
         // Flags LAST: Island.setSpawn() resets the flag map to defaults, so
-        // anything applied before designating spawn would be wiped
+        // anything applied before designating spawn would be wiped.
+        // applyBandFlags carries the harbor allowances (boats, self-defense,
+        // crafting, doors) that every trading island needs.
         registrar.applyBandFlags(spawn, spec);
-        // Spawn-port allowances: it is a harbor, so boats, self-defense and
-        // workbenches are everyone's right, and nothing hostile spawns or
-        // explodes here
-        GalaxyIslandRegistrar.setRanks(spawn, java.util.Map.of(
-                Flags.BOAT, 0,
-                Flags.HURT_MONSTERS, 0,
-                Flags.CRAFTING, 0));
         spawn.setSettingsFlag(Flags.MONSTER_NATURAL_SPAWN, false);
         spawn.setSettingsFlag(Flags.TNT_DAMAGE, false);
         spawn.setSettingsFlag(Flags.BLOCK_EXPLODE_DAMAGE, false);
