@@ -56,6 +56,47 @@ Islets also gained a sandy beach ring at the exact waterline (which is what
 lets vanilla beach shipwrecks and bury treasure) and a 6% chance of being
 **mushroom fields** — mycelium, mooshrooms, no hostile spawns.
 
+**Breaking the circle (same day, from a playtest screenshot).** Ben: "almost
+comically circular". Two causes, both mine:
+1. The land mask is a cosine of *true* distance from the center, which is a
+   perfect disc by definition. Fix: warp the distance with a seeded noise field
+   before the mask ever sees it (`shapedDistance`) - the same mask then draws
+   bays and headlands, for one noise lookup. The warp scales with the island's
+   radius, so a sandbar and a trading island are equally ragged for their size.
+2. Worse, the island shelf blend I had just added levelled *everything* near
+   land to a flat shelf, which is what made the pale shallow ring a perfect
+   circle too. Now only the **basin** is levelled toward the shelf - that is
+   all the "islands always break the surface" guarantee needs. The rolling
+   relief carries on across the shelf at half strength; rifts and seamounts
+   fade out (a canyon through an anchorage helps nobody).
+
+Land also got `hilliness`: a noise multiplier on the lift, so an island is
+hills and hollows rather than a smooth dome. Multiplied into the lift so it
+fades at the shore instead of calving fragments off into the sea.
+
+Everything that reads the island footprint had to move onto the same warped
+distance or the biome would have drawn a circle over the ragged terrain:
+`islandAt`, `biomeKeyAt`, the icy approach ring, `shelfBlendAt`, `isletNear`.
+Neighbour searches widened by `searchMargin()` to match, or a column in a
+headland is missed.
+
+Beaches were rewritten while I was there. They were a geometric ring at an
+analytically exact shore radius - which only worked while the shelf was dead
+flat. Now `isShoreAt` just asks the finished terrain whether it is 1-4 blocks
+above sea level, so the beach follows the real waterline however ragged the
+coast, and needs no geometry at all.
+
+Verified by rendering islands as ASCII height maps before deploying: outlines
+are lobed, the spawn island's quay still runs out to open water (pier end at
+y=59, sea level 70). `galaxy.coast-roughness` / `galaxy.island-hilliness`
+expose both, and `ShapeConfig.ROUND` restores the old coins.
+
+**Pitfall (twice now):** averaging fbm octaves pulls a field toward its middle.
+The first coast warp used `Noise.fbm` and lost most of its range - the coast
+came out nearly round anyway (reach 31-46 on a radius-73 islet). Two explicit
+full-range `Noise.at` octaves instead. Same trap as the basin field earlier the
+same day; worth remembering that fbm is for *shape*, not for amplitude.
+
 **Sealing the carvers (same day, from a playtest screenshot).** Turning vanilla
 caves on opened dry craters straight through the sea floor - carvers have no
 idea there is an ocean overhead, and a generated chunk gets no block updates,

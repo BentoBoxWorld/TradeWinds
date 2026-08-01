@@ -530,6 +530,14 @@ The test server's config has already been updated to the new defaults.
       nearest, worst case 1,376.)
 - [ ] Islets vary — sandbars barely clearing the water through to islands 140 blocks
       across, and small ones are lower as well as narrower.
+- [ ] **Coastlines are not circles.** Islets and trading islands alike have bays,
+      headlands and lobes, and their land is hills and hollows rather than a smooth
+      dome with terraced contour rings. (`galaxy.coast-roughness` and
+      `galaxy.island-hilliness`; set both to 0 to see the old coin shape.)
+- [ ] The shallow water around an island is not a perfectly circular pale ring —
+      the sea floor keeps rolling across the shelf.
+- [ ] Islands are still whole: no island has broken up into a scatter of fragments,
+      and every trading island's quay still runs unbroken out into open water.
 - [ ] Every islet has a sandy shoreline ring with beach biome (snowy beach in cold
       seas), and grass or its own biome inland.
 - [ ] Roughly 1 islet in 16 is **mushroom fields**: mycelium, mooshrooms, red and

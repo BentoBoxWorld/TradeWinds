@@ -73,12 +73,35 @@ public class Seabed {
      * @return depth in blocks below sea level, at least {@link #MINIMUM_WATER}
      */
     public double openSeaDepth(int blockX, int blockZ) {
+        return depthAt(blockX, blockZ, 0);
+    }
+
+    /**
+     * Water depth at a column, given how much of an island's shelf it is on.
+     * <p>
+     * Only the <em>basin</em> is levelled toward the island shelf - that is all
+     * the guarantee needs, and levelling everything is what made the shallows
+     * around an island a perfectly circular pale ring in play. The rolling
+     * relief carries on across the shelf (at half strength, so the guarantee
+     * still holds); rifts and seamounts fade out, since a canyon through an
+     * island's anchorage helps nobody.
+     *
+     * @param blockX block x
+     * @param blockZ block z
+     * @param shelfBlend 0 in open ocean, 1 on an island's own shelf
+     * @return depth in blocks below sea level
+     */
+    private double depthAt(int blockX, int blockZ, double shelfBlend) {
+        double blend = Math.clamp(shelfBlend, 0, 1);
         double basin = basinAt(blockX, blockZ);
         double depth = config.shelfDepth() + basin * (config.abyssDepth() - config.shelfDepth());
+        depth += (config.islandShelfDepth() - depth) * blend;
         // Rolling relief, centered so it neither raises nor lowers on average
-        depth += (Noise.fbm(seed, SALT_RELIEF, blockX, blockZ, RELIEF_LATTICE, 3, 0.5) - 0.5) * 2 * config.relief();
-        depth += riftCut(blockX, blockZ);
-        depth -= seamountRise(blockX, blockZ, basin);
+        double relief = (Noise.fbm(seed, SALT_RELIEF, blockX, blockZ, RELIEF_LATTICE, 3, 0.5) - 0.5) * 2
+                * config.relief();
+        depth += relief * (1 - blend / 2);
+        depth += riftCut(blockX, blockZ) * (1 - blend);
+        depth -= seamountRise(blockX, blockZ, basin) * (1 - blend);
         // Open water everywhere: a shoal that reached the surface would be land
         // the galaxy never placed (spec principle 6)
         return Math.max(MINIMUM_WATER, depth);
@@ -158,12 +181,7 @@ public class Seabed {
      * @return the Y of the topmost floor block
      */
     public int heightAt(int blockX, int blockZ, double shelfBlend) {
-        double depth = openSeaDepth(blockX, blockZ);
-        if (shelfBlend > 0) {
-            double blend = Math.clamp(shelfBlend, 0, 1);
-            depth = depth + (config.islandShelfDepth() - depth) * blend;
-        }
-        return seaLevel - (int) Math.round(depth);
+        return seaLevel - (int) Math.round(depthAt(blockX, blockZ, shelfBlend));
     }
 
     /**

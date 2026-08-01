@@ -32,13 +32,14 @@ import java.util.stream.Collectors;
  * @param mushroomIsletChance chance (0-1) that an islet is a mushroom island -
  *        rare enough to be worth the find
  * @param seabed shape of the ocean floor between the islands
+ * @param shape how ragged coastlines and island surfaces are
  *
  * @author tastybento
  */
 public record GalaxyConfig(long seed, int minSeparation, int terrainRadius, int landLift, double density,
         int starterMinIslands, int bandRadius, int seaLevel, Map<IslandType, Integer> typeWeights,
         IslandType spawnIslandType, double wildIsletChance, int wildIsletRadius, int wildIsletGrid,
-        double mushroomIsletChance, SeabedConfig seabed) {
+        double mushroomIsletChance, SeabedConfig seabed, ShapeConfig shape) {
 
     /** Default wild islet chance / radius / grid. */
     public static final double DEFAULT_WILD_CHANCE = 0.55;
@@ -54,17 +55,32 @@ public record GalaxyConfig(long seed, int minSeparation, int terrainRadius, int 
         if (seabed == null) {
             seabed = SeabedConfig.DEFAULT;
         }
+        if (shape == null) {
+            shape = ShapeConfig.DEFAULT;
+        }
     }
 
     /**
-     * Convenience constructor with the default seabed and mushroom chance.
+     * Convenience constructor with the default island shape.
+     */
+    public GalaxyConfig(long seed, int minSeparation, int terrainRadius, int landLift, double density,
+            int starterMinIslands, int bandRadius, int seaLevel, Map<IslandType, Integer> typeWeights,
+            IslandType spawnIslandType, double wildIsletChance, int wildIsletRadius, int wildIsletGrid,
+            double mushroomIsletChance, SeabedConfig seabed) {
+        this(seed, minSeparation, terrainRadius, landLift, density, starterMinIslands, bandRadius, seaLevel,
+                typeWeights, spawnIslandType, wildIsletChance, wildIsletRadius, wildIsletGrid, mushroomIsletChance,
+                seabed, ShapeConfig.DEFAULT);
+    }
+
+    /**
+     * Convenience constructor with the default seabed, shape and mushroom chance.
      */
     public GalaxyConfig(long seed, int minSeparation, int terrainRadius, int landLift, double density,
             int starterMinIslands, int bandRadius, int seaLevel, Map<IslandType, Integer> typeWeights,
             IslandType spawnIslandType, double wildIsletChance, int wildIsletRadius, int wildIsletGrid) {
         this(seed, minSeparation, terrainRadius, landLift, density, starterMinIslands, bandRadius, seaLevel,
                 typeWeights, spawnIslandType, wildIsletChance, wildIsletRadius, wildIsletGrid,
-                DEFAULT_MUSHROOM_CHANCE, SeabedConfig.DEFAULT);
+                DEFAULT_MUSHROOM_CHANCE, SeabedConfig.DEFAULT, ShapeConfig.DEFAULT);
     }
 
     /**

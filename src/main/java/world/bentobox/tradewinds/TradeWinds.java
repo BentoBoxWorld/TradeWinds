@@ -60,6 +60,7 @@ import world.bentobox.tradewinds.galaxy.GalaxyConfig;
 import world.bentobox.tradewinds.galaxy.GalaxyEngine;
 import world.bentobox.tradewinds.galaxy.IslandType;
 import world.bentobox.tradewinds.galaxy.SeabedConfig;
+import world.bentobox.tradewinds.galaxy.ShapeConfig;
 import world.bentobox.tradewinds.generator.ChunkGeneratorWorld;
 import world.bentobox.tradewinds.generator.GalaxyIslandRegistrar;
 import world.bentobox.tradewinds.generator.TradeWindsBiomeProvider;
@@ -503,7 +504,8 @@ public class TradeWinds extends GameModeAddon {
                     s.getIslandTerrainRadius(), s.getLandLift(), s.getGalaxyDensity(),
                     s.getStarterClusterMinIslands(), s.getBandRadius(), s.getSeaHeight(), typeWeights(),
                     spawnIslandType(), s.getWildIsletChance(), s.getWildIsletRadius(), s.getWildIsletGrid(),
-                    s.getMushroomIsletChance(), seabedConfig()));
+                    s.getMushroomIsletChance(), seabedConfig(),
+                    new ShapeConfig(s.getCoastRoughness(), s.getIslandHilliness())));
             log("TradeWinds galaxy seed: " + seed);
         }
         return galaxyEngine;

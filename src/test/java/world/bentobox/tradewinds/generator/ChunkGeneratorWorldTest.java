@@ -218,9 +218,13 @@ class ChunkGeneratorWorldTest extends CommonTestSetup {
 
     @Test
     void testNoLandAboveSeaLevelAtScaleOne() {
-        // Stage 0: flat ocean everywhere - nothing may poke above the sea surface
+        // With no islands and no islets, nothing may poke above the sea surface:
+        // seamounts, shoals and relief all stay under water
+        when(addon.getGalaxyEngine(org.mockito.ArgumentMatchers.anyLong()))
+                .thenReturn(new GalaxyEngine(new GalaxyConfig(SEED, 2500, 160, 45, 0.0, 0, 5000, 70,
+                        GalaxyConfig.defaultTypeWeights(), null, 0.0, 0, 900)));
         ChunkGeneratorWorld gen = new ChunkGeneratorWorld(addon);
-        RecordingChunkData r = generate(gen, Environment.NORMAL, SEED, 5, 5);
+        RecordingChunkData r = generate(gen, Environment.NORMAL, SEED, 200, 200);
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
                 for (int y = settings.getSeaHeight() + 1; y < 320; y++) {

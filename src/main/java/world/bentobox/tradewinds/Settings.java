@@ -125,6 +125,17 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "galaxy.mushroom-islet-chance", needsReset = true)
     private double mushroomIsletChance = 0.06;
 
+    @ConfigComment("How far a coastline wanders in and out from the island's nominal radius, as a")
+    @ConfigComment("fraction of it: bays and headlands. 0 gives perfect circles - a radial mask")
+    @ConfigComment("on its own draws a coin. Above about 0.3 coasts start breaking into fragments.")
+    @ConfigEntry(path = "galaxy.coast-roughness", needsReset = true)
+    private double coastRoughness = 0.25;
+
+    @ConfigComment("How much the land height varies across an island, as a fraction of its full")
+    @ConfigComment("lift: hills and hollows instead of a smooth dome. 0 gives the dome.")
+    @ConfigEntry(path = "galaxy.island-hilliness", needsReset = true)
+    private double islandHilliness = 0.30;
+
     @ConfigComment("Relative spawn weight per island type. Higher = more common; 0 disables a type.")
     @ConfigComment("Types: AGRICULTURAL, FOREST, FISHING, MINING, INDUSTRIAL, LUXURY, FROZEN.")
     @ConfigEntry(path = "galaxy.type-weights", needsReset = true)
@@ -2476,6 +2487,10 @@ public class Settings implements WorldSettings {
     public void setWildIsletGrid(int wildIsletGrid) { this.wildIsletGrid = wildIsletGrid; }
     public double getMushroomIsletChance() { return mushroomIsletChance; }
     public void setMushroomIsletChance(double mushroomIsletChance) { this.mushroomIsletChance = mushroomIsletChance; }
+    public double getCoastRoughness() { return coastRoughness; }
+    public void setCoastRoughness(double coastRoughness) { this.coastRoughness = coastRoughness; }
+    public double getIslandHilliness() { return islandHilliness; }
+    public void setIslandHilliness(double islandHilliness) { this.islandHilliness = islandHilliness; }
     public boolean isVarySeabed() { return varySeabed; }
     public void setVarySeabed(boolean varySeabed) { this.varySeabed = varySeabed; }
     public int getSeabedShelfDepth() { return seabedShelfDepth; }

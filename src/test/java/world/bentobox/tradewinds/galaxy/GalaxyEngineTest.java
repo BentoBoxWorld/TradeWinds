@@ -108,13 +108,14 @@ class GalaxyEngineTest {
     void testLandLift() {
         GalaxyEngine engine = new GalaxyEngine(config(SEED, 1.0));
         IslandSpec spec = engine.islandInCell(2, 3).orElseThrow();
-        // Full lift at the center
-        assertEquals(45, engine.landLiftAt(spec.centerX(), spec.centerZ()));
+        // Near full lift at the center - hilliness varies it a little either way
+        int center = engine.landLiftAt(spec.centerX(), spec.centerZ());
+        assertTrue(center > 36 && center <= 52, "Center lift off: " + center);
         // Tapered on the flank
         int flank = engine.landLiftAt(spec.centerX() + 80, spec.centerZ());
-        assertTrue(flank > 0 && flank < 45, "Flank lift should taper: " + flank);
-        // Zero beyond the terrain radius
-        assertEquals(0, engine.landLiftAt(spec.centerX() + 161, spec.centerZ()));
+        assertTrue(flank > 0 && flank < center, "Flank lift should taper: " + flank);
+        // Zero well beyond the terrain radius, even allowing for a headland
+        assertEquals(0, engine.landLiftAt(spec.centerX() + 250, spec.centerZ()));
         // Zero in open ocean (empty cell far out with density check impossible at 1.0 -> use ocean point between islands)
         assertEquals(0, new GalaxyEngine(config(SEED, 0.0)).landLiftAt(1_000_000, 1_000_000));
     }
@@ -340,12 +341,81 @@ class GalaxyEngineTest {
             }
         }
         assertTrue(islet != null, "No ordinary islet found");
-        double shore = engine.isletShoreRadius(islet);
-        assertTrue(shore > 0 && shore < islet.radius(), "Shore radius out of range: " + shore);
-        // Inland is grass, the waterline is sand
+        // Inland is grass, well above the water
         assertEquals(SurfaceKind.GRASS, engine.surfaceKindAt(islet.centerX(), islet.centerZ()));
-        assertEquals(SurfaceKind.SAND, engine.surfaceKindAt(islet.centerX() + (int) shore, islet.centerZ()));
-        assertTrue(engine.biomeKeyAt(islet.centerX() + (int) shore, islet.centerZ()).orElseThrow().contains("beach"));
+        assertTrue(engine.surfaceHeightAt(islet.centerX(), islet.centerZ()) > 70 + 4);
+        // Walking out to sea, the last land before the water is sand and beach
+        // biome - found by the real waterline, so it tracks a ragged coast
+        int sand = 0;
+        int beach = 0;
+        for (int d = 1; d < islet.radius() * 2; d++) {
+            int x = islet.centerX() + d;
+            if (!engine.isShoreAt(x, islet.centerZ())) {
+                continue;
+            }
+            if (engine.surfaceKindAt(x, islet.centerZ()) == SurfaceKind.SAND) {
+                sand++;
+            }
+            if (engine.biomeKeyAt(x, islet.centerZ()).orElseThrow().contains("beach")) {
+                beach++;
+            }
+        }
+        assertTrue(sand > 0, "No sandy shore on the islet");
+        assertEquals(sand, beach, "Every shore column should carry a beach biome");
+    }
+
+    @Test
+    void testCoastlinesAreNotCircles() {
+        // Playtest: "almost comically circular". A cosine mask on true distance
+        // draws a perfect disc; the distance is warped before the mask sees it.
+        GalaxyEngine engine = new GalaxyEngine(config(SEED, 0.0));
+        Islet islet = null;
+        for (int cx = 0; cx <= 20 && islet == null; cx++) {
+            for (int cz = 0; cz <= 20 && islet == null; cz++) {
+                islet = engine.wildIsletInCell(cx, cz).orElse(null);
+            }
+        }
+        assertTrue(islet != null, "No islet found");
+        // Walk the compass, recording how far the land reaches on each bearing
+        List<Integer> reach = new ArrayList<>();
+        for (int deg = 0; deg < 360; deg += 5) {
+            double rad = Math.toRadians(deg);
+            int last = 0;
+            for (int d = 1; d < islet.radius() * 2; d++) {
+                int x = islet.centerX() + (int) Math.round(Math.cos(rad) * d);
+                int z = islet.centerZ() + (int) Math.round(Math.sin(rad) * d);
+                if (engine.surfaceHeightAt(x, z) > 70) {
+                    last = d;
+                }
+            }
+            reach.add(last);
+        }
+        int min = reach.stream().mapToInt(Integer::intValue).min().orElseThrow();
+        int max = reach.stream().mapToInt(Integer::intValue).max().orElseThrow();
+        // Bays and headlands: the coast must be materially further out on some
+        // bearings than others
+        assertTrue(max - min > islet.radius() * 0.25,
+                "Coastline is near circular: reach " + min + " to " + max + " (r=" + islet.radius() + ")");
+        // ... but it is still one island, not a scatter of fragments
+        assertTrue(min > 0, "The island broke up: some bearing has no land at all");
+    }
+
+    @Test
+    void testRoundShapeConfigRestoresPerfectCircles() {
+        // The knob that turns it all off again
+        GalaxyConfig round = new GalaxyConfig(SEED, 2500, 160, 45, 1.0, 5, 5000, 70,
+                GalaxyConfig.defaultTypeWeights(), null, 0.0, 70, 1200, 0.0, SeabedConfig.flat(20),
+                ShapeConfig.ROUND);
+        GalaxyEngine engine = new GalaxyEngine(round);
+        IslandSpec spec = engine.islandInCell(1, 1).orElseThrow();
+        int first = engine.landLiftAt(spec.centerX() + 100, spec.centerZ());
+        // Same distance, every bearing, identical lift
+        for (int deg = 0; deg < 360; deg += 15) {
+            double rad = Math.toRadians(deg);
+            int x = spec.centerX() + (int) Math.round(Math.cos(rad) * 100);
+            int z = spec.centerZ() + (int) Math.round(Math.sin(rad) * 100);
+            assertEquals(first, engine.landLiftAt(x, z), 1.0);
+        }
     }
 
     @Test
@@ -477,9 +547,17 @@ class GalaxyEngineTest {
                     continue;
                 }
                 assertEquals(1.0, engine.shelfBlendAt(spec.centerX(), spec.centerZ()), 1e-9);
-                assertEquals(70 - shelf, engine.seabedHeightAt(spec.centerX(), spec.centerZ()));
+                // The basin is levelled to the island shelf; the rolling relief
+                // carries on across it at half strength, so this is a band, not
+                // a number - a dead flat shelf is what made islands look stamped
+                int bed = engine.seabedHeightAt(spec.centerX(), spec.centerZ());
+                int slack = SeabedConfig.DEFAULT.relief() / 2 + 1;
+                assertTrue(Math.abs(bed - (70 - shelf)) <= slack, "Island shelf drifted to y" + bed);
                 // ... and its shallows are shallows, whatever is underneath
                 assertFalse(engine.isDeepWater(spec.centerX(), spec.centerZ()));
+                // ... so the island still clears the waves
+                assertTrue(engine.surfaceHeightAt(spec.centerX(), spec.centerZ()) > 70,
+                        "Island " + spec.name() + " failed to break the surface");
             }
         }
     }

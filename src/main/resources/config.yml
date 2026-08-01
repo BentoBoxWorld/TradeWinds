@@ -47,6 +47,13 @@ galaxy:
   # Chance (0-1) that a wild islet is a mushroom island: mycelium, mooshrooms and
   # no hostile spawns. Rare enough to be worth the find.
   mushroom-islet-chance: 0.06
+  # How far a coastline wanders in and out from the island's nominal radius, as a
+  # fraction of it: bays and headlands. 0 gives perfect circles - a radial mask on
+  # its own draws a coin. Above about 0.3 coasts start breaking into fragments.
+  coast-roughness: 0.25
+  # How much the land height varies across an island, as a fraction of its full
+  # lift: hills and hollows instead of a smooth dome. 0 gives the dome.
+  island-hilliness: 0.3
   # Relative spawn weight per island type. Higher = more common; 0 disables a type.
   type-weights:
     AGRICULTURAL: 10

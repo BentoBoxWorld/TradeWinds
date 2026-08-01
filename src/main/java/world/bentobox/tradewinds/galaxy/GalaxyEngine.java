@@ -47,6 +47,8 @@ public class GalaxyEngine {
     private static final long SALT_WILD_SIZE = 0x317DBEABL;
     private static final long SALT_WILD_MUSHROOM = 0x317DBEACL;
     private static final long SALT_OCEAN_TEMP = 0x0CEA17E1L;
+    private static final long SALT_COAST = 0x0C0A5701L;
+    private static final long SALT_HILLS = 0x81115001L;
 
     /**
      * Scale of the ocean's temperature regions, in blocks. Broad enough that a
@@ -88,8 +90,12 @@ public class GalaxyEngine {
     /** Sandy fringes: where beached shipwrecks and buried treasure belong. */
     private static final String BEACH_BIOME = "minecraft:beach";
     private static final String SNOWY_BEACH_BIOME = "minecraft:snowy_beach";
-    /** Half-width of an islet's beach ring, in blocks, either side of the shoreline. */
-    private static final int BEACH_RING = 7;
+    /**
+     * How far above sea level land still counts as shore. Measured from the
+     * finished terrain rather than from a radius, so a beach follows the real
+     * waterline however ragged the coast is.
+     */
+    private static final int SHORE_HEIGHT = 4;
     /** Smallest and largest islet radius as a fraction of the configured mean. */
     private static final double ISLET_MIN_SCALE = 0.55;
     private static final double ISLET_MAX_SCALE = 1.55;
@@ -290,9 +296,10 @@ public class GalaxyEngine {
      * @return the island spec, or empty in open ocean
      */
     public Optional<IslandSpec> islandAt(int blockX, int blockZ) {
-        long r2 = (long) config.terrainRadius() * config.terrainRadius();
-        return islandsNear(blockX, blockZ, config.terrainRadius()).stream()
-                .filter(s -> s.distanceSquared(blockX, blockZ) <= r2).findFirst();
+        int radius = config.terrainRadius();
+        return islandsNear(blockX, blockZ, searchRadius(radius)).stream()
+                .filter(s -> shapedDistance(blockX, blockZ, s.centerX(), s.centerZ(), radius) <= radius)
+                .findFirst();
     }
 
     /**
@@ -308,11 +315,10 @@ public class GalaxyEngine {
     public int landLiftAt(int blockX, int blockZ) {
         int radius = config.terrainRadius();
         double best = 0;
-        for (IslandSpec s : islandsNear(blockX, blockZ, radius)) {
-            double d = Math.sqrt(s.distanceSquared(blockX, blockZ));
+        for (IslandSpec s : islandsNear(blockX, blockZ, searchRadius(radius))) {
+            double d = shapedDistance(blockX, blockZ, s.centerX(), s.centerZ(), radius);
             if (d < radius) {
-                double mask = 0.5 * (1 + Math.cos(Math.PI * d / radius));
-                best = Math.max(best, mask);
+                best = Math.max(best, 0.5 * (1 + Math.cos(Math.PI * d / radius)));
             }
         }
         // Wild islets: free land between the trading islands. Small islets are
@@ -320,11 +326,73 @@ public class GalaxyEngine {
         Optional<Islet> wild = isletAt(blockX, blockZ);
         if (wild.isPresent()) {
             Islet islet = wild.get();
-            double d = Math.sqrt(islet.distanceSquared(blockX, blockZ));
-            double mask = 0.5 * (1 + Math.cos(Math.PI * d / islet.radius()));
-            return (int) Math.round(config.landLift() * mask * isletHeightScale(islet));
+            double d = shapedDistance(blockX, blockZ, islet.centerX(), islet.centerZ(), islet.radius());
+            double mask = 0.5 * (1 + Math.cos(Math.PI * Math.min(1.0, d / islet.radius())));
+            return (int) Math.round(config.landLift() * mask * isletHeightScale(islet) * hillsAt(blockX, blockZ));
         }
-        return (int) Math.round(config.landLift() * best);
+        return (int) Math.round(config.landLift() * best * hillsAt(blockX, blockZ));
+    }
+
+    /**
+     * Distance from a center, warped by a seeded noise field so that a radial
+     * mask draws a ragged coast instead of a circle.
+     * <p>
+     * A cosine mask on true distance is a perfect disc - which is exactly what
+     * it looked like in play. Pushing the distance in and out with noise before
+     * the mask sees it turns the same mask into bays and headlands, and costs
+     * one noise lookup. The warp scales with the island's radius so a sandbar
+     * and a trading island are equally ragged for their size.
+     *
+     * @param blockX block x
+     * @param blockZ block z
+     * @param centerX island center x
+     * @param centerZ island center z
+     * @param radius the island's nominal radius
+     * @return the warped distance, never negative
+     */
+    public double shapedDistance(int blockX, int blockZ, int centerX, int centerZ, int radius) {
+        double d = Math.hypot((double) blockX - centerX, (double) blockZ - centerZ);
+        if (config.shape().coastRoughness() <= 0) {
+            return d;
+        }
+        // Lattice tied to the radius: features big enough to be a bay, small
+        // enough that there are several around one island. Two explicit octaves
+        // rather than fbm - averaging octaves pulls the field toward its middle,
+        // which cost most of the warp and left the coast nearly round anyway.
+        int lattice = Math.max(16, radius / 2);
+        double broad = Noise.at(config.seed(), SALT_COAST, blockX, blockZ, lattice) * 2 - 1;
+        double detail = Noise.at(config.seed(), SALT_COAST + 1, blockX, blockZ, Math.max(8, lattice / 3)) * 2 - 1;
+        double warp = broad * 0.75 + detail * 0.25;
+        return Math.max(0, d + warp * radius * config.shape().coastRoughness());
+    }
+
+    /**
+     * How much the land rises or falls here relative to its plain radial cone:
+     * the difference between a smooth dome and something with hills and hollows
+     * on it. Multiplied into the lift, so it fades out at the shore rather than
+     * calving bits of land off into the sea.
+     *
+     * @param blockX block x
+     * @param blockZ block z
+     * @return multiplier around 1
+     */
+    private double hillsAt(int blockX, int blockZ) {
+        double hilliness = config.shape().hilliness();
+        if (hilliness <= 0) {
+            return 1.0;
+        }
+        return 1.0 - hilliness / 2 + Noise.fbm(config.seed(), SALT_HILLS, blockX, blockZ, 44, 3, 0.5) * hilliness;
+    }
+
+    /**
+     * How far to search for islands whose warped coastline could still reach a
+     * column.
+     *
+     * @param radius nominal radius
+     * @return the search radius in blocks
+     */
+    private int searchRadius(int radius) {
+        return (int) Math.ceil(radius * config.shape().searchMargin());
     }
 
     /**
@@ -422,8 +490,9 @@ public class GalaxyEngine {
             for (int cz = cellZ - 1; cz <= cellZ + 1; cz++) {
                 Optional<Islet> islet = wildIsletInCell(cx, cz);
                 if (islet.isPresent()) {
-                    long reach = Math.round(islet.get().radius() * scale);
-                    if (islet.get().distanceSquared(blockX, blockZ) <= reach * reach) {
+                    Islet i = islet.get();
+                    double d = shapedDistance(blockX, blockZ, i.centerX(), i.centerZ(), i.radius());
+                    if (d <= i.radius() * scale) {
                         return islet;
                     }
                 }
@@ -433,25 +502,29 @@ public class GalaxyEngine {
     }
 
     /**
-     * The distance from an islet's center at which its land meets the water -
-     * exactly, because the shelf under an islet is flat by construction. The
-     * beach ring and the sand surface hang off this.
+     * The finished height of the land or sea floor at a column - the same
+     * number the chunk generator uses as the top of the column.
      *
-     * @param islet the islet
-     * @return shoreline radius in blocks, 0 if the islet never breaks the surface
+     * @param blockX block x
+     * @param blockZ block z
+     * @return the surface Y
      */
-    public double isletShoreRadius(Islet islet) {
-        double lift = config.landLift() * isletHeightScale(islet);
-        if (lift <= 0) {
-            return 0;
-        }
-        // Land where lift * mask > shelf depth; invert the cosine mask for the
-        // exact crossing rather than sampling for it
-        double mask = config.seabed().islandShelfDepth() / lift;
-        if (mask >= 1.0) {
-            return 0;
-        }
-        return islet.radius() / Math.PI * Math.acos(Math.clamp(2 * mask - 1, -1.0, 1.0));
+    public int surfaceHeightAt(int blockX, int blockZ) {
+        return seabedHeightAt(blockX, blockZ) + landLiftAt(blockX, blockZ);
+    }
+
+    /**
+     * Whether a column is land just above the waterline - a shore. Read from
+     * the finished terrain rather than from a radius, so it follows a ragged
+     * coast exactly and needs no geometry of its own.
+     *
+     * @param blockX block x
+     * @param blockZ block z
+     * @return true on the beach
+     */
+    public boolean isShoreAt(int blockX, int blockZ) {
+        int above = surfaceHeightAt(blockX, blockZ) - config.seaLevel();
+        return above > 0 && above <= SHORE_HEIGHT;
     }
 
     /**
@@ -588,13 +661,15 @@ public class GalaxyEngine {
     public double shelfBlendAt(int blockX, int blockZ) {
         double best = 0;
         int radius = config.terrainRadius();
-        for (IslandSpec s : islandsNear(blockX, blockZ, radius * 2)) {
-            best = Math.max(best, shelfTaper(Math.sqrt(s.distanceSquared(blockX, blockZ)), radius));
+        for (IslandSpec s : islandsNear(blockX, blockZ, searchRadius(radius * 2))) {
+            best = Math.max(best,
+                    shelfTaper(shapedDistance(blockX, blockZ, s.centerX(), s.centerZ(), radius), radius));
         }
         Optional<Islet> islet = isletNear(blockX, blockZ, 2.0);
         if (islet.isPresent()) {
+            Islet i = islet.get();
             best = Math.max(best,
-                    shelfTaper(Math.sqrt(islet.get().distanceSquared(blockX, blockZ)), islet.get().radius()));
+                    shelfTaper(shapedDistance(blockX, blockZ, i.centerX(), i.centerZ(), i.radius()), i.radius()));
         }
         return best;
     }
@@ -629,9 +704,7 @@ public class GalaxyEngine {
         if (islet.get().isMushroom()) {
             return SurfaceKind.MYCELIUM;
         }
-        double shore = isletShoreRadius(islet.get());
-        double d = Math.sqrt(islet.get().distanceSquared(blockX, blockZ));
-        return shore > 0 && d >= shore - BEACH_RING ? SurfaceKind.SAND : SurfaceKind.GRASS;
+        return isShoreAt(blockX, blockZ) ? SurfaceKind.SAND : SurfaceKind.GRASS;
     }
 
     /**
@@ -694,15 +767,15 @@ public class GalaxyEngine {
             return Optional.of(isletBiomeAt(wild.get(), blockX, blockZ));
         }
         int radius = config.terrainRadius();
-        long r2 = (long) radius * radius;
-        long ring2 = 4L * radius * radius;
         Optional<String> ring = Optional.empty();
-        for (IslandSpec s : islandsNear(blockX, blockZ, radius * 2)) {
-            long d2 = s.distanceSquared(blockX, blockZ);
-            if (d2 <= r2) {
+        for (IslandSpec s : islandsNear(blockX, blockZ, searchRadius(radius * 2))) {
+            // The same warped distance the terrain uses, so the biome follows
+            // the ragged coast instead of drawing a circle over it
+            double d = shapedDistance(blockX, blockZ, s.centerX(), s.centerZ(), radius);
+            if (d <= radius) {
                 return Optional.of(s.biomeKey());
             }
-            if (d2 <= ring2 && s.type().isIcyApproach()) {
+            if (d <= radius * 2.0 && s.type().isIcyApproach()) {
                 ring = Optional.of("minecraft:frozen_ocean");
             }
         }
@@ -723,13 +796,9 @@ public class GalaxyEngine {
         if (islet.isMushroom()) {
             return islet.biomeKey();
         }
-        double shore = isletShoreRadius(islet);
-        if (shore > 0) {
-            double d = Math.sqrt(islet.distanceSquared(blockX, blockZ));
-            if (d >= shore - BEACH_RING && d <= shore + BEACH_RING) {
-                // Cold seas get a snowy shore, so the shoreline matches its water
-                return oceanTemperatureIndex(blockX, blockZ) <= 1 ? SNOWY_BEACH_BIOME : BEACH_BIOME;
-            }
+        if (isShoreAt(blockX, blockZ)) {
+            // Cold seas get a snowy shore, so the shoreline matches its water
+            return oceanTemperatureIndex(blockX, blockZ) <= 1 ? SNOWY_BEACH_BIOME : BEACH_BIOME;
         }
         return islet.biomeKey();
     }
