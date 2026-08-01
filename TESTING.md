@@ -423,7 +423,11 @@ database (or use `/twadmin delete` on it), then restart.
       setspawnpoint`, `/twadmin settings` on the spawn island.
 - [ ] No other island is closer than 2500 blocks to spawn (nothing crowds the port).
 
-### Stage 5c — rank-flag application (core setFlag pitfall)
+### Stage 5c — spawn island flags (two bugs: load order + setFlag)
+- [ ] After restart, the island JSON in `plugins/BentoBox/database/Island/` shows
+      `"spawn": true`, `"name": "Spawn"`, and flags including BOAT/CRAFTING/
+      HURT_MONSTERS at 0.
+- [ ] Only ONE island file exists at the origin (no duplicate created per restart).
 - [ ] Non-op at spawn: **place and ride a boat**, use a crafting table, hit a monster.
       (Rank flags were silently dropped before — see PROGRESS.md.)
 - [ ] Non-op anywhere: drop and pick up items on trading islands.

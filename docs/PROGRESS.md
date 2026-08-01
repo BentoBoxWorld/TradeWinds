@@ -3,6 +3,29 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## Bug: spawn island bootstrapped before islands loaded (2026-07-31)
+
+Boats were STILL denied at spawn after the rank-flag fix. The server log gave
+it away:
+
+    17:19:19 [TradeWinds] Designated Spawn (FISHING) as the spawn island
+    17:19:19 [BentoBox]   Loading islands from database...
+
+`bootstrapSpawnIsland` ran in onEnable, but core loads islands from the
+database AFTER addon enable (BentoBox.java: islandsManager.load() at ~line
+234, addonsManager.allLoaded() at ~276). So the island cache was empty: every
+startup created a brand-new island (the grid rejected the duplicates) and the
+subsequent database load shadowed our in-memory changes - which is why the
+island JSON showed name/protection/range from an earlier run but
+`"spawn": false` and no BOAT/CRAFTING/HURT_MONSTERS.
+Fix: run the bootstrap from `allLoaded()`, which core calls after the island
+load.
+Second trap found while fixing it: `Island.setSpawn(true)` calls
+`setFlagsDefaults()`, wiping the flag map - so ALL flag work must happen
+after designating spawn, not before (band flags were being erased). The
+bootstrap now applies band flags and harbor allowances last, and is
+idempotent.
+
 ## Bug: rank flags were being silently dropped (2026-07-31)
 
 "No boat usage at spawn" - and the same cause behind every rank flag we have

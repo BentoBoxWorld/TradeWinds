@@ -248,11 +248,9 @@ public class TradeWinds extends GameModeAddon {
         // Navigation boss bar: island, standing, distance to dock
         navigationBarTask = new NavigationBarTask(this);
         navigationBarTask.start();
-        // Spawn (and bed-less respawn) is the spawn island's market plaza
+        // Spawn (and bed-less respawn) is the spawn island's market plaza.
+        // The island itself is adopted in allLoaded() - see below.
         registerListener(new world.bentobox.tradewinds.listeners.SpawnRespawnListener(this));
-        if (islandWorld != null) {
-            bootstrapSpawnIsland();
-        }
     }
 
     @Override
@@ -362,6 +360,13 @@ public class TradeWinds extends GameModeAddon {
     public void allLoaded() {
         // Save settings. This will occur after all addons have loaded
         this.saveWorldSettings();
+        // IMPORTANT: BentoBox loads islands from the database AFTER addon
+        // onEnable, so the island cache is empty there. Adopting the spawn
+        // island any earlier creates a duplicate island every startup and the
+        // database load then shadows the changes.
+        if (islandWorld != null) {
+            bootstrapSpawnIsland();
+        }
     }
 
     public BiomeProvider getBiomeProvider() {
@@ -401,9 +406,12 @@ public class TradeWinds extends GameModeAddon {
             getIslands().setSpawn(spawn);
             log("Designated " + spec.name() + " (" + spec.type() + ") as the spawn island");
         }
-        // Spawn-port allowances, re-asserted every enable: it is a harbor, so
-        // boats, self-defense and workbenches are everyone's right, and
-        // nothing hostile spawns or explodes here
+        // Flags LAST: Island.setSpawn() resets the flag map to defaults, so
+        // anything applied before designating spawn would be wiped
+        registrar.applyBandFlags(spawn, spec);
+        // Spawn-port allowances: it is a harbor, so boats, self-defense and
+        // workbenches are everyone's right, and nothing hostile spawns or
+        // explodes here
         GalaxyIslandRegistrar.setRanks(spawn, java.util.Map.of(
                 Flags.BOAT, 0,
                 Flags.HURT_MONSTERS, 0,
