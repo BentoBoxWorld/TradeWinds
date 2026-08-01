@@ -394,6 +394,11 @@ temporarily to force it.
 - [ ] Lawless/anarchic water adds worse things: Zombie Nautilus (26.2's undead sea
       horror), phantoms at night, pillager PIRATE CREWS in their own boat, and the
       sea witch.
+      - ~~The witch adrift did nothing and was easy to kill~~ FIXED: mobs riding a
+        boat cannot run their attack goals, and the target was set once at spawn.
+        An aggression pass now re-asserts targets every 2s, and boated crews
+        ABANDON SHIP when you come within ~14 blocks — pirates and the witch should
+        now come over the side at you.
 - [ ] Safe island waters are quiet (2% base, further reduced near the dock);
       encounters intensify with distance from any island.
 - [ ] Killing encounter mobs sometimes drops booty (nautilus shells, tridents,

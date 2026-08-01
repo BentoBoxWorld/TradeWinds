@@ -3,6 +3,19 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## Playtest fix: the harmless sea witch (2026-07-31)
+
+The witch adrift did nothing and died easily. Two causes: a mob riding a boat
+cannot run its attack goals at all (so the boated encounters - SEA_WITCH and
+PIRATE_CREW - were ornaments), and the target was set once at spawn with
+nothing to re-assert it, so any mob that lost interest stayed lost.
+EncounterService now runs a 2s aggression pass over encounter-tagged mobs
+near players: re-target when the target is gone, and ABANDON SHIP (leaveVehicle)
+when the quarry is within 14 blocks - crews come over the side to fight,
+which is both functional and the right image. This also stiffens the swimming
+encounters (drowned, nautilus, guardians), which previously forgot their
+quarry after a short chase.
+
 ## The port scan: charts spread from port to port (2026-07-31)
 
 Discovery was sighting-only, so a player who warped everywhere never learned

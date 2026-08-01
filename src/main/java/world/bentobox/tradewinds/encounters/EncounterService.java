@@ -39,8 +39,14 @@ public class EncounterService {
     /** PDC key marking encounter mobs (booty, cleanup). */
     public static final NamespacedKey ENCOUNTER_KEY = NamespacedKey.fromString("tradewinds:encounter");
 
+    /** How close before a boated crew abandons ship to attack. */
+    private static final double BOARDING_RANGE = 14.0;
+    /** How far encounter mobs keep hunting. */
+    private static final double HUNT_RANGE = 48.0;
+
     private final TradeWinds addon;
     private BukkitTask task;
+    private BukkitTask aggression;
 
     public EncounterService(TradeWinds addon) {
         this.addon = addon;
@@ -49,11 +55,47 @@ public class EncounterService {
     public void start() {
         long period = Math.max(1, addon.getSettings().getEncounterCheckSeconds()) * 20L;
         task = Bukkit.getScheduler().runTaskTimer(addon.getPlugin(), this::tick, period, period);
+        // Mobs forget, and a passenger cannot fight: keep them hunting
+        aggression = Bukkit.getScheduler().runTaskTimer(addon.getPlugin(), this::hunt, 40L, 40L);
     }
 
     public void stop() {
         if (task != null) {
             task.cancel();
+        }
+        if (aggression != null) {
+            aggression.cancel();
+        }
+    }
+
+    /**
+     * Keep encounters dangerous: re-assert targets (mobs lose interest, and a
+     * freshly spawned target is forgotten within moments) and put crews over
+     * the side when their quarry is close - a witch or pillager riding a boat
+     * cannot run its attack goals at all, which made the sea witch a harmless
+     * ornament.
+     */
+    private void hunt() {
+        if (addon.getOverWorld() == null) {
+            return;
+        }
+        for (Player player : addon.getOverWorld().getPlayers()) {
+            if (player.getGameMode() != org.bukkit.GameMode.SURVIVAL || player.isDead()) {
+                continue;
+            }
+            for (Entity entity : player.getNearbyEntities(HUNT_RANGE, 32, HUNT_RANGE)) {
+                if (!entity.getPersistentDataContainer().has(ENCOUNTER_KEY, PersistentDataType.STRING)
+                        || !(entity instanceof Mob mob)) {
+                    continue;
+                }
+                if (mob.getTarget() == null || mob.getTarget().isDead()) {
+                    mob.setTarget(player);
+                }
+                if (mob.getVehicle() instanceof Boat
+                        && mob.getLocation().distanceSquared(player.getLocation()) < BOARDING_RANGE * BOARDING_RANGE) {
+                    mob.leaveVehicle();
+                }
+            }
         }
     }
 
