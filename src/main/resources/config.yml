@@ -87,6 +87,12 @@ travel:
     # fuel salvaged). Stops the warp being a panic button in a fight or customs chase.
     # 0 = instant. Ops and tradewinds.mod.bypassdelays holders always warp instantly.
     stand-still-seconds: 0
+    # Hostile mobs within this many blocks stop a warp engaging, the way monsters
+    # stop you sleeping in a bed. A warp is not a panic button out of a fight or a
+    # customs chase - run, fight, or jettison. 0 disables the check.
+    # The interstice re-engage is always exempt: it is the way OUT of somewhere
+    # dangerous, and gating it could strand a player for good.
+    enemy-radius: 12.0
     # Warping hurts - it gates the under-equipped.
     nausea-seconds: 8
     blindness-seconds: 3

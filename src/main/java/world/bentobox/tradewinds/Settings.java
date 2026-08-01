@@ -407,6 +407,14 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "travel.warp.stand-still-seconds")
     private int warpStandStillSeconds = 0;
 
+    @ConfigComment("Hostile mobs within this many blocks stop a warp engaging, the way monsters")
+    @ConfigComment("stop you sleeping in a bed. A warp is not a panic button out of a fight or a")
+    @ConfigComment("customs chase - run, fight, or jettison. 0 disables the check.")
+    @ConfigComment("The interstice re-engage is always exempt: it is the way OUT of somewhere")
+    @ConfigComment("dangerous, and gating it could strand a player for good.")
+    @ConfigEntry(path = "travel.warp.enemy-radius")
+    private double warpEnemyRadius = 12.0;
+
     @ConfigComment("Seconds of nausea after a warp. Warping hurts - it gates the under-equipped.")
     @ConfigEntry(path = "travel.warp.nausea-seconds")
     private int warpNauseaSeconds = 8;
@@ -2778,6 +2786,8 @@ public class Settings implements WorldSettings {
     public void setWarpPromptCooldownSeconds(int warpPromptCooldownSeconds) { this.warpPromptCooldownSeconds = warpPromptCooldownSeconds; }
     public int getMaxWarpDestinations() { return maxWarpDestinations; }
     public void setMaxWarpDestinations(int maxWarpDestinations) { this.maxWarpDestinations = maxWarpDestinations; }
+    public double getWarpEnemyRadius() { return warpEnemyRadius; }
+    public void setWarpEnemyRadius(double v) { this.warpEnemyRadius = v; }
     public int getWarpStandStillSeconds() { return warpStandStillSeconds; }
     public void setWarpStandStillSeconds(int warpStandStillSeconds) { this.warpStandStillSeconds = warpStandStillSeconds; }
     public int getWarpNauseaSeconds() { return warpNauseaSeconds; }

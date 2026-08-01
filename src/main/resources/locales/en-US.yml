@@ -234,3 +234,4 @@ tradewinds:
     arrived: "<aqua>The warp releases you at [name].</aqua>"
     hold-course: "<aqua>Hold your course for [seconds] seconds - the warp is spinning up...</aqua>"
     course-broken: "<red>You broke course - the warp fizzles out. Fuel salvaged.</red>"
+    enemies-near: "[actionbar]<red>You cannot warp while enemies are close.</red>"

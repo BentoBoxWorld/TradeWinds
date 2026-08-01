@@ -83,6 +83,11 @@ public class WarpService {
      * Show the warp dialog to a boated player at an island border.
      */
     public void openDialog(Player player, IslandSpec origin) {
+        // No warping out of a fight - the same rule a bed applies to sleeping
+        if (addon.getDialogGuard().enemiesNear(player)) {
+            addon.getDialogGuard().refuse(player);
+            return;
+        }
         double fuelAboard = addon.getFuelService().holdFuel(player);
         List<Destination> destinations = destinations(player, origin, fuelAboard);
         if (destinations.isEmpty()) {
@@ -126,6 +131,12 @@ public class WarpService {
      * refunded - see {@link #standStillThen}).
      */
     public void warp(Player player, IslandSpec from, IslandSpec to, int fuelCost) {
+        // Checked again here, not only at the dialog: a patrol can arrive while
+        // the menu is open, and the fuel is spent the moment this is allowed
+        if (addon.getDialogGuard().enemiesNear(player)) {
+            addon.getDialogGuard().refuse(player);
+            return;
+        }
         TWWarpEvent event = new TWWarpEvent(player, from, to, fuelCost);
         Bukkit.getPluginManager().callEvent(event);
         if (event.isCancelled()) {
@@ -161,6 +172,12 @@ public class WarpService {
                 // Course broken: refund the fuel that was spent on engagement
                 refund(player, fuelCost);
                 user(player).sendMessage("tradewinds.warp.course-broken");
+                return;
+            }
+            if (addon.getDialogGuard().enemiesNear(player)) {
+                // Something reached them while the warp was spinning up
+                refund(player, fuelCost);
+                addon.getDialogGuard().refuse(player);
                 return;
             }
             jump.run();

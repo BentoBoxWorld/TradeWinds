@@ -892,3 +892,24 @@ two rules.
       `travel.warp.edge-overrides`).
 - [ ] Adrift between islands the cost is an estimate from your position - close
       enough to plan by. It should still fall as you approach a destination.
+
+## Dialogs close under attack; no warping out of a fight
+
+- [ ] Open any dialog (warp, market, shipwright) and take damage: the dialog
+      **closes**. A modal screen hides the boat, the water and whatever is shooting.
+- [ ] Any damage does it, not just mobs - drown while reading a shop menu.
+- [ ] With a hostile mob within 12 blocks, the warp dialog **refuses to open** and an
+      action bar says "You cannot warp while enemies are close." Same idea as a bed
+      refusing to let you sleep.
+- [ ] Kill or outrun the mob and the dialog opens normally.
+- [ ] Let a mob arrive **while the dialog is already open**, then click a
+      destination: the warp is refused, and no fuel is taken. (Checked again at the
+      moment of engaging, because that is when the fuel is spent.)
+- [ ] With `travel.warp.stand-still-seconds` above 0, a mob arriving during the
+      countdown aborts the warp and **refunds** the fuel.
+- [ ] **A customs chase cannot be escaped by warping** - the patrol counts as
+      enemies. Run, fight or jettison, as designed.
+- [ ] **The interstice re-engage still works with ghasts nearby.** This is the one
+      exemption and it matters: it is the way out of somewhere dangerous, and gating
+      it would strand players.
+- [ ] `travel.warp.enemy-radius: 0` disables the gate (dialogs still close on damage).

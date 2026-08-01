@@ -60,6 +60,7 @@ import world.bentobox.tradewinds.tasks.ResidentAuditTask;
 import world.bentobox.tradewinds.travel.BoatPickupListener;
 import world.bentobox.tradewinds.travel.BorderPromptListener;
 import world.bentobox.tradewinds.travel.ChartHolograms;
+import world.bentobox.tradewinds.travel.DialogGuard;
 import world.bentobox.tradewinds.travel.ChartingListener;
 import world.bentobox.tradewinds.travel.ExpanderListener;
 import world.bentobox.tradewinds.travel.FuelService;
@@ -120,6 +121,7 @@ public class TradeWinds extends GameModeAddon {
     private @Nullable NavigationBarTask navigationBarTask;
     private @Nullable FuelWarningTask fuelWarningTask;
     private SeaPositionTracker seaPositionTracker;
+    private DialogGuard dialogGuard;
 
     /**
      * This addon uses the new chunk generation API for the sea bottom
@@ -267,6 +269,9 @@ public class TradeWinds extends GameModeAddon {
         registerListener(new BorderPromptListener(this));
         // Teleporting while boated brings the boat (and cargo) along
         registerListener(new BoatPickupListener(this));
+        // Being attacked closes any open menu, and gates the warp
+        dialogGuard = new DialogGuard(this);
+        registerListener(dialogGuard);
         // Where a sailor left the ocean, so coming back is not a teleport
         seaPositionTracker = new SeaPositionTracker(this);
         registerListener(seaPositionTracker);
@@ -553,6 +558,10 @@ public class TradeWinds extends GameModeAddon {
 
     public CustomsService getCustomsService() {
         return customsService;
+    }
+
+    public DialogGuard getDialogGuard() {
+        return dialogGuard;
     }
 
     public SeaPositionTracker getSeaPositionTracker() {

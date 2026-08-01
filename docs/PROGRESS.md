@@ -3,6 +3,34 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## Dialogs close under attack, and no warping out of a fight (2026-08-01)
+
+Ben: a dialog should exit if you are being attacked, with a bed-style action
+bar - "cannot warp while enemies are close".
+
+A dialog is a modal screen: reading the warp list while a patrol closes in
+means not seeing the boat, the water, or the thing shooting. Any damage now
+closes any open dialog - deliberately *any* damage, since drowning while
+reading a shop menu deserves the same treatment.
+
+The warp gate is the more interesting half, because it turns a UI nicety into a
+rule: a warp is no longer a panic button out of a fight, which makes the
+customs chase mean what section 6 says it means. Caught with contraband, the
+choices are run, fight or jettison - warping away would have been a silent
+fourth option that beat all three. Checked in three places, because the fuel is
+spent at engagement: when the dialog opens, again when a destination is
+clicked (a patrol can arrive while the menu is up), and during the stand-still
+countdown, where it refunds.
+
+**The interstice re-engage is exempt, and that exemption is load-bearing.** It
+is the way *out* of a place designed to be dangerous, and gating it behind "no
+enemies nearby" could strand a player permanently - the exact failure the free
+re-engage exists to prevent. It goes through `deliver` rather than `warp`, so
+it never meets the check; that is now written down in both classes so nobody
+"tidies" the two paths together.
+
+209 tests green.
+
 ## Star chart: fuel range ring, reachability, readable names (2026-08-01)
 
 Three playtest asks, all about the chart telling a sailor what they can
