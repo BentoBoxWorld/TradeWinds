@@ -293,7 +293,18 @@ player:
   # Career restarts a destitute player may use (/tw restart). -1 unlimited, 0 none.
   max-restarts: 3
 interstice:
-  # Ghasts spawned around a stranded sailor.
+  # Chance (0-1) that anything is waiting when a warp fails. Below 1, some failures
+  # are just dark water and a long silence - unsettling in its own right, and it
+  # means a failed warp is not automatically a fight.
+  ghast-chance: 0.6
+  # How far away ghasts appear, in blocks. Keep ABOVE a ghast's own 64-block
+  # detection range: they are not told where the player is, so at this distance
+  # engaging is the player's choice rather than something done to them.
+  ghast-distance: 90
+  # Seconds after a failed warp during which nothing in the interstice may target or
+  # hurt the player - long enough to read the dialog and take the free way out.
+  grace-seconds: 20
+  # Ghasts spawned around a stranded sailor, when any come at all.
   ghasts-min: 1
   ghasts-max: 3
   # Seconds between offers of the free re-engage while adrift.

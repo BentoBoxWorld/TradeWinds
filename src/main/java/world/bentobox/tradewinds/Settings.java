@@ -567,6 +567,23 @@ public class Settings implements WorldSettings {
     }
 
     /*      INTERSTICE      */
+    @ConfigComment("Chance (0-1) that anything is waiting when a warp fails. Below 1 some failures")
+    @ConfigComment("are just dark water and a long silence, which is unsettling in its own right -")
+    @ConfigComment("and means a failed warp is not automatically a fight.")
+    @ConfigEntry(path = "interstice.ghast-chance")
+    private double intersticeGhastChance = 0.6;
+
+    @ConfigComment("How far away ghasts appear, in blocks. Keep this ABOVE a ghast's own 64-block")
+    @ConfigComment("detection range: they are not told where the player is, so at this distance")
+    @ConfigComment("engaging is the player's choice rather than something done to them.")
+    @ConfigEntry(path = "interstice.ghast-distance")
+    private double intersticeGhastDistance = 90;
+
+    @ConfigComment("Seconds after a failed warp during which nothing in the interstice may target")
+    @ConfigComment("or hurt the player - long enough to read the dialog and take the free way out.")
+    @ConfigEntry(path = "interstice.grace-seconds")
+    private int intersticeGraceSeconds = 20;
+
     @ConfigComment("Ghasts spawned around a stranded sailor in the interstice.")
     @ConfigEntry(path = "interstice.ghasts-min")
     private int intersticeGhastsMin = 1;
@@ -2870,6 +2887,12 @@ public class Settings implements WorldSettings {
     public void setMaxRestarts(int maxRestarts) { this.maxRestarts = maxRestarts; }
     public Map<String, Double> getBasePrices() { return basePrices; }
     public void setBasePrices(Map<String, Double> basePrices) { this.basePrices = basePrices; }
+    public double getIntersticeGhastChance() { return intersticeGhastChance; }
+    public void setIntersticeGhastChance(double v) { this.intersticeGhastChance = v; }
+    public double getIntersticeGhastDistance() { return intersticeGhastDistance; }
+    public void setIntersticeGhastDistance(double v) { this.intersticeGhastDistance = v; }
+    public int getIntersticeGraceSeconds() { return intersticeGraceSeconds; }
+    public void setIntersticeGraceSeconds(int v) { this.intersticeGraceSeconds = v; }
     public int getIntersticeGhastsMin() { return intersticeGhastsMin; }
     public void setIntersticeGhastsMin(int intersticeGhastsMin) { this.intersticeGhastsMin = intersticeGhastsMin; }
     public int getIntersticeGhastsMax() { return intersticeGhastsMax; }

@@ -263,6 +263,8 @@ public class TradeWinds extends GameModeAddon {
         // Risk at sea: the interstice for warpers, encounters for rowers
         intersticeService = new IntersticeService(this);
         intersticeService.start();
+        // A moment to read the way out before anything in there notices you
+        registerListener(new world.bentobox.tradewinds.travel.IntersticeGraceListener(this));
         encounterService = new EncounterService(this);
         encounterService.start();
         registerListener(new EncounterListener(this));

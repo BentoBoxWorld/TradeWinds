@@ -3,6 +3,36 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## Interstice: a failed warp was killing new players (2026-08-01)
+
+Playtest: "I was warping and got sent to the Nether. The ghasts immediately
+started to attack... a dialog box popped up that I was too frightened to read
+... I just died and lost everything after one warp."
+
+The numbers were indefensible. Ghasts spawned at **20-35 blocks** - well inside
+a ghast's 64-block detection range - and `setTarget(player)` was called on
+arrival, so they were already hunting before the player had finished loading in.
+There was no chance of an empty interstice: at least one always came. A 5% warp
+failure meant a new player's first jump could cost them the boat, the cargo and
+the kit, for nothing they did wrong.
+
+The interstice is meant to be a **detour with a way out**, not a death sentence
+(spec 3.3: the fuel is already spent, so re-engaging is free). Three changes:
+- `interstice.ghast-chance` (0.6): sometimes nothing comes at all. Dark water
+  and a long silence is unsettling on its own, and it means a failed warp is not
+  automatically a fight.
+- `interstice.ghast-distance` (90): ghasts appear **beyond their own detection
+  range** and are no longer given a target. They are a thing you can see and
+  decide about, which is the same rule the sea encounters already follow.
+- `interstice.grace-seconds` (20): for a short window nothing may target or
+  damage a new arrival, so the dialog can actually be read. It also covers a
+  fireball already in flight - clicking "re-engage the warp" and dying to a shot
+  fired before you read it is precisely the reported experience.
+
+The grace covers the arrival only; stay and pick a fight and it is a fight.
+
+197 tests green.
+
 ## Stage 6c — police, wanted response, bounties (2026-08-01)
 
 Closes Stage 6. The law now answers for itself: while you are inside a policed

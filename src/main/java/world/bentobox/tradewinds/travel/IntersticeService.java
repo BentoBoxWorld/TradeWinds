@@ -52,6 +52,8 @@ public class IntersticeService {
     /** Player -> the destination cell they are still owed, free of charge. */
     private final Map<UUID, String> pendingDestination = new ConcurrentHashMap<>();
     private final Map<UUID, Long> lastPrompt = new ConcurrentHashMap<>();
+    /** Player -> when they were stranded, for the arrival grace. */
+    private final Map<UUID, Long> arrivals = new ConcurrentHashMap<>();
 
     private final TradeWinds addon;
     private BukkitTask task;
@@ -105,26 +107,65 @@ public class IntersticeService {
             target.getWorld().spawnParticle(Particle.PORTAL, target, 120, 2, 2, 2, 0.6);
             target.getWorld().playSound(target, Sound.ENTITY_GHAST_SCREAM, 1.0f, 0.7f);
             User.getInstance(player).sendMessage("tradewinds.interstice.stranded");
+            arrivals.put(player.getUniqueId(), System.currentTimeMillis());
             spawnGhasts(player, target);
             Bukkit.getPluginManager().callEvent(new TWWarpFailedEvent(player, from, to));
         });
     }
 
+    /**
+     * Put whatever is out there in the dark, at a distance.
+     * <p>
+     * The first cut spawned ghasts at 20-35 blocks and called
+     * {@code setTarget} on arrival - inside a ghast's 64-block detection range
+     * and already hunting. A player whose very first warp failed was under fire
+     * before they could read the dialog offering them the way out, and died
+     * having lost everything. A failed warp is meant to be a detour, not an
+     * execution.
+     * <p>
+     * So: sometimes nothing comes at all, and when it does it starts beyond its
+     * own detection range and is not told where the player is. Engaging is the
+     * player's choice - re-engage the warp and leave, or go hunting.
+     */
     private void spawnGhasts(Player player, Location around) {
+        if (Math.random() >= addon.getSettings().getIntersticeGhastChance()) {
+            return; // Dark water and nothing in it. The interstice is unsettling enough.
+        }
         int min = addon.getSettings().getIntersticeGhastsMin();
         int count = min + (int) (Math.random() * Math.max(1,
                 addon.getSettings().getIntersticeGhastsMax() - min + 1));
+        double near = addon.getSettings().getIntersticeGhastDistance();
         for (int i = 0; i < count; i++) {
             double angle = Math.random() * Math.PI * 2;
-            double distance = 20 + Math.random() * 15;
-            Location spot = around.clone().add(Math.cos(angle) * distance, 12 + Math.random() * 8,
+            double distance = near + Math.random() * 30;
+            Location spot = around.clone().add(Math.cos(angle) * distance, 10 + Math.random() * 10,
                     Math.sin(angle) * distance);
             Entity ghast = around.getWorld().spawnEntity(spot, EntityType.GHAST);
             if (ghast instanceof Ghast g) {
-                g.setTarget(player);
+                // Deliberately NOT targeted: let the player decide whether this
+                // is a fight
                 g.setRemoveWhenFarAway(true);
             }
         }
+    }
+
+    /**
+     * How long a freshly stranded sailor is left alone, in millis.
+     */
+    private long graceMillis() {
+        return addon.getSettings().getIntersticeGraceSeconds() * 1000L;
+    }
+
+    /**
+     * Whether a player is still inside their arrival grace - long enough to
+     * read the dialog and take the free way out.
+     *
+     * @param playerId the player
+     * @return true during the grace window
+     */
+    public boolean isInGrace(UUID playerId) {
+        Long arrived = arrivals.get(playerId);
+        return arrived != null && System.currentTimeMillis() - arrived < graceMillis();
     }
 
     /**

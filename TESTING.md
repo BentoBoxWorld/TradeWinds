@@ -781,3 +781,23 @@ Get yourself **Wanted** (−200: one murder, or ~8 villager kills) with
       all ("We know what you are").
 - [ ] At FRONTIER and beyond it opens normally. Merely **Wanted** is not barred —
       only Fugitive. (`crime.safest-fugitive-trader`.)
+
+## Interstice: a failed warp must not be an execution
+
+Playtest: a new player's first warp failed, ghasts opened fire instantly, and they
+died having lost everything before they could read the dialog offering the free way
+out. Set `travel.warp.failure-chance: 1.0` temporarily to test this repeatedly.
+
+- [ ] Fail a warp several times. Roughly **40% of the time nothing comes at all** —
+      dark water and silence (`interstice.ghast-chance`).
+- [ ] When ghasts do come, they appear **~90+ blocks away** and are **not already
+      hunting you**. You can see them, and decide. (They spawn beyond their own
+      64-block detection range and are deliberately not given a target.)
+- [ ] For **20 seconds after arrival** nothing can target or damage you
+      (`interstice.grace-seconds`) — long enough to read the dialog and click
+      re-engage. Confirm a fireball already in the air does not kill you either.
+- [ ] Re-engaging is still free, and still returns you to the original destination.
+- [ ] Stay past the grace and approach them: it becomes a real fight. The grace
+      covers the arrival, not the visit.
+- [ ] A brand new player with a starter kit can survive a failed first warp without
+      losing their boat and cargo. That is the actual bar here.
