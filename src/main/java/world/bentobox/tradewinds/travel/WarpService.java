@@ -241,6 +241,10 @@ public class WarpService {
                 addon.getOverWorld(), to.centerX(), to.centerZ(), arrive[0], arrive[1],
                 addon.getSettings().getSeaHeight());
 
+        addon.log("Warp: " + player.getName() + " arriving at " + to.name() + " ("
+                + target.getBlockX() + "," + target.getBlockY() + "," + target.getBlockZ() + ") - "
+                + (int) Math.sqrt(to.distanceSquared(target.getBlockX(), target.getBlockZ()))
+                + " blocks from the island centre");
         // Dismount -> teleport player and boat -> re-seat (AcidIsland /ai pattern)
         Entity vehicle = player.getVehicle();
         if (vehicle != null) {

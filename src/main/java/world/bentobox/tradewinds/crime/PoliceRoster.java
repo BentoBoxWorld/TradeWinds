@@ -67,7 +67,15 @@ public final class PoliceRoster {
     public static List<PoliceUnit> forCustoms(int size) {
         List<PoliceUnit> units = new ArrayList<>();
         for (int i = 0; i < Math.max(0, size); i++) {
-            units.add(i % 3 == 0 ? PoliceUnit.GUARDIAN : PoliceUnit.DROWNED);
+            // A phantom is not optional. Launching from the dock puts the
+            // swimmers a long way behind a boat and they will never close the
+            // gap, so without something that can pursue, "run" stops being a
+            // choice and becomes the answer every time.
+            units.add(switch (i % 3) {
+            case 0 -> PoliceUnit.GUARDIAN;
+            case 1 -> PoliceUnit.DROWNED;
+            default -> PoliceUnit.PHANTOM;
+            });
         }
         return units;
     }

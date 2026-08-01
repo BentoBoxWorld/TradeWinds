@@ -3,6 +3,42 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## Patrols launch from the dock, and leave bystanders alone (2026-08-01)
+
+"Again instant ambush." Twice now I had answered that by moving the spawn
+further from the player - 22 blocks, then 45 - and twice it was still an
+ambush, because the distance was never the problem. **The origin was.** A
+patrol that materialises near its quarry is an ambush at any radius.
+
+Customs now launch from the **pier end** of the island's own quay, which is
+where a harbour's boats put out from, and swim after the smuggler. You can see
+them coming and outrun them, which is what the decision window in spec section
+6 is for.
+
+That change forced another: with the swimmers starting at the dock they will
+never close on a boat, so a customs patrol now includes a **phantom**. Without
+something that can genuinely pursue, "run" stops being a choice and becomes the
+answer every time. (Ben also asked where the phantoms were - they only existed
+in the *wanted* roster, never the customs one.)
+
+**Police no longer hurt bystanders.** Targeting was re-asserted every couple of
+seconds, but a mob can swing between ticks and a guardian's beam locks on
+before any of that runs. The damage itself is now refused unless the victim is
+the one the law actually wants - wanted, or being chased right now. A patrol
+that hurts whoever is moored nearby is not policing, it is weather.
+
+**Logging**, as asked: the warp arrival prints the player's coordinates and
+distance from the island centre, and every dispatch prints the player position,
+the pier position, the launch point, and each unit's type, coordinates and
+distance from the player.
+
+**Pitfall:** a scripted replace on `PoliceRoster` silently did not match, and
+the script cheerfully printed "roster ok" anyway. The test caught it, but only
+because it asserted on the roster contents. Never print success from a
+replacement without checking it happened.
+
+211 tests green.
+
 ## Contraband in pockets, and patrols that ambush (2026-08-01)
 
 Two from the same playtest.

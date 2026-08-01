@@ -204,6 +204,49 @@ public class PoliceService implements Listener {
     }
 
     /**
+     * Police never touch a bystander.
+     * <p>
+     * Targeting is re-asserted every couple of seconds, but a mob can swing
+     * between ticks and a guardian's beam locks on before any of that runs -
+     * so the damage itself is refused unless the victim is the one the law
+     * actually wants. A patrol that hurts whoever happens to be moored nearby
+     * is not policing, it is weather.
+     */
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onPoliceDamage(EntityDamageByEntityEvent event) {
+        if (addon.getCustomsService() == null || !(event.getEntity() instanceof Player victim)) {
+            return;
+        }
+        if (!isPoliceSource(event.getDamager())) {
+            return;
+        }
+        if (!isWantedByTheLaw(victim)) {
+            event.setCancelled(true);
+        }
+    }
+
+    /**
+     * Whether the law has any business with this player: wanted, or being
+     * chased by customs right now.
+     */
+    private boolean isWantedByTheLaw(Player player) {
+        return addon.getReputationService().standing(player.getUniqueId()).isHunted()
+                || addon.getCustomsService().isChased(player.getUniqueId())
+                || responses.containsKey(player.getUniqueId());
+    }
+
+    /**
+     * Whether damage came from a police unit, directly or by projectile.
+     */
+    private boolean isPoliceSource(Entity damager) {
+        if (dispatch().isPolice(damager)) {
+            return true;
+        }
+        return damager instanceof org.bukkit.entity.Projectile projectile
+                && projectile.getShooter() instanceof Entity shooter && dispatch().isPolice(shooter);
+    }
+
+    /**
      * Police phantoms do not burn at dawn. A pursuit that ends because the sun
      * came up is not a pursuit.
      */

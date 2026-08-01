@@ -16,6 +16,7 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.Vector;
 
 import world.bentobox.tradewinds.TradeWinds;
+import world.bentobox.tradewinds.galaxy.DockPlan;
 import world.bentobox.tradewinds.galaxy.IslandSpec;
 import world.bentobox.tradewinds.galaxy.SecurityBand;
 
@@ -67,28 +68,63 @@ public class PoliceDispatch {
         int count = patrolSize(island.band());
         List<Entity> units = new ArrayList<>();
         Location from = player.getLocation();
-        // Between the player and the island: the patrol comes from the port
-        Vector toIsland = new Vector(island.centerX() - from.getX(), 0, island.centerZ() - from.getZ());
-        if (toIsland.lengthSquared() < 0.01) {
-            toIsland = new Vector(1, 0, 0);
-        }
-        Location spot = openWater(from.clone().add(toIsland.normalize().multiply(interceptDistance())), from,
-                interceptDistance() * 0.75);
-        if (spot == null) {
-            // Ashore in the market: there is no water to launch a patrol from,
-            // and a guardian spawned on a plaza just flops about. The caller
-            // turns this into a straight confiscation instead.
+        // Customs launch from the HARBOUR, not from thin air beside the boat.
+        // Spawning them near the quarry was an ambush however far out it was
+        // set - the fix is not a bigger radius, it is the right origin. A
+        // patrol that has to row out from the pier is one you can see coming
+        // and outrun, which is the whole point of the decision window.
+        Location pier = pierOf(island, from.getWorld());
+        Location launch = openWater(pier, from, minimumStandoff());
+        if (launch == null) {
+            addon.log("Customs at " + island.name() + ": no open water at the pier ("
+                    + describe(pier) + ") - confiscating instead of chasing");
             return units;
         }
+        addon.log("Customs at " + island.name() + ": player at " + describe(from) + ", pier at "
+                + describe(pier) + ", launching from " + describe(launch) + " ("
+                + (int) launch.distance(from) + " blocks from the player)");
         for (PoliceUnit kind : PoliceRoster.forCustoms(count)) {
-            Location at = openWater(spot.clone().add(Math.random() * 6 - 3, 0, Math.random() * 6 - 3), from,
-                    interceptDistance() * 0.75);
+            Location at = spawnPoint(kind, launch, from);
             Entity unit = at == null ? null : spawn(at, entityType(kind), player);
             if (unit != null) {
                 units.add(unit);
+                addon.log("   " + kind + " at " + describe(at) + " - "
+                        + (int) at.distance(from) + " blocks from the player");
+            } else {
+                addon.log("   " + kind + " could not be placed near the pier");
             }
         }
         return units;
+    }
+
+    /**
+     * The end of an island's quay - where a harbour's boats put out from.
+     */
+    private Location pierOf(IslandSpec island, org.bukkit.World world) {
+        DockPlan plan = addon.getGalaxyEngine(world.getSeed()).dockPlan(island);
+        int pierX = island.centerX() + (int) Math.round(Math.cos(plan.bearing()) * plan.dockEnd());
+        int pierZ = island.centerZ() + (int) Math.round(Math.sin(plan.bearing()) * plan.dockEnd());
+        return new Location(world, pierX + 0.5, addon.getSettings().getSeaHeight() - 1.0, pierZ + 0.5);
+    }
+
+    /**
+     * Where one unit of a patrol starts: swimmers in the water off the pier,
+     * the phantom in the air above it.
+     */
+    private Location spawnPoint(PoliceUnit kind, Location launch, Location player) {
+        Location scattered = launch.clone().add(Math.random() * 8 - 4, 0, Math.random() * 8 - 4);
+        if (kind == PoliceUnit.PHANTOM) {
+            scattered.setY(addon.getSettings().getSeaHeight() + 12 + Math.random() * 6);
+            return scattered;
+        }
+        return openWater(scattered, player, minimumStandoff());
+    }
+
+    /**
+     * Compact coordinates for the console.
+     */
+    private static String describe(Location location) {
+        return location.getBlockX() + "," + location.getBlockY() + "," + location.getBlockZ();
     }
 
     /**

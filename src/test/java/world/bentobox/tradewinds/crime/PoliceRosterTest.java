@@ -76,6 +76,10 @@ class PoliceRosterTest {
         assertFalse(customs.contains(PoliceUnit.GOLEM));
         assertTrue(customs.contains(PoliceUnit.GUARDIAN));
         assertTrue(customs.contains(PoliceUnit.DROWNED));
+        // And something that can actually pursue. Launching from the dock puts
+        // the swimmers a long way behind a boat, so without a phantom "run"
+        // stops being a choice and becomes the answer every time.
+        assertTrue(customs.contains(PoliceUnit.PHANTOM), "A customs patrol needs a pursuer: " + customs);
     }
 
     @Test

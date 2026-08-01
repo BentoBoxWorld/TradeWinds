@@ -970,3 +970,20 @@ Use `/twadmin warpfail <you>` then `/tw warp` to get there on demand.
       a bay. (About 4% of approach bearings used to land on or beside land, because a
       warped coastline can reach the arrival ring; arrivals now step outward along
       the approach, never sideways or inward.)
+
+## Customs patrols launch from the dock
+
+Watch the console - every dispatch now logs the player, the pier, the launch
+point, and each unit's distance.
+
+- [ ] Trigger a customs scan. The patrol appears **at the island's pier**, not
+      beside your boat, and swims out to you. The console line shows the launch
+      point and how far it is from you.
+- [ ] The warp arrival is logged too: coordinates and distance from the island
+      centre. Cross-check it against where the patrol starts.
+- [ ] There is a **phantom** in the patrol - the only unit that can catch a boat.
+      The guardians and drowned should fall behind if you run.
+- [ ] Running works: get clear of the border and the chase breaks off.
+- [ ] **A second, innocent player standing nearby is never hurt by the patrol** -
+      not by a guardian beam, not by a trident. Try mooring next to the smuggler.
+- [ ] The patrol still switches back to the smuggler if it wanders.
