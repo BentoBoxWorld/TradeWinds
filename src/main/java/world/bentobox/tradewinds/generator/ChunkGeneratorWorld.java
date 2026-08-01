@@ -60,6 +60,11 @@ public class ChunkGeneratorWorld extends ChunkGenerator {
     private static final int SEDIMENT_THICKNESS = 4;
     /** How far the varied rock reaches below the floor before it is all stone. */
     private static final int ROCK_BAND = 8;
+    /**
+     * How thick a crust the sea floor keeps over vanilla's carvers. Thick enough
+     * that a cave roof is not one block of rock holding back the ocean.
+     */
+    private static final int CRUST_THICKNESS = 5;
     /** Soil depth under a land surface before it turns to stone. */
     private static final int SOIL_THICKNESS = 4;
 
@@ -153,6 +158,60 @@ public class ChunkGeneratorWorld extends ChunkGenerator {
                         baseTop, floorTops[(x << 4) | z]);
             }
         }
+    }
+
+    /**
+     * Seal the sea floor after vanilla's carvers have run.
+     * <p>
+     * Carvers cut caves and ravines with no idea there is an ocean overhead, so
+     * left alone they open dry craters straight through the floor - generated
+     * chunks get no block updates, so nothing ever flows in to fill them. This
+     * is the Poseidon fix, narrowed: rather than filling every carved space
+     * under the sea, only the crust is put back. Anything deeper than
+     * {@link #CRUST_THICKNESS} below the floor stays hollow, so there are still
+     * caves down there to find - they just have a sea floor over them.
+     */
+    @Override
+    public void generateCaves(@NonNull WorldInfo worldInfo, @NonNull Random random, int chunkX, int chunkZ,
+            @NonNull ChunkData chunkData) {
+        WorldConfig wc = seaConfig.get(worldInfo.getEnvironment());
+        if (wc == null) {
+            return;
+        }
+        Seabed floor = seabed(worldInfo);
+        GalaxyEngine engine = worldInfo.getEnvironment() == Environment.NORMAL
+                ? addon.getGalaxyEngine(worldInfo.getSeed())
+                : null;
+        int lowestY = worldInfo.getMinHeight() + 1;
+        for (int x = 0; x < 16; x++) {
+            for (int z = 0; z < 16; z++) {
+                int worldX = (chunkX << 4) + x;
+                int worldZ = (chunkZ << 4) + z;
+                int floorTop = floorTopAt(worldInfo, wc, floor, engine, worldX, worldZ);
+                int from = Math.max(lowestY, floorTop - CRUST_THICKNESS);
+                if (from > wc.seaHeight()) {
+                    continue; // Land: a cave mouth in an island's flank is fine
+                }
+                double sediment = floor.sedimentAt(worldX, worldZ);
+                int depth = wc.seaHeight() - floorTop;
+                for (int y = from; y <= wc.seaHeight(); y++) {
+                    if (chunkData.getType(x, y, z) != Material.AIR) {
+                        continue;
+                    }
+                    // Above the floor is sea; below it is the crust it carved through
+                    chunkData.setBlock(x, y, z, y >= floorTop ? wc.waterBlock()
+                            : crustMaterial(worldInfo, y, floorTop, depth, sediment));
+                }
+            }
+        }
+    }
+
+    /**
+     * What to put back into a hole carved in the sea floor: the same sediment
+     * and rock the floor is made of, so the repair is invisible.
+     */
+    private Material crustMaterial(WorldInfo worldInfo, int y, int floorTop, int depth, double sediment) {
+        return columnMaterial(worldInfo, y, floorTop, false, depth, sediment, null, SurfaceKind.GRASS);
     }
 
     /**

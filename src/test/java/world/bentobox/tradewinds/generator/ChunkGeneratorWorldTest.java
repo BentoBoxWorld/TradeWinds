@@ -35,6 +35,8 @@ import world.bentobox.tradewinds.galaxy.IslandSpec;
 class ChunkGeneratorWorldTest extends CommonTestSetup {
 
     private static final long SEED = 12345L;
+    /** Mirrors ChunkGeneratorWorld.CRUST_THICKNESS. */
+    private static final int CRUST = 5;
 
     private TradeWinds addon;
     private Settings settings;
@@ -106,6 +108,10 @@ class ChunkGeneratorWorldTest extends CommonTestSetup {
                 org.mockito.ArgumentMatchers.anyInt(), org.mockito.ArgumentMatchers.anyInt(),
                 org.mockito.ArgumentMatchers.anyInt(), org.mockito.ArgumentMatchers.anyInt(),
                 org.mockito.ArgumentMatchers.any(Material.class));
+        // getType, so the cave-sealing pass can read back what the carvers left
+        when(cd.getType(org.mockito.ArgumentMatchers.anyInt(), org.mockito.ArgumentMatchers.anyInt(),
+                org.mockito.ArgumentMatchers.anyInt()))
+                .thenAnswer(inv -> recorder.get(inv.getArgument(0), inv.getArgument(1), inv.getArgument(2)));
         return cd;
     }
 
@@ -296,6 +302,64 @@ class ChunkGeneratorWorldTest extends CommonTestSetup {
             landAboveSea = r.get(0, y, 0) == Material.GRASS_BLOCK;
         }
         assertTrue(landAboveSea, "The spawn island should rise above the sea at the origin");
+    }
+
+    @Test
+    void testCarvedSeaFloorIsSealedBackUp() {
+        // Playtest: vanilla's carvers cut dry craters straight through the sea
+        // floor, because a generated chunk gets no block updates and nothing
+        // ever flows in to fill them.
+        ChunkGeneratorWorld gen = new ChunkGeneratorWorld(addon);
+        RecordingChunkData r = new RecordingChunkData();
+        ChunkData cd = chunkData(r);
+        WorldInfo wi = worldInfo(Environment.NORMAL, SEED);
+        gen.generateNoise(wi, new Random(SEED), 40, 40, cd);
+
+        // Carve a crater the way a cave or ravine would: a column of air from
+        // well under the floor up through the sea surface
+        int carvedX = 7;
+        int carvedZ = 9;
+        int solidTop = floorTop(r, carvedX, carvedZ, settings.getSeaHeight());
+        for (int y = solidTop - 20; y <= settings.getSeaHeight(); y++) {
+            r.blocks.put(RecordingChunkData.key(carvedX, y, carvedZ), Material.AIR);
+        }
+
+        gen.generateCaves(wi, new Random(SEED), 40, 40, cd);
+
+        // The sea is back: no air anywhere below the surface in that column
+        for (int y = solidTop + 1; y <= settings.getSeaHeight(); y++) {
+            assertEquals(Material.WATER, r.get(carvedX, y, carvedZ), "Open water missing at y=" + y);
+        }
+        // ... standing on a crust of floor, not a one-block roof over the void
+        for (int y = solidTop - CRUST + 1; y <= solidTop; y++) {
+            assertTrue(r.get(carvedX, y, carvedZ) != Material.AIR, "Sea floor still open at y=" + y);
+        }
+        // ... and the cave underneath survives: this is not a blanket infill
+        assertEquals(Material.AIR, r.get(carvedX, solidTop - 20, carvedZ),
+                "The cave under the floor should still be there");
+    }
+
+    @Test
+    void testCaveMouthsInIslandFlanksAreLeftAlone() {
+        // Above the waterline a cave opening is just a cave opening
+        GalaxyEngine denseEngine = new GalaxyEngine(new GalaxyConfig(SEED, 2500, 160, 45, 1.0, 0, 5000, 70));
+        when(addon.getGalaxyEngine(org.mockito.ArgumentMatchers.anyLong())).thenReturn(denseEngine);
+        ChunkGeneratorWorld gen = new ChunkGeneratorWorld(addon);
+        IslandSpec spec = denseEngine.islandInCell(0, 0).orElseThrow();
+        RecordingChunkData r = new RecordingChunkData();
+        ChunkData cd = chunkData(r);
+        WorldInfo wi = worldInfo(Environment.NORMAL, SEED);
+        gen.generateNoise(wi, new Random(SEED), spec.centerX() >> 4, spec.centerZ() >> 4, cd);
+
+        int x = spec.centerX() & 15;
+        int z = spec.centerZ() & 15;
+        int top = floorTop(r, x, z, 320);
+        assertTrue(top > settings.getSeaHeight(), "Expected island land at the center");
+        int carved = top - 3;
+        r.blocks.put(RecordingChunkData.key(x, carved, z), Material.AIR);
+
+        gen.generateCaves(wi, new Random(SEED), spec.centerX() >> 4, spec.centerZ() >> 4, cd);
+        assertEquals(Material.AIR, r.get(x, carved, z), "Dry land caves should be left alone");
     }
 
     @Test

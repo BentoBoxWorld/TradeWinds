@@ -56,7 +56,26 @@ Islets also gained a sandy beach ring at the exact waterline (which is what
 lets vanilla beach shipwrecks and bury treasure) and a 6% chance of being
 **mushroom fields** — mycelium, mooshrooms, no hostile spawns.
 
+**Sealing the carvers (same day, from a playtest screenshot).** Turning vanilla
+caves on opened dry craters straight through the sea floor - carvers have no
+idea there is an ocean overhead, and a generated chunk gets no block updates,
+so nothing ever flows in to fill what they cut. Ben pointed at Poseidon, which
+hit this and fixed it in `generateCaves`: the API guarantees vanilla's carvers
+run *before* that hook and that the ChunkData handed to it already contains
+their work, so it is the place to repair them.
+Poseidon fills every carved space under the sea with rock. TradeWinds narrows
+that, because caves under the seabed are wanted: it recomputes the true floor
+top (pure function, so it is exact) and puts back only a 5-block **crust** -
+air at or above the floor becomes water again, air just below becomes the same
+sediment or rock the floor is made of, and anything deeper stays hollow. Caves
+survive, with a sea floor over them; break in from below and they flood, which
+is what a player expects. Cave mouths in an island's flank above the waterline
+are left alone.
+
 **Pitfalls:**
+- The test helper reads the topmost *solid* block, which is `floorTop - 1` in
+  generator terms (blocks are written for `y < floorTop`). Worth remembering
+  when writing terrain assertions.
 - Stacked fbm octaves pull toward the middle: the first cut gave only 16
   blocks of depth variation across a long transect — still barren. The basin
   field is now stretched about its midpoint and eased, restoring real shelves

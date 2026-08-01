@@ -562,10 +562,16 @@ The test server's config has already been updated to the new defaults.
       (`world.keep-structures-off-islands: true`.)
 
 **Caves** (`make-caves: true`)
-- [ ] Caves, ravines and caverns exist under the sea floor and inside the islands.
-- [ ] Judgement call to make in play: cave mouths opening into the ocean leave dry air
-      pockets rather than flooding. That is intended (somewhere to surface, something
-      to mine) — but if it looks wrong, `world.make-caves: false` turns it off.
+- [ ] **No voids in the sea floor.** Swim over a lot of open water: the floor is
+      unbroken. No dry craters, no open gashes, no ravines cut through to the water.
+      (Vanilla's carvers have no idea there is an ocean overhead and generated chunks
+      get no block updates, so nothing ever flows in to fill what they cut. The
+      generator seals a 5-block crust back over them in `generateCaves`, the Poseidon
+      fix — narrowed so the caves themselves survive.)
+- [ ] Dig down through the sea floor anywhere promising: the caves are still there
+      underneath, and flood when you break into them. That is the point — sealed, not
+      filled in.
+- [ ] Cave mouths in an island's flank *above* the waterline are left alone.
 - [ ] Caves do not break into a market plaza or dock from below.
 
 **Regression**
