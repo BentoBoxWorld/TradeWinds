@@ -391,9 +391,16 @@ temporarily to force it.
 - [ ] Row in open water far from islands: within a few rolls (45s each) mobs appear
       ~28 blocks AHEAD of you — visible, so fleeing is a real choice.
 - [ ] Day vs night differ: guardians by day, trident-throwing drowned at night.
-- [ ] Lawless/anarchic water adds worse things: Zombie Nautilus (26.2's undead sea
-      horror), phantoms at night, pillager PIRATE CREWS in their own boat, and the
-      sea witch.
+- [ ] Lawless/anarchic water adds worse things: an ELDER GUARDIAN in deep water
+      (flee — it is meant to be unwinnable for a lone trader), phantoms at night,
+      pillager PIRATE CREWS in their own boat, and the sea witch.
+      - ~~The zombie nautilus just swam away~~ FIXED: it is a tameable MOUNT, not a
+        monster (AbstractNautilus extends Tameable/Vehicle), so it was never going to
+        attack. Replaced with the elder guardian; a test now asserts every encounter
+        mob implements Enemy.
+      - Water mobs also used to spawn ABOVE the waterline, where they flop instead of
+        hunting. They now spawn 3 blocks under, phantoms 14 above, boats on the
+        surface.
       - ~~The witch adrift did nothing and was easy to kill~~ FIXED: mobs riding a
         boat cannot run their attack goals, and the target was set once at spawn.
         An aggression pass now re-asserts targets every 2s, and boated crews

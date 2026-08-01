@@ -166,7 +166,9 @@ public class EncounterService {
         }
         ahead.normalize().multiply(addon.getSettings().getEncounterDistance());
         Location spot = origin.clone().add(ahead);
-        spot.setY(addon.getSettings().getSeaHeight() + 1.0);
+        // Swimmers below the waterline, fliers above it: a water mob spawned in
+        // the air just flops about instead of hunting
+        spot.setY(type.getHabitat().spawnY(addon.getSettings().getSeaHeight()));
 
         int count = type.getMin()
                 + (int) (Math.random() * Math.max(1, type.getMax() - type.getMin() + 1));
@@ -180,7 +182,7 @@ public class EncounterService {
                 spawned.add(crewBoat);
             }
             for (EntityType mobType : type.getMobs()) {
-                Entity entity = at.getWorld().spawnEntity(type.isBoated() ? at : at.clone().add(0, 0.5, 0), mobType);
+                Entity entity = at.getWorld().spawnEntity(at, mobType);
                 equip(entity, mobType);
                 tag(entity);
                 if (entity instanceof Mob mob) {
@@ -198,6 +200,10 @@ public class EncounterService {
         }
         User.getInstance(player).sendMessage("tradewinds.encounter." + type.name().toLowerCase(java.util.Locale.ENGLISH));
         player.playSound(player.getLocation(), Sound.AMBIENT_UNDERWATER_LOOP_ADDITIONS_RARE, 1.0f, 0.6f);
+        if (addon.getSettings().isDebug()) {
+            addon.log("[DEBUG] " + type + " x" + spawned.size() + " for " + player.getName() + " at "
+                    + spot.getBlockX() + "," + spot.getBlockY() + "," + spot.getBlockZ());
+        }
     }
 
     /**

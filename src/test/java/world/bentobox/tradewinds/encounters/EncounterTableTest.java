@@ -55,14 +55,41 @@ class EncounterTableTest {
     @Test
     void testLawlessnessUnlocksWorseThings() {
         Set<EncounterType> policed = rollAll(SecurityBand.POLICED, true);
-        assertFalse(policed.contains(EncounterType.NAUTILUS_HORROR));
+        assertFalse(policed.contains(EncounterType.DEEP_TERROR));
         assertFalse(policed.contains(EncounterType.PIRATE_CREW));
         Set<EncounterType> frontier = rollAll(SecurityBand.FRONTIER, true);
-        assertTrue(frontier.contains(EncounterType.NAUTILUS_HORROR));
+        assertTrue(frontier.contains(EncounterType.DEEP_TERROR));
         assertFalse(frontier.contains(EncounterType.PIRATE_CREW));
         Set<EncounterType> anarchic = rollAll(SecurityBand.ANARCHIC, true);
         assertTrue(anarchic.contains(EncounterType.PIRATE_CREW));
         assertTrue(anarchic.contains(EncounterType.SEA_WITCH));
+    }
+
+    @Test
+    void testMobsSpawnInTheirElement() {
+        // A swimmer spawned above the waterline just flops; a flier below it drowns
+        assertTrue(EncounterType.DROWNED_RAIDERS.getHabitat().spawnY(70) < 70,
+                "Swimmers must spawn under water");
+        assertTrue(EncounterType.DEEP_TERROR.getHabitat().spawnY(70) < 70);
+        assertTrue(EncounterType.GUARDIAN_PICKET.getHabitat().spawnY(70) < 70);
+        assertTrue(EncounterType.PHANTOM_FLIGHT.getHabitat().spawnY(70) > 70 + 5,
+                "Phantoms belong above the mast");
+        assertEquals(71, EncounterType.SEA_WITCH.getHabitat().spawnY(70), "Boats float on the surface");
+        assertEquals(71, EncounterType.PIRATE_CREW.getHabitat().spawnY(70));
+    }
+
+    @Test
+    void testEveryEncounterMobIsActuallyHostile() {
+        // The zombie nautilus taught this lesson: it is a tameable MOUNT
+        // (AbstractNautilus extends Tameable, Vehicle), so it just swam away.
+        // Every encounter mob must be an Enemy or the encounter is scenery.
+        for (EncounterType type : EncounterType.values()) {
+            for (org.bukkit.entity.EntityType mob : type.getMobs()) {
+                Class<?> clazz = mob.getEntityClass();
+                assertTrue(clazz != null && org.bukkit.entity.Enemy.class.isAssignableFrom(clazz),
+                        type + " spawns " + mob + ", which is not hostile");
+            }
+        }
     }
 
     @Test

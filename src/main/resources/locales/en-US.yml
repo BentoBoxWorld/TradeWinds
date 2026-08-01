@@ -80,7 +80,7 @@ tradewinds:
   encounter:
     guardian_picket: "&3 Guardians rise in your path."
     drowned_raiders: "&3 Drowned surface off the bow - some carry tridents."
-    nautilus_horror: "&5 Something vast and dead uncoils beneath the hull."
+    deep_terror: "&5 Something vast and ancient rises from the deep. Run."
     phantom_flight: "&3 Wings in the dark above the mast."
     pirate_crew: "&c A crewed boat turns toward you. Pirates."
     sea_witch: "&5 A witch adrift, and she has seen you."

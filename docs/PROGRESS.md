@@ -3,6 +3,27 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## The nautilus is a mount, and swimmers were spawning in the air (2026-07-31)
+
+Ben reported the "sea horror" encounter swimming harmlessly away - and he had
+seen our encounter message, so it was ours. Two causes:
+- **ZOMBIE_NAUTILUS is not a monster.** 26.2's `AbstractNautilus extends
+  Tameable, InventoryHolder, Vehicle` - it is a rideable, tameable sea mount
+  with an inventory, so it has no attack goals at all. Replaced with an
+  ELDER_GUARDIAN as the FRONTIER+ deep-water encounter (a flee-not-fight
+  threat), and a test now asserts every encounter mob implements
+  `org.bukkit.entity.Enemy`, so scenery can never be rostered as a threat
+  again.
+- **Water mobs were spawning above the waterline** (seaHeight + 1.5), where a
+  swimmer flops instead of hunting. EncounterType gained a Habitat: swimmers
+  spawn 3 blocks under water, phantoms 14 above, boated crews on the surface.
+Also added debug logging of encounter spawns (gated by `debug:`) so "was that
+one of ours?" is answerable from the console.
+
+NOTE for post-MVP: a tameable sea mount with an inventory is a gift for this
+game mode - nautilus as an alternative to boats, or a late-game hold. Worth
+its own feature.
+
 ## Varied ocean biomes (2026-07-31)
 
 The open sea was a single flat OCEAN everywhere. It now varies through the
