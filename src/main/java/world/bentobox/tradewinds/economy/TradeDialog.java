@@ -57,8 +57,8 @@ public class TradeDialog {
             buttons.add(button("Buy goods", NamedTextColor.AQUA, "Buy this island's trade goods into your hold",
                     () -> openBuy(player, spec, addon.getMarketService().saleCatalog(spec), " - Buying")));
         }
-        buttons.add(button("Outfitter", NamedTextColor.GREEN, "Food, fuel and gear for the sailing life",
-                () -> openBuy(player, spec, addon.getMarketService().outfitterCatalog(spec), " - Outfitter")));
+        buttons.add(button("Outfitter", NamedTextColor.GREEN, "Food, fuel and gear - straight to your pack",
+                () -> openOutfitter(player, spec)));
         buttons.add(button("Shipwright", NamedTextColor.GOLD, "Boats, chest boats and cargo expanders",
                 () -> openShipwright(player, spec)));
         show(player, spec.name() + " Market",
@@ -135,6 +135,41 @@ public class TradeDialog {
     }
 
     /**
+     * The outfitter's shelf: stores for living, bought into the player's pack
+     * rather than the hold - a fishing rod is not cargo, and gear that will
+     * not stack could never fit a bundle anyway.
+     */
+    public void openOutfitter(Player player, IslandSpec spec) {
+        List<ActionButton> buttons = new ArrayList<>();
+        for (Material material : addon.getMarketService().outfitterCatalog(spec)) {
+            addon.getMarketService().playerBuysAt(spec, material).ifPresent(unit -> {
+                String name = MarketService.pretty(material);
+                String each = String.format("$%.2f each - carried in your pack, not the hold", unit);
+                buttons.add(button(String.format("%s x1 - $%.2f", name, unit), NamedTextColor.GREEN, each,
+                        () -> outfitThenReopen(player, spec, material, 1)));
+                if (new org.bukkit.inventory.ItemStack(material).getMaxStackSize() > 1) {
+                    buttons.add(button(String.format("x%d - $%.2f", MID_BATCH, unit * MID_BATCH),
+                            NamedTextColor.GREEN, each,
+                            () -> outfitThenReopen(player, spec, material, MID_BATCH)));
+                }
+            });
+        }
+        if (buttons.isEmpty()) {
+            User.getInstance(player).sendMessage("tradewinds.trade.nothing-for-sale");
+            openMain(player, spec);
+            return;
+        }
+        show(player, spec.name() + " - Outfitter",
+                List.of("Stores for the sailing life - food, fuel and gear", statusLine(player)), buttons,
+                backButton(player, spec), 2);
+    }
+
+    private void outfitThenReopen(Player player, IslandSpec spec, Material material, int amount) {
+        addon.getMarketService().buyToInventory(player, spec, material, amount);
+        openOutfitter(player, spec);
+    }
+
+    /**
      * The shipwright's slipway: hulls to your inventory, expanders to your
      * hold. The cargo progression lives here: boat -> chest boat -> expanders.
      */
@@ -145,7 +180,7 @@ public class TradeDialog {
                     String.format("%s - $%.2f", MarketService.pretty(hull), unit), NamedTextColor.GOLD,
                     "Delivered to your inventory - place it at the dock",
                     () -> {
-                        addon.getMarketService().buyToInventory(player, spec, hull);
+                        addon.getMarketService().buyToInventory(player, spec, hull, 1);
                         openShipwright(player, spec);
                     })));
         }

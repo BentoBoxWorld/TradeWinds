@@ -4,6 +4,7 @@ import java.util.Optional;
 
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -84,34 +85,43 @@ public class MarketService {
     }
 
     /**
-     * Buy an item delivered to the player's inventory rather than the hold -
-     * used for hulls only. Stamped like any purchase.
+     * Buy stores delivered to the player's INVENTORY, not the hold: outfitter
+     * supplies (food, gear, beds, rods) and hulls. These are for using, not
+     * for resale, so they are deliberately NOT customs stamped - which also
+     * stops the outfitter's shelf becoming an arbitrage route. Anything that
+     * will not fit is dropped at the player's feet.
      *
-     * @return true if bought
+     * @return how many were bought
      */
-    public boolean buyToInventory(Player player, IslandSpec spec, Material material) {
+    public int buyToInventory(Player player, IslandSpec spec, Material material, int amount) {
         Optional<Double> unitPrice = playerBuysAt(spec, material);
         Optional<VaultHook> vault = addon.getPlugin().getVault();
-        if (unitPrice.isEmpty() || vault.isEmpty()) {
-            return false;
+        if (unitPrice.isEmpty() || vault.isEmpty() || amount <= 0) {
+            return 0;
         }
         User user = User.getInstance(player);
-        if (!vault.get().has(user, unitPrice.get())) {
+        double balance = vault.get().getBalance(user);
+        int affordable = (int) Math.min(amount, Math.floor(balance / unitPrice.get()));
+        if (affordable <= 0) {
             user.sendMessage("tradewinds.trade.cannot-afford");
-            return false;
+            thud(player);
+            return 0;
         }
-        TWTradeEvent event = new TWTradeEvent(player, spec, material, 1, unitPrice.get(), false);
+        TWTradeEvent event = new TWTradeEvent(player, spec, material, affordable, unitPrice.get(), false);
         org.bukkit.Bukkit.getPluginManager().callEvent(event);
         if (event.isCancelled()) {
-            return false;
+            thud(player);
+            return 0;
         }
-        vault.get().withdraw(user, unitPrice.get());
-        ItemStack item = stamp(new ItemStack(material));
-        player.getInventory().addItem(item).values()
+        double total = PriceModel.round2(affordable * unitPrice.get());
+        vault.get().withdraw(user, total);
+        ItemStack stores = new ItemStack(material, affordable);
+        player.getInventory().addItem(stores).values()
                 .forEach(left -> player.getWorld().dropItem(player.getLocation(), left));
-        user.sendMessage("tradewinds.trade.bought", "[amount]", "1", "[material]", pretty(material), "[price]",
-                String.format("%.2f", unitPrice.get()));
-        return true;
+        user.sendMessage("tradewinds.trade.bought", "[amount]", String.valueOf(affordable), "[material]",
+                pretty(material), "[price]", String.format("%.2f", total));
+        chime(player);
+        return affordable;
     }
 
     /**
@@ -211,6 +221,7 @@ public class MarketService {
         int count = Math.min(addon.getHoldService().count(player, material, sellableFilter()), amount);
         if (count <= 0) {
             User.getInstance(player).sendMessage("tradewinds.trade.not-stamped");
+            thud(player);
             return 0;
         }
         TWTradeEvent event = new TWTradeEvent(player, spec, material, count, unitPrice.get(), true);
@@ -224,6 +235,7 @@ public class MarketService {
         addon.getIslandDataManager().adjustStock(spec, TradeCategory.of(material), removed);
         User.getInstance(player).sendMessage("tradewinds.trade.sold", "[amount]", String.valueOf(removed),
                 "[material]", pretty(material), "[price]", String.format("%.2f", total));
+        chime(player);
         return removed;
     }
 
@@ -245,11 +257,13 @@ public class MarketService {
         int affordable = (int) Math.min(amount, Math.floor(balance / unitPrice.get()));
         if (affordable <= 0) {
             user.sendMessage("tradewinds.trade.cannot-afford");
+            thud(player);
             return 0;
         }
         TWTradeEvent event = new TWTradeEvent(player, spec, material, affordable, unitPrice.get(), false);
         org.bukkit.Bukkit.getPluginManager().callEvent(event);
         if (event.isCancelled()) {
+            thud(player);
             return 0;
         }
         // Limit by hold space: add first, pay for what fit. Bought goods are
@@ -257,6 +271,7 @@ public class MarketService {
         int added = addon.getHoldService().add(player, stamp(new ItemStack(material, affordable)));
         if (added <= 0) {
             user.sendMessage("tradewinds.trade.no-hold-space");
+            thud(player);
             return 0;
         }
         double total = PriceModel.round2(added * unitPrice.get());
@@ -264,6 +279,7 @@ public class MarketService {
         addon.getIslandDataManager().adjustStock(spec, TradeCategory.of(material), -added);
         user.sendMessage("tradewinds.trade.bought", "[amount]", String.valueOf(added), "[material]",
                 pretty(material), "[price]", String.format("%.2f", total));
+        chime(player);
         return added;
     }
 
@@ -281,17 +297,20 @@ public class MarketService {
         int owned = addon.getPlayerDataManager().get(player.getUniqueId()).getExpandersPurchased();
         if (owned >= addon.getSettings().getExpanderCap()) {
             user.sendMessage("tradewinds.trade.expander-cap");
+            thud(player);
             return false;
         }
         double price = PriceModel.expanderPrice(addon.getSettings().getExpanderBasePrice(), owned);
         if (!vault.get().has(user, price)) {
             user.sendMessage("tradewinds.trade.cannot-afford");
+            thud(player);
             return false;
         }
-        // Must go into the hold (the chest boat) - expanders never ride pockets
+        // An expander IS hold - it can only be stowed in a chest boat
         int added = addon.getHoldService().add(player, expanderItem());
         if (added <= 0) {
-            user.sendMessage("tradewinds.trade.no-hold-space");
+            user.sendMessage("tradewinds.trade.needs-chest-boat");
+            thud(player);
             return false;
         }
         vault.get().withdraw(user, price);
@@ -299,6 +318,7 @@ public class MarketService {
         data.setExpandersPurchased(owned + 1);
         addon.getPlayerDataManager().save(player.getUniqueId());
         user.sendMessage("tradewinds.trade.expander-bought", "[price]", String.format("%.2f", price));
+        chime(player);
         return true;
     }
 
@@ -321,5 +341,20 @@ public class MarketService {
 
     static String pretty(Material material) {
         return PriceEngine.prettify(material.name());
+    }
+
+    /**
+     * A deal struck: bright coin-on-the-counter chime. Dialogs cover the chat
+     * box, so the sound carries the outcome.
+     */
+    private void chime(Player player) {
+        player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 0.8f, 1.6f);
+    }
+
+    /**
+     * A deal refused: dull anvil thud.
+     */
+    private void thud(Player player) {
+        player.playSound(player.getLocation(), Sound.BLOCK_ANVIL_LAND, 0.5f, 1.4f);
     }
 }

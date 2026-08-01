@@ -3,6 +3,27 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## Trade feedback sounds (2026-07-31)
+
+Dialogs blur and cover the chat box, so refusal messages went unseen: every
+market outcome now carries audio - BLOCK_NOTE_BLOCK_PLING (bright, pitch 1.6)
+on a successful sell/buy/expander purchase, BLOCK_ANVIL_LAND (dull) on every
+refusal path (cannot afford, no hold space, unstamped goods, expander cap,
+missing chest boat, cancelled TWTradeEvent).
+
+## Playtest fix: outfitter stores go to the pack (2026-07-31)
+
+Buying a fishing rod failed with "no hold space" despite free space: gear does
+not stack to 64, and `HoldService.addToBundle` only accepts 64-stackables, so
+with no chest boat the hold could never take it. Ben's call (right on both
+counts): outfitter goods are consumables/equipment - deliver them to the
+player INVENTORY and do not customs-stamp them. Unstamped also means the
+outfitter shelf cannot be arbitraged between islands, which keeps it a
+service rather than a commodity market. `buyToInventory` generalized to an
+amount (hulls reuse it), outfitter got its own dialog page offering x1 for
+unstackables and x1/x16 for stackables, and the expander failure message now
+names the real cause ("buy a chest boat first"). 140 tests green.
+
 ## Stage 5b — Spawn is a real trading island (2026-07-31)
 
 Ben: make spawn a proper named island with dock, plaza and a config-picked

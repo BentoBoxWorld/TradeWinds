@@ -311,6 +311,18 @@ have not visited). The protection flip and stamps work immediately.
       catalog has no fuel; INDUSTRIAL sells iron sword/shield/armor; farms sell beds;
       FISHING sells rods; MINING an iron pickaxe; LUXURY golden apples. All priced by
       the engine (gear prices derive from their recipes).
+      - ~~BUG: buying a fishing rod was refused for "no hold space" with 8 free~~
+        FIXED: outfitter stores now go to your INVENTORY, not the hold, and are NOT
+        stamped (they are for using, not reselling - which also stops bread arbitrage).
+        Unstackable gear could never enter a bundle, which was the actual bug.
+        Retest: buy a rod with no chest boat - it lands in your pack.
+      - [ ] Non-stacking gear (rod, sword, bed) offers only x1; stackables also offer x16.
+      - [ ] Buying an expander without a chest boat now says "buy one from the
+            shipwright first" instead of a vague hold message.
+- [ ] **Trade sounds** (the dialog blurs and covers chat, so outcomes are audible):
+      every successful buy/sell/expander purchase plays a bright pling; every refusal
+      (cannot afford, no hold space, unstamped goods, expander cap, no chest boat)
+      plays a dull anvil thud.
 - [ ] **Wild islets**: row between trading islands through fresh ocean — small
       unnamed islands (~140 across) in varied vanilla biomes, no dock/market/name
       announcement. You can break/place/farm/sleep there and in open ocean

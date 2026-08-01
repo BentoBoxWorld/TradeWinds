@@ -66,6 +66,7 @@ tradewinds:
     bought: "&a Bought [amount] x [material] for $[price]."
     cannot-afford: "&c You cannot afford that."
     no-hold-space: "&c No room in your hold - stow cargo in your chest boat, expanders or bundles."
+    needs-chest-boat: "&c Expanders are stowed in a chest boat - buy one from the shipwright first."
     expander-bought: "&6 Cargo expander purchased for $[price] - stowed in your hold."
     expander-cap: "&c Your boat cannot take any more expanders."
   interstice:
