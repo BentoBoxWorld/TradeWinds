@@ -59,13 +59,30 @@ class TradeWindsBiomeProviderTest extends CommonTestSetup {
     }
 
     @Test
-    void testOpenOceanBiomes() {
+    void testOpenOceanVariesThroughOceanBiomes() {
         // Sampled far from the origin - the spawn island sits at 0,0
         WorldInfo wi = worldInfo(Environment.NORMAL);
-        int x = 100_000;
-        assertEquals(Biome.OCEAN, provider.getBiome(wi, x, settings.getSeaHeight(), x));
-        assertEquals(Biome.OCEAN, provider.getBiome(wi, x, 10, x));
-        assertEquals(settings.getDefaultAirBiome(), provider.getBiome(wi, x, settings.getSeaHeight() + 1, x));
+        java.util.Set<Biome> seen = new java.util.HashSet<>();
+        java.util.Set<Biome> oceans = GalaxyEngine.oceanBiomes().stream()
+                .map(key -> org.bukkit.Registry.BIOME.get(org.bukkit.NamespacedKey.fromString(key)))
+                .collect(java.util.stream.Collectors.toSet());
+        for (int x = 100_000; x < 140_000; x += 500) {
+            Biome biome = provider.getBiome(wi, x, settings.getSeaHeight(), 12_345);
+            assertTrue(oceans.contains(biome), "Open sea should be an ocean biome, got " + biome.getKey());
+            // The same column above water reads the same sea
+            assertEquals(biome, provider.getBiome(wi, x, settings.getSeaHeight() + 1, 12_345));
+            seen.add(biome);
+        }
+        assertTrue(seen.size() > 1, "The open sea should vary");
+    }
+
+    @Test
+    void testUniformOceanWhenVaryingIsOff() {
+        settings.setVaryOceanBiomes(false);
+        WorldInfo wi = worldInfo(Environment.NORMAL);
+        assertEquals(Biome.OCEAN, provider.getBiome(wi, 100_000, settings.getSeaHeight(), 100_000));
+        assertEquals(settings.getDefaultAirBiome(),
+                provider.getBiome(wi, 100_000, settings.getSeaHeight() + 1, 100_000));
     }
 
     @Test

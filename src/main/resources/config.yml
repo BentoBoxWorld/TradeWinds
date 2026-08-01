@@ -277,6 +277,10 @@ world:
   sea-height: 70
   # Base y below which the ocean floor terrain noise starts.
   sea-floor: 25
+  # Vary the open sea through the ocean biomes (frozen, cold, ocean, lukewarm, warm)
+  # from a seeded temperature field. Transitions are gradual: warm sea never borders
+  # frozen sea. False uses default-biome everywhere.
+  vary-ocean-biomes: true
   # Water block for the overworld ocean.
   water-block: WATER
   # Allow vanilla cave generation under the ocean floor.

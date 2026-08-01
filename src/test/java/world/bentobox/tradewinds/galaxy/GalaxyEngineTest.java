@@ -308,6 +308,41 @@ class GalaxyEngineTest {
     }
 
     @Test
+    void testOceanBiomesVaryButNeverJump() {
+        GalaxyEngine engine = new GalaxyEngine(config(SEED, 0.5));
+        java.util.List<String> order = GalaxyEngine.oceanBiomes();
+        java.util.Set<String> seen = new java.util.HashSet<>();
+        int previous = -1;
+        // Sail a long line, sampling every 50 blocks
+        for (int x = -40_000; x <= 40_000; x += 50) {
+            String key = engine.oceanBiomeKeyAt(x, 12_345);
+            int index = order.indexOf(key);
+            assertTrue(index >= 0, "Unknown ocean biome: " + key);
+            seen.add(key);
+            if (previous >= 0) {
+                assertTrue(Math.abs(index - previous) <= 1,
+                        "Ocean temperature jumped from " + order.get(previous) + " to " + key + " at x=" + x);
+            }
+            previous = index;
+        }
+        // The voyage crosses genuinely different water
+        assertTrue(seen.size() >= 3, "Ocean is too uniform: only " + seen);
+    }
+
+    @Test
+    void testOceanBiomesAreSeeded() {
+        GalaxyEngine a = new GalaxyEngine(config(SEED, 0.5));
+        GalaxyEngine b = new GalaxyEngine(config(SEED, 0.5));
+        GalaxyEngine other = new GalaxyEngine(config(SEED + 1, 0.5));
+        boolean differs = false;
+        for (int x = 0; x < 20_000; x += 500) {
+            assertEquals(a.oceanBiomeKeyAt(x, 0), b.oceanBiomeKeyAt(x, 0));
+            differs |= !a.oceanBiomeKeyAt(x, 0).equals(other.oceanBiomeKeyAt(x, 0));
+        }
+        assertTrue(differs, "A different seed should give a different sea");
+    }
+
+    @Test
     void testNamesAreDistinctEnough() {
         GalaxyEngine engine = new GalaxyEngine(config(SEED, 1.0));
         List<IslandSpec> list = islands(engine, 7);

@@ -3,6 +3,23 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## Varied ocean biomes (2026-07-31)
+
+The open sea was a single flat OCEAN everywhere. It now varies through the
+five ocean biomes from a seeded temperature field: a new pure `Noise` helper
+(smoothstep value noise over a 3000-block lattice, seeded like everything
+else) drives `GalaxyEngine.oceanBiomeKeyAt`.
+Ben's blending worry has a structural answer rather than a blending pass:
+because the field is CONTINUOUS and the biomes are mapped in TEMPERATURE
+ORDER (frozen, cold, ocean, lukewarm, warm), neighbouring water can only
+differ by one step - warm can never border frozen. A test walks 80,000 blocks
+asserting the index never jumps by more than one, and that a voyage crosses
+at least three different seas.
+The provider declares all ocean biomes in getBiomes; `world.vary-ocean-biomes`
+turns it off. FROZEN islands keep their frozen-ocean approach ring, which now
+sits naturally inside cold water where the field allows.
+152 tests green.
+
 ## Playtest fix: the harmless sea witch (2026-07-31)
 
 The witch adrift did nothing and died easily. Two causes: a mob riding a boat

@@ -502,3 +502,12 @@ database (or use `/twadmin delete` on it), then restart.
 - [ ] Opening the chart at sea (not at an island) does NOT scan — discovery still
       requires making landfall.
 - [ ] `chart.port-scan: 0` disables the free scan.
+
+### Stage 5i — varied ocean biomes
+**Needs fresh chunks** (biomes are baked at generation).
+- [ ] Sail a long way through open water: the sea changes through frozen, cold,
+      ordinary, lukewarm and warm ocean — water colour, fog and fish change with it.
+- [ ] Transitions are gradual: you never find warm water directly against frozen.
+      (A test walks 80,000 blocks asserting the temperature never skips a step.)
+- [ ] The same seed gives the same seas; a different seed gives different ones.
+- [ ] `world.vary-ocean-biomes: false` returns the world to a single ocean biome.

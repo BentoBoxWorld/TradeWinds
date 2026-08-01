@@ -628,6 +628,13 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "world.default-game-mode")
     private GameMode defaultGameMode = GameMode.SURVIVAL;
 
+    @ConfigComment("Vary the open sea through the ocean biomes (frozen, cold, ocean, lukewarm,")
+    @ConfigComment("warm) using a seeded temperature field, so voyages cross visibly different")
+    @ConfigComment("water. Transitions are always gradual - warm sea never borders frozen sea.")
+    @ConfigComment("False uses the single default-biome everywhere.")
+    @ConfigEntry(path = "world.vary-ocean-biomes")
+    private boolean varyOceanBiomes = true;
+
     @ConfigComment("The default biome for the ocean (at and below sea level)")
     @ConfigEntry(path = "world.default-biome")
     private Biome defaultBiome;
@@ -2541,6 +2548,8 @@ public class Settings implements WorldSettings {
     public void setIntersticeSeaFloor(int intersticeSeaFloor) { this.intersticeSeaFloor = intersticeSeaFloor; }
     public Material getIntersticeWaterBlock() { return intersticeWaterBlock == null ? Material.WATER : intersticeWaterBlock; }
     public void setIntersticeWaterBlock(Material intersticeWaterBlock) { this.intersticeWaterBlock = intersticeWaterBlock; }
+    public boolean isVaryOceanBiomes() { return varyOceanBiomes; }
+    public void setVaryOceanBiomes(boolean varyOceanBiomes) { this.varyOceanBiomes = varyOceanBiomes; }
     public Biome getDefaultAirBiome() { return defaultAirBiome == null ? Biome.OCEAN : defaultAirBiome; }
     public void setDefaultAirBiome(Biome defaultAirBiome) { this.defaultAirBiome = defaultAirBiome; }
 

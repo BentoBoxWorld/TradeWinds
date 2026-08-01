@@ -44,6 +44,21 @@ public class GalaxyEngine {
     private static final long SALT_WILD_X = 0x317DBEA8L;
     private static final long SALT_WILD_Z = 0x317DBEA9L;
     private static final long SALT_WILD_BIOME = 0x317DBEAAL;
+    private static final long SALT_OCEAN_TEMP = 0x0CEA17E1L;
+
+    /**
+     * Scale of the ocean's temperature regions, in blocks. Broad enough that a
+     * voyage crosses a few of them.
+     */
+    private static final int OCEAN_TEMPERATURE_SCALE = 3000;
+
+    /**
+     * Ocean biomes in temperature order. Because the temperature field is
+     * continuous and this mapping is monotonic, neighbouring water can only
+     * differ by one step - warm sea never borders frozen sea.
+     */
+    private static final List<String> OCEAN_BIOMES = List.of("minecraft:frozen_ocean", "minecraft:cold_ocean",
+            "minecraft:ocean", "minecraft:lukewarm_ocean", "minecraft:warm_ocean");
 
     /** Vanilla biomes wild islets draw from - Minecraft-stuff land. */
     private static final List<String> WILD_BIOMES = List.of("minecraft:plains", "minecraft:forest",
@@ -404,6 +419,28 @@ public class GalaxyEngine {
             }
         }
         return Optional.empty();
+    }
+
+    /**
+     * The open sea's biome at a position: a seeded temperature field mapped to
+     * the ocean biomes in temperature order, so the water varies from frozen
+     * through to warm as you sail, and always gradually.
+     *
+     * @param blockX block x
+     * @param blockZ block z
+     * @return an ocean biome key
+     */
+    public String oceanBiomeKeyAt(int blockX, int blockZ) {
+        double temperature = Noise.at(config.seed(), SALT_OCEAN_TEMP, blockX, blockZ, OCEAN_TEMPERATURE_SCALE);
+        int index = Math.clamp((int) (temperature * OCEAN_BIOMES.size()), 0, OCEAN_BIOMES.size() - 1);
+        return OCEAN_BIOMES.get(index);
+    }
+
+    /**
+     * Every ocean biome the sea can take - the world must declare them all.
+     */
+    public static List<String> oceanBiomes() {
+        return OCEAN_BIOMES;
     }
 
     /**

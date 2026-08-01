@@ -13,6 +13,7 @@ import org.bukkit.generator.BiomeProvider;
 import org.bukkit.generator.WorldInfo;
 
 import world.bentobox.tradewinds.TradeWinds;
+import world.bentobox.tradewinds.galaxy.GalaxyEngine;
 import world.bentobox.tradewinds.galaxy.IslandType;
 
 /**
@@ -39,9 +40,15 @@ public class TradeWindsBiomeProvider extends BiomeProvider {
         if (worldInfo.getEnvironment() == org.bukkit.World.Environment.NETHER) {
             return addon.getSettings().getDefaultNetherBiome();
         }
-        Optional<String> key = addon.getGalaxyEngine(worldInfo.getSeed()).biomeKeyAt(x, z);
+        GalaxyEngine engine = addon.getGalaxyEngine(worldInfo.getSeed());
+        Optional<String> key = engine.biomeKeyAt(x, z);
         if (key.isPresent()) {
             return resolve(key.get());
+        }
+        if (addon.getSettings().isVaryOceanBiomes()) {
+            // The open sea, varying from frozen to warm with the seeded
+            // temperature field
+            return resolve(engine.oceanBiomeKeyAt(x, z));
         }
         return y <= addon.getSettings().getSeaHeight()
                 ? addon.getSettings().getDefaultBiome()
@@ -82,10 +89,12 @@ public class TradeWindsBiomeProvider extends BiomeProvider {
                 }
             });
         }
-        Biome frozen = resolve("minecraft:frozen_ocean");
-        if (!biomes.contains(frozen)) {
-            biomes.add(frozen);
-        }
+        GalaxyEngine.oceanBiomes().forEach(key -> {
+            Biome b = resolve(key);
+            if (!biomes.contains(b)) {
+                biomes.add(b);
+            }
+        });
         return biomes;
     }
 }
