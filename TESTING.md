@@ -476,8 +476,9 @@ database (or use `/twadmin delete` on it), then restart.
       star chart. `chart.sighting-range` tunes this.
 
 ### Stage 5g — recovery: cheap first pouch and the harbourmaster's charity
-- [ ] A first Trading Pouch costs $50 (was $250); the second $150, the third $450.
-      The 3-pouch cap — not the price — is what makes expanders worth buying.
+- [ ] Trading Pouches cost a flat $50 each, up to the 3-pouch cap. (Escalating prices
+      were dropped: dropping a pouch before buying reset the count. The cap — not the
+      price — is what makes expanders worth buying.)
 - [ ] **Soft-lock check**: with no pouch, no expander and under $50, the Shipwright
       shows "Harbourmaster's charity": claim it for a free pouch (plus a boat if you
       have none). You can immediately buy goods and trade again.

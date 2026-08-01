@@ -56,13 +56,13 @@ class CharityTest extends CommonTestSetup {
     }
 
     @Test
-    void testPouchPriceEscalates() {
-        when(hold.pouchCount(mockPlayer)).thenReturn(0);
-        assertEquals(50.0, service.pouchPrice(mockPlayer));
-        when(hold.pouchCount(mockPlayer)).thenReturn(1);
-        assertEquals(150.0, service.pouchPrice(mockPlayer));
-        when(hold.pouchCount(mockPlayer)).thenReturn(2);
-        assertEquals(450.0, service.pouchPrice(mockPlayer));
+    void testPouchPriceIsFlatSoItCannotBeGamed() {
+        // Pricing by carried pouches would be defeated by dropping one before
+        // buying and picking it up again; the cap does the limiting instead
+        for (int carried = 0; carried < 3; carried++) {
+            when(hold.pouchCount(mockPlayer)).thenReturn(carried);
+            assertEquals(settings.getPouchPrice(), service.pouchPrice(mockPlayer));
+        }
     }
 
     @Test

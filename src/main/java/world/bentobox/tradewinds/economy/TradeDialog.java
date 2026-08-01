@@ -189,8 +189,8 @@ public class TradeDialog {
         if (pouches < maxPouches) {
             buttons.add(button(String.format("Trading Pouch - $%.0f",
                     addon.getMarketService().pouchPrice(player)), NamedTextColor.GOLD,
-                    "Holds 64 items (" + pouches + "/" + maxPouches + " carried). Each further pouch costs "
-                            + "more; expanders carry far more per slot.",
+                    "Holds 64 items (" + pouches + "/" + maxPouches + " carried). Cargo expanders carry "
+                            + "27 stacks each - the way to a real hold.",
                     () -> {
                         addon.getMarketService().buyPouch(player);
                         openShipwright(player, spec);

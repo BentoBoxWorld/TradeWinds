@@ -359,13 +359,12 @@ public class MarketService {
      * @return true if bought
      */
     /**
-     * What the next pouch costs: cheap for a sailor with none, escalating for
-     * each one already carried.
+     * What a pouch costs. Flat: pricing by how many the sailor carries would be
+     * defeated by dropping one before buying and picking it up afterwards. The
+     * max-bundles cap does the limiting instead.
      */
     public double pouchPrice(Player player) {
-        return addon.getSettings().getPouchPrice()
-                * Math.pow(addon.getSettings().getPouchPriceMultiplier(),
-                        addon.getHoldService().pouchCount(player));
+        return addon.getSettings().getPouchPrice();
     }
 
     /**

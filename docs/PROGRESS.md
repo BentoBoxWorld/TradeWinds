@@ -12,10 +12,13 @@ so a dead player could not earn the money to buy the thing that lets them
 earn. A hard soft-lock, and my fault for pricing the entry ticket as an
 upgrade.
 Two fixes:
-- **First pouch $50** (was 250), each further one x3 (50/150/450). The
-  3-pouch CAP, not the price, is what makes expanders necessary - so pouches
-  can be affordable without undermining the money sink. A test asserts the
-  starting balance always covers a pouch plus a boat.
+- **Pouches $50 flat** (was 250). First tried escalating prices (50/150/450)
+  keyed off carried pouches; Ben immediately spotted the hole - drop a pouch,
+  buy at the base price, pick it back up. Any per-pouch escalation is
+  defeated the same way, so the price is flat and the max-bundles CAP does
+  the limiting; that is also what keeps expanders necessary. A test asserts
+  the starting balance always covers a pouch plus a boat, and another pins
+  the price flat regardless of how many are carried.
 - **The harbourmaster's charity**: at any market, a sailor with no cargo
   space, no boat and too little money to buy either can claim a free pouch
   (and a hull if needed), on a config cooldown (15 min). Unabusable by
