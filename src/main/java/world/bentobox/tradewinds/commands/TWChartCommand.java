@@ -31,6 +31,13 @@ public class TWChartCommand extends CompositeCommand {
     @Override
     public boolean execute(User user, String label, List<String> args) {
         TradeWinds addon = getAddon();
+        // At a port? Copy its harbour charts first - a free scan of the
+        // neighbouring islands
+        List<IslandSpec> scanned = addon.getPlayerDataManager().portScan(user.getPlayer());
+        if (!scanned.isEmpty()) {
+            user.sendMessage("tradewinds.chart.port-scan", TextVariables.NUMBER,
+                    String.valueOf(scanned.size()));
+        }
         // In a boat (and not asking for the text list): raise the hologram
         // compass - visual targets to row toward
         boolean wantList = !args.isEmpty() && args.get(0).equalsIgnoreCase("list");

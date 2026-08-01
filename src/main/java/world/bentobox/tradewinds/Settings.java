@@ -202,6 +202,12 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "chart.hologram-max")
     private int chartHologramMax = 12;
 
+    @ConfigComment("Islands added to a sailor's chart for free when they open the chart while at a")
+    @ConfigComment("trading island - the port's own harbour charts. 8 matches the warp dialog, so")
+    @ConfigComment("docking anywhere leaves with a full menu of onward routes. 0 disables.")
+    @ConfigEntry(path = "chart.port-scan")
+    private int portScan = 8;
+
     @ConfigComment("How close a sailor must pass an island to chart it, in blocks. Slightly beyond")
     @ConfigComment("island waters (distance-between-islands) so islands are charted as they are")
     @ConfigComment("sighted. Only charted islands can be warped to.")
@@ -2446,6 +2452,8 @@ public class Settings implements WorldSettings {
     public void setChartHologramSeconds(int chartHologramSeconds) { this.chartHologramSeconds = chartHologramSeconds; }
     public int getChartHologramMax() { return chartHologramMax; }
     public void setChartHologramMax(int chartHologramMax) { this.chartHologramMax = chartHologramMax; }
+    public int getPortScan() { return portScan; }
+    public void setPortScan(int portScan) { this.portScan = portScan; }
     public int getChartSightingRange() { return chartSightingRange; }
     public void setChartSightingRange(int chartSightingRange) { this.chartSightingRange = chartSightingRange; }
     public boolean isChartOnBoarding() { return chartOnBoarding; }

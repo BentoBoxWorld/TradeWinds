@@ -48,6 +48,7 @@ tradewinds:
     clean: "Clean"
   chart:
     charted: "Charted [name]!"
+    port-scan: "&b You copy the harbour charts: [number] islands added to yours."
     holograms-shown: "&b Your chart shimmers into the air - row toward a name."
     starchart-given: "&b The Star Chart is yours - hold it to see your world."
     empty: "&c Your chart is empty - row into an island's waters to chart it."

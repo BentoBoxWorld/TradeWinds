@@ -3,6 +3,19 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## The port scan: charts spread from port to port (2026-07-31)
+
+Discovery was sighting-only, so a player who warped everywhere never learned
+anything new and the warp dialog stayed at the starter cluster. Ben's fix:
+opening the chart AT a trading island copies that port's harbour charts -
+the nearest `chart.port-scan` (8, matching the warp dialog cap) islands are
+charted free. Implemented as `PlayerDataManager.portScan(player)`, called
+from the chart command and from ChartHolograms.show (so boarding a boat at a
+port scans too). Requires being within the protection range - at the port,
+not merely in its waters - so discovery still needs landfall, and each port
+teaches its own neighbourhood, which spreads the map outward naturally as
+players trade.
+
 ## Recovery: the pouch soft-lock and the harbourmaster (2026-07-31)
 
 Ben died, respawned with under $250, and could not afford a pouch. Worse than

@@ -134,6 +134,9 @@ chart:
   hologram-duration-seconds: 15
   # Maximum holograms shown at once (nearest islands first).
   hologram-max: 12
+  # Islands added to a sailor's chart for free when they open the chart at a trading
+  # island - the port's own harbour charts. 8 matches the warp dialog. 0 disables.
+  port-scan: 8
   # How close a sailor must pass an island to chart it. Slightly beyond island waters,
   # so islands are charted as they are sighted. Only charted islands can be warped to.
   sighting-range: 1200

@@ -89,6 +89,13 @@ public class ChartHolograms {
      */
     public void show(Player player) {
         clear(player.getUniqueId());
+        // Boarding or charting at a port copies its harbour charts
+        List<IslandSpec> scanned = addon.getPlayerDataManager().portScan(player);
+        if (!scanned.isEmpty()) {
+            world.bentobox.bentobox.api.user.User.getInstance(player).sendMessage("tradewinds.chart.port-scan",
+                    world.bentobox.bentobox.api.localization.TextVariables.NUMBER,
+                    String.valueOf(scanned.size()));
+        }
         List<IslandSpec> charted = chartedIslands(player);
         if (charted.isEmpty()) {
             return;

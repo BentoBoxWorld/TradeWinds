@@ -485,3 +485,14 @@ database (or use `/twadmin delete` on it), then restart.
 - [ ] The charity refuses if you are NOT destitute ("You'll manage"), and again
       within 15 minutes of a claim ("Come back in N minutes").
 - [ ] Charity goods cannot be sold (unstamped), so repeat claims yield no money.
+
+### Stage 5h — the port scan (free chart at a trading island)
+- [ ] Stand on any trading island and run `/tw chart` (or board a boat there): "You
+      copy the harbour charts: N islands added to yours."
+- [ ] Those islands immediately appear in `/tw chart`, the hologram compass, the star
+      chart, and — the point of it — the warp dialog, so docking anywhere leaves you
+      with a full menu of onward routes.
+- [ ] Running it again at the same port adds nothing (they are already charted).
+- [ ] Opening the chart at sea (not at an island) does NOT scan — discovery still
+      requires making landfall.
+- [ ] `chart.port-scan: 0` disables the free scan.
