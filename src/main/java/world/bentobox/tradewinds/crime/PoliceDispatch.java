@@ -62,16 +62,49 @@ public class PoliceDispatch {
         if (toIsland.lengthSquared() < 0.01) {
             toIsland = new Vector(1, 0, 0);
         }
-        Location spot = from.clone().add(toIsland.normalize().multiply(INTERCEPT_DISTANCE));
-        spot.setY(addon.getSettings().getSeaHeight() - 2.0);
+        Location spot = openWater(from.clone().add(toIsland.normalize().multiply(INTERCEPT_DISTANCE)), from);
+        if (spot == null) {
+            // Ashore in the market: there is no water to launch a patrol from,
+            // and a guardian spawned on a plaza just flops about. The caller
+            // turns this into a straight confiscation instead.
+            return units;
+        }
         for (int i = 0; i < count; i++) {
-            Location at = spot.clone().add(Math.random() * 6 - 3, 0, Math.random() * 6 - 3);
-            Entity unit = spawn(at, i % 3 == 0 ? EntityType.GUARDIAN : EntityType.DROWNED, player);
+            Location at = openWater(spot.clone().add(Math.random() * 6 - 3, 0, Math.random() * 6 - 3), from);
+            Entity unit = at == null ? null : spawn(at, i % 3 == 0 ? EntityType.GUARDIAN : EntityType.DROWNED,
+                    player);
             if (unit != null) {
                 units.add(unit);
             }
         }
         return units;
+    }
+
+    /**
+     * The nearest sea-level water column to a spot, searching outward, or null
+     * if there is none within reach. Police are sailors: they need somewhere to
+     * be.
+     *
+     * @param spot the preferred position
+     * @param fallbackToward searched around as well, so a patrol still launches
+     *        when the ideal intercept point happens to be inland
+     * @return a water location, or null
+     */
+    private Location openWater(Location spot, Location fallbackToward) {
+        int seaY = addon.getSettings().getSeaHeight();
+        for (Location candidate : new Location[] { spot, fallbackToward }) {
+            for (int radius = 0; radius <= 24; radius += 4) {
+                for (int attempt = 0; attempt < 8; attempt++) {
+                    double angle = attempt * Math.PI / 4;
+                    Location at = candidate.clone().add(Math.cos(angle) * radius, 0, Math.sin(angle) * radius);
+                    at.setY(seaY - 1.0);
+                    if (at.getBlock().getType() == org.bukkit.Material.WATER) {
+                        return at;
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     /**

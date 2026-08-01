@@ -180,13 +180,39 @@ public class CustomsService {
 
     /**
      * Caught at the border: launch the patrol and start the clock.
+     * <p>
+     * A title alone was not enough in play - it flashes and is gone, and a
+     * player who blinks has no idea what happened. The chat line stays.
      */
     private void detect(Player player, IslandSpec island, int aboard, boolean flagged) {
         User user = User.getInstance(player);
+        List<Entity> units = police.dispatch(player, island);
+        if (units.isEmpty()) {
+            // Nowhere to launch a boat from: the smuggler is ashore in the
+            // market itself, so there is no chase to have - customs just take
+            // the cargo off them
+            seize(player, island);
+            return;
+        }
         user.sendMessage(flagged ? "tradewinds.customs.flagged" : "tradewinds.customs.detected",
                 "[name]", island.name(), TextVariables.NUMBER, String.valueOf(aboard));
-        List<Entity> units = police.dispatch(player, island);
+        user.sendMessage("tradewinds.customs.detected-chat", "[name]", island.name(), TextVariables.NUMBER,
+                String.valueOf(aboard));
         chases.put(player.getUniqueId(), new Chase(island, System.currentTimeMillis(), units));
+        addon.log("Customs at " + island.name() + " detected " + aboard + " contraband on " + player.getName()
+                + " - patrol of " + units.size() + " dispatched");
+    }
+
+    /**
+     * Confiscation with no chase: the player is standing in the market, and
+     * there is nowhere for a patrol boat to come from.
+     */
+    private void seize(Player player, IslandSpec island) {
+        int seized = confiscate(player);
+        double fine = charge(player, seized);
+        User.getInstance(player).sendMessage("tradewinds.customs.seized", TextVariables.NUMBER,
+                String.valueOf(seized), "[amount]", format(fine), "[name]", island.name());
+        addon.getReputationService().record(player, Crime.SMUGGLING);
     }
 
     /**
@@ -238,6 +264,20 @@ public class CustomsService {
      * cargo is destroyed rather than dropped - customs seized it.
      */
     void caught(Player player, Chase chase) {
+        int seized = confiscate(player);
+        double fine = charge(player, seized);
+        User.getInstance(player).sendMessage("tradewinds.customs.caught", TextVariables.NUMBER,
+                String.valueOf(seized), "[amount]", format(fine), "[name]", chase.island().name());
+        addon.getReputationService().record(player, Crime.SMUGGLING);
+    }
+
+    /**
+     * Take every scrap of contraband out of the hold.
+     *
+     * @param player the smuggler
+     * @return how much was seized
+     */
+    private int confiscate(Player player) {
         int seized = 0;
         for (String name : contrabandNames()) {
             Material material = Material.matchMaterial(name);
@@ -245,19 +285,31 @@ public class CustomsService {
                 seized += addon.getHoldService().remove(player, material, Integer.MAX_VALUE, stack -> true);
             }
         }
+        return seized;
+    }
+
+    /**
+     * Charge the smuggling fine, taking what they have if they cannot cover it
+     * - a debt would only be one more thing to run from.
+     *
+     * @param player the smuggler
+     * @param seized how much contraband was taken
+     * @return what was actually paid
+     */
+    private double charge(Player player, int seized) {
         double fine = seized * addon.getSettings().getSmugglingFinePerItem();
         VaultHook vault = addon.getPlugin().getVault().orElse(null);
-        User user = User.getInstance(player);
-        if (vault != null && fine > 0) {
-            // Take what they have if they cannot cover it - a debt would just
-            // be another thing to run from
-            double payable = Math.min(fine, vault.getBalance(user));
-            vault.withdraw(user, payable);
-            fine = payable;
+        if (vault == null || fine <= 0) {
+            return 0;
         }
-        user.sendMessage("tradewinds.customs.caught", TextVariables.NUMBER, String.valueOf(seized),
-                "[amount]", vault == null ? "0" : vault.format(fine), "[name]", chase.island().name());
-        addon.getReputationService().record(player, Crime.SMUGGLING);
+        User user = User.getInstance(player);
+        double payable = Math.min(fine, vault.getBalance(user));
+        vault.withdraw(user, payable);
+        return payable;
+    }
+
+    private String format(double amount) {
+        return addon.getPlugin().getVault().map(v -> v.format(amount)).orElse(String.valueOf(amount));
     }
 
     /**
@@ -322,6 +374,18 @@ public class CustomsService {
      * @param player the player
      */
     public void updatePosition(Player player) {
+        updatePosition(player, true);
+    }
+
+    /**
+     * Track which island's space a player is in.
+     *
+     * @param player the player
+     * @param scan false to record the position without triggering a scan - used
+     *        on login, so a player who logged out inside a port is not searched
+     *        the moment they take a step
+     */
+    public void updatePosition(Player player, boolean scan) {
         if (!addon.inWorld(player.getWorld()) || addon.getOverWorld() == null
                 || !player.getWorld().equals(addon.getOverWorld())) {
             insideIsland.remove(player.getUniqueId());
@@ -329,16 +393,37 @@ public class CustomsService {
         }
         Optional<IslandSpec> here = islandSpaceAt(player);
         String was = insideIsland.get(player.getUniqueId());
-        if (here.isEmpty()) {
+        String now = here.map(CustomsService::key).orElse(null);
+        if (java.util.Objects.equals(now, was)) {
+            return;
+        }
+        // Leaving an island's space ends any chase it had running BEFORE the
+        // new island is considered. Warping out mid-chase used to leave the
+        // chase live, which then blocked the destination's scan entirely - the
+        // smuggler simply stopped being inspected anywhere.
+        if (was != null) {
+            leftIslandSpace(player, was);
+        }
+        if (now == null) {
             insideIsland.remove(player.getUniqueId());
             return;
         }
-        String now = key(here.get());
-        if (now.equals(was)) {
-            return;
-        }
         insideIsland.put(player.getUniqueId(), now);
-        onEntry(player, here.get());
+        if (scan) {
+            onEntry(player, here.get());
+        }
+    }
+
+    /**
+     * A player has left an island's space: if that island was chasing them,
+     * they got away.
+     */
+    private void leftIslandSpace(Player player, String islandKey) {
+        Chase chase = chases.get(player.getUniqueId());
+        if (chase != null && key(chase.island()).equals(islandKey)) {
+            escaped(player, chase);
+            end(player.getUniqueId(), chase);
+        }
     }
 
     /**

@@ -59,6 +59,9 @@ permissions:
   tradewinds.admin.tpisland:
     description: Allow teleporting to trading islands
     default: op
+  tradewinds.admin.customs:
+    description: Show the customs state at your position (contraband, scan odds, patrol)
+    default: op
   tradewinds.admin.reflag:
     description: Allow re-applying security-band flags to all islands
     default: op

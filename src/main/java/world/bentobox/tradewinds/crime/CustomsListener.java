@@ -8,6 +8,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.vehicle.VehicleMoveEvent;
@@ -101,6 +102,16 @@ public class CustomsListener implements Listener {
             event.getDrops().clear();
             event.setDroppedExp(0);
         }
+    }
+
+    /**
+     * Record where a joining player is without searching them. A player who
+     * logged out inside a port would otherwise be scanned the instant they
+     * took a step, which is not an "entry" by any reading.
+     */
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onJoin(PlayerJoinEvent event) {
+        customs().updatePosition(event.getPlayer(), false);
     }
 
     @EventHandler

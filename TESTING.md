@@ -650,6 +650,25 @@ player can make and still sell, and the deliberate hole in the two-economies rul
 Grow some, or `/give` yourself sugar, and put it in your **hold** (a pouch, expander
 or chest boat — loose pockets are not cargo and are not scanned).
 
+**Use `/twadmin customs`** — it prints the whole customs state where you stand
+(contraband in your hold, your standing, this island's band, your effective scan
+chance, patrol size, whether a chase is running). Scans are probabilistic and
+cooldowns are invisible, so guessing from behaviour alone is a trap.
+
+### 6b-0 — Fixes from the first playtest
+- [ ] The customs alert reads "CUSTOMS" with "Patrol dispatched from <name>" beneath
+      it — **no line-feed glyph**. (A `<newline>` inside a title half is parsed into a
+      real newline character, which a title cannot render.)
+- [ ] A chat line follows the title and stays in the log, so a blink does not lose it.
+- [ ] **Log in inside a port with contraband: nothing happens.** Logging in is not an
+      entry. Row out and back in and the scan fires normally.
+- [ ] **Warp away mid-chase, then into another island's space: the new island scans
+      you.** (Previously the old chase stayed live and blocked every later scan, so
+      customs silently stopped working for the rest of the session.)
+- [ ] Standing on a plaza with contraband when a scan fires: there is no water for a
+      patrol to launch from, so customs simply seize the cargo and fine you, with a
+      message saying so — rather than spawning guardians that flop about on land.
+
 ### 6b-i — The scan
 - [ ] Row or warp into a **SAFE** island's protection range carrying no contraband:
       "Customs board you, look through the hold, and wave you on." (Set

@@ -25,6 +25,7 @@ import world.bentobox.bentobox.api.configuration.Config;
 import world.bentobox.bentobox.api.configuration.WorldSettings;
 import world.bentobox.bentobox.api.user.User;
 import world.bentobox.bentobox.lists.Flags;
+import world.bentobox.tradewinds.commands.AdminCustomsCommand;
 import world.bentobox.tradewinds.commands.AdminIslandsCommand;
 import world.bentobox.tradewinds.commands.AdminReflagCommand;
 import world.bentobox.tradewinds.commands.AdminTpIslandCommand;
@@ -179,6 +180,7 @@ public class TradeWinds extends GameModeAddon {
                 new AdminIslandsCommand(this);
                 new AdminTpIslandCommand(this);
                 new AdminReflagCommand(this);
+                new AdminCustomsCommand(this);
             }
         };
     }

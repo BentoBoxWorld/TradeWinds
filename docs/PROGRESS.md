@@ -43,6 +43,32 @@ so a smuggling run is a voyage outward rather than a shortcut.
 with rather than blanks: 10 min scan cooldown, 20 min flee flag, 4-block arrest
 radius, 400-block break-off, 120-second chase cap.
 
+**First playtest: "not sure if it is working" - four real bugs.**
+1. `<newline>` inside a `[title]` rendered as a literal line-feed glyph. BentoBox
+   splits the string on the raw `[subtitle]` marker and hands each half to
+   MiniMessage separately, so `<newline>` became an actual newline character
+   inside a title component - and a title is one line by definition. The
+   subtitle IS the second line. `CustomsLocaleMarkerTest` now walks every locale
+   string and fails on a newline in a title half, a marker that is not at the
+   start, or a `[subtitle]` with no `[title]`.
+2. A title flashes past and is gone. Every customs alert now also sends a chat
+   line, which persists.
+3. **Warping away mid-chase silently disabled customs for the session.** The
+   chase stayed live, and `onEntry` refuses to start a second one - so the
+   destination never scanned, and neither did anywhere afterwards. Leaving an
+   island's space now ends that island's chase (as an escape) *before* the new
+   island is considered.
+4. Logging in inside a port counted as an entry, and the patrol spawned on the
+   plaza - guardians flopping on dry land. Login now records position without
+   scanning, and a patrol that can find no water to launch from turns into a
+   straight confiscation, which is what being caught ashore in a market should
+   mean anyway.
+
+Also added `/twadmin customs`: contraband aboard, standing, band, effective scan
+chance, patrol size, chase state. Scans are probabilistic and cooldowns are
+invisible, so "is it working?" was not answerable from behaviour alone - that
+was the real complaint, and a diagnostic is the answer to it. 189 tests green.
+
 ## Stage 6a — the law: port flags, reputation, fines (2026-07-31)
 
 **The flag audit, finally done properly.** Three separate playtest bugs (no boat
