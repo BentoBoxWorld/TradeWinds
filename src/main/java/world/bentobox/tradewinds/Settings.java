@@ -616,6 +616,93 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "illegal-trade.enabled")
     private boolean illegalTradeEnabled = true;
 
+    @ConfigComment("The safest security band that will buy contraband at all. Safer ports refuse it,")
+    @ConfigComment("which is what pushes smuggling runs outward - crime pays, into danger.")
+    @ConfigComment("One of SAFE, POLICED, FRONTIER, LAWLESS, ANARCHIC.")
+    @ConfigEntry(path = "illegal-trade.safest-contraband-buyer")
+    private String safestContrabandBuyer = "FRONTIER";
+
+    @ConfigComment("Chance (0-1) that entering an island's space triggers a customs scan, per band.")
+    @ConfigComment("Safe space searches everyone; out in the lawless bands nobody is looking.")
+    @ConfigEntry(path = "illegal-trade.scan-chance")
+    private Map<String, Double> scanChance = defaultScanChance();
+
+    @ConfigComment("Scan chance multipliers by standing: a clean name is worth something at the")
+    @ConfigComment("border, and a known offender is searched harder.")
+    @ConfigEntry(path = "illegal-trade.scan-upstanding-factor")
+    private double scanUpstandingFactor = 0.4;
+    @ConfigEntry(path = "illegal-trade.scan-offender-factor")
+    private double scanOffenderFactor = 1.6;
+
+    @ConfigComment("Minutes before the same island will scan the same player again. Without this a")
+    @ConfigComment("smuggler could bounce across the border re-rolling until they got a pass.")
+    @ConfigEntry(path = "illegal-trade.scan-cooldown-minutes")
+    private int scanCooldownMinutes = 10;
+
+    @ConfigComment("Minutes an island remembers a smuggler who ran from its patrol. While flagged,")
+    @ConfigComment("re-entering that island's space skips the roll: the patrol simply launches.")
+    @ConfigEntry(path = "illegal-trade.flee-flag-minutes")
+    private int fleeFlagMinutes = 20;
+
+    @ConfigComment("Customs patrol size per security band. 0 means that band has nobody to send.")
+    @ConfigEntry(path = "illegal-trade.patrol-size")
+    private Map<String, Integer> patrolSize = defaultPatrolSize();
+
+    @ConfigComment("How close a patrol unit must get to make the arrest, in blocks.")
+    @ConfigEntry(path = "illegal-trade.caught-radius")
+    private double caughtRadius = 4.0;
+
+    @ConfigComment("How far beyond the island's protection range a smuggler must get to shake the")
+    @ConfigComment("chase, and the longest a chase can run before they are counted as away.")
+    @ConfigEntry(path = "illegal-trade.chase-break-off-distance")
+    private int chaseBreakOffDistance = 400;
+    @ConfigEntry(path = "illegal-trade.chase-seconds")
+    private int chaseSeconds = 120;
+
+    @ConfigComment("Fine per contraband item seized when caught, on top of losing the cargo and")
+    @ConfigComment("the reputation. A player who cannot cover it pays what they have.")
+    @ConfigEntry(path = "illegal-trade.smuggling-fine-per-item")
+    private double smugglingFinePerItem = 5.0;
+
+    @ConfigComment("Tell players when a scan finds nothing. On by default: being waved through is")
+    @ConfigComment("how a player learns the mechanic exists before it costs them anything.")
+    @ConfigEntry(path = "illegal-trade.announce-clean-scans")
+    private boolean announceCleanScans = true;
+
+    private static Map<String, Double> defaultScanChance() {
+        Map<String, Double> map = new HashMap<>();
+        map.put("SAFE", 0.9);
+        map.put("POLICED", 0.6);
+        map.put("FRONTIER", 0.3);
+        map.put("LAWLESS", 0.1);
+        map.put("ANARCHIC", 0.0);
+        return map;
+    }
+
+    private static Map<String, Integer> defaultPatrolSize() {
+        Map<String, Integer> map = new HashMap<>();
+        map.put("SAFE", 4);
+        map.put("POLICED", 3);
+        map.put("FRONTIER", 2);
+        map.put("LAWLESS", 1);
+        map.put("ANARCHIC", 0);
+        return map;
+    }
+
+    /**
+     * The safest band that still buys contraband, parsed from config.
+     *
+     * @return the band
+     */
+    public world.bentobox.tradewinds.galaxy.SecurityBand safestContrabandBuyer() {
+        try {
+            return world.bentobox.tradewinds.galaxy.SecurityBand
+                    .valueOf(safestContrabandBuyer.toUpperCase(java.util.Locale.ENGLISH));
+        } catch (IllegalArgumentException e) {
+            return world.bentobox.tradewinds.galaxy.SecurityBand.FRONTIER;
+        }
+    }
+
     /*      DEBUG       */
     @ConfigComment("Log detailed [TradeWinds DEBUG] lines around galaxy generation, travel and trade.")
     @ConfigEntry(path = "debug")
@@ -2759,6 +2846,30 @@ public class Settings implements WorldSettings {
     public void setBootyChance(double bootyChance) { this.bootyChance = bootyChance; }
     public List<String> getBootyTable() { return bootyTable; }
     public void setBootyTable(List<String> bootyTable) { this.bootyTable = bootyTable; }
+    public String getSafestContrabandBuyer() { return safestContrabandBuyer; }
+    public void setSafestContrabandBuyer(String v) { this.safestContrabandBuyer = v; }
+    public Map<String, Double> getScanChance() { return scanChance; }
+    public void setScanChance(Map<String, Double> v) { this.scanChance = v; }
+    public double getScanUpstandingFactor() { return scanUpstandingFactor; }
+    public void setScanUpstandingFactor(double v) { this.scanUpstandingFactor = v; }
+    public double getScanOffenderFactor() { return scanOffenderFactor; }
+    public void setScanOffenderFactor(double v) { this.scanOffenderFactor = v; }
+    public int getScanCooldownMinutes() { return scanCooldownMinutes; }
+    public void setScanCooldownMinutes(int v) { this.scanCooldownMinutes = v; }
+    public int getFleeFlagMinutes() { return fleeFlagMinutes; }
+    public void setFleeFlagMinutes(int v) { this.fleeFlagMinutes = v; }
+    public Map<String, Integer> getPatrolSize() { return patrolSize; }
+    public void setPatrolSize(Map<String, Integer> v) { this.patrolSize = v; }
+    public double getCaughtRadius() { return caughtRadius; }
+    public void setCaughtRadius(double v) { this.caughtRadius = v; }
+    public int getChaseBreakOffDistance() { return chaseBreakOffDistance; }
+    public void setChaseBreakOffDistance(int v) { this.chaseBreakOffDistance = v; }
+    public int getChaseSeconds() { return chaseSeconds; }
+    public void setChaseSeconds(int v) { this.chaseSeconds = v; }
+    public double getSmugglingFinePerItem() { return smugglingFinePerItem; }
+    public void setSmugglingFinePerItem(double v) { this.smugglingFinePerItem = v; }
+    public boolean isAnnounceCleanScans() { return announceCleanScans; }
+    public void setAnnounceCleanScans(boolean v) { this.announceCleanScans = v; }
     public boolean isIllegalTradeEnabled() { return illegalTradeEnabled; }
     public void setIllegalTradeEnabled(boolean illegalTradeEnabled) { this.illegalTradeEnabled = illegalTradeEnabled; }
 

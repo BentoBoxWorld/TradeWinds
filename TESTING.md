@@ -642,3 +642,55 @@ rank *except* an explicit deny list.
       reputation loss off innocents by attacking them would be a weapon.
 - [ ] Killing a **Wanted or Fugitive** player pays their bounty to the killer with no
       penalty, and the bounty is cleared — kill them again and it pays **nothing**.
+
+## Stage 6b — Customs and contraband
+
+Contraband is **sugar** by default (`economy.unstamped-sellables`) — the one thing a
+player can make and still sell, and the deliberate hole in the two-economies rule.
+Grow some, or `/give` yourself sugar, and put it in your **hold** (a pouch, expander
+or chest boat — loose pockets are not cargo and are not scanned).
+
+### 6b-i — The scan
+- [ ] Row or warp into a **SAFE** island's protection range carrying no contraband:
+      "Customs board you, look through the hold, and wave you on." (Set
+      `announce-clean-scans: false` to silence it.)
+- [ ] Do it again immediately — no second scan, the per-island cooldown holds
+      (10 min default). This is what stops re-entry dice-rolling.
+- [ ] Enter a **SAFE** island with sugar in the hold: title card "CUSTOMS — Patrol
+      dispatched", and drowned/guardians surface **between you and the island**.
+- [ ] Warping in triggers the scan exactly like rowing in.
+- [ ] Enter an **ANARCHIC** island with contraband: no scan at all, ever.
+- [ ] Being **Upstanding** noticeably reduces how often you are searched; being an
+      Offender or worse increases it.
+
+### 6b-ii — The chase, and its three ways out
+- [ ] **Jettison**: drop the sugar mid-chase. "Your cargo goes over the side" — the
+      patrol despawns, no fine, no reputation loss. The dropped items float and
+      **anyone else can pick them up** (this is where piracy comes from).
+- [ ] **Run**: get more than 400 blocks beyond the protection range. "Open water..."
+      — you keep the cargo, no penalty.
+- [ ] **Caught**: let a patrol unit reach you (within 4 blocks) or let one hit you.
+      All contraband is seized, a fine is taken, and reputation drops by 30.
+      Check the balance actually moved and the hold is actually empty of sugar.
+- [ ] Fight the patrol instead: killing a unit costs reputation (KILL_POLICE)...
+- [ ] ...and **police drop nothing at all** — no items, no XP. Kill several and
+      confirm. (Loot-bearing police would make a criminal record an iron farm.)
+- [ ] The chase ends by itself after 2 minutes if nothing else resolves it, and the
+      patrol despawns. Log out mid-chase and the patrol is cleaned up too.
+
+### 6b-iii — The flee flag
+- [ ] After escaping a chase, go back to **that same island** within 20 minutes:
+      "[name] remembers you... the patrol is already coming." No scan roll — the
+      patrol launches immediately.
+- [ ] A *different* island still rolls normally. The flag is per-island.
+- [ ] The flag expires after 20 minutes.
+
+### 6b-iv — Selling contraband
+- [ ] Try to sell sugar at a **SAFE** or **POLICED** island: refused, with the trader
+      telling you to try a rougher port, and the dull "no" sound.
+- [ ] Sell it at a **FRONTIER**, **LAWLESS** or **ANARCHIC** island: it sells, with no
+      customs stamp needed. This is the only way to turn farmed goods into money.
+- [ ] `illegal-trade.safest-contraband-buyer: SAFE` makes every port buy it;
+      `ANARCHIC` makes it almost unsellable.
+- [ ] `illegal-trade.enabled: false` removes all of it: no scans, no patrols, and
+      sugar becomes an ordinary unsellable homemade good.

@@ -218,6 +218,14 @@ public class MarketService {
         if (unitPrice.isEmpty() || vault.isEmpty() || amount <= 0) {
             return 0;
         }
+        // The safest ports will not touch contraband at any price, which is
+        // what makes a smuggling run a voyage outward rather than a shortcut
+        if (addon.getCustomsService() != null && addon.getCustomsService().isContraband(material)
+                && !addon.getCustomsService().buysContraband(spec.band())) {
+            User.getInstance(player).sendMessage("tradewinds.trade.contraband-refused");
+            thud(player);
+            return 0;
+        }
         int count = Math.min(addon.getHoldService().count(player, material, sellableFilter()), amount);
         if (count <= 0) {
             User.getInstance(player).sendMessage("tradewinds.trade.not-stamped");

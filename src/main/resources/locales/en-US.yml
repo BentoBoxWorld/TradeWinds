@@ -70,8 +70,13 @@ tradewinds:
     fine-cannot-afford: "<red>You cannot afford the fine ([amount]).</red>"
     fine-no-market: "<red>Fines are paid at a trading island, not out here.</red>"
     fine-barred: "<red>'We don't take money from your sort.' Try a rougher port.</red>"
-  status:
-    clean: "Clean"
+  customs:
+    clean: "<gray>Customs board you, look through the hold, and wave you on.</gray>"
+    detected: "[title]<dark_red>CUSTOMS</dark_red><newline>[subtitle]<red>Patrol dispatched from [name]</red>"
+    flagged: "<dark_red>[name] remembers you. No inspection this time - the patrol is already coming.</dark_red>"
+    jettisoned: "<green>Your cargo goes over the side. The patrol turns back - nothing to find.</green>"
+    escaped: "<gold>Open water. [name] loses you - but its harbourmaster will not forget.</gold>"
+    caught: "<dark_red>Boarded. [number] items seized, [amount] in fines, and [name] has your name.</dark_red>"
   hud:
     navigation: "<aqua>[name]</aqua><white> | [standing] | </white><yellow>Dock [distance]m</yellow>"
   hologram:
@@ -153,6 +158,7 @@ tradewinds:
   trade:
     not-at-market: "<red>There is no market here - trade within an island's protection range.</red>"
     not-stamped: "<red>Traders only buy customs-stamped goods (or... certain other merchandise).</red>"
+    contraband-refused: "<red>The trader looks at what you are offering, then at you. 'Not here. Try a rougher port.'</red>"
     nothing-to-sell: "<red>Nothing in your hold that this island will pay for.</red>"
     nothing-for-sale: "<red>This island has nothing for sale - it only buys.</red>"
     sold: "<green>Sold [amount] x [material] for $[price].</green>"

@@ -36,6 +36,8 @@ import world.bentobox.tradewinds.commands.TWStarChartCommand;
 import world.bentobox.tradewinds.commands.TWTradeCommand;
 import world.bentobox.tradewinds.commands.TWWarpCommand;
 import world.bentobox.tradewinds.crime.CrimeListener;
+import world.bentobox.tradewinds.crime.CustomsListener;
+import world.bentobox.tradewinds.crime.CustomsService;
 import world.bentobox.tradewinds.crime.ReputationService;
 import world.bentobox.tradewinds.crime.Standing;
 import world.bentobox.tradewinds.dataobjects.IslandDataManager;
@@ -104,6 +106,7 @@ public class TradeWinds extends GameModeAddon {
     private @Nullable EncounterService encounterService;
     private ReputationService reputationService;
     private CrimeListener crimeListener;
+    private CustomsService customsService;
     private NamespacedKey policeKey;
     private @Nullable ResidentAuditTask residentAuditTask;
     private @Nullable NavigationBarTask navigationBarTask;
@@ -262,6 +265,10 @@ public class TradeWinds extends GameModeAddon {
         reputationService.start();
         crimeListener = new CrimeListener(this);
         registerListener(crimeListener);
+        // Customs: the scan on entering island space, and the chase after it
+        customsService = new CustomsService(this);
+        customsService.start();
+        registerListener(new CustomsListener(this));
         // Residents survive the night: no mob targeting, tether, respawn
         registerListener(new ResidentProtectionListener());
         residentAuditTask = new ResidentAuditTask(this);
@@ -290,6 +297,9 @@ public class TradeWinds extends GameModeAddon {
         }
         if (reputationService != null) {
             reputationService.stop();
+        }
+        if (customsService != null) {
+            customsService.stop();
         }
         if (chartHolograms != null) {
             chartHolograms.clearAll();
@@ -500,6 +510,10 @@ public class TradeWinds extends GameModeAddon {
 
     public CrimeListener getCrimeListener() {
         return crimeListener;
+    }
+
+    public CustomsService getCustomsService() {
+        return customsService;
     }
 
     /**

@@ -3,6 +3,46 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## Stage 6b — customs and contraband (2026-07-31)
+
+The scan on entering island space, and the chase after it. Detection is
+deliberately **not** a fine (spec section 6): being caught at the border starts
+a pursuit, and the water between you and the horizon is a decision - **run**,
+**fight**, or **jettison**, which clears you at the cost of the cargo and
+leaves it floating for anyone to take. That last one is the seed of piracy.
+
+`CustomsService` owns the loop. Entry is detected by tracking which island's
+protection range a player is inside and firing on the transition, so rowing in
+and warping in are the same event - the spec asks for a scan on *every* entry,
+and a teleport is an entry.
+
+Two counters stop the obvious abuses, both from the spec:
+- a **per-island scan cooldown**, so a smuggler cannot bounce across the border
+  re-rolling the dice until they get a pass;
+- a **flee flag**, so running is remembered: return to that port inside 20
+  minutes and there is no roll at all, the patrol just launches.
+
+The risk/reward shape has an invariant worth stating out loud, and there is now
+a test for it: **the bands that buy contraband are the bands that do not scan
+for it**. Safe ports search everyone and refuse to deal; anarchic ports do
+neither. If that ever inverts, smuggling becomes either free money or
+impossible. Standing tilts the odds both ways, which is where "positive rep
+must pay" finally bites.
+
+`PoliceDispatch` is the minimum force that makes a chase real - a sea patrol
+surfacing *between* the smuggler and the port, so running for open water is a
+live option and running for the harbour is not. Stage 6c builds the rest on it.
+Police are PDC-tagged, non-persistent, and **drop nothing at all**: loot-bearing
+police would turn a criminal record into an iron farm, which is exactly
+backwards.
+
+Contraband selling is band-gated (`safest-contraband-buyer`, default FRONTIER),
+so a smuggling run is a voyage outward rather than a shortcut.
+
+187 tests green. Open question 5 (scan/flag tuning) now has defaults to argue
+with rather than blanks: 10 min scan cooldown, 20 min flee flag, 4-block arrest
+radius, 400-block break-off, 120-second chase cap.
+
 ## Stage 6a — the law: port flags, reputation, fines (2026-07-31)
 
 **The flag audit, finally done properly.** Three separate playtest bugs (no boat

@@ -324,6 +324,49 @@ illegal-trade:
   # Master gate for all illegal-goods mechanics: contraband, customs scans, smuggling.
   # Set false for family-friendly servers - removes the entire crime layer cleanly.
   enabled: true
+  # The safest band that will buy contraband at all. Safer ports refuse it, which is
+  # what pushes smuggling runs outward - crime pays, into danger.
+  # SAFE, POLICED, FRONTIER, LAWLESS or ANARCHIC.
+  safest-contraband-buyer: FRONTIER
+  # Chance (0-1) that entering an island's space triggers a customs scan, per band.
+  # Safe space searches everyone; out in the lawless bands nobody is looking. Note
+  # these are deliberately the inverse of who will BUY contraband: nowhere both
+  # deals in it and searches hard for it.
+  scan-chance:
+    SAFE: 0.9
+    POLICED: 0.6
+    FRONTIER: 0.3
+    LAWLESS: 0.1
+    ANARCHIC: 0.0
+  # Scan chance multipliers by standing: a clean name is worth something at the
+  # border, a known offender is searched harder.
+  scan-upstanding-factor: 0.4
+  scan-offender-factor: 1.6
+  # Minutes before the same island scans the same player again. Without this a
+  # smuggler could bounce across the border re-rolling until they got a pass.
+  scan-cooldown-minutes: 10
+  # Minutes an island remembers a smuggler who ran from its patrol. While flagged,
+  # re-entering that island's space skips the roll: the patrol simply launches.
+  flee-flag-minutes: 20
+  # Customs patrol size per band. 0 means that band has nobody to send.
+  patrol-size:
+    SAFE: 4
+    POLICED: 3
+    FRONTIER: 2
+    LAWLESS: 1
+    ANARCHIC: 0
+  # How close a patrol unit must get to make the arrest, in blocks.
+  caught-radius: 4.0
+  # How far beyond the protection range a smuggler must get to shake the chase, and
+  # the longest a chase can run before they are counted as away.
+  chase-break-off-distance: 400
+  chase-seconds: 120
+  # Fine per contraband item seized when caught, on top of losing the cargo and the
+  # reputation. A player who cannot cover it pays what they have.
+  smuggling-fine-per-item: 5.0
+  # Tell players when a scan finds nothing - how a player learns the mechanic exists
+  # before it costs them anything.
+  announce-clean-scans: true
 world:
   friendly-name: TradeWinds
   world-name: tradewinds_world
