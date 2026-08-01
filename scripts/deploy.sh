@@ -16,9 +16,20 @@ set -euo pipefail
 ADDONS="/Users/ben/Minecraft/26.2/plugins/BentoBox/addons"
 JAR="target/TradeWinds-0.1.0-SNAPSHOT-LOCAL.jar"
 
-if pgrep -f "paper-26.2.jar" > /dev/null; then
+# Match the server jar loosely: it is named paper-26.2-87.jar, not
+# paper-26.2.jar, so an exact pattern silently never matched and the guard was
+# decorative. Keep this broad.
+if pgrep -f "java.*paper-26\.2" > /dev/null; then
     echo "REFUSING TO DEPLOY: the test server is running."
     echo "Stop it first - replacing the jar under a live server crashes it."
+    exit 1
+fi
+
+# Belt and braces: a log written in the last minute means it is probably up
+LOG="/Users/ben/Minecraft/26.2/logs/latest.log"
+if [ -f "$LOG" ] && [ -n "$(find "$LOG" -mmin -1 2>/dev/null)" ]; then
+    echo "REFUSING TO DEPLOY: $LOG was written within the last minute."
+    echo "The server looks live. Stop it first."
     exit 1
 fi
 
