@@ -18,6 +18,7 @@ import org.bukkit.entity.TextDisplay;
 import net.kyori.adventure.text.Component;
 import world.bentobox.bentobox.api.user.User;
 import world.bentobox.tradewinds.TradeWinds;
+import world.bentobox.tradewinds.galaxy.DockPlan;
 import world.bentobox.tradewinds.galaxy.IslandSpec;
 
 /**
@@ -35,6 +36,8 @@ public class ChartHolograms {
     /** Bearing sector width for stacking, degrees. */
     private static final double SECTOR_DEGREES = 20.0;
     private static final double BASE_HEIGHT = 1.2;
+    /** The dock marker hangs below the island names, clear of their stack. */
+    private static final double DOCK_HEIGHT = 0.2;
     private static final double STACK_STEP = 0.8;
     private static final int ZOOM_TICKS = 12;
 
@@ -47,8 +50,37 @@ public class ChartHolograms {
 
     /**
      * One hologram's placement: offset from the player and its label parts.
+     *
+     * @param dock true for the marker pointing at the island's own pier rather
+     *        than at a distant island
      */
-    record Marker(double dx, double dy, double dz, IslandSpec island, int distance) {
+    record Marker(double dx, double dy, double dz, IslandSpec island, int distance, boolean dock) {
+    }
+
+    /**
+     * The marker pointing at the pier of the island you are currently in the
+     * waters of, if you are in any.
+     * <p>
+     * The chart answers "where is everywhere else" perfectly well and used to
+     * say nothing at all about the one thing a sailor actually needs next:
+     * which way is the dock. Pure, so the bearing is testable.
+     *
+     * @param island the island whose waters the player is in
+     * @param plan its dock plan
+     * @param px player block x
+     * @param pz player block z
+     * @param radius ring radius in blocks
+     * @return the dock marker
+     */
+    static Marker dockMarker(IslandSpec island, DockPlan plan, int px, int pz, double radius) {
+        int pierX = island.centerX() + (int) Math.round(Math.cos(plan.bearing()) * plan.dockEnd());
+        int pierZ = island.centerZ() + (int) Math.round(Math.sin(plan.bearing()) * plan.dockEnd());
+        double dx = (double) pierX - px;
+        double dz = (double) pierZ - pz;
+        double dist = Math.max(1.0, Math.hypot(dx, dz));
+        // Sits below the island names: it is the nearest thing, and keeping it
+        // out of their stack means it never collides with one
+        return new Marker(dx / dist * radius, DOCK_HEIGHT, dz / dist * radius, island, (int) dist, true);
     }
 
     /**
@@ -78,7 +110,7 @@ public class ChartHolograms {
             int sector = (int) Math.floor((bearing + 180.0) / SECTOR_DEGREES);
             int rank = sectorRank.merge(sector, 1, Integer::sum) - 1;
             result.add(new Marker(dx / dist * radius, BASE_HEIGHT + rank * STACK_STEP, dz / dist * radius, spec,
-                    (int) dist));
+                    (int) dist, false));
         }
         return result;
     }
@@ -96,20 +128,27 @@ public class ChartHolograms {
                     world.bentobox.bentobox.api.localization.TextVariables.NUMBER,
                     String.valueOf(scanned.size()));
         }
-        List<IslandSpec> charted = chartedIslands(player);
-        if (charted.isEmpty()) {
+        Location eye = player.getLocation();
+        double radius = addon.getSettings().getChartHologramDistance();
+        List<Marker> markers = new ArrayList<>();
+        // Which way is the dock - the one bearing a sailor in these waters
+        // actually needs, and the one the chart never used to give them
+        dockIsland(eye.getBlockX(), eye.getBlockZ()).ifPresent(island -> markers.add(dockMarker(island,
+                addon.getGalaxyEngine(addon.getOverWorld().getSeed()).dockPlan(island), eye.getBlockX(),
+                eye.getBlockZ(), radius)));
+        markers.addAll(markers(chartedIslands(player), eye.getBlockX(), eye.getBlockZ(), radius,
+                addon.getSettings().getChartHologramMax()));
+        if (markers.isEmpty()) {
             return;
         }
-        Location eye = player.getLocation();
-        List<Marker> markers = markers(charted, eye.getBlockX(), eye.getBlockZ(),
-                addon.getSettings().getChartHologramDistance(), addon.getSettings().getChartHologramMax());
         List<TextDisplay> spawned = new ArrayList<>();
         for (Marker marker : markers) {
             TextDisplay display = eye.getWorld().spawn(eye.clone().add(0, 1.0, 0), TextDisplay.class);
             display.text(label(player, marker));
             display.setBillboard(Billboard.CENTER);
             display.setSeeThrough(true);
-            display.setBackgroundColor(Color.fromARGB(120, 0, 20, 40));
+            display.setBackgroundColor(marker.dock() ? Color.fromARGB(140, 60, 40, 0)
+                    : Color.fromARGB(120, 0, 20, 40));
             display.setPersistent(false);
             display.setTeleportDuration(ZOOM_TICKS);
             // Only the caller sees their own compass
@@ -133,8 +172,26 @@ public class ChartHolograms {
                 addon.getSettings().getChartHologramSeconds() * 20L);
     }
 
+    /**
+     * The island whose waters the player is in, if any - the same reach the
+     * navigation bar uses, so the dock marker appears exactly when the bar
+     * starts counting down the distance to the pier.
+     */
+    private java.util.Optional<IslandSpec> dockIsland(int x, int z) {
+        if (addon.getOverWorld() == null) {
+            return java.util.Optional.empty();
+        }
+        int range = addon.getSettings().getIslandDistance();
+        return addon.getGalaxyEngine(addon.getOverWorld().getSeed()).islandsNear(x, z, range).stream()
+                .filter(spec -> spec.distanceSquared(x, z) <= (long) range * range).findFirst();
+    }
+
     private Component label(Player player, Marker marker) {
         IslandSpec spec = marker.island();
+        if (marker.dock()) {
+            return User.getInstance(player).getTranslationAsComponent("tradewinds.hologram.dock",
+                    "[name]", spec.name(), "[distance]", String.valueOf(marker.distance()));
+        }
         return User.getInstance(player).getTranslationAsComponent("tradewinds.hologram.island",
                 "[name]", spec.name(),
                 "[type]", spec.type().name(),

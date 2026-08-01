@@ -116,6 +116,7 @@ tradewinds:
     navigation: "<aqua>[name]</aqua><white> | </white>[band]<white> | [standing] | </white><yellow>Dock [distance]m</yellow>"
   hologram:
     island: "<aqua>[name]</aqua><newline><gray>[type], </gray>[band]<newline><yellow>[distance]m</yellow>"
+    dock: "<gold><bold>DOCK</bold></gold><newline><gray>[name]</gray><newline><yellow>[distance]m</yellow>"
   ui:
     market:
       title: "<dark_aqua>[name] Market</dark_aqua>"

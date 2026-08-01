@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import world.bentobox.tradewinds.galaxy.DockPlan;
 import world.bentobox.tradewinds.galaxy.GalaxyConfig;
 import world.bentobox.tradewinds.galaxy.GalaxyEngine;
 import world.bentobox.tradewinds.galaxy.IslandSpec;
@@ -21,6 +22,36 @@ import world.bentobox.tradewinds.galaxy.SecurityBand;
 class ChartNavigationTest {
 
     private final GalaxyEngine engine = new GalaxyEngine(new GalaxyConfig(77L, 2500, 160, 45, 1.0, 0, 5000, 70));
+
+    @Test
+    void testDockMarkerPointsAtThePier() {
+        // The chart answered "where is everywhere else" and said nothing about
+        // the one bearing a sailor in these waters actually needs
+        IslandSpec island = engine.islandInCell(1, 1).orElseThrow();
+        DockPlan plan = engine.dockPlan(island);
+        int pierX = island.centerX() + (int) Math.round(Math.cos(plan.bearing()) * plan.dockEnd());
+        int pierZ = island.centerZ() + (int) Math.round(Math.sin(plan.bearing()) * plan.dockEnd());
+        // Stand just off the island, not at the origin
+        int px = island.centerX() + 300;
+        int pz = island.centerZ() + 300;
+
+        ChartHolograms.Marker marker = ChartHolograms.dockMarker(island, plan, px, pz, 10.0);
+        assertTrue(marker.dock(), "The dock marker must be flagged so it is labelled and coloured as one");
+        // On the ring, pointing at the pier - NOT at the island centre
+        assertEquals(10.0, Math.hypot(marker.dx(), marker.dz()), 0.01);
+        assertEquals(Math.atan2((double) pierZ - pz, (double) pierX - px),
+                Math.atan2(marker.dz(), marker.dx()), 0.001);
+        assertEquals((int) Math.hypot((double) pierX - px, (double) pierZ - pz), marker.distance());
+        // Below the island names so it never collides with their stack
+        assertTrue(marker.dy() < 1.2, "Dock marker should hang below the island markers");
+    }
+
+    @Test
+    void testIslandMarkersAreNotDockMarkers() {
+        IslandSpec spec = engine.islandInCell(1, 1).orElseThrow();
+        ChartHolograms.markers(List.of(spec), 0, 0, 10.0, 12)
+                .forEach(m -> assertTrue(!m.dock(), "Island markers must not be flagged as docks"));
+    }
 
     @Test
     void testMarkersPointTheRightWay() {

@@ -858,3 +858,18 @@ two rules.
 - [ ] `/tw restart` still returns a destitute player to spawn with a fresh kit,
       capped by `player.max-restarts`.
 - [ ] The old `/tw spawn` label still works as an alias, and does the same thing.
+
+## Dock marker on the hologram chart
+
+- [ ] Inside an island's waters, `/tw chart` (or boarding a boat) now raises a
+      **DOCK** hologram alongside the island names, pointing at that island's pier
+      with its distance. Row toward it and the number falls.
+- [ ] It points at the **pier**, not the island centre - check on an island whose
+      dock faces away from you.
+- [ ] It hangs **below** the island name markers and has a warmer background, so it
+      never collides with their stack.
+- [ ] Out in open ocean, away from any island, there is no dock marker - just the
+      island names.
+- [ ] With an empty chart but inside an island's waters, the dock marker still
+      appears on its own. (Previously an empty chart showed nothing at all.)
+- [ ] The label is translatable: `tradewinds.hologram.dock`.
