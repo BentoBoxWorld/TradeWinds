@@ -6,10 +6,11 @@ tradewinds:
     # The admin command.
     admin: twadmin
     # The default action for new player command call.
-    # TradeWinds players do not start with an island, so the default is 'spawn'.
-    new-player-action: spawn
+    # 'spawn' is deliberately NOT registered as a player command - it would be a free
+    # warp back to the spawn trading post - so bare /tw shows the command list.
+    new-player-action: help
     # The default action for player command.
-    default-action: spawn
+    default-action: help
 galaxy:
   # The galaxy seed. Every island position, type, security band, biome, name and
   # route cost derives deterministically from this one number - share it and another

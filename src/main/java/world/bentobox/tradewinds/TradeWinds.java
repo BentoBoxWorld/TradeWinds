@@ -33,7 +33,6 @@ import world.bentobox.tradewinds.commands.AdminWarpFailCommand;
 import world.bentobox.tradewinds.commands.TWChartCommand;
 import world.bentobox.tradewinds.commands.TWFineCommand;
 import world.bentobox.tradewinds.commands.TWRestartCommand;
-import world.bentobox.tradewinds.commands.TWSpawnCommand;
 import world.bentobox.tradewinds.commands.TWStarChartCommand;
 import world.bentobox.tradewinds.commands.TWTradeCommand;
 import world.bentobox.tradewinds.commands.TWWarpCommand;
@@ -168,7 +167,11 @@ public class TradeWinds extends GameModeAddon {
                 setDescription("tradewinds.commands.help.description");
                 setOnlyPlayer(true);
                 setPermission("island");
-                new TWSpawnCommand(this);
+                // NOTE: TWSpawnCommand is deliberately NOT registered. Now that
+                // spawn is a working trading post, /tw spawn would be a free
+                // warp back to a market from anywhere - travel is the game.
+                // Death still respawns there (SpawnRespawnListener), and
+                // /tw restart still returns a destitute player there.
                 new TWWarpCommand(this);
                 new TWChartCommand(this);
                 new TWStarChartCommand(this);

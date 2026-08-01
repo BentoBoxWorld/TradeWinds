@@ -3,6 +3,30 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## /tw spawn removed: it had become a free warp home (2026-08-01)
+
+Ben spotted it: "Now that Spawn is a trading post, which is a good thing...
+the /tw spawn command is a free way to warp back there!" Exactly right, and it
+is the kind of exploit that only appears when two good decisions meet - spawn
+became a real port so new players would trade there, and the free teleport that
+was harmless when spawn was an empty islet turned into a free ride to a market
+from anywhere in the galaxy.
+
+Unregistered rather than permission-gated, as asked - a command that exists and
+is denied still shows up and still invites "can I have this?". `TWSpawnCommand`
+stays in the tree for whenever it is wanted again.
+
+The catch: `new-player-action` and `default-action` both pointed at `spawn`, so
+bare `/tw` would have fallen through to a non-existent sub-command. Both now
+default to `help`, which is the most useful thing to hand someone anyway. The
+live server config had the old values too - stored config beats changed
+defaults, as always.
+
+Death still respawns at the spawn plaza (you paid for that trip with your
+cargo), and `/tw restart` still returns a destitute player there, capped.
+
+205 tests green.
+
 ## Low fuel warning, and the band on the boss bar (2026-08-01)
 
 Two playtest asks, both about the player not being told something they needed.

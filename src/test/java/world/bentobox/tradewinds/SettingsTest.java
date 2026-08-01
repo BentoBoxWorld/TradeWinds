@@ -29,9 +29,10 @@ class SettingsTest extends CommonTestSetup {
     void testCommands() {
         assertEquals("tw tradewinds", settings.getPlayerCommandAliases());
         assertEquals("twadmin", settings.getAdminCommandAliases());
-        // No starting island: both default actions teleport to spawn
-        assertEquals("spawn", settings.getDefaultNewPlayerAction());
-        assertEquals("spawn", settings.getDefaultPlayerAction());
+        // 'spawn' is not a registered player command - it would be a free warp
+        // back to the spawn trading post - so bare /tw lists the commands
+        assertEquals("help", settings.getDefaultNewPlayerAction());
+        assertEquals("help", settings.getDefaultPlayerAction());
     }
 
     @Test

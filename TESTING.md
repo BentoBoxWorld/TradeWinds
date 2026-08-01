@@ -837,3 +837,14 @@ out. Set `travel.warp.failure-chance: 1.0` temporarily to test this repeatedly.
       Lawless, bold dark-red ANARCHIC. Sail into each and confirm you can tell at a
       glance what kind of water you are in.
 - [ ] The same coloured band appears on the chart holograms and the market subtitle.
+
+## /tw spawn removed (free warp home)
+
+- [ ] `/tw spawn` is **gone** - it is not in `/tw help` and running it is unknown.
+      Now that spawn is a working trading post it was a free warp back to a market
+      from anywhere, which undercuts the whole point of travelling.
+- [ ] Bare `/tw` shows the command list rather than teleporting anywhere.
+- [ ] Dying still respawns you at the spawn plaza (that is not a cheat - you lost
+      your cargo to get there).
+- [ ] `/tw restart` still returns a destitute player to spawn with a fresh kit,
+      capped by `player.max-restarts`.

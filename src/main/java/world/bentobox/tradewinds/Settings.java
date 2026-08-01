@@ -48,15 +48,15 @@ public class Settings implements WorldSettings {
 
     @ConfigComment("The default action for new player command call.")
     @ConfigComment("Sub-command of main player command that will be run on first player command call.")
-    @ConfigComment("TradeWinds players do not start with an island, so the default is 'spawn'.")
+    @ConfigComment("'spawn' is deliberately NOT registered as a player command - it would be a free")
+    @ConfigComment("warp back to the spawn trading post - so bare /tw shows the command list.")
     @ConfigEntry(path = "tradewinds.command.new-player-action")
-    private String defaultNewPlayerAction = "spawn";
+    private String defaultNewPlayerAction = "help";
 
     @ConfigComment("The default action for player command.")
     @ConfigComment("Sub-command of main player command that will be run on each player command call.")
-    @ConfigComment("TradeWinds players do not start with an island, so the default is 'spawn'.")
     @ConfigEntry(path = "tradewinds.command.default-action")
-    private String defaultPlayerAction = "spawn";
+    private String defaultPlayerAction = "help";
 
     /*      GALAXY      */
     @ConfigComment("The galaxy seed. Every island position, type, security band, biome, name and")
