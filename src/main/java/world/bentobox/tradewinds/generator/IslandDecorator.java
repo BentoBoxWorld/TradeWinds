@@ -120,6 +120,43 @@ public class IslandDecorator extends BlockPopulator {
             setIfPossible(region, lx, y + 2, lz, Material.LANTERN);
         }
 
+        // The galley: a public workbench and cooking hearth beside the quay
+        // entrance, so any sailor can craft and cook their catch the moment
+        // they step ashore. CRAFTING and FURNACE (which governs campfires) are
+        // visitor-rank at every port, and BREAK_BLOCKS is not - usable by all,
+        // removable by none. The campfire stands on a cobblestone hearth so
+        // residents do not path across open flame.
+        double galleyAngle = plan.bearing() + 0.7;
+        int galleyR = plan.plazaRadius() - 4;
+        int gx = plan.plazaX() + (int) Math.round(Math.cos(galleyAngle) * galleyR);
+        int gz = plan.plazaZ() + (int) Math.round(Math.sin(galleyAngle) * galleyR);
+        setIfPossible(region, gx, y, gz, Material.CRAFTING_TABLE);
+        int tangentX = (int) Math.round(-Math.sin(galleyAngle));
+        int tangentZ = (int) Math.round(Math.cos(galleyAngle));
+        setIfPossible(region, gx + tangentX * 2, y, gz + tangentZ * 2, Material.COBBLESTONE);
+        setIfPossible(region, gx + tangentX * 2, y + 1, gz + tangentZ * 2, Material.CAMPFIRE);
+
+        // Higher tech furnishes the plaza further: the amenity row continues
+        // the ring on from the galley - smelting and stonework where there is
+        // industry, brewing at developed ports, and at the top of the tree an
+        // enchanting table with a bookshelf arc behind it
+        List<Material> amenities = IslandPalette.amenities(spec.techLevel());
+        for (int i = 0; i < amenities.size(); i++) {
+            double angle = galleyAngle + 0.25 * (i + 1);
+            int ax = plan.plazaX() + (int) Math.round(Math.cos(angle) * galleyR);
+            int az = plan.plazaZ() + (int) Math.round(Math.sin(angle) * galleyR);
+            Material amenity = amenities.get(i);
+            setIfPossible(region, ax, y, az, amenity);
+            if (amenity == Material.ENCHANTING_TABLE) {
+                for (int k = -2; k <= 2; k++) {
+                    int bx = plan.plazaX() + (int) Math.round(Math.cos(angle + k * 0.12) * (galleyR + 2));
+                    int bz = plan.plazaZ() + (int) Math.round(Math.sin(angle + k * 0.12) * (galleyR + 2));
+                    setIfPossible(region, bx, y, bz, Material.BOOKSHELF);
+                    setIfPossible(region, bx, y + 1, bz, Material.BOOKSHELF);
+                }
+            }
+        }
+
         // Market stalls on a ring: fence corners, wool canopy, a barrel counter,
         // and a profession workstation beside each stall
         int stalls = 2 + rand.nextInt(3);

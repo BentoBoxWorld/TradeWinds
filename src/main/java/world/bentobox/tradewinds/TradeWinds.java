@@ -44,6 +44,7 @@ import world.bentobox.tradewinds.crime.CustomsService;
 import world.bentobox.tradewinds.crime.PoliceService;
 import world.bentobox.tradewinds.crime.ReputationService;
 import world.bentobox.tradewinds.crime.Standing;
+import world.bentobox.tradewinds.dataobjects.HoldManager;
 import world.bentobox.tradewinds.dataobjects.IslandDataManager;
 import world.bentobox.tradewinds.dataobjects.PlayerDataManager;
 import world.bentobox.tradewinds.economy.MarketService;
@@ -55,6 +56,7 @@ import world.bentobox.tradewinds.galaxy.RouteGraph;
 import world.bentobox.tradewinds.listeners.IntersticePortalListener;
 import world.bentobox.tradewinds.listeners.ResidentProtectionListener;
 import world.bentobox.tradewinds.tasks.FuelWarningTask;
+import world.bentobox.tradewinds.tasks.BorderCurtainTask;
 import world.bentobox.tradewinds.tasks.NavigationBarTask;
 import world.bentobox.tradewinds.tasks.ResidentAuditTask;
 import world.bentobox.tradewinds.travel.BoatPickupListener;
@@ -62,7 +64,8 @@ import world.bentobox.tradewinds.travel.BorderPromptListener;
 import world.bentobox.tradewinds.travel.ChartHolograms;
 import world.bentobox.tradewinds.travel.DialogGuard;
 import world.bentobox.tradewinds.travel.ChartingListener;
-import world.bentobox.tradewinds.travel.ExpanderListener;
+import world.bentobox.tradewinds.travel.BoatRanks;
+import world.bentobox.tradewinds.travel.BoatService;
 import world.bentobox.tradewinds.travel.FuelService;
 import world.bentobox.tradewinds.travel.IntersticeService;
 import world.bentobox.tradewinds.travel.HoldService;
@@ -104,6 +107,11 @@ public class TradeWinds extends GameModeAddon {
     private RouteGraph routeGraph;
     private StarterKit starterKit;
     private HoldService holdService;
+    private HoldManager holdManager;
+    private BoatRanks boatRanks;
+    private BoatService boatService;
+    private world.bentobox.tradewinds.travel.HoldGui holdGui;
+    private world.bentobox.tradewinds.travel.BoatListener boatListener;
     private IslandDataManager islandDataManager;
     private MarketService marketService;
     private TradeDialog tradeDialog;
@@ -119,6 +127,7 @@ public class TradeWinds extends GameModeAddon {
     private NamespacedKey policeKey;
     private @Nullable ResidentAuditTask residentAuditTask;
     private @Nullable NavigationBarTask navigationBarTask;
+    private @Nullable BorderCurtainTask borderCurtainTask;
     private @Nullable FuelWarningTask fuelWarningTask;
     private SeaPositionTracker seaPositionTracker;
     private DialogGuard dialogGuard;
@@ -256,8 +265,19 @@ public class TradeWinds extends GameModeAddon {
         routeGraph = new RouteGraph(getSettings().getFuelPerBlock(), getSettings().getEdgeOverrides());
         warpService = new WarpService(this);
         starterKit = new StarterKit(this);
-        // Economy: hold, market data, prices, trade dialogs
+        // Economy: the virtual hold, market data, prices, trade dialogs
+        holdManager = new HoldManager(this);
+        boatRanks = new BoatRanks(this);
+        boatService = new BoatService(this);
         holdService = new HoldService(this);
+        holdGui = new world.bentobox.tradewinds.travel.HoldGui(this);
+        registerListener(holdGui);
+        // Crafting a boat obeys the One Boat Rule: bigger replaces, smaller refused
+        registerListener(new world.bentobox.tradewinds.travel.BoatCraftListener(this));
+        // Boats: capture, protection, name plates, TTL on hulls left as items
+        boatListener = new world.bentobox.tradewinds.travel.BoatListener(this);
+        boatListener.start();
+        registerListener(boatListener);
         islandDataManager = new IslandDataManager(this);
         marketService = new MarketService(this);
         tradeDialog = new TradeDialog(this);
@@ -275,9 +295,6 @@ public class TradeWinds extends GameModeAddon {
         // Where a sailor left the ocean, so coming back is not a teleport
         seaPositionTracker = new SeaPositionTracker(this);
         registerListener(seaPositionTracker);
-        // Cargo expanders open in the hand (Java cannot open shulkers in an
-        // inventory, and a carried hold has to be openable)
-        registerListener(new ExpanderListener(this));
         // Risk at sea: the interstice for warpers, encounters for rowers
         intersticeService = new IntersticeService(this);
         intersticeService.start();
@@ -308,6 +325,9 @@ public class TradeWinds extends GameModeAddon {
         // Navigation boss bar: island, standing, distance to dock
         navigationBarTask = new NavigationBarTask(this);
         navigationBarTask.start();
+        // The visible sea-lanes: red warp ring, blue island edge
+        borderCurtainTask = new BorderCurtainTask(this);
+        borderCurtainTask.start();
         // "You cannot afford to leave" - said at the port, where it is fixable
         fuelWarningTask = new FuelWarningTask(this);
         fuelWarningTask.start();
@@ -323,6 +343,9 @@ public class TradeWinds extends GameModeAddon {
         }
         if (navigationBarTask != null) {
             navigationBarTask.stop();
+        }
+        if (borderCurtainTask != null) {
+            borderCurtainTask.stop();
         }
         if (fuelWarningTask != null) {
             fuelWarningTask.stop();
@@ -350,6 +373,12 @@ public class TradeWinds extends GameModeAddon {
         }
         if (playerDataManager != null) {
             playerDataManager.saveAll();
+        }
+        if (boatListener != null) {
+            boatListener.stop();
+        }
+        if (holdManager != null) {
+            holdManager.saveAll();
         }
         if (islandDataManager != null) {
             islandDataManager.saveAll();
@@ -518,6 +547,34 @@ public class TradeWinds extends GameModeAddon {
 
     public HoldService getHoldService() {
         return holdService;
+    }
+
+    /**
+     * @return the virtual hold database manager
+     */
+    public HoldManager getHoldManager() {
+        return holdManager;
+    }
+
+    /**
+     * @return the boat ladder
+     */
+    public BoatRanks getBoatRanks() {
+        return boatRanks;
+    }
+
+    /**
+     * @return the physical-boat keeper
+     */
+    public BoatService getBoatService() {
+        return boatService;
+    }
+
+    /**
+     * @return the hold GUI
+     */
+    public world.bentobox.tradewinds.travel.HoldGui getHoldGui() {
+        return holdGui;
     }
 
     public IslandDataManager getIslandDataManager() {

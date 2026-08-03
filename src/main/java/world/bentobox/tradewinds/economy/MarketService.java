@@ -3,36 +3,32 @@ package world.bentobox.tradewinds.economy;
 import java.util.Optional;
 
 import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.persistence.PersistentDataType;
 
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import world.bentobox.bentobox.api.user.User;
 import world.bentobox.bentobox.hooks.VaultHook;
 import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.api.events.TWTradeEvent;
 import world.bentobox.tradewinds.galaxy.IslandSpec;
+import world.bentobox.tradewinds.travel.BoatRanks;
 
 /**
  * The market: prices and trades. Base prices come from the embedded
  * {@link PriceEngine} (config table plus recipe derivation - BlueBook logic
- * carried in-addon). Island prices apply the type/band/stock model
- * ({@link PriceModel}); all transactions move items through the hold ONLY and
- * money through Vault.
+ * carried in-addon). Island prices apply the type/tech/band/stock model
+ * ({@link PriceModel}); all transactions move goods through the player's
+ * VIRTUAL hold only and money through Vault.
+ * <p>
+ * Customs stamping is gone (hold plan, 2026-08-01): the market buys anything
+ * the hold carries. What keeps farming from minting free money now is
+ * capacity (a hold slot is scarce) and the per-island stock pools (selling
+ * into an island crushes its price toward the drift floor).
  *
  * @author tastybento
  */
 public class MarketService {
-
-    /** PDC key marking cargo expander items. */
-    public static final NamespacedKey EXPANDER_KEY = NamespacedKey.fromString("tradewinds:expander");
-    /** PDC key marking customs-stamped (trader-bought) goods - the API marker. */
-    public static final NamespacedKey STAMP_KEY = NamespacedKey.fromString("tradewinds:stamp");
 
     private final TradeWinds addon;
     private final PriceEngine priceEngine;
@@ -64,8 +60,8 @@ public class MarketService {
     /**
      * The outfitter's shelf: survival essentials every island guarantees.
      * Bread always; fuel (CHARCOAL) unless the trade catalog already sells
-     * fuel - only the skint AND fuel-less row; plus per-type gear (smiths at
-     * INDUSTRIAL, beds at AGRICULTURAL, rods at FISHING).
+     * fuel; plus per-type gear (smiths at INDUSTRIAL, beds at AGRICULTURAL,
+     * rods at FISHING).
      */
     public java.util.List<Material> outfitterCatalog(IslandSpec spec) {
         java.util.List<Material> shelf = new java.util.ArrayList<>();
@@ -80,21 +76,9 @@ public class MarketService {
     }
 
     /**
-     * The shipwright's slipway: hulls, bought straight to the player's
-     * inventory (a shipless sailor has no hold to receive into - a vessel is
-     * not cargo). Cargo expanders complete the shipwright's stock via
-     * {@link #buyExpander}.
-     */
-    public java.util.List<Material> shipwrightCatalog() {
-        return java.util.List.of(Material.OAK_BOAT, Material.OAK_CHEST_BOAT);
-    }
-
-    /**
      * Buy stores delivered to the player's INVENTORY, not the hold: outfitter
-     * supplies (food, gear, beds, rods) and hulls. These are for using, not
-     * for resale, so they are deliberately NOT customs stamped - which also
-     * stops the outfitter's shelf becoming an arbitrage route. Anything that
-     * will not fit is dropped at the player's feet.
+     * supplies (food, gear, beds, rods). These are for using, not for resale.
+     * Anything that will not fit is dropped at the player's feet.
      *
      * @return how many were bought
      */
@@ -124,52 +108,9 @@ public class MarketService {
         player.getInventory().addItem(stores).values()
                 .forEach(left -> player.getWorld().dropItem(player.getLocation(), left));
         user.sendMessage("tradewinds.trade.bought", "[amount]", String.valueOf(affordable), "[material]",
-                pretty(material), "[price]", String.format("%.2f", total));
+                pretty(material), "[price]", Money.format(addon, total));
         chime(player);
         return affordable;
-    }
-
-    /**
-     * Apply the customs stamp: trader-bought goods carry a PDC marker and a
-     * lore line. Only stamped goods can be sold back to traders - homegrown
-     * and homemade items are for living with, not for selling (with the
-     * illegal exceptions the customs office would rather not discuss).
-     */
-    public ItemStack stamp(ItemStack item) {
-        ItemMeta meta = item.getItemMeta();
-        if (meta == null) {
-            return item;
-        }
-        meta.getPersistentDataContainer().set(STAMP_KEY, PersistentDataType.STRING, "stamped");
-        java.util.List<Component> lore = meta.lore() == null ? new java.util.ArrayList<>()
-                : new java.util.ArrayList<>(meta.lore());
-        lore.add(text("tradewinds.item.stamp"));
-        meta.lore(lore);
-        if (addon.getSettings().isStampGlint()) {
-            meta.setEnchantmentGlintOverride(true);
-        }
-        item.setItemMeta(meta);
-        return item;
-    }
-
-    /**
-     * Is this item customs-stamped (trader-bought)? Public API for other
-     * addons.
-     */
-    public boolean isStamped(ItemStack item) {
-        return item != null && item.hasItemMeta()
-                && item.getItemMeta().getPersistentDataContainer().has(STAMP_KEY, PersistentDataType.STRING);
-    }
-
-    /**
-     * The filter deciding what traders will buy: stamped goods, plus the
-     * configured unstamped exceptions (contraband - if the illegal trade is
-     * enabled at all).
-     */
-    public java.util.function.Predicate<ItemStack> sellableFilter() {
-        return stack -> isStamped(stack)
-                || (addon.getSettings().isIllegalTradeEnabled()
-                        && addon.getSettings().getUnstampedSellables().contains(stack.getType().name()));
     }
 
     /**
@@ -178,7 +119,7 @@ public class MarketService {
     public PriceModel model() {
         var s = addon.getSettings();
         return new PriceModel(s.getProduceFactor(), s.getDemandFactor(), s.getBandDemandBonus(), s.getBuySpread(),
-                s.getSellSpread(), s.getDriftScale(), s.getDriftMin(), s.getDriftMax());
+                s.getSellSpread(), s.getDriftScale(), s.getDriftMin(), s.getDriftMax(), s.getTechPriceStep());
     }
 
     /**
@@ -207,16 +148,42 @@ public class MarketService {
     }
 
     /**
-     * Whether this island will deal with this player at all.
-     * <p>
-     * A fugitive is barred from the safe bands entirely (spec principle 4):
-     * crime pays, into danger. Having burned your name, the only markets left
-     * are the ones where the law is thin - which is the same journey outward
-     * that smuggling forces, arrived at from the other direction.
+     * Whether the player's boat is at this island - the cargo lives in the
+     * boat, so trading needs the ship at the quay. "Here" means inside the
+     * island's PROTECTED space (ruled 2026-08-02): a hull a thousand blocks
+     * out is not a port call. Carrying the boat as an item counts - it is
+     * with you.
      *
      * @param player the player
      * @param spec the island
-     * @return true if the market is open to them
+     * @return true if they may trade here
+     */
+    public boolean boatIsHere(Player player, IslandSpec spec) {
+        var hold = addon.getHoldService().active(player.getUniqueId());
+        if (hold.isEmpty()) {
+            return false;
+        }
+        int range = addon.getSettings().getIslandProtectionRange();
+        // In hand or in the pack: the boat is wherever the sailor is
+        for (ItemStack stack : player.getInventory().getContents()) {
+            if (stack != null && hold.get().getUniqueId()
+                    .equals(world.bentobox.tradewinds.travel.BoatService.boatId(stack))) {
+                return spec.distanceSquared(player.getLocation().getBlockX(),
+                        player.getLocation().getBlockZ()) <= (long) range * range;
+            }
+        }
+        // Otherwise: wherever we last saw it
+        if (hold.get().getWorld() == null || hold.get().getWorld().isEmpty()) {
+            return false;
+        }
+        return spec.distanceSquared(hold.get().getX(), hold.get().getZ()) <= (long) range * range;
+    }
+
+    /**
+     * Whether this island will deal with this player at all.
+     * <p>
+     * A fugitive is barred from the safe bands entirely (spec principle 4):
+     * crime pays, into danger.
      */
     public boolean willTradeWith(Player player, IslandSpec spec) {
         if (addon.getReputationService() == null || !addon.getSettings().isCrimeEnabled()) {
@@ -227,14 +194,8 @@ public class MarketService {
     }
 
     /**
-     * The smuggler's premium.
-     * <p>
-     * Contraband is priced from its crafting recipe like everything else, and
-     * sugar's recipe price is about one currency unit - so the first playtest
-     * ran cargo past a customs patrol and was offered a dollar for it. The risk
-     * was built and the reward was not. This is the reward: what a black market
-     * pays over the honest price of the same goods, and the main lever for how
-     * profitable smuggling is.
+     * The smuggler's premium: what a black market pays over the honest price
+     * of the same goods, and the main lever for how profitable smuggling is.
      *
      * @param material the material
      * @return the multiplier, 1.0 for anything legal
@@ -255,17 +216,30 @@ public class MarketService {
         // bonus apply, so the rougher the port the better it pays
         boolean demands = contraband || TypeEconomy.demands(spec.type()).contains(category);
         boolean produces = !contraband && TypeEconomy.produces(spec.type()).contains(category);
-        return model().economicFactor(produces, demands, spec.band().ordinal(),
+        double economic = model().economicFactor(produces, demands, spec.band().ordinal(),
                 addon.getIslandDataManager().getStock(spec, category));
+        // The tech tilt: high tech sells finished cheap and buys raw dear, so
+        // the best routes are tech DIFFERENTIALS. Contraband is exempt - the
+        // black market premium is its own lever and answers to nothing else.
+        if (!contraband) {
+            economic *= model().techFactor(category.isFinished(), category.isRaw(), spec.techLevel());
+        }
+        return economic;
     }
 
     /**
      * Sell up to {@code amount} of one material from the player's hold to the
-     * island (Integer.MAX_VALUE = everything).
+     * island (Integer.MAX_VALUE = everything). No stamps, no filters: if it
+     * is in the hold and this port will touch it, it sells.
      *
      * @return amount sold
      */
     public int sell(Player player, IslandSpec spec, Material material, int amount) {
+        if (!boatIsHere(player, spec)) {
+            User.getInstance(player).sendMessage("tradewinds.trade.boat-not-here");
+            thud(player);
+            return 0;
+        }
         Optional<Double> unitPrice = playerSellsAt(spec, material);
         Optional<VaultHook> vault = addon.getPlugin().getVault();
         if (unitPrice.isEmpty() || vault.isEmpty() || amount <= 0) {
@@ -279,9 +253,9 @@ public class MarketService {
             thud(player);
             return 0;
         }
-        int count = Math.min(addon.getHoldService().count(player, material, sellableFilter()), amount);
+        int count = Math.min(addon.getHoldService().count(player, material), amount);
         if (count <= 0) {
-            User.getInstance(player).sendMessage("tradewinds.trade.not-stamped");
+            User.getInstance(player).sendMessage("tradewinds.trade.nothing-of-that");
             thud(player);
             return 0;
         }
@@ -290,23 +264,28 @@ public class MarketService {
         if (event.isCancelled()) {
             return 0;
         }
-        int removed = addon.getHoldService().remove(player, material, count, sellableFilter());
+        int removed = addon.getHoldService().remove(player, material, count);
         double total = PriceModel.round2(removed * unitPrice.get());
         vault.get().deposit(User.getInstance(player), total);
         addon.getIslandDataManager().adjustStock(spec, TradeCategory.of(material), removed);
         User.getInstance(player).sendMessage("tradewinds.trade.sold", "[amount]", String.valueOf(removed),
-                "[material]", pretty(material), "[price]", String.format("%.2f", total));
+                "[material]", pretty(material), "[price]", Money.format(addon, total));
         chime(player);
         return removed;
     }
 
     /**
      * Buy up to {@code amount} of a material from the island into the hold,
-     * limited by balance and hold space.
+     * limited by balance and hold slots.
      *
      * @return amount bought
      */
     public int buy(Player player, IslandSpec spec, Material material, int amount) {
+        if (!boatIsHere(player, spec)) {
+            User.getInstance(player).sendMessage("tradewinds.trade.boat-not-here");
+            thud(player);
+            return 0;
+        }
         Optional<Double> unitPrice = playerBuysAt(spec, material);
         Optional<VaultHook> vault = addon.getPlugin().getVault();
         if (unitPrice.isEmpty() || vault.isEmpty() || amount <= 0) {
@@ -327,9 +306,8 @@ public class MarketService {
             thud(player);
             return 0;
         }
-        // Limit by hold space: add first, pay for what fit. Bought goods are
-        // customs stamped - the only goods traders will buy back.
-        int added = addon.getHoldService().add(player, stamp(new ItemStack(material, affordable)));
+        // Limit by hold slots: add first, pay for what fit
+        int added = addon.getHoldService().add(player, material, affordable);
         if (added <= 0) {
             user.sendMessage("tradewinds.trade.no-hold-space");
             thud(player);
@@ -339,120 +317,121 @@ public class MarketService {
         vault.get().withdraw(user, total);
         addon.getIslandDataManager().adjustStock(spec, TradeCategory.of(material), -added);
         user.sendMessage("tradewinds.trade.bought", "[amount]", String.valueOf(added), "[material]",
-                pretty(material), "[price]", String.format("%.2f", total));
+                pretty(material), "[price]", Money.format(addon, total));
         chime(player);
         return added;
     }
 
     /**
-     * Buy a cargo expander: price doubles per expander already owned, capped.
+     * Buy a boat from the shipwright: an UPGRADE, never a second boat. The
+     * replaced boat is destroyed; the hold's contents stay put and the slot
+     * count grows. The listing is validated against the island's tech level
+     * and the player's current boat, so a stale dialog cannot downgrade or
+     * out-tech the port.
      *
      * @return true if bought
      */
-    public boolean buyExpander(Player player) {
+    public boolean buyBoat(Player player, IslandSpec spec, BoatRanks.Rank rank) {
         Optional<VaultHook> vault = addon.getPlugin().getVault();
         if (vault.isEmpty()) {
             return false;
         }
         User user = User.getInstance(player);
-        int owned = addon.getPlayerDataManager().get(player.getUniqueId()).getExpandersPurchased();
-        if (owned >= addon.getSettings().getExpanderCap()) {
-            user.sendMessage("tradewinds.trade.expander-cap");
+        Material current = addon.getHoldService().boat(player);
+        boolean listed = addon.getBoatRanks().shopListing(current, spec.techLevel()).stream()
+                .anyMatch(r -> r.material() == rank.material());
+        if (!listed) {
+            user.sendMessage("tradewinds.trade.boat-not-sold-here");
             thud(player);
             return false;
         }
-        double price = PriceModel.expanderPrice(addon.getSettings().getExpanderBasePrice(), owned);
+        double price = addon.getBoatRanks().price(rank);
+        // A refit is a trade-in: the yard needs the old hull in front of it.
+        // (Buying your FIRST boat has nothing to trade in, and must always be
+        // possible - it is how a sailor who lost their ship gets off the
+        // island.)
+        var owned = addon.getHoldService().active(player.getUniqueId());
+        if (owned.isPresent() && !boatIsHere(player, spec)) {
+            user.sendMessage("tradewinds.trade.refit-needs-ship");
+            thud(player);
+            return false;
+        }
         if (!vault.get().has(user, price)) {
             user.sendMessage("tradewinds.trade.cannot-afford");
             thud(player);
             return false;
         }
-        // An expander IS cargo space - it is carried, so it can always be
-        // opened and filled (a moored or pocketed chest boat cannot be)
         vault.get().withdraw(user, price);
-        player.getInventory().addItem(expanderItem()).values()
-                .forEach(left -> player.getWorld().dropItem(player.getLocation(), left));
-        var data = addon.getPlayerDataManager().get(player.getUniqueId());
-        data.setExpandersPurchased(owned + 1);
-        addon.getPlayerDataManager().save(player.getUniqueId());
-        user.sendMessage("tradewinds.trade.expander-bought", "[price]", String.format("%.2f", price));
+        if (owned.isEmpty()) {
+            // No ship at all: they are buying one outright, hull in hand
+            var fresh = addon.getBoatService().createFor(player, rank.material());
+            addon.getBoatService().giveBoatItem(player, fresh);
+        } else {
+            addon.getBoatService().refit(player, owned.get(), rank.material());
+        }
+        user.sendMessage("tradewinds.trade.boat-bought", "[material]", pretty(rank.material()),
+                "[slots]", String.valueOf(rank.slots()), "[price]", Money.format(addon, price));
         chime(player);
         return true;
     }
 
     /**
-     * The cargo expander item: a lore-marked shulker box. Purchase-only - with
-     * no End there are no shulker shells to craft one (spec principle 7).
-     */
-    public ItemStack expanderItem() {
-        // White, so it never reads as a vanilla purple shulker box
-        ItemStack item = new ItemStack(Material.WHITE_SHULKER_BOX);
-        ItemMeta meta = item.getItemMeta();
-        if (meta != null) {
-            meta.displayName(text("tradewinds.item.expander"));
-            meta.lore(java.util.List.of(text("tradewinds.item.expander-lore")));
-            meta.getPersistentDataContainer().set(EXPANDER_KEY, PersistentDataType.STRING, "expander");
-            item.setItemMeta(meta);
-        }
-        return item;
-    }
-
-    /**
-     * A translated component from the console locale - for item names and lore,
-     * which belong to the item rather than to any one viewer.
-     */
-    private Component text(String key) {
-        return User.getInstance(org.bukkit.Bukkit.getConsoleSender()).getTranslationAsComponent(key,
-                new String[0]);
-    }
-
-    /**
-     * A trading pouch: the first rung of cargo space, and the only hold a new
-     * sailor has.
-     */
-    public ItemStack pouchItem() {
-        ItemStack pouch = new ItemStack(Material.BUNDLE);
-        ItemMeta meta = pouch.getItemMeta();
-        if (meta != null) {
-            meta.displayName(text("tradewinds.item.pouch"));
-            meta.lore(java.util.List.of(text("tradewinds.item.pouch-lore")));
-            pouch.setItemMeta(meta);
-        }
-        return pouch;
-    }
-
-    /**
-     * Buy a trading pouch, up to the hold's pouch limit.
+     * Buy and install a cargo expander: the endgame money sink. Sold only at
+     * top-tech ports (the sink has a home port), installs only into a Pale
+     * Oak Chest Boat with a free slot, and the price doubles per expander
+     * already installed - the wallet is the cap.
      *
      * @return true if bought
      */
-    /**
-     * What a pouch costs. Flat: pricing by how many the sailor carries would be
-     * defeated by dropping one before buying and picking it up afterwards. The
-     * max-bundles cap does the limiting instead.
-     */
-    public double pouchPrice(Player player) {
-        return addon.getSettings().getPouchPrice();
+    public boolean buyExpander(Player player, IslandSpec spec) {
+        Optional<VaultHook> vault = addon.getPlugin().getVault();
+        if (vault.isEmpty()) {
+            return false;
+        }
+        User user = User.getInstance(player);
+        if (spec.techLevel() < world.bentobox.tradewinds.galaxy.GalaxyEngine.MAX_TECH_LEVEL) {
+            user.sendMessage("tradewinds.trade.expander-not-sold-here");
+            thud(player);
+            return false;
+        }
+        java.util.UUID id = player.getUniqueId();
+        if (!addon.getHoldService().canInstallExpander(id)) {
+            user.sendMessage("tradewinds.trade.expander-needs-flagship");
+            thud(player);
+            return false;
+        }
+        double price = PriceModel.expanderPrice(addon.getSettings().getExpanderBasePrice(),
+                addon.getHoldService().expanderCount(id));
+        if (!vault.get().has(user, price)) {
+            user.sendMessage("tradewinds.trade.cannot-afford");
+            thud(player);
+            return false;
+        }
+        vault.get().withdraw(user, price);
+        addon.getHoldService().installExpander(id);
+        user.sendMessage("tradewinds.trade.expander-bought", "[price]", Money.format(addon, price));
+        chime(player);
+        return true;
     }
 
     /**
-     * Is this sailor destitute - no cargo space, and unable to buy any?
+     * Is this sailor destitute - no boat, and unable to buy even the smallest?
      */
     public boolean isDestitute(Player player) {
-        if (addon.getHoldService().pouchCount(player) > 0 || !addon.getHoldService().expanders(player).isEmpty()) {
+        if (addon.getHoldService().boat(player) != null) {
             return false;
         }
+        double raftPrice = addon.getBoatRanks().ladder().stream().findFirst()
+                .map(addon.getBoatRanks()::price).orElse(100.0);
         return addon.getPlugin().getVault()
-                .map(vault -> vault.getBalance(User.getInstance(player)) < addon.getSettings().getPouchPrice())
+                .map(vault -> vault.getBalance(User.getInstance(player)) < raftPrice)
                 .orElse(false);
     }
 
     /**
-     * The harbourmaster's charity: a sailor with no hold and no money to buy
-     * one cannot earn anything at all - the market needs cargo space on both
-     * sides of a trade - so the port gives them the bare minimum to work
-     * again. Charity goods are unstamped and therefore unsellable, so there is
-     * nothing here to farm.
+     * The harbourmaster's charity: a sailor with no boat has no hold, and
+     * with no hold they can neither earn nor leave - so the port gives them
+     * the barest hull that floats (a bamboo raft).
      *
      * @return true if something was given
      */
@@ -474,51 +453,11 @@ public class MarketService {
         }
         data.setLastCharity(System.currentTimeMillis());
         addon.getPlayerDataManager().save(player.getUniqueId());
-        player.getInventory().addItem(pouchItem()).values()
-                .forEach(left -> player.getWorld().dropItem(player.getLocation(), left));
-        // A hull too, if they have neither boat nor boat item
-        if (!hasBoat(player)) {
-            player.getInventory().addItem(new ItemStack(Material.OAK_BOAT)).values()
-                    .forEach(left -> player.getWorld().dropItem(player.getLocation(), left));
-        }
+        Material raft = addon.getBoatRanks().ladder().stream().findFirst()
+                .map(BoatRanks.Rank::material).orElse(Material.BAMBOO_RAFT);
+        var hold = addon.getBoatService().createFor(player, raft);
+        addon.getBoatService().giveBoatItem(player, hold);
         user.sendMessage("tradewinds.trade.charity-given");
-        chime(player);
-        return true;
-    }
-
-    private boolean hasBoat(Player player) {
-        if (player.getVehicle() instanceof org.bukkit.entity.Boat) {
-            return true;
-        }
-        for (ItemStack stack : player.getInventory().getContents()) {
-            if (stack != null && stack.getType().name().endsWith("_BOAT")) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public boolean buyPouch(Player player) {
-        Optional<VaultHook> vault = addon.getPlugin().getVault();
-        if (vault.isEmpty()) {
-            return false;
-        }
-        User user = User.getInstance(player);
-        if (addon.getHoldService().pouchCount(player) >= addon.getSettings().getMaxBundles()) {
-            user.sendMessage("tradewinds.trade.pouch-cap");
-            thud(player);
-            return false;
-        }
-        double price = pouchPrice(player);
-        if (!vault.get().has(user, price)) {
-            user.sendMessage("tradewinds.trade.cannot-afford");
-            thud(player);
-            return false;
-        }
-        vault.get().withdraw(user, price);
-        player.getInventory().addItem(pouchItem()).values()
-                .forEach(left -> player.getWorld().dropItem(player.getLocation(), left));
-        user.sendMessage("tradewinds.trade.pouch-bought", "[price]", String.format("%.2f", price));
         chime(player);
         return true;
     }

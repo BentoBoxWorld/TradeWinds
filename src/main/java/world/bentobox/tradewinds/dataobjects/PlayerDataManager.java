@@ -102,6 +102,22 @@ public class PlayerDataManager {
         return charted;
     }
 
+    /**
+     * Whichever cached player remembers this boat as their OLD BOAT. Cache
+     * only - a boat taken while its former owner is offline is reported to
+     * them at login instead.
+     *
+     * @param boatId the boat id
+     * @return the player, if any
+     */
+    public java.util.Optional<UUID> findByOldBoat(String boatId) {
+        if (boatId == null || boatId.isEmpty()) {
+            return java.util.Optional.empty();
+        }
+        return cache.entrySet().stream().filter(e -> boatId.equals(e.getValue().getOldBoat()))
+                .map(Map.Entry::getKey).findFirst();
+    }
+
     public void save(UUID playerId) {
         TWPlayerData data = cache.get(playerId);
         if (data != null) {

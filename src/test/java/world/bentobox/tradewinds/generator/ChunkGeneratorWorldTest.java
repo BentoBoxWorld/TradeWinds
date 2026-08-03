@@ -244,18 +244,21 @@ class ChunkGeneratorWorldTest extends CommonTestSetup {
         ChunkGeneratorWorld gen = new ChunkGeneratorWorld(addon);
         RecordingChunkData r = generate(gen, Environment.NORMAL, SEED, spec.centerX() >> 4, spec.centerZ() >> 4);
 
-        boolean grassAboveSea = false;
-        for (int x = 0; x < 16 && !grassAboveSea; x++) {
-            for (int z = 0; z < 16 && !grassAboveSea; z++) {
+        // Land, not necessarily lawn: the surface follows the island's biome
+        // (sand under a desert port, mud under a mangrove one)
+        boolean landAboveSea = false;
+        for (int x = 0; x < 16 && !landAboveSea; x++) {
+            for (int z = 0; z < 16 && !landAboveSea; z++) {
                 for (int y = settings.getSeaHeight() + 1; y < settings.getSeaHeight() + 45; y++) {
-                    if (r.get(x, y, z) == Material.GRASS_BLOCK) {
-                        grassAboveSea = true;
+                    Material m = r.get(x, y, z);
+                    if (m != Material.AIR && m != Material.WATER) {
+                        landAboveSea = true;
                         break;
                     }
                 }
             }
         }
-        assertTrue(grassAboveSea, "The island mask should lift grassy land above sea level");
+        assertTrue(landAboveSea, "The island mask should lift land above sea level");
 
         // And the interstice ignores the galaxy entirely
         RecordingChunkData nether = generate(gen, Environment.NETHER, SEED, spec.centerX() >> 4, spec.centerZ() >> 4);
@@ -301,9 +304,12 @@ class ChunkGeneratorWorldTest extends CommonTestSetup {
                 .thenReturn(new GalaxyEngine(new GalaxyConfig(SEED, 2500, 160, 45, 0.0, 0, 5000, 70)));
         ChunkGeneratorWorld gen = new ChunkGeneratorWorld(addon);
         RecordingChunkData r = generate(gen, Environment.NORMAL, SEED, 0, 0);
+        // Any solid ground counts: the spawn island's surface follows its
+        // biome, which need not be grass
         boolean landAboveSea = false;
         for (int y = settings.getSeaHeight() + 1; y < settings.getSeaHeight() + 50 && !landAboveSea; y++) {
-            landAboveSea = r.get(0, y, 0) == Material.GRASS_BLOCK;
+            Material m = r.get(0, y, 0);
+            landAboveSea = m != Material.AIR && m != Material.WATER;
         }
         assertTrue(landAboveSea, "The spawn island should rise above the sea at the origin");
     }

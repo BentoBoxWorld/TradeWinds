@@ -64,8 +64,10 @@ class ChartNavigationTest {
         assertEquals(Math.atan2((double) pierZ - pz, (double) pierX - px),
                 Math.atan2(marker.dz(), marker.dx()), 0.001);
         assertEquals((int) Math.hypot((double) pierX - px, (double) pierZ - pz), marker.distance());
-        // Below the island names so it never collides with their stack
-        assertTrue(marker.dy() < 1.2, "Dock marker should hang below the island markers");
+        // Below the island names so it never collides with their stack, but
+        // above the waterline - a sailor at sea level must not see it submerged
+        assertTrue(marker.dy() < 2.5, "Dock marker should hang below the island markers");
+        assertTrue(marker.dy() >= 1.0, "Dock marker must sit above the waterline, not in the sea");
     }
 
     @Test

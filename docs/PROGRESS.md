@@ -3,6 +3,487 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## Whole coins, and the economy's own formatter (2026-08-03)
+
+"Oak Log x1 - $0.97" made every market chart ragged. Two independent faults:
+
+**We never asked the economy how to write money.** Vault exposes
+`fractionalDigits()` and `format(double)`, and BentoBox surfaces the latter as
+`VaultHook.format()` - an admin running a whole-coin economy has stated a
+preference. TradeWinds hand-formatted `%.2f` in 19 places and overrode them
+everywhere. All of it now goes through `economy.Money.format(addon, amount)`,
+which delegates to Vault and falls back to whole units when there is no
+economy. Two local copies of the same helper (TWFineCommand, CustomsService)
+were folded in.
+
+**Prices are now whole coins.** Naive rounding would have broken the cheap end
+- sand/stone/kelp sat at 0.2-0.35 after the produce factor and would have
+rounded to FREE - so every money value is scaled x10 (base prices, starting
+balance 2500, boats `250 x slots²`, expanders 50000, fines, bounties) and the
+unit price is rounded **directionally**: buying `ceil`, selling `floor`, buy
+never below 1. The direction is load-bearing: rounding both to nearest lets a
+same-island round trip break even on some prices, which is free money.
+Verified by brute force over 2000 base values x every type factor - zero
+violations - and pinned by `testEveryPriceIsAWholeCoin`.
+
+Cost of the x10 scale: the cheapest goods carry up to ~10% rounding error
+(sand's true 2.07 becomes 3). x20 or x100 would shrink it if play says it
+matters. Live servers would need balances scaled to match; ours is wiped
+anyway.
+
+## The boat IS the hold: capture, abandonment, protection (2026-08-02)
+
+Design session with Ben settled the abandonment rules, and they forced the
+structural change the last refit left open: **the hold is now keyed to the
+BOAT, not the player.** Capture gives the pirate "everything in it", an
+abandoned boat keeps its cargo while you row back to it, and trading needs
+the ship present - none of which works with a player-keyed hold. The two
+records collapse into one `BoatHold` (material, cargo, fuel, expanders,
+owner, last-seen position, item TTL) keyed by a UUID stamped in PDC on BOTH
+the entity and its item form; `TWPlayerData` just points at `activeBoat` and
+`oldBoat`. `PlayerHold` and `DroppedBoat` are gone.
+
+**The rules as built:**
+- **Trading gate:** no ship inside that island's PROTECTED space, no market.
+  Carrying the boat as an item counts (it is with you); otherwise the record's
+  last-seen position answers.
+- **Capture by boarding or by pickup**, always behind a confirmation dialog -
+  because the boat you leave behind keeps YOUR cargo and becomes unowned.
+  Item pickups cancel first and prompt (15s suppression, since pickup fires
+  every tick you stand near a hull). Passengers never capture. A player with
+  no boat claims silently - nothing to lose.
+- **Smaller hull:** take the goods, leave the hull to the sea and its TTL.
+- **Protection:** an OWNED boat left unattended in protected island space
+  cannot be boarded or broken by anyone else, mobs included - except at
+  ANARCHIC ports. **Unowned boats are never protected, anywhere**, which is
+  what makes an OLD BOAT a race to recover and dying with a loaded ship at a
+  safe dock genuinely costly.
+- **Exactly one OLD BOAT** is remembered; older abandonments are forgotten
+  flotsam. Reclaiming it clears the marker.
+- **Death leaves the boat where it is** - no item drop, still yours. Lava
+  alone destroys boat and cargo together.
+- **Name plates:** `Entity extends Nameable`, so the hull carries the owner's
+  name or UNOWNED, hidden while ridden. (Vanilla name TAGS only work on mobs;
+  the API has no such limit.)
+- **Respawn/login:** a raft when your own ship is out of reach; a stolen-boat
+  message and a raft for anyone left treading water at login.
+- `/tw chart` now raises BOAT and OLD BOAT holograms anywhere in the world.
+
+**Trap hit:** `yes:`/`no:` are YAML 1.1 BOOLEANS as keys - the capture dialog
+locale keys parsed as `true`/`false` and blew up the locale marker test.
+Renamed to confirm/cancel. Never use bare yes/no/on/off as locale keys.
+
+**Warp arrivals face the dock (2026-08-02):** the boat (and sailor) now leave
+a warp pointed at the destination's pier, computed from the same seeded dock
+plan the quay is built from, so holding forward is the approach. **A hull
+sits ACROSS its yaw, not along it** - the first cut used the plain look-at
+yaw and arrived broadside ("turn 90 clockwise and I would be pointing at the
+dock"), so `boatYawToward` leads the heading by a quarter turn and normalises
+back into Minecraft's (-180, 180]. The plain `yawToward` keeps its own tests
+as the honest compass maths.
+
+**Offered to swap straight back (2026-08-03, playtest):** taking a boat from
+the ground leaves the old hull at your feet, and walking over it immediately
+asked whether you would like to swap back. The existing per-hull prompt
+suppression could not help - the shed hull is a *different* boat, seen for the
+first time - so a swap now opens a 5-second quiet window during which boat
+items are ignored entirely (the pickup is cancelled, not allowed through, or
+the spare would land in the pack). Re-pocketing your OWN boat still works
+throughout: that branch runs before the window is checked.
+
+**Jigsaw blocks left standing in islet structures (2026-08-02, playtest):** a
+camp on an islet was held up by a row of glowing jigsaw blocks. The templates
+were chosen as "single-piece NBT" precisely to avoid this, but that was wrong:
+inspecting the shipped NBT shows the pillager camp features AND ruined portals
+1/2/3/4/5 all carry jigsaw connectors. Vanilla's assembler swaps each for its
+own `final_state` while building; a raw paste does not.
+
+Rather than read `final_state` at runtime (Boxed does this via BentoBox's NMS
+metadata helper, which needs a real Block and so does not fit a
+BlockPopulator), the value is read from each template's NBT once and recorded
+on the `Placement`: camps and portal_3 become AIR, portals 1/2/4/5 become
+NETHERRACK. `IsletDecorator` then scrubs the pasted box - JIGSAW to that fill,
+STRUCTURE blocks to air. A test asserts every placement names a real material
+and that the netherrack-footed portals say so.
+
+**Crafted boat came out blank (2026-08-02, playtest):** an acacia boat crafted
+as an upgrade had no lore and would not open. Clicking a crafting result puts
+the item on the **cursor**, not into a slot, and the stamping pass only walked
+`getInventory().getContents()` - so the new hull never got its record id. It
+now checks the cursor first (and retries a few ticks later if the item has not
+landed anywhere yet). Because an unstamped hull can never be opened, the hold
+GUI also self-heals: right-clicking a boat item with no id, of exactly your
+boat's type, while carrying no other avatar of it, adopts it as the avatar.
+That repairs any hull that reaches a player without its record, whatever the
+route.
+
+**Chart marking your own pocket (2026-08-02, playtest):** after a few boat
+swaps the chart showed BOAT 8m and OLD BOAT 8m - both pointing at the
+player's feet, one of them at the boat in their hand. Markers are now only
+raised for a boat you actually have to GO to: never one you are carrying
+(`BoatService.isCarrying`), never one already under you, and never one within
+32 blocks. A hull deliberately shed during a merge (emptied, dropped at your
+feet) also stops being charted as an OLD BOAT - you did not lose it, you put
+it down.
+
+**Two boats in one pack (2026-08-02, playtest):** recovering an old boat while
+carrying the current one left BOTH hulls in the inventory - and since the
+hold GUI matched the boat item by MATERIAL, either oak hull opened the active
+hold. The spare could then be dropped, picked up and stripped for free fuel,
+or thrown to show up as an OLD BOAT. Three fixes: taking a boat while your
+old one is **with you** (carried, or moored within loading range) now pours
+its cargo into the new hull and leaves the empty hull at your feet, unowned -
+you end up with the best boat and all the cargo, per Ben's ruling; the GUI
+gesture matches by boat IDENTITY, not type; and crafted hulls are stamped
+with their record, so a freshly built boat is not an anonymous item that
+merely looks like your ship. When the old boat is far away nothing changes -
+it stays put with its cargo as the OLD BOAT you row back to.
+
+**Paid $100 for a raft and got nothing (2026-08-02, playtest):** the yard's
+purchase only knew how to REFIT - it changed the material on the record the
+player already had. With no boat there was no record, so `ifPresent` did
+nothing at all: money gone, no hull. Buying with no boat now creates the
+record and hands over the item; buying WITH a boat is a genuine refit that
+also swaps the avatar in the world (ridden entity replaced under the sailor,
+carried item retyped, moored hull rebuilt where it floats) - the old code
+changed only the record, so a refit would have left an oak hull claiming to
+be a Cherry Chest Boat. A refit now also requires the ship to be AT the yard
+(a trade-in needs the old hull present); buying your first boat never does,
+since that is the escape hatch for a stranded sailor.
+
+**Capture left the victim holding a ghost (2026-08-02, two-player playtest):**
+one capture produced five bugs, all from a single omission - **taking a boat
+never told the boat's owner.** Player 2's record still pointed at the hull
+Player 1 had taken, so: no notification at the time; phantom "0/3 slots" at
+the market; low-fuel nagging with no boat; and at login the stolen-boat path
+called `setActiveBoat(null)`, which *demotes* - so it stripped the new
+owner's name (handing the boat back!) and left a bogus OLD BOAT marker 16m
+away. The database showed it plainly: both players' `oldBoat` pointed at the
+same hull, and Player 1's real abandoned boat was orphaned.
+
+Fixes: `setActiveBoat` now takes the boat off its previous owner (clearing
+their pointer and telling them if online); **losing** a boat goes through a
+new `clearActiveBoat` that does NOT demote (only abandonment leaves an OLD
+BOAT); `oldBoat()` returns nothing - and forgets the pointer - once the hull
+is owned again or gone; fuel warnings skip boatless players; and the market
+gate now applies to CARGO only, so the outfitter and shipwright always serve
+(a sailor who lost their boat could otherwise never buy another and was
+stranded on the island for good).
+
+**Tests now run the real thing:** these rules had been "verified" against a
+hand-written stand-in for HoldManager, which is why none of it was caught.
+`TestHolds` now drives the REAL manager over an in-memory database, so the
+ownership regressions are pinned against production logic.
+
+**No BOAT marker while aboard (2026-08-02):** pointing a sailor at the deck
+under their feet is noise, so the green BOAT hologram is suppressed while
+riding. OLD BOAT still shows - that is the one being rowed back to.
+
+**Cargo teleported across the ocean (2026-08-02, playtest):** a hull thrown to
+a player standing on ANOTHER island stripped itself into their boat thousands
+of blocks away, and they could not take the hull at all ("I really wanted the
+boat"). Both faults came from the automatic size-based salvage. Finding a hull
+- by pickup or by boarding - now always opens one dialog with up to three
+answers: take the boat (your own becomes an unowned OLD BOAT), take only the
+cargo (**only** while your own boat is within `boats.cargo-transfer-range`,
+default 200 - and the dialog says WHY the option is missing when it is not),
+or leave it. A boatless finder still claims outright with no dialog. This
+supersedes the earlier "smaller hull: goods only, leave the hull" ruling: the
+size of the hull no longer decides anything, the player does.
+
+**Warp facing, settled by console (2026-08-02):** the "hull sits across its
+yaw" theory was WRONG and is reverted. The logging proved it in one warp:
+arriving (-2919, 2187) with the dock flag at (-3237, 2497), the computed
+look-at yaw was 45.8 and the sailor's own F3 read 46.3 when they turned to
+face the dock - so `yawToward` had been right from the start. The real fault
+is that **mounting drags the facing** (the boat ends up pointing wherever the
+player is looking; the log showed player yaw 178.8 against a boat set to
+135.8). Both rotations are now forced with `setRotation` two ticks AFTER the
+re-seat instead of trusting the teleport, and a regression test pins the real
+numbers from that console line. Confirmed working in play; the yaw
+diagnostics were removed once they had done their job (the one-line arrival
+log stays). Lesson: one empirical report ("turn 90
+clockwise") is a symptom, not a diagnosis - the offset it suggested was a
+coincidence of that arrival's geometry.
+
+**Chart holograms vanishing (2026-08-02):** "/tw chart shows them, then they
+quickly disappear." Every `show()` scheduled a fade for the configured
+duration, but the timer cleared whatever was current rather than its OWN set
+- so an earlier call's timer wiped a later call's holograms seconds after
+they appeared. Each set now carries a generation number and a timer only
+clears its own. Arrival also raises the chart a second time once the arrival
+BLINDNESS wears off, which is why they were "sometimes" invisible on warp in.
+Warp arrivals additionally log the dock-flag position, the look-at yaw, the
+boat yaw set, and - a tick after the re-seat - what the yaw actually ended up
+being, so the remaining facing question can be settled by console rather than
+by eye.
+
+**Playtest round 2 (2026-08-02):** `/tw chart` ashore printed the text list -
+useless for the one job ashore actually has, finding your moored boat. The
+hologram compass now raises anywhere in the world (text behind
+`/tw chart list`). And the capture flow relabelled the abandoned boat BEFORE
+`setActiveBoat` stripped its owner, so the plate kept the old owner's name -
+relabel now happens after the switch.
+
+**Playtest immediately after (2026-08-02):** "I dropped the boat in the water
+and tried to enter it - it asked me to TAKE my own Oak Boat." Placing a boat
+item spawns a plain vanilla entity carrying none of the item's PDC, so the
+hull in the water was an unregistered stranger: boarding it registered a new
+unowned record and offered a capture, which demoted the real starter boat
+(coal and all) to OLD BOAT - hence the phantom marker 56m away and the
+missing starter fuel. Fixed with an `EntityPlaceEvent` handler that carries
+the record id from item to entity as it is placed. The same identity loss
+existed on the teleport path (`BoatPickupListener` built a bare ItemStack),
+now stamped; the chest boat's real inventory is no longer rescued there
+because the hold is the record.
+
+241 tests green.
+
+## The great refit: virtual hold, One Boat, tech levels (2026-08-01)
+
+The playtest rework, from `tradewinds-hold-plan.md` (normative) + session
+rulings. Clean slate - **the test server's TradeWinds DB and world must be
+wiped on next deploy** (pouches, stamped goods and real-container holds are
+all meaningless now).
+
+**Tech levels (galaxy).** `IslandSpec.techLevel()` 1-7, seeded, type-based
+(+/-2 wobble; INDUSTRIAL/LUXURY base 5, farms/fisheries 2), starter cluster
+guarantees one >= TL3 (deterministic boost of the best natural roll if seed
+luck fails). Prices tilt by `economy.tech-price-step` (3%/step from TL4):
+high tech sells finished (METALS, FOOD) cheap, buys raw (ORES, CROPS, WOOD,
+FISH, STONE) dear - contraband exempt. Tech shows in the market subtitle,
+warp tooltips, chart, holograms, nav bar. Plazas furnish by tech: galley
+everywhere; furnace+stonecutter TL3, smithing+grindstone TL4, brewing+cauldron
+TL5, anvil TL6, enchanting table with bookshelf arc TL7.
+
+**The virtual hold.** `PlayerHold` (DB): boat, cargo material→amount, fuel,
+expanders. No real container ever holds cargo; ItemStack meta does not
+survive deposit (by design - cargo is a commodity). `HoldService` is the only
+gate: slots = ceil(amount/stack) consolidated; one-way in (containers,
+bundles, shulkers and BOATS refused); out = sell or TNT-destroy only; 7 fuel
+slots, fuel free both ways. `HoldGui`: 54-slot render-and-command window -
+every click cancelled and interpreted (deposit from pack, select stack → TNT,
+fuel withdraw, expander panels). Chest-boat REAL inventories are now
+unreachable by design (sneak-click and in-boat right-click open the hold GUI
+instead) - no shadow storage.
+
+**One Boat.** 20 ranks (config `boats.ranks`), Bamboo Raft 2 slots → Pale Oak
+Chest Boat 21. Shop: quadratic `25 x slots²`, lists bigger-only, gated
+rank <= TL x 3; purchase REPLACES and destroys the old boat, contents stay.
+Crafting: smaller-or-equal refused, bigger is a replacement upgrade
+(chest-add included); tech never gates crafting. Start kit: Oak Boat + coal
+in the fuel slots. Charity: Bamboo Raft. `/tw restart` clears the whole hold.
+
+**Stamping is GONE.** Contraband has its own list
+(`illegal-trade.contraband-materials`); the market buys anything aboard.
+Balance now rests on capacity + stock-pool drift - **watch the pools in
+playtest** (farm-and-sell is legal now; drift-scale 500 / decay 50/hr may
+need tightening).
+
+**Dropped boats.** Boat items carry their hold via a PDC UUID onto a
+`DroppedBoat` record; DB-persisted TTL (`boats.dropped-boat-ttl-minutes`),
+sweep task sinks expired flotsam; vanilla despawn cancelled for tagged items.
+Breakage always yields the item (destroy event cancelled, entity swapped for
+a drop) - lava alone burns boat and hold. Death drops the tagged boat
+(keepInventory keeps it; DeathChest chests it; fire/lava deaths burn it).
+Pickup: no boat = claim whole; bigger = SWAP (ruled in session: your old boat
+becomes the floating item, carrying whatever overflow did not fit - the old
+hull can always take it, so nothing is ever lost to the sea); smaller/equal =
+most-valuable-first partial transfer, remainder stays claimable. Handing a
+loaded boat over IS the trade gesture. Shop purchases remain trade-ins (old
+boat destroyed) - only salvage swaps.
+
+**Expanders v2.** Install-only into a Pale Oak Chest Boat with a free slot
+(each occupies one), TL7 shops only, `5000 x 2^installed`, no cap. Nested
+21-slot panel per expander (own TNT, no fuel row, no nesting); TNT refuses a
+loaded expander; in any smaller boat they ride inert, contents intact, still
+counted aboard for trade and customs.
+
+**Post-rulings (same session):** riding + inventory key opens the hold on
+CHEST-variant boats (the client sends the vanilla open-vehicle-inventory
+request and we redirect it - this also seals the chest boat's real inventory
+completely). Plain boats CANNOT get this gesture: the client renders the
+ordinary inventory screen without telling the server, so the right-click
+gestures cover them. Also:  bigger-boat salvage is a SWAP (old boat
+floats on with the overflow - nothing lost to the sea, conservation-tested);
+fuel-valued cargo clicks MOVE to the fuel row instead of selecting for the
+TNT (fuel is exempt from one-way, and the TNT never touches fuel, per plan).
+
+**Respawn loaner (2026-08-02):** a boatless respawner is lent
+`boats.respawn-boat` (default BAMBOO_RAFT, NONE disables) - death maroons you
+ashore while your boat floats at the death site; the raft is the row back.
+Never granted over an existing boat (keepInventory), and off-ladder config
+values disable rather than misfire.
+
+**Duplicate locale keys (2026-08-02):** the console warned "duplicate keys
+found : description / nothing-to-sell". Both were self-inflicted by bulk
+locale edits: the `commands.trade` subcommand had been left indented under
+`starchart` (so its `description` collided and the trade command lost its
+help line), and renaming `not-stamped` to `nothing-to-sell` collided with an
+existing key of that name - two different messages, one for "this port wants
+none of what you carry" (dialog) and one for "you have none of THAT"
+(market), so the market's got its own key `nothing-of-that`. Bukkit only
+WARNS and then silently keeps one, so `ResourceYamlTest` now fails the build
+on any duplicate key in addon.yml, config.yml or any locale.
+
+**Plain-boat pickups + no lingering hulls (2026-08-02, playtest):** "picking
+up a given oak chest boat didn't upgrade." The ladder now applies to UNTAGGED
+boat items too (command-given, spare hulls, other players' plain drops):
+bigger replaces (no record = no overflow = old hull consumed outright),
+boatless claims, smaller stays an ordinary item. And the salvage swap only
+leaves the old boat afloat when it actually carries overflow - an empty old
+hull no longer lingers.
+
+**Visible boundaries (2026-08-02, playtest):** "there is no visible border -
+it's invisible." A per-player dust-curtain task now paints the arc nearest
+you of both rings: RED at the warp-offer ring (protection edge), BLUE at the
+island-space edge. Colors/view distance/master switch in `border.*`; parsing
+is forgiving (typo = default, never a stripped border). Paint, not a wall.
+
+**First cut showed nothing** (warp dialog fired, no particles). Rewritten to
+follow the Border addon's proven path exactly: `User.spawnParticle` (which
+resolves DUST/REDSTONE across versions, validates the dust options, applies
+the server view-distance check and passes extra=1 - a raw
+`player.spawnParticle(..., extra 0, dust)` was the difference), and the
+curtain now hangs around the PLAYER's own Y rather than an assumed sea level,
+so a boat sitting above the waterline still sees it. Startup logs a line with
+the ring radii and on/off state, so the console says whether it is alive.
+Ruled out first: config default (BentoBox `config.contains` gating means a
+missing path keeps the Java default `true`, so an old config cannot silently
+disable it) and task registration (start() is in onEnable).
+
+**Removed:** pouches, customs stamps, the carried-shulker expander,
+`ExpanderListener`, `economy.unstamped-sellables`, `stamp-glint`,
+`expander-cap`, `max-bundles`, `pouch-price`, `TWPlayerData.expandersPurchased`.
+
+229 tests green.
+
+## The galley: every plaza cooks (2026-08-01)
+
+Every market plaza now has a **public workbench and a campfire hearth** beside
+the quay entrance (bearing + 0.7 rad, plazaRadius − 4), so a sailor can craft
+and cook their catch the moment they step ashore. No flag changes were needed:
+CRAFTING is already visitor-rank at every port, campfire interaction is
+governed by BentoBox's FURNACE flag (also visitor-rank), and BREAK_BLOCKS is
+denied - usable by all, removable by none. The campfire stands on a
+cobblestone hearth block so residents do not path across open flame. A
+campfire rather than a furnace on purpose: it needs no fuel, so even a
+destitute sailor can cook. No economy leak either way - anything crafted or
+cooked is unstamped and therefore unsellable; the galley feeds players, not
+wallets.
+
+226 tests green.
+
+## Ground truth, and ruins worth rowing to (2026-08-01)
+
+**Per-biome surface materials.** With every biome now generatable, "everything
+stands on grass" stopped being ignorable: a desert islet was a lawn with a
+desert sky. `surfaceKindAt` is now purely biome-driven - it asks `biomeKeyAt`
+(which already knows islet vs island vs beach fringe vs mushroom) and maps
+through one table: sand under deserts and beaches, red sand over terracotta in
+the badlands, podzol in old-growth taiga, mud in mangrove swamps, bare stone
+on stony shores and the peaks, gravel on the gravelly hills, snow blocks on
+groves/slopes/ice spikes, mycelium on mushroom fields. Trading islands follow
+the same rule (a desert INDUSTRIAL port is a sand island now); plaza and dock
+terraforming still override their own columns. `SurfaceKind` grew from 3 kinds
+to 9; `IslandPalette` maps them (subsoil too: sandstone under sand, terracotta
+under red sand). NOTE for the live world: the spawn island's mangrove biome
+means its newly generated chunks are mud-surfaced - a seam against
+already-generated grass chunks is expected on the test server.
+
+**Islet structures.** Wild islets can now carry a small vanilla structure at
+their heart, chance per islet in config (`galaxy.islet-structure-chance`,
+default 0.25). Selection is pure and seeded (`galaxy.IsletStructures`):
+igloos on the snowfields, half-buried fossils in the deserts/badlands/swamps,
+ruined portals (loot chests intact) in jungles and woods, abandoned pillager
+camps (tents, log piles, target ranges) on plains and savannas. Placement is
+`generator.IsletDecorator`, a BlockPopulator that stamps the whole template
+down when the islet's center chunk generates - single-chunk anchored, so no
+cross-chunk consistency to maintain, and safe to toggle mid-game.
+**Deliberately restricted to vanilla's single-piece NBT templates** (fossils,
+igloo/top, ruined_portal/*, pillager_outpost/feature_*) - jigsaw-built
+structures (villages, temples) would leave connector blocks behind if placed
+raw; that is Stage-2 territory via the Boxed patterns. Mushroom islets and
+pale gardens never decorate: there the biome itself is the find.
+
+226 tests green.
+
+## Every land biome now has somewhere to exist (2026-08-01)
+
+"Is it possible to find a Cherry Grove islet or Pale Oak islet?" It was not:
+wild islets drew uniformly from a list of 8 temperate biomes, and 21 of the
+registry's 40 generatable overworld land biomes existed nowhere at all
+(pale_garden, taiga, grove, bamboo_jungle, eroded_badlands, the peaks...).
+
+Wild islets now draw from **temperature-banded lists** keyed to
+`oceanTemperatureIndex` at the islet's center - the sea the galaxy already
+varies. Frozen seas grow snowfields, groves and frozen peaks; cold seas taigas
+and windswept hills; temperate seas the forests (cherry grove and pale garden
+among them); lukewarm the savannas and sparse jungle; warm seas desert,
+badlands, bamboo jungle and mangrove. Between the five bands and the trading
+island types, every land biome is reachable (caves, rivers, oceans, Nether and
+End deliberately excepted), and the land always suits the water it stands in.
+`isletBiomes()` aggregates the bands, so the biome provider declares the new
+keys with no further change. Trading island type biomes are untouched.
+
+Caveat for the live world: islet biomes in not-yet-generated chunks re-roll
+under the new scheme, so a chunk border through an already-half-generated
+islet could show a biome seam. Trading islands are unaffected.
+
+220 tests green.
+
+## The expander that would not open (2026-08-01)
+
+**"Right clicking a cargo expander does not open its inventory."** Two
+findings, one report:
+
+**The gesture players actually try was never implemented.** The listener only
+knew the in-hand gesture (expander in the main hand, right-click the world);
+the natural one - inventory screen open, right-click the expander where it
+lies, like using a bundle - fell through to vanilla's pick-up-half. There is
+now an `InventoryClickEvent` handler for it: own inventory only, empty cursor
+only, opens the same 27-slot view next tick. The view write-back is tracked by
+SLOT, and registration now happens only after `openInventory` confirms the
+view really opened - registering first meant the close of a view being swapped
+out could have its contents written into the box.
+
+**The in-hand gesture was also broken, invisibly.** `PlayerInteractEvent` for
+a click at AIR is *born cancelled* - `isCancelled()` is defined as "block use
+denied", and with no block that half is permanently denied - so the
+`ignoreCancelled = true` on `onRightClick` skipped every click at sea or at
+the horizon. The handler now checks the half that means something for a held
+item: `useItemInHand() == DENY`. **Pitfall for every future
+PlayerInteractEvent listener: never pair `ignoreCancelled = true` with
+RIGHT_CLICK_AIR handling.**
+
+218 tests green.
+
+## Arrivals reopened the warp dialog, and the dock sign sank (2026-08-01)
+
+**"Warping in triggered the exit warp."** Moving arrivals to the border (below)
+overshot: 400 blocks is exactly the protection range, which is exactly where
+the warp-offer ring sits - so every arrival landed ON the ring and the dialog
+the sailor had just come through reopened in their face. Two fixes, either of
+which suffices: the arrival default is now 320 (inside the ring's inner edge at
+protection − trigger = 370, with margin for the outward open-water correction),
+and `BorderPromptListener` listens for `TWWarpCompletedEvent` and seeds its own
+prompt cooldown at the destination - so even a config that lands arrivals on
+the ring cannot reopen the dialog. Live configs need `arrival-distance: 320` by
+hand; the cooldown seeding protects the ones that keep 400.
+
+**"The DOCK sign is in the water."** Chart hologram heights are relative to the
+player's feet, and a sailor in a boat has their feet at sea level - the dock
+marker's 0.2 offset put it *in* the sea ten blocks out, below the horizon.
+Dock marker raised to 1.5 and the island-name stack base to 2.5, preserving the
+design (dock lowest, names stacked above, 0.8 per rank) with everything above
+the waterline.
+
+Also learned in the same playtest: the SAFE-cluster produce→demand triangle
+(Belege → Teenla → Esedaxe on the test seed) earns as designed - "a bit of a
+grind, but makes safe money."
+
+211 tests green.
+
 ## Patrols that never ticked, and a false escape (2026-08-01)
 
 The dispatch logging earned its place immediately - one paste of console output

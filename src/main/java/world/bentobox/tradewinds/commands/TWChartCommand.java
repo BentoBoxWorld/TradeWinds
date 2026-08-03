@@ -38,11 +38,12 @@ public class TWChartCommand extends CompositeCommand {
             user.sendMessage("tradewinds.chart.port-scan", TextVariables.NUMBER,
                     String.valueOf(scanned.size()));
         }
-        // In a boat (and not asking for the text list): raise the hologram
-        // compass - visual targets to row toward
+        // The hologram compass, afloat OR ashore: a sailor hunting their
+        // moored boat needs the BOAT marker exactly when they are NOT in it
+        // (playtest 2026-08-02: the text list was "not useful" for finding
+        // it). The text listing stays behind '/tw chart list'.
         boolean wantList = !args.isEmpty() && args.get(0).equalsIgnoreCase("list");
-        if (!wantList && user.getPlayer().getVehicle() instanceof org.bukkit.entity.Boat
-                && getWorld().equals(user.getWorld())) {
+        if (!wantList && getWorld().equals(user.getWorld())) {
             addon.getChartHolograms().show(user.getPlayer());
             user.sendMessage("tradewinds.chart.holograms-shown");
             return true;
@@ -66,17 +67,59 @@ public class TWChartCommand extends CompositeCommand {
         IslandSpec origin = portAt(engine, x, z).orElse(null);
         user.sendMessage("tradewinds.chart.header", TextVariables.NUMBER, String.valueOf(charted.size()));
         user.sendMessage("tradewinds.chart.fuel-aboard", "[amount]", String.valueOf((int) fuelAboard));
+        reportBoat(addon, user, x, z, false);
+        reportBoat(addon, user, x, z, true);
         charted.forEach(spec -> {
             int cost = routeCost(addon, origin, spec, x, z);
             boolean reachable = cost <= fuelAboard;
             user.sendMessage(reachable ? "tradewinds.chart.entry-reachable" : "tradewinds.chart.entry-far",
                     TextVariables.NAME, spec.name(),
                     "[type]", spec.type().name(),
+                    "[tech]", String.valueOf(spec.techLevel()),
                     "[band]", user.getTranslation(spec.band().getLocaleKey()),
                     "[distance]", String.valueOf((int) Math.sqrt(spec.distanceSquared(x, z))),
                     "[fuel]", String.valueOf(cost));
         });
         return true;
+    }
+
+    /**
+     * Where a boat of yours lies, in words: the chart's holograms only draw
+     * boats in THIS world, so the list has to say when one is missing or
+     * elsewhere - otherwise a sailor cannot tell "no old boat" from "the
+     * marker did not draw".
+     *
+     * @param addon the addon
+     * @param user the player
+     * @param x their block x
+     * @param z their block z
+     * @param old true for the abandoned OLD BOAT, false for their own
+     */
+    private void reportBoat(TradeWinds addon, User user, int x, int z, boolean old) {
+        var record = old ? addon.getHoldManager().oldBoat(user.getUniqueId())
+                : addon.getHoldManager().activeBoat(user.getUniqueId());
+        String key = old ? "tradewinds.chart.old-boat" : "tradewinds.chart.your-boat";
+        if (record.isEmpty()) {
+            if (!old) {
+                user.sendMessage("tradewinds.chart.no-boat");
+            }
+            return;
+        }
+        var hold = record.get();
+        String material = world.bentobox.tradewinds.economy.PriceEngine.prettify(hold.getMaterial());
+        if (hold.getWorld() == null || hold.getWorld().isEmpty()) {
+            user.sendMessage(key + "-lost", "[material]", material);
+            return;
+        }
+        if (!hold.getWorld().equals(user.getWorld().getName())) {
+            user.sendMessage(key + "-elsewhere", "[material]", material, "[world]", hold.getWorld());
+            return;
+        }
+        long dx = (long) hold.getX() - x;
+        long dz = (long) hold.getZ() - z;
+        user.sendMessage(key, "[material]", material, "[x]", String.valueOf(hold.getX()),
+                "[z]", String.valueOf(hold.getZ()),
+                "[distance]", String.valueOf((int) Math.sqrt((double) dx * dx + (double) dz * dz)));
     }
 
     /**

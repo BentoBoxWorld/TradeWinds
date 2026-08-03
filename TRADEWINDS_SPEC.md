@@ -3,33 +3,33 @@
 **Name:** TradeWinds (decided — house style, one word, like BSkyBlock/AcidIsland; repo `TradeWinds` under BentoBoxWorld)
 **Addon ID:** `TradeWinds` · **Package:** `world.bentobox.tradewinds` · **Commands:** `/tw` (admin: `/twadmin`)
 **Target:** Paper 26.2 (Java 25 runtime, release-21 compile), BentoBox 3.18.1+
-**Author context:** Written for implementation via Claude Code by the BentoBox author. Assume full familiarity with GameModeAddon, WorldSettings, Blueprints, Flags, the BentoBox Database, and the AcidIsland/Poseidon codebases (closest architectural relatives). Companion docs: `tradewinds-overview.md` (pitch), `tradewinds-design-decisions.md` (rationale + open questions), `tradewinds-dev-plan.md` (stage plan). Where this spec and those docs disagree, this spec wins.
+**Author context:** Written for implementation via Claude Code by the BentoBox author. Assume full familiarity with GameModeAddon, WorldSettings, Blueprints, Flags, the BentoBox Database, and the AcidIsland/Poseidon codebases (closest architectural relatives). Companion docs: `tradewinds-overview.md` (pitch), `tradewinds-design-decisions.md` (rationale + open questions), `tradewinds-dev-plan.md` (stage plan), **`tradewinds-hold-plan.md` (normative detail for the virtual hold, One Boat rule, boat ranks, dropped-boat lifecycle and expanders — revised 2026-08-01)**. Where this spec and those docs disagree, this spec wins — except that the hold plan is authoritative on hold/boat mechanics.
 
 ---
 
 ## 1. Concept
 
-A sea-trading game mode: an endless procedurally generated ocean dotted with **NPC trading islands**. Players start with a boat and one trading bundle and get rich buying low and selling high — honestly, or by smuggling, bounty hunting, and piracy. Inspired by TradeWars 2002 and Elite, rebuilt in Minecraft terms.
+A sea-trading game mode: an endless procedurally generated ocean dotted with **NPC trading islands**. Players start with a boat — the boat IS the cargo hold — and get rich buying low and selling high — honestly, or by smuggling, bounty hunting, and piracy. Inspired by TradeWars 2002 and Elite, rebuilt in Minecraft terms.
 
 | Elite/TW2002 ingredient | TradeWinds equivalent |
 |---|---|
 | Sectors / systems | Seeded sparse trading islands in open ocean |
 | Hyperspace jump + fuel | Boat **warp** between island borders, paid in hold-carried fuel |
 | Misjump / interdiction | **Interstice**: warp failure drops you in a hostile Nether sea |
-| Cargo hold expansion | Bundles → chest boat → shulker "cargo expanders" |
+| Cargo hold expansion | 20 boat ranks (Bamboo Raft → Pale Oak Chest Boat) → installed cargo expanders |
 | Commodity market | BlueBook base prices × island type/biome/security modifiers |
 | Police / legal status | Reputation bands, customs scans, police mobs, bounties |
 | Player bases | Purchasable player islands in the open ocean |
 
 ### Design principles (load-bearing — do not break)
 
-1. **The fuel/cargo tradeoff is the central mechanic.** Trading transacts **exclusively** against trading bundles and boat hold — never player inventory, ender chests, or carried shulkers. Any feature letting sellable goods bypass the hold breaks the game's spine.
+1. **The fuel/cargo tradeoff is the central mechanic.** Trading transacts **exclusively** against the player's **virtual hold** (server-authoritative, database-backed, sized by their one boat — see §4 and `tradewinds-hold-plan.md`) — never player inventory, ender chests, real containers, or anything else. Any feature letting sellable goods bypass the hold breaks the game's spine. Cargo leaves the hold only by being sold or destroyed.
 2. **Risk symmetry between travel modes.** Warp: fuel cost, instant, interstice risk. Rowing: free, slow, lawless-ocean risk. Neither may become strictly dominant.
 3. **Scans, not prices, balance contraband.** Sugar has infinite trivial supply; the customs-scan risk is the cost. Smuggling is a skill, not a tax.
 4. **Crime pays you into danger.** Contraband sells only at less-safe islands; Fugitives are barred from safe-island markets. The richest criminals are structurally pushed into PvP space where bounty hunters lawfully operate.
 5. **The seed is the world.** Island positions, existence, types, security bands, biomes, names, and route-graph edge costs are ALL pure deterministic functions of (seed, position) — unit-testable with no Bukkit dependency. Runtime randomness here breaks seed shareability.
 6. **Generator-driven terrain, not pasted terrain.** Island landmass comes from the chunk generator (Poseidon-style noise × radial mask). Lazy generation is just chunk generation: no pop-in, no paste pacing. Blueprints/structures decorate; they never create the land.
-7. **Scarcity by dimension removal.** No End world → shulker shells unobtainable → cargo expanders are a purchasable, cap-controlled money sink. Never add End access.
+7. **Scarcity by purchase-only endgame.** Cargo expanders are shop-only (top-tech ports), price-doubling per unit installed — the endgame money sink; the wallet is the cap. No End world, ever (nothing in the game needs it, and dimension exits break the ocean).
 
 ## 2. World Model
 
@@ -51,6 +51,7 @@ A sea-trading game mode: an endless procedurally generated ocean dotted with **N
   - **Security band:** EVE model — `SAFE`, `POLICED`, `FRONTIER`, `LAWLESS`, `ANARCHIC` (working names; config thresholds). Correlated with local density per above.
   - **Biome:** whole-island, from a per-type weighted table. Frozen-ocean approaches are a feature (ice = fast boat lanes).
   - **Name:** Elite-BBC-style procedural token-pair digraph generator, seeded — pronounceable, distinct.
+  - **Tech level (adopted 2026-08-01):** 1–7, seeded, correlated with type (industrial/luxury skew high, agricultural/fishing low, ±2 variance — "Advanced Agricultural" exists). Starter cluster guarantees at least one ≥ TL3 island. Shown in entry announcement and chart data: *"Esedaxe — Industrial (Tech 6), Safe."* Tech gates **shops only, never docking, riding or crafting**: boat ranks sold ≤ TL × 3 (TL7 = all twenty), expanders sold only at TL7. Tech also modulates prices (±`tech-price-step`, default 3%, per TL step from 4): high-tech sells **finished** goods (metals, food) cheap and buys **raw** (ores, crops, wood, fish, stone) dear; low-tech the inverse — best routes are tech *differentials*, read off the chart as type × tech × security. Higher tech also furnishes the plaza: every port has the galley (workbench + campfire); TL3+ adds furnace + stonecutter, TL4+ smithing table + grindstone, TL5+ brewing stand + cauldron, TL6+ anvil, TL7 an enchanting table ringed with bookshelves.
   - **Range / protection radius:** AcidIsland framing — range ~1000, protection ~400 (config).
 - **Reserved space:** cells that rolled empty are candidate sites for purchased player islands (Stage 7).
 
@@ -77,7 +78,7 @@ Free. The border (Border addon in passable/visual mode, or protection-range visu
 
 - **Trigger:** player in a boat reaches an island's border (proximity trigger + action-bar prompt; packet-level "click the wall" rejected as needless complexity). Opens the **warp dialog** (Paper dialog API): charted islands listed with per-destination fuel cost; unaffordable/unreachable grayed out.
 - **Route graph:** seeded per-edge costs; default = Euclidean distance × `fuel-per-block` multiplier; per-edge overrides in config allow cheap "warp lanes" and expensive frontiers without world regen.
-- **Fuel:** value table (config): wood < coal/charcoal < coal block < lava bucket (non-stackable = deliberate tension). Consumed **from bundles/boat hold only** (principle 1). Empty buckets returned.
+- **Fuel:** value table (config): wood < coal/charcoal < coal block < lava bucket (non-stackable = deliberate tension). Consumed **from the hold's fuel slots only** (principle 1; 7 dedicated slots, fuel never competes with cargo and moves freely both ways). Empty buckets returned.
 - **Execution** (AcidIsland `/ai` proven pattern): dismount → teleport player + boat cross-world-safe → re-seat. Arrival just inside destination border **on the bearing of the origin island**. Effects: nausea + blindness (durations config) + configurable minor damage ("warping hurts" — gates the under-equipped), portal particles + sound.
 - **Charting:** dialog lists **charted** islands only. Chart by physically entering an island's range (free, slow); starter cluster pre-charted for new players. Buying chart data = post-MVP. Charting is the discovery layer over lazy generation.
 
@@ -88,23 +89,31 @@ Free. The border (Border addon in passable/visual mode, or protection-range visu
 - Ghast-vs-boat combat intentionally survivable (fireballs battable). Interstice is a **shared** world (interdiction/ambush meta — very Elite); PvP rules there are an open question (§10).
 - Stale entity cleanup: interstice mobs despawn on player exit / world empty.
 
-## 4. Cargo & Progression
+## 4. Cargo & Progression (canonical, revised 2026-08-01 — full detail in `tradewinds-hold-plan.md`)
 
-- **Start kit:** boat + 1 **trading bundle** (a bundle = one stack's worth of capacity, vanilla bundle rules).
-- **Progression:** up to 3 bundles → chest boat → **cargo expanders**: lore-renamed shulker boxes, purchase-only (no End → no crafting), price ~doubling per unit, configurable cap. Expanders live in the chest boat's inventory; their contents count as hold.
-- **Hold definition (canonical, revised 2026-07-31):** the player's trading bundles (pouches) + **cargo expanders wherever they are carried** + the chest-boat inventory while riding one. All trade and fuel transactions resolve against the hold only; loose pocket items never count. The hold is *carried*, not moored: a chest boat sitting as an item, or bobbing at a dock, cannot be filled, so the expanders (openable anywhere) are the backbone of cargo capacity and the chest boat is a bonus while sailing.
+- **One Boat Rule:** a player has exactly one boat, or none. The hold is the *player's* virtual cargo inventory; the boat they possess only sets its size. Upgrades never move items — the slot count grows, contents stay put.
+- **Virtual hold:** server-authoritative, database-backed (`PlayerHold`); **no real container ever holds cargo**. Slot-stack model: up to 21 cargo slots (by boat rank) + 7 fuel slots, auto-consolidated. GUI via BentoBox Panel API: TNT destroy slot, locked-slot panes, fuel row. Opened by right-click while riding, sneak-right-click the boat entity, or right-click the boat item.
+- **One-way cargo:** anything can go in (except container items — bundles, shulkers, pouches); cargo leaves only by being **sold** or **destroyed** (TNT slot). Fuel is exempt: freely added and removed, never destroyable.
+- **Boat ranks:** 20, Bamboo Raft (2 slots) → Pale Oak Chest Boat (21 slots); config map `boat-material → slots`. Prices quadratic `25 × slots²`. Shops list only bigger boats, gated by island tech (rank ≤ TL × 3); **a purchase replaces and destroys the old boat** (a trade-in at the yard); **a bigger-boat pickup is a swap**: your old boat becomes the floating item, carrying whatever overflow did not fit - nothing is ever lost to the sea. Crafting bypasses tech gates; crafting smaller than current is blocked; adding a chest to the current boat is an in-place upgrade.
+- **Start kit:** Oak Boat (rank 2, 3 slots) + starter coal in the fuel slots. Charity/destitution grants a Bamboo Raft. `/tw restart` resets to the start kit.
+- **Dropped boats:** a boat item (thrown, death-dropped, or broken loose) carries its hold via a DB record keyed by a PDC UUID, under a DB-persisted TTL. Pickup: bigger = swap (you keep your cargo, salvage merges in, overflow floats on in your old hull); smaller/equal = most-valuable-first transfer into free space, remainder stays claimable; no boat = it becomes yours. Handing a loaded boat to another player this way is sanctioned trade, not an exploit. Boats are destroyed only by lava; death drops the boat with contents (keepInventory keeps it; DeathChest chests it).
+- **Cargo expanders:** install only in a Pale Oak Chest Boat, occupy one cargo slot each, open a nested 21-slot panel (net +20; no fuel row, no containers, no nested expanders; TNT-destroyable only when empty). Price `5000 × 2^installed`, no cap — the wallet is the cap. Sold only at TL7 ports. A fully expanded ship approaches ~440 slots: the guard-it-with-your-life endgame.
 - **Boat ownership:** owner UUID in boat entity PDC from day one (theft/persistence/bounty questions hang off it).
 
 ## 5. Economy
 
-### 5.0 The two economies (adopted 2026-07-30)
+### 5.0 The two economies (adopted 2026-07-30; stamping removed 2026-08-01)
 
-TradeWinds runs **two parallel economies** connected at only three points:
+TradeWinds runs **two parallel economies**, bridged by the hold:
 
-- **The stamped trade economy (money).** Goods bought from traders carry a
-  **customs stamp** (PDC key `tradewinds:stamp` + lore line; API-visible).
-  Traders buy ONLY stamped goods - money enters the game exclusively through
-  trade margins on goods that money already bought. Farming cannot mint money.
+- **The trade economy (money).** Customs stamping is **removed entirely**.
+  Traders buy anything the hold carries, at prices set by island type, tech,
+  band and the per-island **stock/demand pools** — capacity (a hold slot is
+  scarce) and pool drift (selling into an island crushes its price toward the
+  drift floor; pools decay back slowly) are what carry the balance that the
+  stamp used to. Money still overwhelmingly enters through trade margins,
+  because hauling bought goods up a price gradient beats farming into a
+  saturating pool.
 - **The vanilla survival economy (stuff).** **Wild islets** (small unnamed
   islands on their own fine grid; `galaxy.wild-islet-*`) are free country:
   mine, farm, build, sleep. Each rolls its own size and biome, so they range
@@ -115,11 +124,12 @@ TradeWinds runs **two parallel economies** connected at only three points:
   ruins, monuments in the deep basins, buried treasure on the beaches, trial
   chambers in the rock, and caves under the floor. All protection flags default
   to allowed outside named islands' protection ranges. Homemade goods are
-  freely usable (eat, wear, build, burn as warp fuel) but unsellable.
-- **The connections:** buying (money->stuff, stamped); **contraband**
-  (stuff->money: unstamped sugar - and later villagers - are the only
-  farmable income, balanced by scan risk per principle 3); and self-supply
-  (homemade food/fuel substitute for purchases).
+  usable directly (eat, wear, build, burn as warp fuel) and, via the hold,
+  sellable into the pools.
+- **Contraband** remains its own config list (`illegal-trade.contraband-materials`,
+  default sugar) with the ×premium black-market price at FRONTIER-or-rougher
+  ports, balanced by scan risk per principle 3 — no longer coupled to any
+  stamping concept.
 
 Survival needs are met by the **outfitter** shelf every island guarantees
 (bread always, charcoal when the trade catalog carries no fuel, gear by type:
@@ -138,7 +148,7 @@ Stage 7 player islands (teams + Bank addon).
 - **Master config gate** `illegal-trade.enabled` disables ALL illegal-goods mechanics (family servers). Default on.
 - **Contraband:** sugar (config list; never called drugs anywhere — code, config, locale). **Villager "passengers"** in boats sellable at less-safe islands only (boating the villager is the player's problem — emergent). Gated separately (`illegal-trade.passenger-trade`).
 - **Customs scan on every entry** into island space — rowed or warped. Chance per security band (SAFE scans often; ANARCHIC never). Per-island scan cooldown prevents re-entry scumming.
-- **Detection = chase, not fine:** "customs patrol dispatched" — police launch from the island; ~400 blocks of water is the decision window: **flee** across the border, **fight**, or **jettison** (dumped items float and are lootable by anyone — emergent piracy). **Caught** = police land a hit or close to proximity radius while contraband aboard → confiscation + fine + rep loss.
+- **Detection = chase, not fine:** "customs patrol dispatched" — police launch from the island; ~400 blocks of water is the decision window: **flee** across the border, **fight**, or **jettison — destroy-only** (ruled 2026-08-01): dump the evidence into the hold GUI's TNT slot and it is gone, a last-ditch option when you cannot beat the police or escape. Nothing floats. **Caught** = police land a hit or close to proximity radius while contraband aboard → confiscation + fine + rep loss.
 - **Fleeing a detection flags you** at that island for a cooldown: re-entry skips the roll, police launch immediately.
 
 ## 7. Reputation, Police, Bounties
@@ -158,7 +168,9 @@ Purchase command: sufficient balance → choose blueprint → placement at a val
 
 ## 9. Data Model (BentoBox Database objects)
 
-- `TWPlayerData` (by player UUID): reputation score, bounty, chart set (known island IDs), flags (per-island flee-flags with expiry), scan cooldowns, expander purchase count.
+- `TWPlayerData` (by player UUID): reputation score, bounty, chart set (known island IDs), flags (per-island flee-flags with expiry), scan cooldowns.
+- `PlayerHold` (by player UUID): boat material (or none), cargo contents `[{material, amount}]`, fuel `[{material, amount}]`, installed expanders with nested contents.
+- `DroppedBoat` (by hold UUID, mirrored in the boat item's PDC): boat material, contents, fuel, `expiresAt` TTL. Ownership transitions (drop → pickup → replace) are atomic moves between `PlayerHold` and `DroppedBoat`; duplicating a key item cannot duplicate cargo.
 - `TWIslandData` (by island ID): galaxy cell coords, type, security band, biome, name, stock levels + price drift map, market state timestamps.
 - `TWWorldData` (singleton): galaxy seed (authoritative copy; config seed used at first creation then persisted), route-edge overrides cache, bounty ledger totals.
 - Boat ownership, police tags, loot tags: entity **PDC**, not database.
@@ -168,7 +180,7 @@ Purchase command: sufficient balance → choose blueprint → placement at a val
 
 1. **Poseidon mask internals** (Stage 1): mask multiplies noise amplitude vs. lifts a base height — prototype both, pick by coastline quality.
 2. **Dock placement** (Stage 2): deterministic terraformed shelf at fixed bearing (lean) vs. jigsaw adaptive.
-3. **Boat loss rules** (Stage 4/8): what drops on boat destruction/death? Insurance is the counterweight. Undecided.
+3. **Boat loss rules — RESOLVED 2026-08-01** (`tradewinds-hold-plan.md`): boats always drop as an item with hold contents attached (DB-keyed, TTL) — death, trident, collision alike; only lava truly destroys. Insurance remains post-MVP.
 4. **Interstice PvP** (Stage 5): is interdicting non-wanted players lawful or itself a rep crime?
 5. **Scan/flag tuning** (Stage 6b): cooldown lengths, caught-proximity radius.
 6. **Galaxies architecture** (post-MVP): multi-instance addon vs. world manager. Keep world references abstracted from day one.

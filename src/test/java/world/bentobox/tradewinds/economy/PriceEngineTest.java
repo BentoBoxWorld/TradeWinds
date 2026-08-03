@@ -49,7 +49,7 @@ class PriceEngineTest extends CommonTestSetup {
     @Test
     void testConfiguredPrice() {
         // WHEAT is in the default base price table at 2.0
-        assertEquals(2.0, engine.getPrice(new ItemStack(Material.WHEAT)));
+        assertEquals(20.0, engine.getPrice(new ItemStack(Material.WHEAT)));
     }
 
     @Test
@@ -69,7 +69,7 @@ class PriceEngineTest extends CommonTestSetup {
         recipes.put(new ItemStack(Material.HAY_BLOCK), List.of(recipe));
         // HAY_BLOCK is configured at 18.0 in defaults - remove to force derivation
         addonSettingsWithout("HAY_BLOCK");
-        assertEquals(9 * 2.0, engine.getPrice(new ItemStack(Material.HAY_BLOCK)));
+        assertEquals(9 * 20.0, engine.getPrice(new ItemStack(Material.HAY_BLOCK)));
     }
 
     @Test
@@ -79,7 +79,7 @@ class PriceEngineTest extends CommonTestSetup {
         when(recipe.getResult()).thenReturn(new ItemStack(Material.PAPER, 4));
         when(recipe.getIngredientList()).thenReturn(List.of(new ItemStack(Material.WHEAT, 1)));
         recipes.put(new ItemStack(Material.PAPER), List.of(recipe));
-        assertEquals(0.5, engine.getPrice(new ItemStack(Material.PAPER)));
+        assertEquals(5.0, engine.getPrice(new ItemStack(Material.PAPER)));
     }
 
     @Test
@@ -89,7 +89,7 @@ class PriceEngineTest extends CommonTestSetup {
         when(recipe.getResult()).thenReturn(new ItemStack(Material.COOKED_MUTTON, 1));
         when(recipe.getInput()).thenReturn(new ItemStack(Material.MUTTON));
         recipes.put(new ItemStack(Material.COOKED_MUTTON), List.of(recipe));
-        assertEquals(2.0 + 4.0 / 8.0, engine.getPrice(new ItemStack(Material.COOKED_MUTTON)));
+        assertEquals(20.0 + 40.0 / 8.0, engine.getPrice(new ItemStack(Material.COOKED_MUTTON)));
     }
 
     @Test
@@ -104,7 +104,7 @@ class PriceEngineTest extends CommonTestSetup {
         when(outer.getIngredientList()).thenReturn(List.of(new ItemStack(Material.PAPER, 3)));
         recipes.put(new ItemStack(Material.BOOK), List.of(outer));
         // BOOK = 3 x PAPER = 3 x (2 x 2.0) = 12.0
-        assertEquals(12.0, engine.getPrice(new ItemStack(Material.BOOK)));
+        assertEquals(120.0, engine.getPrice(new ItemStack(Material.BOOK)));
     }
 
     @Test

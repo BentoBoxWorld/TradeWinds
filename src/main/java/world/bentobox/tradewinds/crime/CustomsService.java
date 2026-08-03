@@ -100,7 +100,7 @@ public class CustomsService {
      * @return material names customs care about
      */
     public Set<String> contrabandNames() {
-        return new HashSet<>(addon.getSettings().getUnstampedSellables());
+        return new HashSet<>(addon.getSettings().getContrabandMaterials());
     }
 
     /**
@@ -133,7 +133,7 @@ public class CustomsService {
             if (material == null) {
                 continue;
             }
-            total += addon.getHoldService().count(player, material, stack -> true);
+            total += addon.getHoldService().count(player, material);
             total += loose(player, material);
         }
         return total;
@@ -309,7 +309,7 @@ public class CustomsService {
             if (material == null) {
                 continue;
             }
-            seized += addon.getHoldService().remove(player, material, Integer.MAX_VALUE, stack -> true);
+            seized += addon.getHoldService().remove(player, material, Integer.MAX_VALUE);
             // Pockets too, or the search that found it could not take it
             for (ItemStack stack : player.getInventory().getContents()) {
                 if (stack != null && stack.getType() == material) {
@@ -342,7 +342,7 @@ public class CustomsService {
     }
 
     private String format(double amount) {
-        return addon.getPlugin().getVault().map(v -> v.format(amount)).orElse(String.valueOf(amount));
+        return world.bentobox.tradewinds.economy.Money.format(addon, amount);
     }
 
     /**

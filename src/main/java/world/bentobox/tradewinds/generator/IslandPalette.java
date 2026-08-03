@@ -102,21 +102,71 @@ public final class IslandPalette {
      * @param kind the surface kind
      * @return the surface material
      */
+    /**
+     * The public plaza amenities an island's tech level provides, cumulative:
+     * every port has the galley (workbench + campfire, placed separately);
+     * real industry brings smelting and stonework; high tech brews; the top of
+     * the tree enchants. All governed by visitor-rank flags (FURNACE covers
+     * the brewing stand per BentoBox's interaction listener; ENCHANTING,
+     * ANVIL, GRINDSTONE, SMITHING, STONECUTTING are their own flags, none
+     * denied at ports).
+     *
+     * @param techLevel the island's tech level (1-7)
+     * @return amenity blocks in placement order
+     */
+    public static List<Material> amenities(int techLevel) {
+        List<Material> list = new java.util.ArrayList<>();
+        if (techLevel >= 3) {
+            list.add(Material.FURNACE);
+            list.add(Material.STONECUTTER);
+        }
+        if (techLevel >= 4) {
+            list.add(Material.SMITHING_TABLE);
+            list.add(Material.GRINDSTONE);
+        }
+        if (techLevel >= 5) {
+            list.add(Material.BREWING_STAND);
+            list.add(Material.CAULDRON);
+        }
+        if (techLevel >= 6) {
+            list.add(Material.ANVIL);
+        }
+        if (techLevel >= 7) {
+            list.add(Material.ENCHANTING_TABLE);
+        }
+        return list;
+    }
+
     public static Material surface(SurfaceKind kind) {
         return switch (kind) {
         case SAND -> Material.SAND;
         case MYCELIUM -> Material.MYCELIUM;
+        case RED_SAND -> Material.RED_SAND;
+        case PODZOL -> Material.PODZOL;
+        case STONE -> Material.STONE;
+        case GRAVEL -> Material.GRAVEL;
+        case MUD -> Material.MUD;
+        case SNOW -> Material.SNOW_BLOCK;
         case GRASS -> Material.GRASS_BLOCK;
         };
     }
 
     /**
-     * What sits under that surface, before the column turns to stone.
+     * What sits under that surface, before the column turns to stone. Sand
+     * needs sandstone under it (and red sand its terracotta) or the first
+     * shovelful finds lawn under the dunes.
      *
      * @param kind the surface kind
      * @return the subsoil material
      */
     public static Material subsoil(SurfaceKind kind) {
-        return kind == SurfaceKind.SAND ? Material.SANDSTONE : Material.DIRT;
+        return switch (kind) {
+        case SAND -> Material.SANDSTONE;
+        case RED_SAND -> Material.TERRACOTTA;
+        case STONE -> Material.STONE;
+        case GRAVEL -> Material.GRAVEL;
+        case MUD -> Material.MUD;
+        case GRASS, MYCELIUM, PODZOL, SNOW -> Material.DIRT;
+        };
     }
 }

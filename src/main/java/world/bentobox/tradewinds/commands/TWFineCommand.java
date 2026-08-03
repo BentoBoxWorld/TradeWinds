@@ -58,7 +58,7 @@ public class TWFineCommand extends ConfirmableCommand {
             user.sendMessage("tradewinds.crime.fine-barred");
             return false;
         }
-        String amount = format(addon, owed);
+        String amount = world.bentobox.tradewinds.economy.Money.format(addon, owed);
         user.sendMessage("tradewinds.crime.fine-quote", "[amount]", amount);
         askConfirmation(user, () -> {
             if (addon.getReputationService().payFine(user.getPlayer())) {
@@ -81,7 +81,4 @@ public class TWFineCommand extends ConfirmableCommand {
                 .filter(s -> s.distanceSquared(x, z) <= (long) range * range).findFirst();
     }
 
-    private String format(TradeWinds addon, double amount) {
-        return addon.getPlugin().getVault().map(v -> v.format(amount)).orElse(String.valueOf(amount));
-    }
 }

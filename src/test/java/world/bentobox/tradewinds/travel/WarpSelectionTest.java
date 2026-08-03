@@ -107,4 +107,29 @@ class WarpSelectionTest extends CommonTestSetup {
                     <= list.get(i).island().distanceSquared(origin.centerX(), origin.centerZ()));
         }
     }
+
+    @org.junit.jupiter.api.Test
+    void testArrivalYawFacesTheTarget() {
+        // Minecraft yaw: 0 = south (+Z), -90 = east (+X), 90 = west, ±180 = north
+        assertEquals(0.0f, WarpService.yawToward(0, 0, 0, 100), 0.01f);
+        assertEquals(-90.0f, WarpService.yawToward(0, 0, 100, 0), 0.01f);
+        assertEquals(90.0f, WarpService.yawToward(0, 0, -100, 0), 0.01f);
+        assertEquals(180.0f, Math.abs(WarpService.yawToward(0, 0, 0, -100)), 0.01f);
+        // A diagonal: north-east is -135
+        assertEquals(-135.0f, WarpService.yawToward(0, 0, 100, -100), 0.01f);
+    }
+
+    @org.junit.jupiter.api.Test
+    void testTheRealWarpArrivalFromTheLog() {
+        // The 2026-08-02 console: arriving (-2919, 2187) with the dock flag at
+        // (-3237, 2497). The sailor's own F3 read 46.3 facing the dock, so the
+        // plain look-at yaw is the answer - no hull offset (that "fix" turned
+        // the boat the other way and had to be reverted).
+        assertEquals(45.7f, WarpService.yawToward(-2919, 2187, -3237, 2497), 0.2f);
+        // Wrapping still hands back Minecraft's own (-180, 180]
+        for (int deg = -360; deg <= 360; deg += 17) {
+            float wrapped = WarpService.normalise(deg);
+            assertTrue(wrapped > -180.01f && wrapped <= 180.01f, "Out of range: " + wrapped);
+        }
+    }
 }

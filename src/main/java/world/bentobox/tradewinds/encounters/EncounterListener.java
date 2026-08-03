@@ -48,8 +48,7 @@ public class EncounterListener implements Listener {
             addon.logError("Unknown material in encounters.booty-table: " + entry);
             return;
         }
-        // Stamped, so it can be sold: salvage has papers
-        ItemStack booty = addon.getMarketService().stamp(new ItemStack(material));
-        event.getDrops().add(booty);
+        // Plain loot: stow it in the hold and any port will buy it
+        event.getDrops().add(new ItemStack(material));
     }
 }

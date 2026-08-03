@@ -17,11 +17,40 @@ package world.bentobox.tradewinds.economy;
  * @param driftScale stock units for full drift swing
  * @param driftMin lower clamp of the drift factor
  * @param driftMax upper clamp of the drift factor
+ * @param techPriceStep price tilt per tech-level step from 4: high tech sells
+ *        finished goods cheap and buys raw dear, low tech the inverse
  *
  * @author tastybento
  */
 public record PriceModel(double produceFactor, double demandFactor, double bandDemandBonus, double buySpread,
-        double sellSpread, int driftScale, double driftMin, double driftMax) {
+        double sellSpread, int driftScale, double driftMin, double driftMax, double techPriceStep) {
+
+    /**
+     * Convenience constructor without the tech tilt (tests, tech-neutral use).
+     */
+    public PriceModel(double produceFactor, double demandFactor, double bandDemandBonus, double buySpread,
+            double sellSpread, int driftScale, double driftMin, double driftMax) {
+        this(produceFactor, demandFactor, bandDemandBonus, buySpread, sellSpread, driftScale, driftMin, driftMax,
+                0.0);
+    }
+
+    /**
+     * The tech tilt for a good at an island of the given tech level. Finished
+     * goods get cheaper as tech rises, raw goods dearer; TL4 is neutral.
+     * Categories that are neither (gems, luxuries, misc) are untouched.
+     *
+     * @param finished the category is finished goods
+     * @param raw the category is raw goods
+     * @param techLevel the island's tech level (1-7)
+     * @return multiplier around 1
+     */
+    public double techFactor(boolean finished, boolean raw, int techLevel) {
+        if (finished == raw) {
+            return 1.0;
+        }
+        double shift = techPriceStep * (techLevel - 4);
+        return Math.max(0.1, finished ? 1.0 - shift : 1.0 + shift);
+    }
 
     /**
      * Stock drift: positive stock (players sold a lot here) depresses prices,
@@ -54,17 +83,28 @@ public record PriceModel(double produceFactor, double demandFactor, double bandD
     }
 
     /**
-     * What a player pays the island per unit.
+     * What a player pays the island per unit: rounded UP to a whole unit of
+     * currency, and never free.
+     * <p>
+     * Prices are whole numbers (adopted 2026-08-03): cents made every chart
+     * ragged - "Oak Log x1 - $0.97" - and Minecraft economies are usually
+     * counted in whole coins. The rounding DIRECTION is the load-bearing part:
+     * buying rounds up and selling rounds down, so the buy/sell spread can
+     * never close. Rounding both to nearest would let a same-island round trip
+     * break even or profit on some prices, which is free money.
      */
     public double playerBuysAt(double base, double economicFactor) {
-        return round2(base * economicFactor * buySpread);
+        return Math.max(1, Math.ceil(base * economicFactor * buySpread));
     }
 
     /**
-     * What the island pays a player per unit.
+     * What the island pays a player per unit: rounded DOWN to a whole unit of
+     * currency (see {@link #playerBuysAt} for why the direction matters). A
+     * good can be worth nothing here - that is a market saying it does not
+     * want it.
      */
     public double playerSellsAt(double base, double economicFactor) {
-        return round2(base * economicFactor * sellSpread);
+        return Math.max(0, Math.floor(base * economicFactor * sellSpread));
     }
 
     /**

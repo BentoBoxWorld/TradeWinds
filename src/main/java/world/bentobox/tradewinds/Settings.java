@@ -128,6 +128,15 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "galaxy.mushroom-islet-chance", needsReset = true)
     private double mushroomIsletChance = 0.06;
 
+    @ConfigComment("Chance (0-1) that a wild islet carries a small biome-appropriate vanilla")
+    @ConfigComment("structure at its heart: an igloo on the snowfields, fossils in the desert,")
+    @ConfigComment("a ruined portal in the jungle, an abandoned camp in the woods. Seeded and")
+    @ConfigComment("deterministic per islet. Mushroom islets and pale gardens always stay")
+    @ConfigComment("empty - there the biome itself is the find. 0 disables. Safe to change")
+    @ConfigComment("mid-game: it only affects islets whose center chunk is not yet generated.")
+    @ConfigEntry(path = "galaxy.islet-structure-chance")
+    private double isletStructureChance = 0.25;
+
     @ConfigComment("How far a coastline wanders in and out from the island's nominal radius, as a")
     @ConfigComment("fraction of it: bays and headlands. 0 gives perfect circles - a radial mask")
     @ConfigComment("on its own draws a coin. Above about 0.3 coasts start breaking into fragments.")
@@ -247,7 +256,7 @@ public class Settings implements WorldSettings {
     @ConfigComment("Currency charged per point of reputation debt when paying a fine. A fine can")
     @ConfigComment("only ever take you back to Clean - money buys you out of Wanted, not into virtue.")
     @ConfigEntry(path = "crime.fine-per-point")
-    private double finePerPoint = 2.0;
+    private double finePerPoint = 20.0;
 
     @ConfigComment("The safest band that will still trade with a FUGITIVE. Safer ports refuse them")
     @ConfigComment("outright: having burned your name, the only markets left are where the law is")
@@ -383,18 +392,21 @@ public class Settings implements WorldSettings {
     private double warpFailureChance = 0.05;
 
     @ConfigComment("Half-width of the offer ring around an island's visible border (the protection")
-    @ConfigComment("edge, where 'Now leaving...' appears): boated players crossing it get the warp dialog.")
+    @ConfigComment("edge - the RED particle curtain): boated players crossing it get the warp")
+    @ConfigComment("dialog. Small on purpose: you should have to touch the curtain. Keep a few")
+    @ConfigComment("blocks of width or ice-lane boats can cross the line between ticks.")
     @ConfigEntry(path = "travel.warp.trigger-distance")
-    private int warpTriggerDistance = 30;
+    private int warpTriggerDistance = 5;
 
     @ConfigComment("How far from the destination island's CENTRE a warp arrival lands.")
-    @ConfigComment("This wants to be at the island's visible border - the same place the warp")
-    @ConfigComment("dialog offers itself on the way out - so arriving is the mirror of leaving.")
-    @ConfigComment("130 put sailors inside the island's own 160-block terrain footprint, on its")
-    @ConfigComment("underwater shelf: too close to feel like a voyage, and too close for a")
-    @ConfigComment("customs patrol to have anywhere to come from.")
+    @ConfigComment("This wants to be just INSIDE the warp-offer ring (protection-range minus")
+    @ConfigComment("trigger-distance, with margin): landing on the ring itself reopened the warp")
+    @ConfigComment("dialog the sailor had just come through. 130 put sailors inside the island's")
+    @ConfigComment("own 160-block terrain footprint, on its underwater shelf: too close to feel")
+    @ConfigComment("like a voyage, and too close for a customs patrol to have anywhere to come")
+    @ConfigComment("from. 400 sat exactly on the offer ring.")
     @ConfigEntry(path = "travel.warp.arrival-distance")
-    private int warpArrivalDistance = 400;
+    private int warpArrivalDistance = 320;
 
     @ConfigComment("Seconds between automatic warp-dialog offers at the same island's border.")
     @ConfigEntry(path = "travel.warp.prompt-cooldown-seconds")
@@ -478,7 +490,7 @@ public class Settings implements WorldSettings {
     /*      ECONOMY      */
     @ConfigComment("Money given to brand-new players with their starter kit.")
     @ConfigEntry(path = "economy.starting-balance")
-    private double startingBalance = 250.0;
+    private double startingBalance = 2500.0;
 
     @ConfigComment("Coal tucked into the starter bundle - enough fuel that the first island hop")
     @ConfigComment("can be a warp instead of a seven-minute row. 0 disables.")
@@ -507,6 +519,91 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "economy.band-demand-bonus")
     private double bandDemandBonus = 0.125;
 
+    @ConfigComment("Price tilt per tech-level step away from 4 (the neutral level): high-tech")
+    @ConfigComment("islands sell FINISHED goods (metals, food) cheaper and pay more for RAW")
+    @ConfigComment("goods (ores, crops, wood, fish, stone) by this fraction per step; low-tech")
+    @ConfigComment("islands the inverse. The best routes are tech differentials. 0 disables.")
+    @ConfigEntry(path = "economy.tech-price-step")
+    private double techPriceStep = 0.03;
+
+    @ConfigComment("The boat ladder: cargo slots per boat material. A player has exactly ONE")
+    @ConfigComment("boat (or none) and this is the ONLY thing that sizes their hold. Order is")
+    @ConfigComment("by slots; shops list only boats bigger than yours, up to the island's tech")
+    @ConfigComment("(rank <= tech level x ranks-per-tech-level). Crafting ignores tech gates.")
+    @ConfigEntry(path = "boats.ranks")
+    private Map<String, Integer> boatRanks = defaultBoatRanks();
+
+    @ConfigComment("Boat shop price = this x slots squared. Bamboo Raft 100, Pale Oak Chest 11025.")
+    @ConfigEntry(path = "boats.price-per-slot-squared")
+    private double boatPricePerSlotSquared = 250.0;
+
+    @ConfigComment("Boat ranks sold at an island = its tech level x this (TL7 sells all 20).")
+    @ConfigEntry(path = "boats.ranks-per-tech-level")
+    private int boatRanksPerTechLevel = 3;
+
+    @ConfigComment("Show island boundaries as particle curtains: the warp-offer ring at the")
+    @ConfigComment("protection edge, and the edge of island space. Paint, not a wall - both")
+    @ConfigComment("stay fully passable.")
+    @ConfigEntry(path = "border.particles-enabled")
+    private boolean borderParticlesEnabled = true;
+
+    @ConfigComment("Blocks from a boundary line within which its curtain renders.")
+    @ConfigEntry(path = "border.view-distance")
+    private int borderViewDistance = 32;
+
+    @ConfigComment("Dust color 'r,g,b' (0-255) of the warp-offer ring - where the warp dialog")
+    @ConfigComment("fires, at the island's protection edge. Default red.")
+    @ConfigEntry(path = "border.warp-ring-color")
+    private String warpRingColor = "255,64,64";
+
+    @ConfigComment("Dust color 'r,g,b' (0-255) of the island-space edge - where scans and")
+    @ConfigComment("island rules begin. Default blue.")
+    @ConfigEntry(path = "border.edge-color")
+    private String edgeRingColor = "64,128,255";
+
+    @ConfigComment("How close your own boat must be for you to move another hull's cargo into")
+    @ConfigComment("it. Beyond this the option is not offered at all - cargo is not teleported")
+    @ConfigComment("across the ocean; you may still take the boat itself.")
+    @ConfigEntry(path = "boats.cargo-transfer-range")
+    private int cargoTransferRange = 200;
+
+    @ConfigComment("The boat a boatless player is lent when they respawn (their own boat")
+    @ConfigComment("dropped where they died - rowing back out to reclaim it is the recovery")
+    @ConfigComment("trip). A boat-rank material name; NONE disables the loaner.")
+    @ConfigEntry(path = "boats.respawn-boat")
+    private String respawnBoat = "BAMBOO_RAFT";
+
+    @ConfigComment("Minutes a dropped boat item (and the cargo riding in its record) survives")
+    @ConfigComment("before the sea claims it. Persisted in the database - restarts do not")
+    @ConfigComment("reset the clock. The TTL pauses while a mob is holding the item.")
+    @ConfigEntry(path = "boats.dropped-boat-ttl-minutes")
+    private int droppedBoatTtlMinutes = 30;
+
+    private static Map<String, Integer> defaultBoatRanks() {
+        Map<String, Integer> ranks = new java.util.LinkedHashMap<>();
+        ranks.put("BAMBOO_RAFT", 2);
+        ranks.put("OAK_BOAT", 3);
+        ranks.put("SPRUCE_BOAT", 4);
+        ranks.put("BAMBOO_CHEST_RAFT", 5);
+        ranks.put("BIRCH_BOAT", 6);
+        ranks.put("OAK_CHEST_BOAT", 7);
+        ranks.put("JUNGLE_BOAT", 8);
+        ranks.put("SPRUCE_CHEST_BOAT", 9);
+        ranks.put("ACACIA_BOAT", 10);
+        ranks.put("BIRCH_CHEST_BOAT", 11);
+        ranks.put("DARK_OAK_BOAT", 12);
+        ranks.put("JUNGLE_CHEST_BOAT", 13);
+        ranks.put("MANGROVE_BOAT", 14);
+        ranks.put("ACACIA_CHEST_BOAT", 15);
+        ranks.put("CHERRY_BOAT", 16);
+        ranks.put("DARK_OAK_CHEST_BOAT", 17);
+        ranks.put("PALE_OAK_BOAT", 18);
+        ranks.put("MANGROVE_CHEST_BOAT", 19);
+        ranks.put("CHERRY_CHEST_BOAT", 20);
+        ranks.put("PALE_OAK_CHEST_BOAT", 21);
+        return ranks;
+    }
+
     @ConfigComment("Stock units for a full price swing. Selling this much of a category to one")
     @ConfigComment("island drives its prices to the drift minimum.")
     @ConfigEntry(path = "economy.drift-scale")
@@ -526,38 +623,18 @@ public class Settings implements WorldSettings {
 
     @ConfigComment("Base price of the first cargo expander. Each further one costs double.")
     @ConfigEntry(path = "economy.expander-base-price")
-    private double expanderBasePrice = 5000.0;
+    private double expanderBasePrice = 50000.0;
 
-    @ConfigComment("Maximum cargo expanders a player may ever buy.")
-    @ConfigEntry(path = "economy.expander-cap")
-    private int expanderCap = 4;
-
-    @ConfigComment("Maximum trading pouches (bundles) that count as hold space.")
-    @ConfigEntry(path = "economy.max-bundles")
-    private int maxBundles = 3;
-
-    @ConfigComment("Price of a trading pouch. Deliberately cheap: with no pouch a player has no")
-    @ConfigComment("hold, and with no hold they can neither buy nor sell - so a pouch is the price")
-    @ConfigComment("of being able to play at all, not an upgrade. Flat by design: pricing by how")
-    @ConfigComment("many you carry is defeated by dropping one before buying, and the max-bundles")
-    @ConfigComment("cap - not the price - is what makes cargo expanders necessary.")
-    @ConfigEntry(path = "economy.pouch-price")
-    private double pouchPrice = 50.0;
-
-    @ConfigComment("The harbourmaster's charity: a destitute sailor - no cargo space, no boat, and")
-    @ConfigComment("too little money to buy either - is given the bare minimum to work again.")
-    @ConfigComment("Charity goods cannot be sold, so there is nothing to farm. 0 disables it.")
+    @ConfigComment("The harbourmaster's charity: a destitute sailor - no boat, and too little")
+    @ConfigComment("money to buy even a bamboo raft - is granted one, so the economy is never")
+    @ConfigComment("fully closed to them. 0 disables it.")
     @ConfigEntry(path = "economy.charity-cooldown-minutes")
     private int charityCooldownMinutes = 15;
 
-    @ConfigComment("Give customs-stamped goods an enchantment glint as well as their lore line.")
-    @ConfigEntry(path = "economy.stamp-glint")
-    private boolean stampGlint = false;
-
-    @ConfigComment("Materials traders buy even WITHOUT a customs stamp - the contraband exceptions.")
-    @ConfigComment("Only honored while illegal-trade.enabled is true.")
-    @ConfigEntry(path = "economy.unstamped-sellables")
-    private List<String> unstampedSellables = new ArrayList<>(List.of("SUGAR"));
+    @ConfigComment("The contraband list: what customs care about, and what black markets pay")
+    @ConfigComment("the premium for. Only honored while illegal-trade.enabled is true.")
+    @ConfigEntry(path = "illegal-trade.contraband-materials")
+    private List<String> contrabandMaterials = new ArrayList<>(List.of("SUGAR"));
 
     @ConfigComment("Career restarts a destitute player may use (/tw restart): fresh kit, starting")
     @ConfigComment("balance, chart kept. -1 = unlimited, 0 = none.")
@@ -571,28 +648,28 @@ public class Settings implements WorldSettings {
 
     private static Map<String, Double> defaultBasePrices() {
         Map<String, Double> map = new HashMap<>();
-        map.put("WHEAT", 2.0); map.put("CARROT", 1.5); map.put("POTATO", 1.5); map.put("BEETROOT", 1.5);
-        map.put("SUGAR_CANE", 1.0); map.put("SUGAR", 1.5); map.put("PUMPKIN", 3.0); map.put("MELON_SLICE", 0.5);
-        map.put("BREAD", 3.0); map.put("COOKED_BEEF", 4.0); map.put("COOKED_COD", 3.0); map.put("CAKE", 20.0);
-        map.put("GOLDEN_APPLE", 150.0); map.put("EGG", 1.0); map.put("HAY_BLOCK", 18.0);
-        map.put("COD", 2.0); map.put("SALMON", 3.0); map.put("TROPICAL_FISH", 5.0); map.put("PUFFERFISH", 4.0);
-        map.put("KELP", 0.3);
-        map.put("OAK_LOG", 1.5); map.put("SPRUCE_LOG", 1.5); map.put("BIRCH_LOG", 1.5); map.put("DARK_OAK_LOG", 1.5);
-        map.put("ACACIA_LOG", 1.5); map.put("JUNGLE_LOG", 1.5); map.put("CHERRY_LOG", 2.0);
-        map.put("STONE", 0.5); map.put("COBBLESTONE", 0.3); map.put("GRANITE", 0.4); map.put("DIORITE", 0.4);
-        map.put("ANDESITE", 0.4); map.put("DEEPSLATE", 0.6); map.put("SAND", 0.3); map.put("GRAVEL", 0.3);
-        map.put("COAL", 4.0); map.put("CHARCOAL", 3.0); map.put("RAW_IRON", 6.0); map.put("RAW_COPPER", 3.0);
-        map.put("RAW_GOLD", 12.0); map.put("FLINT", 1.0);
-        map.put("IRON_INGOT", 9.0); map.put("COPPER_INGOT", 4.0); map.put("GOLD_INGOT", 18.0);
-        map.put("IRON_NUGGET", 1.0); map.put("GOLD_NUGGET", 2.0);
-        map.put("DIAMOND", 100.0); map.put("EMERALD", 60.0); map.put("AMETHYST_SHARD", 10.0);
-        map.put("QUARTZ", 8.0); map.put("LAPIS_LAZULI", 6.0); map.put("REDSTONE", 3.0);
-        map.put("LEATHER", 4.0); map.put("WHITE_WOOL", 2.0); map.put("STRING", 1.5);
-        map.put("BEEF", 2.5); map.put("PORKCHOP", 2.5); map.put("CHICKEN", 2.0); map.put("MUTTON", 2.0);
+        map.put("WHEAT", 20.0); map.put("CARROT", 15.0); map.put("POTATO", 15.0); map.put("BEETROOT", 15.0);
+        map.put("SUGAR_CANE", 10.0); map.put("SUGAR", 15.0); map.put("PUMPKIN", 30.0); map.put("MELON_SLICE", 5.0);
+        map.put("BREAD", 30.0); map.put("COOKED_BEEF", 40.0); map.put("COOKED_COD", 30.0); map.put("CAKE", 200.0);
+        map.put("GOLDEN_APPLE", 1500.0); map.put("EGG", 10.0); map.put("HAY_BLOCK", 180.0);
+        map.put("COD", 20.0); map.put("SALMON", 30.0); map.put("TROPICAL_FISH", 50.0); map.put("PUFFERFISH", 40.0);
+        map.put("KELP", 3.0);
+        map.put("OAK_LOG", 15.0); map.put("SPRUCE_LOG", 15.0); map.put("BIRCH_LOG", 15.0); map.put("DARK_OAK_LOG", 15.0);
+        map.put("ACACIA_LOG", 15.0); map.put("JUNGLE_LOG", 15.0); map.put("CHERRY_LOG", 20.0);
+        map.put("STONE", 5.0); map.put("COBBLESTONE", 3.0); map.put("GRANITE", 4.0); map.put("DIORITE", 4.0);
+        map.put("ANDESITE", 4.0); map.put("DEEPSLATE", 6.0); map.put("SAND", 3.0); map.put("GRAVEL", 3.0);
+        map.put("COAL", 40.0); map.put("CHARCOAL", 30.0); map.put("RAW_IRON", 60.0); map.put("RAW_COPPER", 30.0);
+        map.put("RAW_GOLD", 120.0); map.put("FLINT", 10.0);
+        map.put("IRON_INGOT", 90.0); map.put("COPPER_INGOT", 40.0); map.put("GOLD_INGOT", 180.0);
+        map.put("IRON_NUGGET", 10.0); map.put("GOLD_NUGGET", 20.0);
+        map.put("DIAMOND", 1000.0); map.put("EMERALD", 600.0); map.put("AMETHYST_SHARD", 100.0);
+        map.put("QUARTZ", 80.0); map.put("LAPIS_LAZULI", 60.0); map.put("REDSTONE", 30.0);
+        map.put("LEATHER", 40.0); map.put("WHITE_WOOL", 20.0); map.put("STRING", 15.0);
+        map.put("BEEF", 25.0); map.put("PORKCHOP", 25.0); map.put("CHICKEN", 20.0); map.put("MUTTON", 20.0);
         // Hulls: priced above raw plank cost - shipwright labor. Frugal
         // players craft their own from wild-islet timber.
-        map.put("OAK_BOAT", 20.0);
-        map.put("OAK_CHEST_BOAT", 60.0);
+        map.put("OAK_BOAT", 200.0);
+        map.put("OAK_CHEST_BOAT", 600.0);
         return map;
     }
 
@@ -758,7 +835,7 @@ public class Settings implements WorldSettings {
     @ConfigComment("Fine per contraband item seized when caught, on top of losing the cargo and")
     @ConfigComment("the reputation. A player who cannot cover it pays what they have.")
     @ConfigEntry(path = "illegal-trade.smuggling-fine-per-item")
-    private double smugglingFinePerItem = 5.0;
+    private double smugglingFinePerItem = 50.0;
 
     @ConfigComment("Tell players when a scan finds nothing. On by default: being waved through is")
     @ConfigComment("how a player learns the mechanic exists before it costs them anything.")
@@ -2778,6 +2855,8 @@ public class Settings implements WorldSettings {
     public void setWildIsletGrid(int wildIsletGrid) { this.wildIsletGrid = wildIsletGrid; }
     public double getMushroomIsletChance() { return mushroomIsletChance; }
     public void setMushroomIsletChance(double mushroomIsletChance) { this.mushroomIsletChance = mushroomIsletChance; }
+    public double getIsletStructureChance() { return isletStructureChance; }
+    public void setIsletStructureChance(double isletStructureChance) { this.isletStructureChance = isletStructureChance; }
     public double getCoastRoughness() { return coastRoughness; }
     public void setCoastRoughness(double coastRoughness) { this.coastRoughness = coastRoughness; }
     public double getIslandHilliness() { return islandHilliness; }
@@ -2923,6 +3002,28 @@ public class Settings implements WorldSettings {
     public void setDemandFactor(double demandFactor) { this.demandFactor = demandFactor; }
     public double getBandDemandBonus() { return bandDemandBonus; }
     public void setBandDemandBonus(double bandDemandBonus) { this.bandDemandBonus = bandDemandBonus; }
+    public double getTechPriceStep() { return techPriceStep; }
+    public void setTechPriceStep(double techPriceStep) { this.techPriceStep = techPriceStep; }
+    public Map<String, Integer> getBoatRanks() { return boatRanks; }
+    public void setBoatRanks(Map<String, Integer> boatRanks) { this.boatRanks = boatRanks; }
+    public double getBoatPricePerSlotSquared() { return boatPricePerSlotSquared; }
+    public void setBoatPricePerSlotSquared(double boatPricePerSlotSquared) { this.boatPricePerSlotSquared = boatPricePerSlotSquared; }
+    public int getBoatRanksPerTechLevel() { return boatRanksPerTechLevel; }
+    public void setBoatRanksPerTechLevel(int boatRanksPerTechLevel) { this.boatRanksPerTechLevel = boatRanksPerTechLevel; }
+    public boolean isBorderParticlesEnabled() { return borderParticlesEnabled; }
+    public void setBorderParticlesEnabled(boolean borderParticlesEnabled) { this.borderParticlesEnabled = borderParticlesEnabled; }
+    public int getBorderViewDistance() { return borderViewDistance; }
+    public void setBorderViewDistance(int borderViewDistance) { this.borderViewDistance = borderViewDistance; }
+    public String getWarpRingColor() { return warpRingColor; }
+    public void setWarpRingColor(String warpRingColor) { this.warpRingColor = warpRingColor; }
+    public String getEdgeRingColor() { return edgeRingColor; }
+    public void setEdgeRingColor(String edgeRingColor) { this.edgeRingColor = edgeRingColor; }
+    public int getCargoTransferRange() { return cargoTransferRange; }
+    public void setCargoTransferRange(int cargoTransferRange) { this.cargoTransferRange = cargoTransferRange; }
+    public String getRespawnBoat() { return respawnBoat; }
+    public void setRespawnBoat(String respawnBoat) { this.respawnBoat = respawnBoat; }
+    public int getDroppedBoatTtlMinutes() { return droppedBoatTtlMinutes; }
+    public void setDroppedBoatTtlMinutes(int droppedBoatTtlMinutes) { this.droppedBoatTtlMinutes = droppedBoatTtlMinutes; }
     public int getDriftScale() { return driftScale; }
     public void setDriftScale(int driftScale) { this.driftScale = driftScale; }
     public double getDriftMin() { return driftMin; }
@@ -2933,18 +3034,10 @@ public class Settings implements WorldSettings {
     public void setStockDecayPerHour(int stockDecayPerHour) { this.stockDecayPerHour = stockDecayPerHour; }
     public double getExpanderBasePrice() { return expanderBasePrice; }
     public void setExpanderBasePrice(double expanderBasePrice) { this.expanderBasePrice = expanderBasePrice; }
-    public int getExpanderCap() { return expanderCap; }
-    public void setExpanderCap(int expanderCap) { this.expanderCap = expanderCap; }
-    public int getMaxBundles() { return maxBundles; }
-    public void setMaxBundles(int maxBundles) { this.maxBundles = maxBundles; }
-    public double getPouchPrice() { return pouchPrice; }
-    public void setPouchPrice(double pouchPrice) { this.pouchPrice = pouchPrice; }
     public int getCharityCooldownMinutes() { return charityCooldownMinutes; }
     public void setCharityCooldownMinutes(int charityCooldownMinutes) { this.charityCooldownMinutes = charityCooldownMinutes; }
-    public boolean isStampGlint() { return stampGlint; }
-    public void setStampGlint(boolean stampGlint) { this.stampGlint = stampGlint; }
-    public List<String> getUnstampedSellables() { return unstampedSellables; }
-    public void setUnstampedSellables(List<String> unstampedSellables) { this.unstampedSellables = unstampedSellables; }
+    public List<String> getContrabandMaterials() { return contrabandMaterials; }
+    public void setContrabandMaterials(List<String> contrabandMaterials) { this.contrabandMaterials = contrabandMaterials; }
     public int getMaxRestarts() { return maxRestarts; }
     public void setMaxRestarts(int maxRestarts) { this.maxRestarts = maxRestarts; }
     public Map<String, Double> getBasePrices() { return basePrices; }

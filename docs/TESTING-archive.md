@@ -1,0 +1,1301 @@
+# TradeWinds — Manual Test Archive (superseded)
+
+*Kept for the record only. This is the chronological, stage-by-stage checklist
+as it stood on 2026-08-02, before it was reorganised by risk into `TESTING.md`.
+Much of it tests mechanics that no longer exist - trading pouches, customs
+stamps, carried-shulker expanders, the chest boat as a hold - and the notes
+under ticked items record bugs already fixed. Use `TESTING.md` to test; use
+this to remember what was checked and why.*
+
+# TradeWinds — Manual In-Game Test Checklists
+
+Per-stage manual verification on the test server (`/Users/ben/Minecraft/26.2`).
+Deploy: `cp target/TradeWinds-*-LOCAL.jar /Users/ben/Minecraft/26.2/plugins/BentoBox/addons/`
+then restart the server. Automated coverage lives in `src/test`; this file is for
+what only a live server can prove.
+
+## Stage 0 — Addon scaffold
+
+- [x] Server starts with no errors/warnings from TradeWinds in the console.
+- [x] `bbox version` lists TradeWinds alongside the other gamemodes (AcidIsland, AOneBlock, Gusher…), state ENABLED.
+- [x] Worlds `tradewinds_world` and `tradewinds_world_nether` exist (`mv list` / console log).
+- [x] `/tw` (and `/tradewinds`) teleports the player to spawn in open ocean — water to the horizon, no land, no vanilla continents.
+  - ~~Fail - Running `/tw` reports the error "There is no spawn in this gamemode" and nothing happens.~~
+  - ~~Running `/tw create` makes an island for the player with a bedrock.~~
+  - FIXED (retest): `/tw spawn` is now a TradeWinds command that teleports straight to the
+    world spawn on the sea surface (no spawn island needed); `create`/`reset` are removed —
+    player islands are purchase-only (Stage 7). Also retest: `/tw create` must now be
+    an unknown command. Delete the stray bedrock island from the earlier test with
+    `/twadmin delete <your name>`.
+- [x] Ocean floor exists (dive down: sand/sandstone floor roughly y25–y50, bedrock at bottom, no caves by default).
+- [x] Above-water world is air up to build height (no floating junk).
+- [x] The interstice is inaccessible: nether portals in `tradewinds_world` do not activate/link (build one and light it), and no command teleports there.
+    - ~~FAIL: I built a portal and was able to port there.~~
+    - FIXED (retest): a portal listener now cancels portal creation AND portal teleports in
+      both TradeWinds worlds (the config flag only stopped BentoBox's own linking, not
+      Multiverse's). Retest: lighting an obsidian frame should do nothing at all; the
+      portal built during the earlier test should also no longer teleport.
+- [x] Interstice world (teleport there as admin, e.g. `mv tp`): water sea over basalt/soul-sand floor, nether ambience.
+- [x] No `tradewinds_world_the_end` world is created.
+- [x] `/twadmin` responds (admin help).
+- [x] `addons/TradeWinds/config.yml` generated with all Stage 0 sections (galaxy, travel, illegal-trade, world).
+- [x] Restart the server: worlds reload, no duplicate-world or generator errors, chunks unchanged (fly the same area).
+- [x] Other gamemodes still work (create/visit an AcidIsland island).
+
+## Stage 1 — Seeded galaxy
+
+Set `galaxy.seed` in `addons/TradeWinds/config.yml` to a known value (e.g. `20260729`)
+and delete the `tradewinds_world*` folders for a clean generation, then:
+
+- [x] Console logs `TradeWinds galaxy seed: <seed>` on first world access.
+- [x] Use `/twadmin islands` to list the 10 nearest trading islands (works before any
+      terrain generates — it queries the galaxy engine), then `/twadmin tpisland 1` to
+      visit the nearest. The registration log line (name, type, band, coords) appears
+      when the island's center chunk loads, i.e. on arrival.
+  - ~~FAIL - no islands logged in console. Cannot TP to any islands either.~~
+  - Not a generation bug: islands register lazily when their center chunk first loads,
+    and nothing had generated chunks 3.5k+ blocks out. The missing piece was a discovery
+    tool — hence the two new admin commands above.
+- [x] Islands rise smoothly from the ocean: underwater shelf → beach → grassy interior; no cliffs of floating terrain, no chunk-border seams, no pop-in (land is generated, not pasted).
+- [x] Each island has a single whole-island biome matching its logged type (e.g. MINING → windswept hills; FROZEN → snowy, with **ice sheets in the surrounding water ring** — ride a boat over the ice: it should be fast).
+- [x] Entering an island's protection range announces its name ("Now entering <name>").
+- [x] `bbox` island info at an island (`/twadmin info` while standing there) shows an unowned island, range 1000, protection 400.
+- [x] Restart the server: the same islands are still registered (no duplicate-registration log lines), names unchanged.
+- [x] Regenerate the world from scratch with the same seed (stop server, delete world folders AND `database/` TradeWinds islands): identical island positions, names, types.
+- [x] Islands are never within sight of one another (min separation 2500).
+- [x] PvP setting: on a LAWLESS/ANARCHIC island the island PVP flag is on; on SAFE it is off.
+
+## Stage 2 — Island content
+
+**IMPORTANT: needs freshly generated island chunks.** Docks/plazas/villagers only appear
+in chunks generated by this build — visit islands you have NOT been to before
+(`/twadmin islands`, pick ones beyond previous exploration), or regenerate the world.
+
+- [x] Every island visited has a **dock**: a straight stone-brick quay with a plank deck
+      one block above the water, running from the island's flank out into open water.
+      A boat can pull up alongside the deck end.
+      - ~~see screenshot at /Users/ben/Downloads/2026-07-29_16.40.38.png. The dock always has a gap between it and the land. It'd be better to have it join the land, otherwise it's not going to be used much.~~
+      - FIXED (retest, needs fresh chunks): the plaza's blend ring took precedence over the
+        dock strip, so the ring blended down to submerged terrain on the seaward side and
+        cut the quay off ~10 blocks from shore. The dock strip now wins over the ring: the
+        deck runs unbroken from the plaza edge to the pier end (one step down from plaza
+        to deck). A regression test walks the full dock axis on 12 islands.
+- [x] The dock's plank type varies by island type (oak/spruce/acacia/cherry/dark oak).
+- [x] Inland of the dock: a flattened **market plaza** (dirt-path disc) with a bell at
+      the center, four lantern posts, and 2–4 market stalls (fence posts + colored wool
+      canopy + barrel). Stall canopy color matches the island type.
+- [x] Plaza edges blend into the terrain — no sheer walls around the plaza disc.
+- [x] **Villagers** (3–5) stand on the plaza, professions matching the island's economy
+      (FISHING → fishermen; AGRICULTURAL → farmer/butcher/shepherd; MINING → mason/toolsmith;
+      INDUSTRIAL → smiths; LUXURY → librarian/cleric; …). Skin variant matches the biome
+      (snowy islands → snow villagers, desert → desert, …).
+      - ~~FAIL - they are always Fishermen, or no profession.~~
+      - FIXED (retest, needs fresh chunks): vanilla resets a zero-XP villager with no
+        claimed job site to unemployed — and the stall barrels are fisherman job sites,
+        so the rest converged on Fisherman. Spawned villagers now carry 1 trade XP,
+        which locks the assigned profession permanently. Existing villagers from the
+        previous build will stay broken; only newly generated islands count.
+- [x] Villagers are on the plaza, NOT at the waterline (shoreline-safety rule).
+- [x] **Iron golems** on the plaza: 3 on SAFE, 2 on POLICED, 1 on FRONTIER/LAWLESS,
+      none on ANARCHIC.
+- [x] Leave (unload chunks) and return: villagers and golems are still there (persistent,
+      no despawn).
+- [x] Restart the server and revisit: residents persist, and no duplicate set spawns.
+- [x] Same seed regeneration: dock bearing, plaza position, and stall layout are identical.
+
+## Stage 2b — Island identity (type landmarks, dressing, configurable weights)
+
+Playtest feedback: islands looked the same apart from biome; INDUSTRIAL didn't read
+industrial. **Needs freshly generated island chunks**, as ever.
+
+- [x] Each island has a **type landmark** on the inland edge of the plaza (opposite the dock):
+  - INDUSTRIAL: brick chimney with a smoking signal fire on top (visible from the sea!),
+    blast furnaces, anvil, coal/iron block piles at the foot.
+  - MINING: timbered shaft head, rails, spoil heap, exposed ore blocks.
+  - AGRICULTURAL: fenced wheat plot with irrigation channel, hay-bale stack.
+  - FISHING: smokehouse campfire + barrel stack, and a moored rowboat at the pier end.
+  - FOREST: log pile with stripped logs.
+  - LUXURY: chiseled-quartz fountain with potted flowers.
+  - FROZEN: packed-ice beacon cairn with a lantern.
+- [x] **Plaza surface** varies by type: polished blackstone (INDUSTRIAL), smooth quartz
+      (LUXURY), cobblestone (MINING), podzol (FOREST), planks (FISHING/FROZEN),
+      dirt path (AGRICULTURAL).
+- [x] A **type-colored banner** and lantern post fly at the seaward end of every quay —
+      the island's "flag" as you approach by boat.
+- [x] **Workstations** beside each stall (blast furnace/grindstone/anvil on INDUSTRIAL,
+      lectern/brewing stand on LUXURY, composter/smoker/loom on AGRICULTURAL, …).
+- [x] Villagers do NOT lose or change their professions near the workstations (locked by XP).
+- [x] `galaxy.type-weights` appears in config.yml; setting a type's weight to 0 and
+      regenerating removes that type (needs world regen — weights are seed-shaping).
+
+## Stage 3 — Travel: warp, fuel, charting
+
+Get a chest boat, put fuel in it (coal is 8 units, a coal block 80, logs 1,
+a lava bucket 100 — see `travel.fuel-values`), and:
+
+- [ ] **Charting**: joining fresh, `/tw chart` already lists the starter-cluster islands
+      (pre-charted). Rowing into a NEW island's waters (range 1000) pops "Charted <name>!"
+      on the action bar, and it appears in `/tw chart` with type/band/distance.
+- [ ] **Warp offer**: rowing a boat across an island's VISIBLE border (the protection
+      edge, ~400 from center — the moment "Now leaving <name>" appears) pops the warp
+      dialog automatically (once per 30s per island). `/tw warp` opens it anywhere
+      inside an island's waters while boated.
+      - ~~Playtest: no offer when rowing out past the leaving message~~ FIXED: the
+        trigger sat at the far range edge (~1000), 550 blocks of empty ocean later.
+        Now it fires right at the visible border. (Fuel never gates the offer —
+        unaffordable routes show greyed out.)
+- [ ] The dialog lists **charted islands only** (uncharted never appear), nearest first,
+      with fuel cost per destination; the body shows fuel aboard. Unaffordable entries
+      are dark grey and clicking them just says "not enough fuel".
+- [ ] **Warp**: clicking an affordable destination consumes fuel from the chest boat /
+      bundles (check the inventory after), plays portal particles/sound, dismounts,
+      teleports player AND boat, re-seats the player in the boat, applies ~8s nausea +
+      3s blindness + 1 heart damage, and lands **~130 blocks from the destination's
+      center on the side facing the origin island** — the island is right in front of
+      you at default view distance (`travel.warp.arrival-distance`).
+      - Playtest: 350 was too far — a boring paddle, and easy to get lost even with
+        the HUD. Retuned to 130 per test.
+- [ ] Fuel in the player's pockets (not in chest boat or bundle) does NOT count and is
+      never consumed — hold-only is the spec's core rule.
+- [ ] Lava bucket burns to an empty bucket (bucket stays aboard).
+- [ ] Fuel costs match distance × 0.01 rounded up (check two islands at a known distance
+      via `/twadmin islands`); add an entry under `travel.warp.edge-overrides`
+      (e.g. `"0,0>0,1": 1`), reload, and see that edge cost change.
+- [ ] Warp back: the full row-out → warp → warp-back loop works, including re-seating.
+- [ ] Chart persists across relog and server restart.
+- [ ] A player without a boat: `/tw warp` refuses ("aboard a boat"); the border prompt
+      does not fire while swimming.
+
+## Stage 3b — Resident protection, band flags, navigation bar, starter kit
+
+Playtest feedback round: traders died to night mobs and scattered; no way to find the
+dock after warping; spawn dropped you in open water with nothing.
+
+**Resident protection (works on EXISTING islands too — no fresh chunks needed for
+the listener/tether; respawn accounting also applies everywhere):**
+- [ ] Stand on a FRONTIER+ island at night: hostile mobs spawn but never chase or hit
+      villagers/golems; a zombie walks straight past the traders.
+- [ ] On SAFE/POLICED islands: no hostile mobs spawn inside the protection range at
+      all (outside the 400 radius and in open ocean they still do).
+- [ ] Hit a villager to make it flee: within ~30s the tether teleports it back to
+      the plaza.
+- [ ] Kill a villager (on a non-SAFE island — on SAFE the hit is blocked outright by
+      the HURT_VILLAGERS flag): after ~10 minutes with the plaza loaded, a replacement
+      spawns at the plaza with the right profession (console logs the respawn).
+- [ ] `/tw settings` while standing on a trading island: any player can VIEW the flags;
+      toggling is refused (unowned island, no rank). `/twadmin settings` edits work.
+- [ ] Change a `bands.*` config value, `/twadmin reload` (or restart), `/twadmin reflag`:
+      existing islands pick up the new flags.
+
+**Navigation boss bar:**
+- [ ] Entering any island's waters shows a boss bar: island name | Clean | Dock <n>m.
+- [ ] The distance falls as you boat toward the dock and the bar fills; it updates
+      about once a second.
+- [ ] Bar color tracks the band: blue SAFE, green POLICED, yellow FRONTIER, red
+      LAWLESS, purple ANARCHIC.
+- [ ] Leaving island waters (or the world) removes the bar. `hud.navigation-bossbar:
+      false` disables it entirely.
+
+**Creeper griefing (playtest feedback):**
+- [ ] Lure a creeper next to a market stall / landmark and let it explode: **no blocks
+      break** anywhere in the world, but the blast still damages you (and would damage
+      other players). Residents take no damage (mob damage is blocked for them).
+- [ ] `world.flags` in config.yml shows `CREEPER_DAMAGE: false`, `CREEPER_GRIEFING: true`
+      after a restart (the addon re-asserts these each enable).
+
+**Starter kit:**
+- [ ] A brand-new player's first `/tw` arrival: gets a gold-named "Trading Bundle",
+      and — since spawn is water — an oak boat appears with them seated in it.
+      Kit message shows once, ever (relog + `/tw spawn` again: no second kit).
+- [ ] The starter boat has the owner recorded (no visible check yet — Stage 4+ uses it).
+- [ ] Returning to spawn later WITH a boat item in inventory: it is placed and you are
+      seated (item consumed). Without one: you swim.
+
+## Stage 4 — Economy and cargo
+
+Vault + an economy plugin must be running (they are on the test server). Base prices
+come from the embedded price engine: the config table (`economy.base-prices`) plus
+recipe derivation — e.g. HAY_BLOCK derives from 9x wheat even if unlisted, and a
+crafted item made of priced parts is automatically sellable.
+
+- [ ] New player: starter kit now also deposits the starting balance ($250).
+- [ ] **Open the market**: right-click any resident villager, or `/tw trade` anywhere
+      within an island's protection range. Main menu shows balance, island type/band,
+      and Sell / Buy / Shipwright buttons.
+- [ ] **Hold-only is enforced**: with wheat in your POCKETS and none in the hold, the
+      sell page says there is nothing to sell. Move it to the chest boat (or a bundle,
+      max 3 count) and it appears. This is the single most important economy check.
+- [ ] **Buy low**: at an AGRICULTURAL island, crops are cheap (produce factor). Buy 16
+      wheat — money leaves Vault balance, wheat lands in the chest boat.
+- [ ] **Sell high**: haul it to an island that demands CROPS (FISHING) — the sell price
+      there beats what you paid. A same-island buy-then-sell always loses money.
+- [ ] **Margins scale with danger**: the same demanded good pays visibly more at a
+      FRONTIER/LAWLESS island than at a SAFE one (band demand bonus).
+- [ ] **Stock drift**: sell a large amount of one category at one island — its prices
+      for that category drop. Buy an island out — prices rise. Restart the server:
+      the drift persists (TWIslandData in the database).
+- [ ] **LUXURY islands** sell nothing (no Buy button) but pay handsomely for gems,
+      luxuries, and fish.
+- [ ] **Shipwright**: buy a Cargo Expander ($5000) — a gold-named shulker box placed
+      into your chest boat. The next one costs $10,000; the cap (4) refuses further
+      purchases. Goods inside the expander count for selling and fuel.
+- [ ] Expanders cannot be crafted (no shulker shells exist — no End).
+- [ ] A 4th bundle in your inventory does NOT add hold space (max-bundles 3).
+- [ ] Without a chest boat and bundles, buying refuses with "no room in your hold".
+
+### Stage 4b — trade screen UX + embedded pricing (feedback round)
+- [ ] Every market screen shows "Balance: $X | Hold space: ~N items", updating after
+      each transaction.
+- [ ] Sell and Buy pages have a "< Back" button returning to the main menu; the main
+      menu has "Close".
+- [ ] Recipe-derived pricing works: an item NOT in the base price table but craftable
+      from priced parts (e.g. a HAY_BLOCK, CRAFTING_TABLE from planks) gets a sane
+      sell price; junk with no priceable recipe (e.g. a stray BEDROCK) is untradeable.
+
+### Stage 4c — Spawn islet and safe respawn (playtest fix)
+
+**Existing worlds**: the islet only appears in freshly generated chunks. Stop the
+server and delete the four region files around the origin
+(`tradewinds_world/region/r.0.0.mca`, `r.-1.0.mca`, `r.0.-1.mca`, `r.-1.-1.mca`) —
+everything else (islands, database) is untouched; the area regenerates with the islet.
+
+- [ ] A grassy plains islet (~96 blocks across) exists at 0,0; world spawn is on top
+      of it.
+- [ ] `/tw` teleports onto the islet (dry land). First-time players get the bundle and
+      a boat ITEM (spawn is land now, not water).
+- [ ] Die without a bed: you respawn ON the islet — not at 0,42,0 in the seabed, and
+      not drowning. Repeat deaths respawn there every time.
+- [ ] Die with a bed set somewhere: the bed is honored.
+- [ ] Dying in the interstice (admin-teleport there) without a bed also returns you to
+      the islet.
+
+### Stage 4d — trade quantities (feedback round)
+- [ ] Main menu: with an empty hold (or nothing this island pays for), there is NO
+      "Sell cargo" button; it appears once sellable cargo is aboard.
+- [ ] Sell page: each cargo type is one ROW of three buttons — "x1", "x16",
+      "All <n> - $total" — selling exactly that many (x16 with only 9 aboard sells 9).
+- [ ] Buy page: each catalog good is a row of "x1 / x16 / x64" at quoted totals,
+      still limited by balance and hold space.
+- [ ] More than 8 cargo types: the sell page shows the first 8 with a note; selling
+      some reveals the rest.
+
+## Stage 4e — Rower navigation: chart holograms + Star Chart
+
+- [ ] **Hologram compass**: in a boat, `/tw chart` raises floating name-tags around you,
+      each hanging in the true direction of a charted island (name / type, band /
+      distance). They start at you and glide out to a ~10 block ring.
+- [ ] Islands sharing a bearing stack vertically — nearest lowest, further ones above.
+- [ ] Holograms fade after ~15s (`chart.hologram-duration-seconds`); re-running the
+      command replaces them; only YOU see them (check with a second account).
+- [ ] Ashore (not in a boat) or with `/tw chart list`: the text list as before.
+- [ ] **Star Chart**: `/tw starchart` gives a map item. Holding it: dark-blue ocean,
+      you centered as a rotating arrow, charted islands as band-colored dots with
+      names. Islands beyond the map edge are pinned AT the edge with their name —
+      a heading hint until you get closer.
+- [ ] The chart follows you as you row (you stay centered); scale via
+      `chart.starchart-blocks-per-pixel` (64 = ~8km across).
+- [ ] Restart the server: an existing Star Chart item still renders (the view id
+      persists and the renderer re-attaches).
+
+### Stage 4f — the fuel guarantee
+- [ ] Every island's Buy page includes at least one fuel: FOREST sells logs (and
+      charcoal is classified as wood, so forest charcoal is cheap), MINING sells coal,
+      and everywhere else — including LUXURY, which otherwise sells nothing — CHARCOAL
+      appears as the fallback line, priced like any commodity.
+- [ ] With money but no fuel, you can always refuel at whatever island you are at.
+
+## Stage 4g — Two economies: stamps, outfitters, wild islets, restart
+
+**World note**: wild islets appear only in freshly generated chunks (empty cells you
+have not visited). The protection flip and stamps work immediately.
+
+- [ ] **Customs stamp**: goods bought from any market carry a lore line "⚓ Customs
+      Stamped" (PDC-marked; `economy.stamp-glint: true` adds a glint). Stamped and
+      identical unstamped items never stack together.
+- [ ] Only stamped goods appear on the Sell page. Homegrown wheat/mined ore in the
+      hold: not offered, and "traders only buy customs-stamped goods" if forced.
+- [ ] **Exception**: unstamped SUGAR sells fine (the smallholder economy) — unless
+      `illegal-trade.enabled: false`.
+- [ ] **Outfitter** button at every market: bread always; charcoal where the trade
+      catalog has no fuel; INDUSTRIAL sells iron sword/shield/armor; farms sell beds;
+      FISHING sells rods; MINING an iron pickaxe; LUXURY golden apples. All priced by
+      the engine (gear prices derive from their recipes).
+      - ~~BUG: buying a fishing rod was refused for "no hold space" with 8 free~~
+        FIXED: outfitter stores now go to your INVENTORY, not the hold, and are NOT
+        stamped (they are for using, not reselling - which also stops bread arbitrage).
+        Unstackable gear could never enter a bundle, which was the actual bug.
+        Retest: buy a rod with no chest boat - it lands in your pack.
+      - [ ] Non-stacking gear (rod, sword, bed) offers only x1; stackables also offer x16.
+      - [ ] Buying an expander without a chest boat now says "buy one from the
+            shipwright first" instead of a vague hold message.
+- [ ] **Trade sounds** (the dialog blurs and covers chat, so outcomes are audible):
+      every successful buy/sell/expander purchase plays a bright pling; every refusal
+      (cannot afford, no hold space, unstamped goods, expander cap, no chest boat)
+      plays a dull anvil thud.
+- [ ] **Wild islets**: row between trading islands through fresh ocean — small
+      unnamed islands (~140 across) in varied vanilla biomes, no dock/market/name
+      announcement. You can break/place/farm/sleep there and in open ocean
+      (protection flipped outside named islands). Trading islands remain protected.
+- [ ] **/tw restart**: confirmation, then balance resets to starting, fresh kit at
+      spawn, chart KEPT; counter decrements (3 by default); refuses at 0.
+
+### Stage 4h — the Shipwright (boat acquisition)
+- [ ] Every market's main menu has a "Shipwright" page: Oak Boat ($20-ish), Oak Chest
+      Boat ($60-ish), and the Cargo Expander ladder (moved here from the main menu).
+- [ ] Buying a hull delivers the (stamped) boat item to your INVENTORY — place it at
+      the dock and ride off. Expanders still require a chest boat (hold delivery).
+- [ ] Boats are NOT valid warp fuel (they are hulls, not firewood).
+- [ ] Wild islets have trees: chop, plank, craft boat + chest → chest boat, the frugal
+      path. Bought hulls cost more than crafted ones by design.
+- [ ] Boatless + broke: wild-islet timber or /tw restart are the exits.
+
+### Stage 4i — command permissions
+- [ ] As a NON-OP player (test account, no LuckPerms grants): /tw, spawn, chart,
+      starchart, restart, info, settings, language all work.
+- [ ] Non-op canNOT use /tw warp or /tw trade (op-only shortcuts) — but the intended
+      paths still work for them: rowing to an island border offers the warp dialog,
+      and right-clicking a plaza trader opens the market.
+- [ ] Non-op cannot use /twadmin or its subcommands.
+
+### Stage 4j — protected spawn island (updated: visitor allowances)
+- [ ] Console logs "Registered the spawn island (protection 100)" on first enable.
+- [ ] As NON-OP: breaking/placing blocks on the spawn islet is blocked; wild islets
+      and open ocean remain free-build.
+- [ ] /twadmin info at spawn shows an unowned island named "Spawn", protection 100,
+      range 200 (small ranges are legal now — Stranger Realms overrides).
+- [ ] Restart: BentoBox loads cleanly (no "island distance mismatch" panic), spawn
+      island persists as spawn.
+- [ ] As NON-OP on the spawn island: placing/riding a BOAT works, hitting a monster
+      works, using a CRAFTING TABLE works — but block break/place is still blocked.
+- [ ] No hostile mobs spawn on the spawn island; primed TNT there breaks no blocks
+      (flags re-asserted every enable, so the existing spawn island picks these up).
+- [ ] Trading islands still register/announce correctly (arbitrary centers untouched
+      by the isFixIslandCenter override).
+
+### Stage 4k — teleport friction (anti-escape)
+Set `commands.delay.time: 3` in `plugins/BentoBox/config.yml` and test as a NON-OP
+(ops and `tradewinds.mod.bypassdelays` holders always bypass delays):
+- [ ] `/tw spawn` says "stand still for 3 seconds"; moving cancels the teleport.
+- [ ] Set `travel.warp.stand-still-seconds: 3` in the TradeWinds config: engaging a
+      warp says "Hold your course..."; standing still completes the jump.
+- [ ] Moving during the countdown aborts the warp and salvages the fuel back into the
+      hold as charcoal (dropped at your feet if the hold is full).
+- [ ] With `stand-still-seconds: 0` (default) warps remain instant.
+
+## Stage 5 — Risk at sea
+
+**Half one: the interstice (warp risk).** Set `travel.warp.failure-chance: 1.0`
+temporarily to force it.
+- [ ] Warping drops you into `tradewinds_world_nether` partway along the route, in
+      your boat, with 1-3 Ghasts inbound and a "the warp collapses!" message.
+- [ ] The re-engage dialog appears within ~20s (and repeats): clicking it delivers
+      you to the ORIGINAL destination for FREE — no second fuel charge.
+- [ ] Stranding is impossible: relog in the interstice (losing the pending
+      destination) — the dialog still offers a free jump to your nearest charted
+      island.
+- [ ] Ghast fireballs can be batted back; the fight is survivable in a boat.
+- [ ] Restore `failure-chance: 0.05` afterwards.
+
+**Half two: sea encounters (rowing risk).**
+- [ ] Row in open water far from islands: within a few rolls (45s each) mobs appear
+      ~28 blocks AHEAD of you — visible, so fleeing is a real choice.
+- [ ] Day vs night differ: guardians by day, trident-throwing drowned at night.
+- [ ] Lawless/anarchic water adds worse things: an ELDER GUARDIAN in deep water
+      (flee — it is meant to be unwinnable for a lone trader), phantoms at night,
+      pillager PIRATE CREWS in their own boat, and the sea witch.
+      - ~~The zombie nautilus just swam away~~ FIXED: it is a tameable MOUNT, not a
+        monster (AbstractNautilus extends Tameable/Vehicle), so it was never going to
+        attack. Replaced with the elder guardian; a test now asserts every encounter
+        mob implements Enemy.
+      - Water mobs also used to spawn ABOVE the waterline, where they flop instead of
+        hunting. They now spawn 3 blocks under, phantoms 14 above, boats on the
+        surface.
+      - ~~The witch adrift did nothing and was easy to kill~~ FIXED: mobs riding a
+        boat cannot run their attack goals, and the target was set once at spawn.
+        An aggression pass now re-asserts targets every 2s, and boated crews
+        ABANDON SHIP as soon as they sight you (~30 blocks, wider than the spawn
+        distance) — a mob that cannot reposition lobs its potions over your head.
+        The abandoned boat stays behind: salvage it if you want.
+- [ ] Safe island waters are quiet (2% base, further reduced near the dock);
+      encounters intensify with distance from any island.
+- [ ] Killing encounter mobs sometimes drops booty (nautilus shells, tridents,
+      ingots...) which IS customs-stamped — check it can be sold at a market.
+- [ ] Only one encounter at a time per player; mobs despawn naturally when far away.
+- [ ] `encounters.enabled: false` turns the whole system off.
+
+## Stage 5b — Spawn is a real trading island
+
+**World note**: the origin now hosts a full trading island instead of the bare islet.
+Stop the server, delete the four origin region files (`tradewinds_world/region/r.0.0.mca`,
+`r.-1.0.mca`, `r.0.-1.mca`, `r.-1.-1.mca`) AND the old spawn island from the TradeWinds
+database (or use `/twadmin delete` on it), then restart.
+
+- [ ] Console logs "Designated Spawn (FISHING) as the spawn island" on first enable.
+- [ ] `/tw` puts you ON the market plaza of an island named **Spawn** — villagers,
+      stalls, landmark, the lot. Trading is available from second one.
+- [ ] Walk down the dock, place your boat, and sail: the border warp prompt appears at
+      the island edge like any other island. The navigation boss bar shows "Spawn".
+- [ ] The island is SAFE band: no hostile spawns, no PvP, villagers protected — plus
+      the harbor allowances (boats, workbenches, hitting monsters) for visitors.
+- [ ] Non-op still cannot break blocks there; TNT breaks nothing.
+- [ ] Die without a bed: respawn on the Spawn plaza.
+- [ ] `galaxy.spawn-island-type` picks the economy (FISHING default, RANDOM allowed) —
+      needs a world regen to change.
+- [ ] Admin control works as normal BentoBox: `/twadmin setname`, `/twadmin
+      setspawnpoint`, `/twadmin settings` on the spawn island.
+- [ ] No other island is closer than 2500 blocks to spawn (nothing crowds the port).
+
+### Stage 5c — island flags (three bugs: load order, setFlag, port allowances)
+- [ ] As NON-OP at ANY trading island (not just spawn): moor, exit and RE-BOARD your
+      boat after shopping; hit a hostile mob; use a crafting table; open stall gates.
+      Run `/twadmin reflag` once to push these onto islands registered earlier.
+- [ ] After restart, the island JSON in `plugins/BentoBox/database/Island/` shows
+      `"spawn": true`, `"name": "Spawn"`, and flags including BOAT/CRAFTING/
+      HURT_MONSTERS at 0.
+- [ ] Only ONE island file exists at the origin (no duplicate created per restart).
+- [ ] Non-op at spawn: **place and ride a boat**, use a crafting table, hit a monster.
+      (Rank flags were silently dropped before — see PROGRESS.md.)
+- [ ] Non-op anywhere: drop and pick up items on trading islands.
+- [ ] `/tw settings` at spawn shows BOAT/CRAFTING/HURT_MONSTERS at Visitor rank.
+- [ ] An island registered by an older build (no name, no flags) is adopted on
+      restart: it gains its name, band flags, and — for spawn — protection 400 /
+      range 1000.
+
+### Stage 5d — the carried hold, pouches and white expanders
+- [ ] The Shipwright sells **Trading Pouches** ($250) up to the 3-pouch limit, then
+      refuses ("cannot carry any more"). A pouch is deliberately poorer value per item
+      than an expander — the early rung, not the destination.
+- [ ] Cargo expanders are **white** shulker boxes named "Cargo Expander" (vanilla
+      purple ones from earlier builds still work as cargo).
+- [ ] Buy a Cargo Expander: it lands in your PACK (no chest boat needed). Right-click
+      it anywhere to open and fill it - that is your hold.
+  - ~~Fail - right clicking a cargo expander did not open its inventory.~~
+  - FIXED (retest): two gestures now open it.
+    1. **Inventory screen** (the natural one, new): open your inventory, right-click
+       the expander where it lies (empty cursor) - the expander view opens. Left
+       click and click-with-item-on-cursor stay vanilla. An expander inside a chest
+       or another container does NOT open this way.
+    2. **In hand**: hold it and right-click - at sea aiming at the sky AND ashore
+       aiming at the ground (air clicks used to arrive "already cancelled" and were
+       skipped). The shulker box must never be placed as a block either way.
+    Fill it, close it, reopen: contents persist. Sell from it at a market.
+- [ ] Goods inside a carried expander are sellable, and count as fuel for warping.
+- [ ] Hold space shown in the market reflects pouches + expanders (+ chest boat when
+      riding one).
+- [ ] Riding a chest boat still adds its 27 slots to the hold; at a port you can
+      sneak-right-click your own chest boat to open it (CHEST flag now visitor rank).
+- [ ] Loose items in your inventory are still NOT sellable (they must be in a pouch,
+      an expander, or the boat).
+
+### Stage 5e — respawn on the plaza (playtest fix)
+- [ ] Die without a bed: you respawn ON the spawn island's market plaza, standing on
+      flat ground beside the stalls — not in the treetops at the island centre, and
+      not inside the bell.
+- [ ] `/tw spawn` puts you in the same place.
+- [ ] After `/twadmin setspawnpoint` somewhere else on the island, respawns and
+      `/tw spawn` both honour the new point.
+
+### Stage 5f — findable islets, openable expanders, charting range
+- [ ] Row (or teleport) into open ocean far from any island: wild islets are now
+      within ~500-1700 blocks of anywhere — you should meet one within a short row.
+      They keep clear of trading islands.
+- [ ] **Right-click a Cargo Expander in hand** to open it — this is the only way
+      (Java cannot open shulker boxes from the inventory). Put items in, close, and
+      they are still there when you reopen; they count as hold for trading and fuel.
+- [ ] An expander cannot be placed as a block, and cannot be stowed inside another.
+- [ ] Rowing within ~1200 blocks of an uncharted island charts it ("Charted <name>!"
+      on the action bar) and it then appears in /tw chart, the warp dialog and the
+      star chart. `chart.sighting-range` tunes this.
+
+### Stage 5g — recovery: cheap first pouch and the harbourmaster's charity
+- [ ] Trading Pouches cost a flat $50 each, up to the 3-pouch cap. (Escalating prices
+      were dropped: dropping a pouch before buying reset the count. The cap — not the
+      price — is what makes expanders worth buying.)
+- [ ] **Soft-lock check**: with no pouch, no expander and under $50, the Shipwright
+      shows "Harbourmaster's charity": claim it for a free pouch (plus a boat if you
+      have none). You can immediately buy goods and trade again.
+- [ ] The charity refuses if you are NOT destitute ("You'll manage"), and again
+      within 15 minutes of a claim ("Come back in N minutes").
+- [ ] Charity goods cannot be sold (unstamped), so repeat claims yield no money.
+
+### Stage 5h — the port scan (free chart at a trading island)
+- [ ] Stand on any trading island and run `/tw chart` (or board a boat there): "You
+      copy the harbour charts: N islands added to yours."
+- [ ] Those islands immediately appear in `/tw chart`, the hologram compass, the star
+      chart, and — the point of it — the warp dialog, so docking anywhere leaves you
+      with a full menu of onward routes.
+- [ ] Running it again at the same port adds nothing (they are already charted).
+- [ ] Opening the chart at sea (not at an island) does NOT scan — discovery still
+      requires making landfall.
+- [ ] `chart.port-scan: 0` disables the free scan.
+
+### Stage 5i — varied ocean biomes
+**Needs fresh chunks** (biomes are baked at generation).
+- [ ] Sail a long way through open water: the sea changes through frozen, cold,
+      ordinary, lukewarm and warm ocean — water colour, fog and fish change with it.
+- [ ] Transitions are gradual: you never find warm water directly against frozen.
+      (A test walks 80,000 blocks asserting the temperature never skips a step.)
+- [ ] The same seed gives the same seas; a different seed gives different ones.
+- [ ] `world.vary-ocean-biomes: false` returns the world to a single ocean biome.
+
+### Stage 5j — the sea itself: seabed, structures, islets
+**Needs a fresh world** — terrain and biomes are baked at generation, so delete
+`world/dimensions/minecraft/tradewinds_world` (and the nether one) before testing.
+The test server's config has already been updated to the new defaults.
+
+**Islets — the "I couldn't find a single one" fix**
+- [ ] Sail in any direction from anywhere: you meet an islet within a few hundred
+      blocks, not a few thousand. (Measured on the live seed: mean 544 blocks to the
+      nearest, worst case 1,376.)
+- [ ] Islets vary — sandbars barely clearing the water through to islands 140 blocks
+      across, and small ones are lower as well as narrower.
+- [ ] **Coastlines are not circles.** Islets and trading islands alike have bays,
+      headlands and lobes, and their land is hills and hollows rather than a smooth
+      dome with terraced contour rings. (`galaxy.coast-roughness` and
+      `galaxy.island-hilliness`; set both to 0 to see the old coin shape.)
+- [ ] The shallow water around an island is not a perfectly circular pale ring —
+      the sea floor keeps rolling across the shelf.
+- [ ] Islands are still whole: no island has broken up into a scatter of fragments,
+      and every trading island's quay still runs unbroken out into open water.
+- [ ] Every islet has a sandy shoreline ring with beach biome (snowy beach in cold
+      seas), and grass or its own biome inland.
+- [ ] Roughly 1 islet in 16 is **mushroom fields**: mycelium, mooshrooms, red and
+      brown mushrooms, and no hostile mobs spawning on it.
+
+**The sea floor**
+- [ ] Dive in open water in several places: the floor is genuinely different depths —
+      sunlit banks around 14 blocks down, dark basins over 45.
+- [ ] Find a **rift**: a narrow canyon wandering across the floor, dropping sharply
+      well below the surrounding seabed.
+- [ ] Find a **seamount**: an underwater peak rising off a deep plain — and confirm it
+      never breaks the surface. Nothing but islands and islets should be land.
+- [ ] The floor is patchy, not static: banks of sand, beds of gravel, clay pans, and
+      bare stone/tuff in the deeps — not alternating sand/sandstone every block.
+- [ ] Water colour changes with depth as well as temperature: deep basins read as
+      deep ocean biomes (`F3` shows `deep_ocean`, `deep_cold_ocean`, ...).
+
+**What vanilla now puts there** (`make-structures: true`)
+- [ ] **Shipwrecks** on the sea floor, and beached ones on islet shores.
+- [ ] **Ocean ruins** — warm (sandstone) in warm/lukewarm water, cold (stone) in
+      colder water. They should match the water they are in.
+- [ ] **Ocean monuments** in the deep basins, with guardians and elder guardians.
+      (Monuments only generate in deep ocean biomes, so this is the check that the
+      depth-to-biome mapping is working at all.)
+- [ ] **Buried treasure** on islet beaches — a treasure map from a shipwreck or ruin
+      should lead somewhere real.
+- [ ] **Trial chambers** in the rock under the sea floor: dig or cave down and find one.
+- [ ] **No structure of any kind on a trading island** — no monument, ruin or village
+      through a plaza, dock or market. Fly around several islands and confirm.
+      (`world.keep-structures-off-islands: true`.)
+
+**Caves** (`make-caves: true`)
+- [ ] **No voids in the sea floor.** Swim over a lot of open water: the floor is
+      unbroken. No dry craters, no open gashes, no ravines cut through to the water.
+      (Vanilla's carvers have no idea there is an ocean overhead and generated chunks
+      get no block updates, so nothing ever flows in to fill what they cut. The
+      generator seals a 5-block crust back over them in `generateCaves`, the Poseidon
+      fix — narrowed so the caves themselves survive.)
+- [ ] Dig down through the sea floor anywhere promising: the caves are still there
+      underneath, and flood when you break into them. That is the point — sealed, not
+      filled in.
+- [ ] Cave mouths in an island's flank *above* the waterline are left alone.
+- [ ] Caves do not break into a market plaza or dock from below.
+
+**Regression**
+- [ ] Trading islands still sit properly in the water, docks still run unbroken from
+      plaza to pier end, and the spawn island is unchanged — an island over a deep
+      basin must look the same as one over a shelf.
+
+## Stage 6a — The law: port flags and reputation
+
+**Flag policy changed for ALL trading islands.** Existing islands are re-flagged on
+chunk load, but run `/twadmin reflag` after starting to be sure, then test as a
+**non-op player** — every flag bug so far was invisible to an operator.
+
+### 6a-i — Port flags (the audit)
+A trading island is now a public market: every protection flag is allowed at visitor
+rank *except* an explicit deny list.
+- [ ] **Things that must work** as a non-op visitor at any trading island: board and
+      leave a boat, open a chest boat and a cargo expander, use a crafting table,
+      anvil, furnace, grindstone, smithing table, loom, stonecutter, cartography
+      table and brewing stand, open doors/gates/trapdoors, press buttons, ring the
+      plaza bell, sleep in a bed, drop and pick up items, hit hostile mobs, fish,
+      throw an ender pearl.
+- [ ] **Things that must NOT work**: break or place any block, use flint and steel,
+      prime TNT, empty a bucket, break an item frame or armour stand, edit a sign.
+- [ ] **Things that must NOT work, because they would mint money outside the market**
+      (spec 5.0 — money enters the game only through trade margins): harvest or
+      trample the island's crops, open its barrels/containers/hoppers, take honey
+      from a hive, shear/milk/breed/kill its livestock.
+- [ ] **Right-clicking a villager must NOT open a vanilla trade screen** — trading
+      goes through the market dialog and the hold only (principle 1).
+- [ ] Hurting villagers is still refused on SAFE islands and allowed on rougher ones.
+- [ ] `bands.port-denied-flags` / `port-allowed-flags` in config override both ways
+      (add `HARVEST` to allowed, reflag, and confirm you can now harvest).
+
+### 6a-ii — Reputation
+- [ ] The navigation boss bar shows your standing, and it changes as you earn one.
+- [ ] Punch a villager on a non-SAFE island: "The market saw that. Reputation -5."
+- [ ] Kill a villager: bigger loss, and the message mentions money on your head.
+- [ ] Kill an iron golem: reputation loss for killing police.
+- [ ] Crossing a band boundary shows a title with your new standing.
+- [ ] Commit enough crime to reach **Wanted** (−200 by default; one murder plus
+      change, or eight villager kills). Then **Fugitive** at −500.
+- [ ] Reputation decays back toward zero by 1 point per 15 minutes of play — and
+      **only while online and in a TradeWinds world**. Log out for a while and
+      confirm your reputation is exactly where you left it.
+- [ ] `/tw fine` out at sea is refused ("paid at a trading island"). At a port it
+      quotes a price, asks for confirmation, charges you, and returns you to Clean —
+      **never above it**. Check the balance actually moved.
+- [ ] With nothing to answer for, `/tw fine` says so and charges nothing.
+- [ ] As a Fugitive, `/tw fine` at a **SAFE** island is refused; at a rougher port it
+      works. (Crime pays, into danger — and buying your way back costs you the same.)
+- [ ] `crime.enabled: false` stops all of it: no penalties, no messages, standing
+      reads Clean for everyone.
+
+### 6a-iii — PvP and bounties (partial; police land in 6c)
+- [ ] Killing a player who is **not** a lawful target costs the killer 100 reputation
+      ("Murder").
+- [ ] But if the victim hit you first (within 30s), there is **no** penalty — the
+      anti-bait guard. Verify both ways round; a wanted player being able to farm
+      reputation loss off innocents by attacking them would be a weapon.
+- [ ] Killing a **Wanted or Fugitive** player pays their bounty to the killer with no
+      penalty, and the bounty is cleared — kill them again and it pays **nothing**.
+
+## Stage 6b — Customs and contraband
+
+Contraband is **sugar** by default (`economy.unstamped-sellables`) — the one thing a
+player can make and still sell, and the deliberate hole in the two-economies rule.
+Grow some, or `/give` yourself sugar, and put it in your **hold** (a pouch, expander
+or chest boat — loose pockets are not cargo and are not scanned).
+
+**Use `/twadmin customs`** — it prints the whole customs state where you stand
+(contraband in your hold, your standing, this island's band, your effective scan
+chance, patrol size, whether a chase is running). Scans are probabilistic and
+cooldowns are invisible, so guessing from behaviour alone is a trap.
+
+### 6b-0 — Fixes from the first playtest
+- [ ] The customs alert reads "CUSTOMS" with "Patrol dispatched from <name>" beneath
+      it — **no line-feed glyph**. (A `<newline>` inside a title half is parsed into a
+      real newline character, which a title cannot render.)
+- [ ] A chat line follows the title and stays in the log, so a blink does not lose it.
+- [ ] **Log in inside a port with contraband: nothing happens.** Logging in is not an
+      entry. Row out and back in and the scan fires normally.
+- [ ] **Warp away mid-chase, then into another island's space: the new island scans
+      you.** (Previously the old chase stayed live and blocked every later scan, so
+      customs silently stopped working for the rest of the session.)
+- [ ] Standing on a plaza with contraband when a scan fires: there is no water for a
+      patrol to launch from, so customs simply seize the cargo and fine you, with a
+      message saying so — rather than spawning guardians that flop about on land.
+
+### 6b-0b — Fixes from the second playtest
+- [ ] **Contraband actually pays.** Sell sugar at a FRONTIER/LAWLESS/ANARCHIC port:
+      roughly $12-14 an item, not $1. It pays more the rougher the port.
+      (`illegal-trade.contraband-price-multiplier`, default 8.0 — the main balance
+      lever, and the one price in the game not funded by a purchase elsewhere.)
+- [ ] The sell page **no longer quotes a price for contraband at a port that will
+      refuse it** — sugar simply is not listed at SAFE/POLICED islands, instead of
+      being offered for a dollar and then declined at the counter. This is what made
+      `/twadmin customs` look like it was lying: it said "buys contraband: false"
+      while the dialog was showing an offer.
+- [ ] **No trader stocks contraband.** Check the buy page at an AGRICULTURAL island:
+      no sugar. (If they sold it you could buy at the honest price and sell at the
+      black-market premium with no farming and no risk.)
+- [ ] **A patrol never spawns on top of you.** It surfaces at least ~12 blocks away,
+      well beyond the 4-block arrest radius, so there is always a chase to run.
+      Previously the water search fell back to the player's own position: patrols
+      materialised alongside the boat, opened fire, and the arrest registered before
+      the warning had been read — "I got instantly hurt and lost the sugar".
+- [ ] Note that warp arrival damage (`travel.warp.damage`, default 2.0) is separate
+      and intended — warping hurts. Do not confuse it with a patrol.
+
+### 6b-i — The scan
+- [ ] Row or warp into a **SAFE** island's protection range carrying no contraband:
+      "Customs board you, look through the hold, and wave you on." (Set
+      `announce-clean-scans: false` to silence it.)
+- [ ] Do it again immediately — no second scan, the per-island cooldown holds
+      (10 min default). This is what stops re-entry dice-rolling.
+- [ ] Enter a **SAFE** island with sugar in the hold: title card "CUSTOMS — Patrol
+      dispatched", and drowned/guardians surface **between you and the island**.
+- [ ] Warping in triggers the scan exactly like rowing in.
+- [ ] Enter an **ANARCHIC** island with contraband: no scan at all, ever.
+- [ ] Being **Upstanding** noticeably reduces how often you are searched; being an
+      Offender or worse increases it.
+
+### 6b-ii — The chase, and its three ways out
+- [ ] **Jettison**: drop the sugar mid-chase. "Your cargo goes over the side" — the
+      patrol despawns, no fine, no reputation loss. The dropped items float and
+      **anyone else can pick them up** (this is where piracy comes from).
+- [ ] **Run**: get more than 400 blocks beyond the protection range. "Open water..."
+      — you keep the cargo, no penalty.
+- [ ] **Caught**: let a patrol unit reach you (within 4 blocks) or let one hit you.
+      All contraband is seized, a fine is taken, and reputation drops by 30.
+      Check the balance actually moved and the hold is actually empty of sugar.
+- [ ] Fight the patrol instead: killing a unit costs reputation (KILL_POLICE)...
+- [ ] ...and **police drop nothing at all** — no items, no XP. Kill several and
+      confirm. (Loot-bearing police would make a criminal record an iron farm.)
+- [ ] The chase ends by itself after 2 minutes if nothing else resolves it, and the
+      patrol despawns. Log out mid-chase and the patrol is cleaned up too.
+
+### 6b-iii — The flee flag
+- [ ] After escaping a chase, go back to **that same island** within 20 minutes:
+      "[name] remembers you... the patrol is already coming." No scan roll — the
+      patrol launches immediately.
+- [ ] A *different* island still rolls normally. The flag is per-island.
+- [ ] The flag expires after 20 minutes.
+
+### 6b-iv — Selling contraband
+- [ ] Try to sell sugar at a **SAFE** or **POLICED** island: refused, with the trader
+      telling you to try a rougher port, and the dull "no" sound.
+- [ ] Sell it at a **FRONTIER**, **LAWLESS** or **ANARCHIC** island: it sells, with no
+      customs stamp needed. This is the only way to turn farmed goods into money.
+- [ ] `illegal-trade.safest-contraband-buyer: SAFE` makes every port buy it;
+      `ANARCHIC` makes it almost unsellable.
+- [ ] `illegal-trade.enabled: false` removes all of it: no scans, no patrols, and
+      sugar becomes an ordinary unsellable homemade good.
+
+## Stage 6c — Police, wanted response, bounties
+
+Get yourself **Wanted** (−200: one murder, or ~8 villager kills) with
+`/twadmin customs` to check your standing, then sail into a policed island's space.
+
+### 6c-i — The standing response
+- [ ] Enter a **SAFE** or **POLICED** island's protection range while Wanted: "…has
+      patrols out for you", and units appear — guardians, drowned and a **phantom**
+      if you are afloat; **iron golems** and a phantom if you are ashore.
+- [ ] The phantom is the only thing that can follow a boat. Row away and confirm it
+      keeps up while the swimmers fall behind. That is the point of the roster.
+- [ ] Phantoms **do not burn at dawn**. Trigger a response in daylight and watch.
+- [ ] A **FUGITIVE** draws a larger response than merely Wanted.
+- [ ] **LAWLESS** sends one unit; **ANARCHIC** sends nobody at all. Confirm you can
+      sit in anarchic water as a fugitive completely unmolested — that is the whole
+      reason to go out there.
+- [ ] Police ignore innocent bystanders: stand a second (clean) player next to the
+      patrol and confirm it stays on the wanted one.
+
+### 6c-ii — Break-off and no leaks
+- [ ] Cross the border and keep going: past ~400 blocks beyond the protection range
+      the patrol breaks off ("The patrol turns back at the border") and the units
+      are **removed**, not left drifting.
+- [ ] Pay your fine mid-pursuit (`/tw fine`): the patrol stands down immediately.
+- [ ] Log out mid-pursuit, log back in: no orphaned police anywhere.
+- [ ] Fly a long way off and come back: no accumulation of stray guardians or
+      phantoms. (`/twadmin customs` shows whether a chase is live.)
+- [ ] Kill police: still **no drops, no XP**, whatever the unit type.
+
+### 6c-iii — PvP override and bounties
+- [ ] A Wanted player can be attacked **even on a SAFE island** where the PvP flag is
+      off. A clean player in the same place still cannot be attacked. (Without this a
+      wanted player could moor in high security and be untouchable.)
+- [ ] Killing them pays their bounty to the killer, with no reputation penalty.
+- [ ] The bounty is cleared by the payout — kill them again and it pays **nothing**.
+- [ ] Their name shows the bounty beside it while it is above zero, and the tag
+      disappears once paid out. (`crime.bounty-nameplate: false` removes it.)
+- [ ] With PlaceholderAPI installed, `%tradewinds_bounty%`, `%tradewinds_standing%`,
+      `%tradewinds_reputation%` and `%tradewinds_wanted%` all resolve. Servers using
+      TAB should turn the nameplate off and use these instead.
+
+### 6c-iv — Fugitive trade bar
+- [ ] As a **Fugitive**, the market at a SAFE or POLICED island refuses to open at
+      all ("We know what you are").
+- [ ] At FRONTIER and beyond it opens normally. Merely **Wanted** is not barred —
+      only Fugitive. (`crime.safest-fugitive-trader`.)
+
+## Interstice: a failed warp must not be an execution
+
+Playtest: a new player's first warp failed, ghasts opened fire instantly, and they
+died having lost everything before they could read the dialog offering the free way
+out. Set `travel.warp.failure-chance: 1.0` temporarily to test this repeatedly.
+
+- [ ] Fail a warp several times. Roughly **40% of the time nothing comes at all** —
+      dark water and silence (`interstice.ghast-chance`).
+- [ ] When ghasts do come, they appear **~90+ blocks away** and are **not already
+      hunting you**. You can see them, and decide. (They spawn beyond their own
+      64-block detection range and are deliberately not given a target.)
+- [ ] For **20 seconds after arrival** nothing can target or damage you
+      (`interstice.grace-seconds`) — long enough to read the dialog and click
+      re-engage. Confirm a fireball already in the air does not kill you either.
+- [ ] Re-engaging is still free, and still returns you to the original destination.
+- [ ] Stay past the grace and approach them: it becomes a real fight. The grace
+      covers the arrival, not the visit.
+- [ ] A brand new player with a starter kit can survive a failed first warp without
+      losing their boat and cargo. That is the actual bar here.
+
+## Warp arrivals must never land inside anything
+
+- [ ] Warp repeatedly to the same island from the same origin. You always arrive on
+      **open water**, never inside the quay decking. (The arrival ring is 130 blocks
+      from the centre; the quay reaches 136 with its deck at exactly arrival height,
+      so ~0.9% of bearings used to suffocate you on arrival.)
+- [ ] Arrivals still land close to the intended spot - the search takes the nearest
+      open water, so the island should still be in view.
+- [ ] `/twadmin warpfail <player>` rigs that player's next warp to fail. Run it
+      again on the same player to clear it. Check the console/chat feedback both ways.
+- [ ] After a rigged failure, the flag is gone: the next warp behaves normally.
+- [ ] Interstice arrivals also land on open water, not inside the interstice floor.
+
+## Low fuel warning, and reading the boss bar
+
+- [ ] Stand at a port with less fuel than the cheapest charted warp costs: a **LOW
+      FUEL** action bar appears and **repeats** every 8 seconds while you are there.
+- [ ] A **chat line** also arrives, once per port visit, saying how much more fuel
+      you need. It stays in the chat log — this is the one a child will still find
+      after looking away.
+- [ ] Open the market: the body says LOW FUEL, and the button that actually sells
+      fuel is relabelled **"BUY FUEL HERE"** — the Outfitter normally, or the Buy
+      Goods button at islands whose own catalog stocks fuel.
+- [ ] Buy fuel: all three warnings stop.
+- [ ] With nothing charted to warp to, there is **no** warning — being unable to
+      warp is not a fuel problem then.
+- [ ] Out at sea (not at a port), no warning. It is only raised where it is fixable.
+- [ ] `travel.fuel-warning.margin: 1.5` warns while you can still just about leave;
+      `enabled: false` removes all of it including the dialog highlight.
+
+- [ ] The navigation boss bar now reads **name | band | standing | dock distance**,
+      with the band coloured — blue Safe, green Policed, yellow Frontier, red
+      Lawless, bold dark-red ANARCHIC. Sail into each and confirm you can tell at a
+      glance what kind of water you are in.
+- [ ] The same coloured band appears on the chart holograms and the market subtitle.
+
+## /tw go - the door into the ocean, and nothing more
+
+`/tw spawn` was a free warp back to a market once spawn became a working trading
+post. But deleting it locked new players out entirely, so it is now a door with
+two rules.
+
+- [ ] **From another world** (or on first ever join): `/tw` or `/tw go` puts you
+      into the ocean. A brand new player arrives at the spawn port with a starter kit.
+- [ ] **A returning player arrives where they LEFT the ocean**, not at spawn. Sail
+      a long way out, `/mv tp world` (or `/acid`), then `/tw` - you should be back
+      in the same stretch of water, not at a market.
+- [ ] **Already at sea**: `/tw go` refuses ("You are already at sea..."). This is the
+      exploit that had to close - there is no commanding your way to a market.
+- [ ] Log out at sea, log back in: you are where you left off, and `/tw go` still
+      refuses.
+- [ ] Dying still respawns you at the spawn plaza (not a cheat - you lost your cargo
+      to get there).
+- [ ] `/tw restart` still returns a destitute player to spawn with a fresh kit,
+      capped by `player.max-restarts`.
+- [ ] The old `/tw spawn` label still works as an alias, and does the same thing.
+
+## Dock marker on the hologram chart
+
+- [ ] Inside an island's waters, `/tw chart` (or boarding a boat) now raises a
+      **DOCK** hologram alongside the island names, pointing at that island's pier
+      with its distance. Row toward it and the number falls.
+- [ ] It points at the **pier**, not the island centre - check on an island whose
+      dock faces away from you.
+- [ ] It hangs **below** the island name markers and has a warmer background, so it
+      never collides with their stack.
+- [ ] Out in open ocean, away from any island, there is no dock marker - just the
+      island names.
+- [ ] With an empty chart but inside an island's waters, the dock marker still
+      appears on its own. (Previously an empty chart showed nothing at all.)
+- [ ] The label is translatable: `tradewinds.hologram.dock`.
+
+## Star chart: fuel range, reachability, readable names
+
+- [ ] Hold the Star Chart: island names are **white** and clearly readable against
+      the blue ocean (they were a mid grey that all but vanished).
+- [ ] A **dashed ring** is drawn around you at the limit of your fuel range. Burn or
+      buy fuel and it shrinks/grows on the next redraw (about a second).
+- [ ] With no fuel there is no ring; with a huge amount the ring is off the chart and
+      is simply not drawn, rather than being clamped to the edge and lying about it.
+- [ ] Islands inside the ring are the ones you can afford to warp to - cross-check
+      against `/tw chart list`.
+- [ ] `/tw chart list` shows **Fuel aboard: N units** and marks every entry with its
+      fuel cost: green and plain when reachable, greyed with "(not enough fuel)" when
+      it is not.
+- [ ] Standing at a port, the quoted cost matches the warp dialog exactly (it uses
+      the same route price, including any lane overrides in
+      `travel.warp.edge-overrides`).
+- [ ] Adrift between islands the cost is an estimate from your position - close
+      enough to plan by. It should still fall as you approach a destination.
+
+## Dialogs close under attack; no warping out of a fight
+
+- [ ] Open any dialog (warp, market, shipwright) and take damage: the dialog
+      **closes**. A modal screen hides the boat, the water and whatever is shooting.
+- [ ] Any damage does it, not just mobs - drown while reading a shop menu.
+- [ ] With a hostile mob within 12 blocks, the warp dialog **refuses to open** and an
+      action bar says "You cannot warp while enemies are close." Same idea as a bed
+      refusing to let you sleep.
+- [ ] Kill or outrun the mob and the dialog opens normally.
+- [ ] Let a mob arrive **while the dialog is already open**, then click a
+      destination: the warp is refused, and no fuel is taken. (Checked again at the
+      moment of engaging, because that is when the fuel is spent.)
+- [ ] With `travel.warp.stand-still-seconds` above 0, a mob arriving during the
+      countdown aborts the warp and **refunds** the fuel.
+- [ ] **A customs chase cannot be escaped by warping** - the patrol counts as
+      enemies. Run, fight or jettison, as designed.
+- [ ] **The interstice re-engage still works with ghasts nearby.** This is the one
+      exemption and it matters: it is the way out of somewhere dangerous, and gating
+      it would strand players.
+- [ ] `travel.warp.enemy-radius: 0` disables the gate (dialogs still close on damage).
+
+## Star Chart is ephemeral
+
+- [x] `/tw starchart` puts the chart straight **into your hand** (a free hotbar slot,
+      selected for you) rather than somewhere you have to hunt for.
+- [x] **Switch to another hotbar slot: the chart is gone.** Run the command again to
+      consult it - it is an instrument, not cargo.
+- [x] Run `/tw starchart` twice: you end up with **one** chart, not two.
+- [x] Try to drop it: it vanishes rather than bobbing in the sea.
+- [ ] Die holding it: it is **not** in your death drops, and nobody can salvage one.
+- [ ] Log out holding it, log back in: gone, and the command still works.
+      - Log back in - it is in my hand. This is OK actually.
+- [x] Sanity check the point of all this: after a dozen `/tw starchart` calls there
+      are no stray maps in your inventory, on the ground, or in your hold.
+- [x] With a completely full hotbar it is added anywhere it fits rather than refused.
+      - True, but if your inventory is completely full, there is no error to say that your inventory is full so it cannot be given.
+
+## The interstice: lit, lidded, and ghasts you can actually see
+
+**Needs fresh interstice chunks** - delete `world/dimensions/minecraft/tradewinds_world_nether`.
+Use `/twadmin warpfail <you>` then `/tw warp` to get there on demand.
+
+- [ ] **The ghasts are visible and close enough to identify** - about 28 blocks, in
+      a tight band (the spread used to add up to 30 blocks on top of the setting,
+      which quietly undid it: a base of 44 arrived as far out as 74).
+- [ ] **They come for you when the grace runs out.** They arrive without a target so
+      landing is not an ambush, but after 20 seconds anything nearby acquires you.
+      Previously they never re-aimed at all, so they drifted and nothing happened.
+- [ ] The re-engage dialog has a **"Stay a while"** exit button. Declining costs
+      nothing - the offer comes round again and the fuel is already spent.
+- [ ] Some failures still bring nothing at all (`ghast-chance: 0.6`).
+- [ ] The 20-second arrival grace still holds - nothing targets or hurts you while
+      you read the dialog.
+- [ ] **There is a ceiling** about 48 blocks above the sea: netherrack with bedrock
+      on top. Fly up and confirm you cannot leave.
+- [ ] **Burning braziers** - netherrack outcrops rising out of the water with fire on
+      top - appear across the sea, roughly one chunk in six. They light the place and
+      give you something to steer by.
+- [ ] The fires stay lit (netherrack burns forever) and do not spread - there is
+      nothing out there to catch.
+- [ ] Some braziers have glowstone at their base, visible from underwater.
+- [ ] Overall: the interstice reads as somewhere hostile you are trapped in, rather
+      than an unfinished black void.
+
+## Contraband: pockets count, and the patrol gives you room
+
+- [ ] **Sugar in your normal inventory slots is scanned too**, not just the hold.
+      Try the obvious dodge: move the sugar from a pouch into your pockets, cross a
+      border, stow it again. You are still caught. (Hold-only scanning made that a
+      free pass.)
+- [ ] Being caught seizes contraband from **both** the hold and the pockets - check
+      the item count in the message against everything you were carrying.
+- [ ] A patrol now surfaces about **45 blocks** away, comfortably beyond a guardian's
+      15-block laser, so there is a real moment to turn and run. They should not be
+      hitting you before the warning has finished printing.
+- [ ] Warp into an island: you arrive **clear of the shore**, not on the beach or in
+      a bay. (About 4% of approach bearings used to land on or beside land, because a
+      warped coastline can reach the arrival ring; arrivals now step outward along
+      the approach, never sideways or inward.)
+
+## Customs patrols launch from the dock
+
+Watch the console - every dispatch now logs the player, the pier, the launch
+point, and each unit's distance.
+
+- [ ] Trigger a customs scan. The patrol appears **at the island's pier**, not
+      beside your boat, and swims out to you. The console line shows the launch
+      point and how far it is from you.
+- [ ] The warp arrival is logged too: coordinates and distance from the island
+      centre. Cross-check it against where the patrol starts.
+- [ ] There is a **phantom** in the patrol - the only unit that can catch a boat.
+      The guardians and drowned should fall behind if you run.
+- [ ] Running works: get clear of the border and the chase breaks off.
+- [ ] **A second, innocent player standing nearby is never hurt by the patrol** -
+      not by a guardian beam, not by a trident. Try mooring next to the smuggler.
+- [ ] The patrol still switches back to the smuggler if it wanders.
+
+## Warp arrival distance and patrol reachability
+
+- [ ] A warp now lands you just inside the island's **visible border** (~320 blocks
+      from the centre), where the warp dialog offers itself on the way out - not on
+      the island's underwater shelf. The nav bar and dock hologram give you the
+      heading.
+  - ~~Fail - arriving at 400 landed exactly ON the warp-offer ring, so the warp
+    dialog reopened the moment you arrived.~~
+  - FIXED (retest): arrival default is now 320 (inside the ring), and arrival also
+    seeds the prompt cooldown, so even a config that lands on the ring cannot
+    reopen the dialog. Update `travel.warp.arrival-distance` to 320 in the live
+    config. Retest: warp anywhere - no dialog on arrival; row inward, trade, row
+    out - the dialog appears at the border crossing as before.
+- [ ] A customs patrol launches from the pier if you are near it, otherwise from as
+      far along the way as the server will simulate (~80 blocks). Check the console
+      line: the launch point should never be more than that from you.
+- [ ] **The patrol actually moves.** Anything beyond ~160 blocks (simulation
+      distance) never ticks at all, which is what "they spawned but nothing
+      happened" was.
+- [ ] Let a chase run past 2 minutes without leaving island space: you are told the
+      patrol **gives up and turns for home** - not that you reached open water - and
+      you are NOT flagged at that port.
+- [ ] Genuinely outrun a chase across the border: you still get the open-water
+      message and you ARE flagged.
+
+## Chart holograms stay above the horizon
+
+- [ ] In a boat in island waters, `/tw chart`: the **DOCK** marker floats clearly
+      above the waterline - never submerged or straddling the horizon, however far
+      away the pier is.
+- [ ] The island-name signs stack **above** the dock marker (dock lowest, nearest
+      island next, further islands higher) with no overlap.
+
+## Islet biomes follow the sea temperature
+
+- [ ] Sail a frozen sea: islets there are snowy (snowy plains/taiga, ice spikes,
+      grove, frozen peaks) with snowy beaches; no jungle or desert in sight.
+- [ ] Sail a warm sea: desert, badlands, bamboo jungle and mangrove islets.
+- [ ] Temperate water: forest-family islets, including the rare **cherry grove**
+      and **pale garden** (pale oaks, pale moss - and creakings at night, so
+      approach one after dark deliberately).
+- [ ] Vanilla decoration matches the biome: cherry trees on a cherry islet, pale
+      oaks on a pale garden islet, cacti/dead bushes on desert ones.
+- [ ] Mushroom islets still roll ~6% anywhere, mycelium with no beach.
+- [ ] Pre-existing explored areas keep their old islet biomes; a chunk seam through
+      a half-generated islet MAY show a biome change (accepted on the test server).
+
+## Ground truth: surfaces match the biome
+
+- [ ] A desert islet is SAND (sandstone beneath when you dig); badlands are red
+      sand over terracotta; mangrove islets are mud; old-growth taiga is podzol;
+      stony shores/peaks are bare rock; groves and snowy slopes are snow blocks.
+- [ ] Trading islands too: a desert or badlands INDUSTRIAL port is a sand/red-sand
+      island. The plaza and quay are unchanged (their own surfaces).
+- [ ] Spawn (mangrove FISHING) generates mud in NEW chunks - a seam against old
+      grass chunks is expected on this test world; a fresh world is seamless.
+
+## Islet structures (galaxy.islet-structure-chance, default 0.25)
+
+- [ ] Roughly one islet in four has something at its heart: igloo on snowy islets,
+      half-buried fossils on desert/badlands/swamp ones, a ruined portal (check the
+      loot chest works) in jungle/forest, tents/log piles/target ranges on
+      plains/savanna.
+- [ ] Same seed, same islet, same structure after a world regen (determinism).
+- [ ] Mushroom and pale garden islets NEVER have one.
+- [ ] Structures sit sensibly: fossils partly buried, igloo floor flush, no
+      floating or truncated templates at chunk edges.
+- [ ] Set the chance to 0 and generate new area: no structures; back to 0.25: they
+      return (safe mid-game toggle).
+
+## The plaza galley: public crafting and cooking
+
+- [x] Every plaza has a crafting table and a campfire on a cobblestone hearth near
+      where the quay meets the plaza (NEW chunks only - previously generated
+      plazas keep their old layout).
+- [x] As a plain visitor: open the crafting table (3x3 grid works) and cook raw cod
+      on the campfire (right-click with the fish, collect cooked cod).
+- [ ] Cooked/crafted goods are unstamped: the market refuses to buy them (eat your
+      catch, don't sell it).
+- [x] The table and campfire cannot be broken by visitors.
+- [x] Villagers and golems do not walk into the campfire (watch a minute or two).
+
+# ============ THE GREAT REFIT (virtual hold / One Boat / tech) ============
+# PREREQUISITE: wipe the TradeWinds world folders AND the TradeWinds database
+# tables (PlayerHold, DroppedBoat, TWPlayerData, TWIslandData) - clean slate,
+# no migration. Old pouches/stamped goods/shulker expanders are dead items.
+
+## Tech levels
+
+- [x] Every island announce/market/chart line shows its tech: "Esedaxe -
+      FISHING (Tech 2), Safe" etc.; nav bossbar shows "Tech N".
+- [ ] The starter cluster contains at least one Tech 3+ island.
+- [ ] Prices tilt: iron/gold ingots cheaper at a Tech 6 INDUSTRIAL island than
+      a Tech 2 one; raw ore sells for MORE at high tech.
+- [x] Plaza amenities by tech: TL3+ furnace + stonecutter; TL4+ smithing table
+      + grindstone; TL5+ brewing stand + cauldron; TL6+ anvil; TL7 enchanting
+      table with a bookshelf arc. All usable as a visitor, none breakable.
+
+## Virtual hold and the GUI
+
+- [x] New player: Oak Boat, 8 coal already in the FUEL row, $250. No pouch.
+- [x] Open the hold: sneak-right-click the boat (confirmed working);
+      right-click riding (empty hand); right-click the boat item in your
+      inventory screen; and in a CHEST-variant boat, just press your inventory
+      key while riding - the hold opens like a vanilla chest boat (top = hold,
+      bottom = your inventory). NOTE: in a plain (non-chest) boat the inventory
+      key cannot open the hold - the client never tells the server about it -
+      so use the right-click gestures there.
+- [x] A chest boat's REAL chest inventory is unreachable by every route
+      (inventory key, sneak-click, riding click) - the hold GUI answers instead.
+- [x] The GUI: TNT top-left, 3/21 cargo slots open (rest gray), 7 fuel slots
+      (pink panes when empty).
+- [x] Click items in your pack to deposit: coal/logs/lava go to FUEL; bundles,
+      chests, shulkers and boats are REFUSED; anything else becomes cargo.
+- [x] NOTHING gets cargo back out: shift-clicks, number keys, drags, cursor
+      tricks all dead. Fuel clicks DO come back out.
+- [x] Select a cargo stack, click TNT: destroyed (gone, not dropped).
+- [x] Coal/logs BOUGHT at market sit in cargo; clicking that cargo stack moves
+      it to the fuel row (works inside expander panels too). Fuel can never be
+      TNT-destroyed - clicking fuel-valued cargo always moves it instead.
+- [ ] Deposited items lose enchantments/names by design - cargo is commodity.
+- [ ] Sell at a market: anything aboard sells (no stamps); buying fills the
+      hold and stops at capacity; balance/slots line is right.
+
+## One Boat
+
+- [x] Shipwright lists only boats BIGGER than yours, only up to TL x 3; buying
+      swaps your boat in place (riding: re-seated in the new boat) and your
+      cargo/fuel are untouched. The old boat is GONE.
+- [ ] Crafting a smaller/equal boat is refused with a message; crafting bigger
+      replaces like the shop. Boat+chest recipe upgrades in place.
+- [ ] Charity (no boat, broke): a bamboo raft. /tw restart: everything reset.
+
+## Dropped boats
+
+- [ ] Q-drop your boat item: cargo goes WITH it. Another player picks it up:
+      no boat = it becomes theirs, contents intact; smaller boat = they strip
+      the valuables first, hull+remainder stays.
+- [ ] Bigger-boat salvage is a SWAP: full oak boat + full cherry chest wreck =
+      you sail the cherry chest with your cargo plus the most valuable salvage,
+      and your old oak floats where the wreck was, holding the overflow. Count
+      the items: NOTHING is lost. If everything fit, the old hull does NOT
+      linger - it is consumed by the upgrade.
+- [ ] A PLAIN boat item (command-given, or a spare hull) upgrades on pickup
+      too: /give yourself an OAK_CHEST_BOAT, drop it, pick it up - it replaces
+      your oak boat, your cargo stays, and the old oak is gone. A smaller
+      plain boat just sits in your pack; a boatless player claims it.
+- [ ] Break a ridden boat (punch/trident): always an item, never destruction;
+      pick it back up and your hold survives the round trip.
+- [ ] Boat + hold burn ONLY in lava (boat entity in lava, or fire/lava death).
+- [ ] Death drops the tagged boat; DeathChest servers: it is in the chest.
+- [ ] Respawning boatless at spawn: the port lends you a BAMBOO_RAFT (message
+      says your own boat is adrift where you fell). With keepInventory on you
+      keep your boat and get NO loaner. `boats.respawn-boat: NONE` disables it;
+      an invalid material name also just disables it.
+- [ ] Tagged boat items never despawn at 5 min; they sink when the TTL
+      (default 30 min, survives restart) runs out.
+
+## Expanders v2
+
+- [ ] Sold only at Tech 7 shipwrights; refuse without a Pale Oak Chest Boat
+      with a free slot; price 5000, 10000, 20000...
+- [ ] Installed expander shows as a white shulker in the hold GUI; click opens
+      its own 21-slot panel (own TNT, no fuel row); refuses containers.
+- [ ] Right-click an EMPTY expander + TNT destroys it; loaded ones refuse.
+- [ ] In any smaller boat (after salvage) expanders are inert but their
+      contents still sell at market.
+
+## Visible boundaries (border.* config)
+
+- [ ] Approaching an island, a BLUE dust curtain marks the edge of island space
+      (where scans begin), and further in a RED curtain marks the warp-offer
+      ring at the protection edge. Both render only the arc near you (~32
+      blocks) and only when you are close.
+- [ ] Both are pure paint: you row straight through them.
+- [ ] Colors change with border.warp-ring-color / border.edge-color (r,g,b);
+      a nonsense value falls back to the defaults instead of vanishing.
+- [ ] border.particles-enabled: false removes both curtains.
+
+## The warp dialog fires AT the red curtain
+
+- [ ] The dialog opens only as you touch the red particle wall (~5 blocks
+      either side of it), not 30 blocks early. Rowing up short of the curtain:
+      nothing. NOTE: needs `travel.warp.trigger-distance: 5` in the LIVE
+      config - the jar default changed but an existing config keeps its 30.
+- [ ] Sprint across an icy approach lane through the curtain: the dialog must
+      still fire (the window is small but not skippable).
+
+## Warp arrivals face the dock
+
+- [ ] Both the BOAT and your view come out of a warp pointed at the dock -
+      mounting aligns the hull to the rider, so both rotations are set after
+      the re-seat.
+
+- [ ] Warp to any island: you and your boat arrive pointing AT the pier -
+      paddle straight forward and you reach the dock. Check from a couple of
+      different origin islands (arrival side changes; the facing must not).
+
+## Boat ownership, capture and protection (2026-08-02 rules)
+
+- [ ] The boat ITEM shows its manifest as lore: "Cargo: X/Y slots",
+      "Fuel: N units", "Right-click to open the hold" - and the numbers update
+      after you close the hold GUI (deposit fuel, close, hover the item).
+- [ ] The starter message names the Oak Boat, its 3 slots and the fuel tank,
+      and says to right-click the boat; arriving at spawn says you come
+      ashore at the spawn port (no more "set sail" while standing on planks).
+- [ ] Place your own boat from the item and board it: NO capture dialog, no
+      OLD BOAT marker, and your fuel/cargo are still aboard (regression: the
+      placed entity used to lose its identity).
+- [ ] Teleport (/tw spawn) while riding: the boat item in your pack still
+      carries its cargo and fuel when you place it again.
+- [ ] Name plates: an unattended boat shows its owner's name; an abandoned one
+      shows UNOWNED. The plate hides while someone is riding it.
+- [ ] Trading needs your ship: leave your boat outside the island's protection
+      range (or on another island) and the market refuses with "your ship is
+      not at this port". Carrying the boat as an item counts as having it.
+- [ ] `/tw chart` raises the hologram compass ashore as well as afloat (text
+      list only via `/tw chart list`): green BOAT marker at your ship, red
+      OLD BOAT at one you abandoned - from anywhere in the world. Walk away
+      from a moored boat, run it, follow the marker back.
+- [ ] While SITTING in your boat there is no BOAT marker (you are in it), nor
+      while CARRYING it as an item, nor when it is within ~32 blocks - a
+      marker is only for a boat you must travel to.
+- [ ] After swapping boats at your feet, neither BOAT nor OLD BOAT clutters
+      the chart; walk a few hundred blocks from an abandoned LOADED hull and
+      the OLD BOAT marker does appear.
+- [ ] `/tw chart list` names both boats with coordinates and distance ("Your
+      Oak Boat: x, z (N blocks)" / "Old Bamboo Raft: ... unowned"), or says
+      plainly that you have no ship / that a boat is in another world. Use
+      this when a hologram marker is missing: it tells you whether the boat
+      is gone, elsewhere, or just not drawing.
+- [ ] Capture a boat: the one you left changes its plate to UNOWNED
+      immediately (regression: it kept showing the old owner's name).
+- [ ] Board someone else's unattended boat in SAFE/POLICED/FRONTIER/LAWLESS
+      island space: refused ("this port protects it"). Same for breaking it,
+      including mob damage. On an ANARCHIC island: allowed.
+- [ ] Board an UNOWNED boat anywhere (even at a safe dock): confirmation
+      dialog; accept and it becomes yours, your previous boat becomes UNOWNED
+      where it lies with your cargo still in it, charted as OLD BOAT.
+- [ ] Walk over an unowned boat ITEM with a boat of your own: the dialog opens
+      once (not every tick) and offers "Take the [boat]", "Take only the cargo"
+      (only if your own boat is within 200 blocks AND the hull carries
+      something), and "Leave it". Take the boat: yours, old one becomes OLD
+      BOAT. Take the cargo: hull stays on the ground, cargo in your hold.
+- [ ] Repeat with your own boat on ANOTHER island: the cargo option is GONE
+      and the dialog says your boat is too far to load. Nothing teleports.
+- [ ] Boarding someone's unattended hull offers the same three answers.
+- [ ] Die: your boat stays floating where it was and is still yours. Respawn
+      at spawn with the ship far away: you are lent a bamboo raft. Board the
+      raft -> confirmation -> your real boat becomes OLD BOAT; row back to it,
+      board it, and it is yours again (marker clears).
+- [ ] Lava: the only thing that destroys a boat and its cargo outright.
+- [ ] Log out in protected island space: boat is safe. Log out in open water:
+      another player can take it; on your next login you are told it was
+      taken, and given a raft if you are adrift with none.
+
+## Two-player capture (2026-08-02 regressions)
+
+- [ ] Player 2 is ONLINE when player 1 takes their boat: player 2 is told
+      immediately ("Someone has taken your boat!").
+- [ ] Player 2 now has NO boat: the market shows no cargo slots, gives no
+      low-fuel warnings, and `/tw chart` shows NO old boat (it was taken, not
+      abandoned - an OLD BOAT marker only ever means unowned and still there).
+- [ ] Player 2 can still use the OUTFITTER and the SHIPWRIGHT with no boat -
+      buying a hull is how they get off the island. Only Sell/Buy cargo are
+      withheld, with a line saying why.
+- [ ] With NO boat, buy a Bamboo Raft ($100): the raft item is IN YOUR PACK,
+      the money is gone once, and the hold GUI opens on it with 2 slots.
+- [ ] With a boat AT the port, buy a bigger hull: the same record refits - the
+      boat you are riding is swapped under you (or the carried item retypes),
+      cargo intact. With your boat elsewhere, the yard refuses the refit and
+      says to bring the ship in.
+- [ ] Restart the server: player 2 gets no repeat "taken while you were away"
+      message, and player 1 still owns the boat (the login path used to strip
+      the new owner and hand it back).
+- [ ] Player 2 offline when it happens: they ARE told at their next login,
+      once, and still have no OLD BOAT marker.
+
+## Recovering a boat while carrying one (no duplicates)
+
+- [ ] Carry your boat as an item, walk to your abandoned OLD BOAT and take it:
+      you end up with ONE boat item (the one you took), its hold holding both
+      cargoes, and the old hull lying on the ground unowned. Never two boats
+      in the pack.
+- [ ] Right-clicking a boat item that is NOT your ship does nothing (it used
+      to open your hold if the material matched).
+- [ ] Craft a bigger boat: the crafted item is your ship (right-click opens
+      the hold), not an anonymous look-alike.
+- [ ] With your old boat an island away, taking a new one leaves it untouched
+      with its cargo - charted as OLD BOAT.

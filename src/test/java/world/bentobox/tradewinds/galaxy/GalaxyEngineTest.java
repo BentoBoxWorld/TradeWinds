@@ -287,6 +287,164 @@ class GalaxyEngineTest {
     }
 
     @Test
+    void testIsletBiomesMatchTheirSea() {
+        // An islet's land suits the water it stands in: its biome comes from
+        // the band for the sea temperature at its center - no snowfields in
+        // warm water, no jungles in the frozen sea
+        GalaxyEngine engine = new GalaxyEngine(config(SEED, 0.0));
+        java.util.Set<String> seen = new java.util.HashSet<>();
+        for (int cx = -40; cx <= 40; cx++) {
+            for (int cz = -40; cz <= 40; cz++) {
+                Optional<Islet> islet = engine.wildIsletInCell(cx, cz);
+                if (islet.isEmpty() || islet.get().isMushroom()) {
+                    continue;
+                }
+                Islet i = islet.get();
+                List<String> band = GalaxyEngine.WILD_BIOMES
+                        .get(engine.oceanTemperatureIndex(i.centerX(), i.centerZ()));
+                assertTrue(band.contains(i.biomeKey()),
+                        i.biomeKey() + " does not belong in the sea at " + i.centerX() + "," + i.centerZ());
+                seen.add(i.biomeKey());
+            }
+        }
+        // A scan across several temperature regions turns up real variety,
+        // including the rare finds this feature exists for
+        assertTrue(seen.size() > 20, "Only " + seen.size() + " islet biomes in a 72km scan: " + seen);
+        assertTrue(seen.contains("minecraft:cherry_grove"), "No cherry grove islet found");
+        assertTrue(seen.contains("minecraft:pale_garden"), "No pale garden islet found");
+    }
+
+    @Test
+    void testTechLevels() {
+        GalaxyEngine engine = new GalaxyEngine(config(SEED, 0.5));
+        List<IslandSpec> all = islands(engine, 12);
+        assertFalse(all.isEmpty());
+        // In range, deterministic across engines
+        GalaxyEngine again = new GalaxyEngine(config(SEED, 0.5));
+        for (IslandSpec spec : all) {
+            assertTrue(spec.techLevel() >= 1 && spec.techLevel() <= GalaxyEngine.MAX_TECH_LEVEL,
+                    spec.name() + " has tech " + spec.techLevel());
+            assertEquals(spec.techLevel(),
+                    again.islandInCell(spec.cellX(), spec.cellZ()).orElseThrow().techLevel());
+        }
+        // Type correlation: industry averages higher than agriculture
+        double industrial = all.stream().filter(s -> s.type() == IslandType.INDUSTRIAL)
+                .mapToInt(IslandSpec::techLevel).average().orElse(0);
+        double agricultural = all.stream().filter(s -> s.type() == IslandType.AGRICULTURAL)
+                .mapToInt(IslandSpec::techLevel).average().orElse(99);
+        assertTrue(industrial > agricultural,
+                "INDUSTRIAL avg " + industrial + " should beat AGRICULTURAL avg " + agricultural);
+        // The wobble means advanced farms exist somewhere
+        assertTrue(all.stream().anyMatch(s -> s.type() == IslandType.AGRICULTURAL && s.techLevel() >= 4),
+                "No Advanced Agricultural island in a 12-cell scan");
+    }
+
+    @Test
+    void testStarterClusterGuaranteesATechFloor() {
+        // Whatever the seed rolls, a fresh sailor can always reach a TL3+ shop
+        // without leaving the pre-charted starter cluster
+        for (long seed = 900; seed < 940; seed++) {
+            GalaxyEngine engine = new GalaxyEngine(config(seed, 0.5));
+            int cells = 2; // starter cells are the 5 nearest the origin
+            int best = 0;
+            for (int cx = -cells; cx <= cells; cx++) {
+                for (int cz = -cells; cz <= cells; cz++) {
+                    best = Math.max(best, engine.islandInCell(cx, cz).map(IslandSpec::techLevel).orElse(0));
+                }
+            }
+            assertTrue(best >= 3, "Seed " + seed + ": best starter tech is " + best);
+        }
+    }
+
+    @Test
+    void testSurfacesFollowTheBiome() {
+        // Ground truth, literally: a desert stands on sand, a mangrove swamp
+        // on mud, the badlands on red sand - not everything on a lawn. This
+        // expectation table is a deliberate duplicate of the engine's: a
+        // mapping change must be made twice, consciously.
+        java.util.Map<String, SurfaceKind> expected = new java.util.HashMap<>();
+        // A sandbar's heart can BE its shore, so beaches appear here too
+        expected.put("minecraft:beach", SurfaceKind.SAND);
+        expected.put("minecraft:snowy_beach", SurfaceKind.SAND);
+        expected.put("minecraft:desert", SurfaceKind.SAND);
+        expected.put("minecraft:badlands", SurfaceKind.RED_SAND);
+        expected.put("minecraft:eroded_badlands", SurfaceKind.RED_SAND);
+        expected.put("minecraft:wooded_badlands", SurfaceKind.RED_SAND);
+        expected.put("minecraft:old_growth_pine_taiga", SurfaceKind.PODZOL);
+        expected.put("minecraft:old_growth_spruce_taiga", SurfaceKind.PODZOL);
+        expected.put("minecraft:stony_shore", SurfaceKind.STONE);
+        expected.put("minecraft:stony_peaks", SurfaceKind.STONE);
+        expected.put("minecraft:jagged_peaks", SurfaceKind.STONE);
+        expected.put("minecraft:windswept_gravelly_hills", SurfaceKind.GRAVEL);
+        expected.put("minecraft:mangrove_swamp", SurfaceKind.MUD);
+        expected.put("minecraft:grove", SurfaceKind.SNOW);
+        expected.put("minecraft:snowy_slopes", SurfaceKind.SNOW);
+        expected.put("minecraft:frozen_peaks", SurfaceKind.SNOW);
+        expected.put("minecraft:ice_spikes", SurfaceKind.SNOW);
+        expected.put(GalaxyEngine.MUSHROOM_BIOME, SurfaceKind.MYCELIUM);
+
+        GalaxyEngine engine = new GalaxyEngine(config(SEED, 0.0));
+        java.util.Set<SurfaceKind> seen = new java.util.HashSet<>();
+        for (int cx = -40; cx <= 40; cx++) {
+            for (int cz = -40; cz <= 40; cz++) {
+                Optional<Islet> islet = engine.wildIsletInCell(cx, cz);
+                if (islet.isEmpty()) {
+                    continue;
+                }
+                Islet i = islet.get();
+                // The islet's heart is inland, so the biome (not the beach
+                // fringe) governs it
+                String biome = engine.biomeKeyAt(i.centerX(), i.centerZ()).orElseThrow();
+                SurfaceKind kind = engine.surfaceKindAt(i.centerX(), i.centerZ());
+                assertEquals(expected.getOrDefault(biome, SurfaceKind.GRASS), kind,
+                        "Wrong ground under " + biome + " at " + i.centerX() + "," + i.centerZ());
+                seen.add(kind);
+            }
+        }
+        assertTrue(seen.size() >= 5, "A 72km scan should stand on many grounds, saw only " + seen);
+
+        // Trading islands follow the same rule: an INDUSTRIAL island's desert
+        // or badlands is sand or red sand at its heart
+        GalaxyEngine dense = new GalaxyEngine(config(SEED, 1.0));
+        boolean checkedIsland = false;
+        for (IslandSpec spec : islands(dense, 15)) {
+            if (spec.type() == IslandType.INDUSTRIAL) {
+                SurfaceKind kind = dense.surfaceKindAt(spec.centerX(), spec.centerZ());
+                assertTrue(kind == SurfaceKind.SAND || kind == SurfaceKind.RED_SAND,
+                        spec.biomeKey() + " island stands on " + kind);
+                checkedIsland = true;
+            }
+        }
+        assertTrue(checkedIsland, "No INDUSTRIAL island in range to check");
+    }
+
+    @Test
+    void testEveryOverworldLandBiomeCanExist() {
+        // The whole point: between trading islands and wild islets, every
+        // generatable overworld land biome in the 26.2 registry has somewhere
+        // it can appear (cave, river, ocean, Nether and End biomes excepted)
+        java.util.Set<String> reachable = new java.util.HashSet<>(GalaxyEngine.isletBiomes());
+        for (IslandType type : IslandType.values()) {
+            reachable.addAll(type.getBiomeKeys());
+        }
+        List<String> landBiomes = List.of("minecraft:badlands", "minecraft:bamboo_jungle", "minecraft:beach",
+                "minecraft:birch_forest", "minecraft:cherry_grove", "minecraft:dark_forest", "minecraft:desert",
+                "minecraft:eroded_badlands", "minecraft:flower_forest", "minecraft:forest",
+                "minecraft:frozen_peaks", "minecraft:grove", "minecraft:ice_spikes", "minecraft:jagged_peaks",
+                "minecraft:jungle", "minecraft:mangrove_swamp", "minecraft:meadow", "minecraft:mushroom_fields",
+                "minecraft:old_growth_birch_forest", "minecraft:old_growth_pine_taiga",
+                "minecraft:old_growth_spruce_taiga", "minecraft:pale_garden", "minecraft:plains",
+                "minecraft:savanna", "minecraft:savanna_plateau", "minecraft:snowy_beach",
+                "minecraft:snowy_plains", "minecraft:snowy_slopes", "minecraft:snowy_taiga",
+                "minecraft:sparse_jungle", "minecraft:stony_peaks", "minecraft:stony_shore",
+                "minecraft:sunflower_plains", "minecraft:swamp", "minecraft:taiga",
+                "minecraft:windswept_forest", "minecraft:windswept_gravelly_hills", "minecraft:windswept_hills",
+                "minecraft:windswept_savanna", "minecraft:wooded_badlands");
+        List<String> missing = landBiomes.stream().filter(b -> !reachable.contains(b)).toList();
+        assertTrue(missing.isEmpty(), "Land biomes with nowhere to exist: " + missing);
+    }
+
+    @Test
     void testIsletsVaryInSize() {
         // Sandbars and proper little islands, not one stamped shape
         GalaxyEngine engine = new GalaxyEngine(config(SEED, 0.0));

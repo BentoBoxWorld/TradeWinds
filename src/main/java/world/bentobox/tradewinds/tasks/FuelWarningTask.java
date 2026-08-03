@@ -66,6 +66,12 @@ public class FuelWarningTask implements Runnable {
     }
 
     private void check(Player player, IslandSpec port) {
+        // No ship, no fuel tank: nagging a boatless sailor about fuel is
+        // noise they cannot act on (playtest 2026-08-02)
+        if (addon.getHoldService().active(player.getUniqueId()).isEmpty()) {
+            warnedAt.remove(player.getUniqueId());
+            return;
+        }
         double fuel = addon.getFuelService().holdFuel(player);
         int cheapest = FuelWarning.cheapestRoute(addon.getWarpService().destinations(player, port, fuel));
         if (!FuelWarning.isLow(fuel, cheapest, addon.getSettings().getFuelWarningMargin())) {

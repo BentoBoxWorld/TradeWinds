@@ -36,6 +36,7 @@ public class GalaxyEngine {
     private static final long SALT_JITTER_X = 0x7177E12AL;
     private static final long SALT_JITTER_Z = 0x7177E12BL;
     private static final long SALT_TYPE = 0x7E9BE001L;
+    private static final long SALT_TECH = 0x7EC81EE1L;
     private static final long SALT_BAND = 0xBA9D0001L;
     private static final long SALT_BIOME = 0xB10E0001L;
     private static final long SALT_NAME = 0x9A3E0001L;
@@ -80,13 +81,64 @@ public class GalaxyEngine {
      */
     private static final double DEEP_WATER_FRACTION = 0.6;
 
-    /** Vanilla biomes wild islets draw from - Minecraft-stuff land. */
-    private static final List<String> WILD_BIOMES = List.of("minecraft:plains", "minecraft:forest",
-            "minecraft:birch_forest", "minecraft:jungle", "minecraft:savanna", "minecraft:swamp",
-            "minecraft:flower_forest", "minecraft:dark_forest");
+    /**
+     * Vanilla biomes wild islets draw from - Minecraft-stuff land - grouped by
+     * the sea temperature at the islet (index order matches
+     * {@link #OCEAN_BIOMES}: frozen through warm). A snowfield rises out of
+     * frozen water and a jungle out of warm, and between the five bands every
+     * generatable overworld land biome can turn up somewhere at sea - a cherry
+     * grove sandbar and a pale garden islet are rare finds, not absences.
+     * (Cave, river, ocean, Nether and End biomes are deliberately not islet
+     * material.)
+     */
+    static final List<List<String>> WILD_BIOMES = List.of(
+            // Frozen seas
+            List.of("minecraft:snowy_plains", "minecraft:snowy_taiga", "minecraft:ice_spikes",
+                    "minecraft:snowy_slopes", "minecraft:grove", "minecraft:frozen_peaks"),
+            // Cold
+            List.of("minecraft:taiga", "minecraft:old_growth_pine_taiga", "minecraft:old_growth_spruce_taiga",
+                    "minecraft:windswept_hills", "minecraft:windswept_forest",
+                    "minecraft:windswept_gravelly_hills", "minecraft:jagged_peaks", "minecraft:stony_shore"),
+            // Temperate
+            List.of("minecraft:plains", "minecraft:sunflower_plains", "minecraft:forest",
+                    "minecraft:birch_forest", "minecraft:old_growth_birch_forest", "minecraft:flower_forest",
+                    "minecraft:dark_forest", "minecraft:pale_garden", "minecraft:meadow",
+                    "minecraft:cherry_grove", "minecraft:swamp", "minecraft:stony_peaks"),
+            // Lukewarm
+            List.of("minecraft:savanna", "minecraft:savanna_plateau", "minecraft:windswept_savanna",
+                    "minecraft:sparse_jungle", "minecraft:jungle", "minecraft:wooded_badlands"),
+            // Warm
+            List.of("minecraft:desert", "minecraft:badlands", "minecraft:eroded_badlands",
+                    "minecraft:bamboo_jungle", "minecraft:mangrove_swamp"));
 
     /** The rare islet biome - no hostile spawns, mycelium, mooshrooms. */
     public static final String MUSHROOM_BIOME = "minecraft:mushroom_fields";
+
+    /**
+     * Ground truth, literally: what the top of a land column is made of, by the
+     * biome that governs the column. Anything unlisted stands on grass. Applies
+     * to trading islands and islets alike - a desert port is a sand island, not
+     * a lawn with a desert sky.
+     */
+    private static final Map<String, SurfaceKind> BIOME_SURFACES = Map.ofEntries(
+            Map.entry("minecraft:desert", SurfaceKind.SAND),
+            Map.entry("minecraft:beach", SurfaceKind.SAND),
+            Map.entry("minecraft:snowy_beach", SurfaceKind.SAND),
+            Map.entry("minecraft:badlands", SurfaceKind.RED_SAND),
+            Map.entry("minecraft:eroded_badlands", SurfaceKind.RED_SAND),
+            Map.entry("minecraft:wooded_badlands", SurfaceKind.RED_SAND),
+            Map.entry("minecraft:old_growth_pine_taiga", SurfaceKind.PODZOL),
+            Map.entry("minecraft:old_growth_spruce_taiga", SurfaceKind.PODZOL),
+            Map.entry("minecraft:stony_shore", SurfaceKind.STONE),
+            Map.entry("minecraft:stony_peaks", SurfaceKind.STONE),
+            Map.entry("minecraft:jagged_peaks", SurfaceKind.STONE),
+            Map.entry("minecraft:windswept_gravelly_hills", SurfaceKind.GRAVEL),
+            Map.entry("minecraft:mangrove_swamp", SurfaceKind.MUD),
+            Map.entry("minecraft:grove", SurfaceKind.SNOW),
+            Map.entry("minecraft:snowy_slopes", SurfaceKind.SNOW),
+            Map.entry("minecraft:frozen_peaks", SurfaceKind.SNOW),
+            Map.entry("minecraft:ice_spikes", SurfaceKind.SNOW),
+            Map.entry(MUSHROOM_BIOME, SurfaceKind.MYCELIUM));
     /** Sandy fringes: where beached shipwrecks and buried treasure belong. */
     private static final String BEACH_BIOME = "minecraft:beach";
     private static final String SNOWY_BEACH_BIOME = "minecraft:snowy_beach";
@@ -112,15 +164,66 @@ public class GalaxyEngine {
     /** Dock deck sits this many blocks above sea level. */
     public static final int DOCK_RISE = 1;
 
+    /** Highest tech level an island can roll. */
+    public static final int MAX_TECH_LEVEL = 7;
+    /** The tech level the starter cluster guarantees at least one of. */
+    private static final int STARTER_TECH_FLOOR = 3;
+
+    /**
+     * Base tech level per island type - industry and luxury skew high, farms
+     * and fisheries low. The seeded wobble of +/-2 around these means an
+     * "Advanced Agricultural" island exists, it is just uncommon.
+     */
+    private static final Map<IslandType, Integer> TECH_BASE = Map.of(
+            IslandType.AGRICULTURAL, 2,
+            IslandType.FISHING, 2,
+            IslandType.FOREST, 3,
+            IslandType.FROZEN, 3,
+            IslandType.MINING, 4,
+            IslandType.INDUSTRIAL, 5,
+            IslandType.LUXURY, 5);
+
     private final GalaxyConfig config;
     private final Set<Long> starterCells;
     private final Map<Long, Optional<IslandSpec>> cache = new ConcurrentHashMap<>();
     private final Seabed seabed;
+    /** The starter cell whose island is lifted to the tech floor, if any needs it. */
+    private final long boostedTechCell;
 
     public GalaxyEngine(GalaxyConfig config) {
         this.config = config;
         this.starterCells = computeStarterCells();
         this.seabed = new Seabed(config.seed(), config.seaLevel(), config.seabed());
+        this.boostedTechCell = computeBoostedTechCell();
+    }
+
+    /**
+     * The starter cluster must hold at least one island of the tech floor
+     * (spec 2.2), or a fresh sailor could be walled off from every useful
+     * shop by seed luck. If no starter cell rolls it naturally, the cell with
+     * the highest natural roll (ties by key order) is lifted to the floor -
+     * deterministically, in the constructor, so the answer never depends on
+     * query order.
+     */
+    private long computeBoostedTechCell() {
+        long best = Long.MIN_VALUE;
+        int bestRoll = -1;
+        for (long key : starterCells.stream().sorted().toList()) {
+            int cellX = (int) (key >> 32);
+            int cellZ = (int) key;
+            IslandType type = cellX == 0 && cellZ == 0 && config.spawnIslandType() != null
+                    ? config.spawnIslandType()
+                    : rollType(cellX, cellZ);
+            int roll = rollTech(cellX, cellZ, type);
+            if (roll >= STARTER_TECH_FLOOR) {
+                return Long.MIN_VALUE; // Seed luck already provides one
+            }
+            if (roll > bestRoll) {
+                bestRoll = roll;
+                best = key;
+            }
+        }
+        return best;
     }
 
     /**
@@ -198,7 +301,7 @@ public class GalaxyEngine {
         if (cellX == 0 && cellZ == 0) {
             IslandType type = config.spawnIslandType() != null ? config.spawnIslandType() : rollType(0, 0);
             return Optional.of(new IslandSpec(0, 0, 0, 0, type, SecurityBand.SAFE, rollBiome(0, 0, type),
-                    SPAWN_NAME));
+                    SPAWN_NAME, techLevel(0, 0, type)));
         }
         boolean starter = starterCells.contains(cellKey(cellX, cellZ));
         if (!starter
@@ -223,7 +326,27 @@ public class GalaxyEngine {
         SecurityBand band = starter ? SecurityBand.SAFE : rollBand(cellX, cellZ, centerX, centerZ);
         String biome = rollBiome(cellX, cellZ, type);
         String name = NameGenerator.name(Hashing.cellHash(config.seed(), cellX, cellZ, SALT_NAME));
-        return Optional.of(new IslandSpec(cellX, cellZ, centerX, centerZ, type, band, biome, name));
+        return Optional.of(new IslandSpec(cellX, cellZ, centerX, centerZ, type, band, biome, name,
+                techLevel(cellX, cellZ, type)));
+    }
+
+    /**
+     * The natural tech roll: the type's base plus a seeded wobble of +/-2,
+     * clamped to 1..{@value #MAX_TECH_LEVEL}.
+     */
+    private int rollTech(int cellX, int cellZ, IslandType type) {
+        int base = TECH_BASE.getOrDefault(type, 3);
+        int wobble = (int) Math.floorMod(Hashing.cellHash(config.seed(), cellX, cellZ, SALT_TECH), 5) - 2;
+        return Math.clamp(base + wobble, 1, MAX_TECH_LEVEL);
+    }
+
+    /**
+     * An island's tech level: the natural roll, lifted to the starter floor
+     * for the one boosted starter cell (if the cluster needed one).
+     */
+    private int techLevel(int cellX, int cellZ, IslandType type) {
+        int rolled = rollTech(cellX, cellZ, type);
+        return cellKey(cellX, cellZ) == boostedTechCell ? Math.max(rolled, STARTER_TECH_FLOOR) : rolled;
     }
 
     private IslandType rollType(int cellX, int cellZ) {
@@ -442,20 +565,22 @@ public class GalaxyEngine {
                 return Optional.empty();
             }
         }
-        return Optional.of(new Islet(x, z, radius, isletBiome(cellX, cellZ)));
+        return Optional.of(new Islet(x, z, radius, isletBiome(cellX, cellZ, x, z)));
     }
 
     /**
-     * A wild islet's whole-island biome (seeded from its cell). Mostly ordinary
-     * vanilla land; rarely, mushroom fields.
+     * A wild islet's whole-island biome: seeded from its cell, drawn from the
+     * band matching the sea temperature at its center - so the land suits the
+     * water it stands in. Rarely, mushroom fields instead.
      */
-    private String isletBiome(int cellX, int cellZ) {
+    private String isletBiome(int cellX, int cellZ, int centerX, int centerZ) {
         if (Hashing.toUnit(Hashing.cellHash(config.seed(), cellX, cellZ,
                 SALT_WILD_MUSHROOM)) < config.mushroomIsletChance()) {
             return MUSHROOM_BIOME;
         }
+        List<String> band = WILD_BIOMES.get(oceanTemperatureIndex(centerX, centerZ));
         long hash = Hashing.cellHash(config.seed(), cellX, cellZ, SALT_WILD_BIOME);
-        return WILD_BIOMES.get((int) Math.floorMod(hash, WILD_BIOMES.size()));
+        return band.get((int) Math.floorMod(hash, band.size()));
     }
 
     /**
@@ -688,23 +813,20 @@ public class GalaxyEngine {
     }
 
     /**
-     * What the top block of a land column should be. Islets get a sandy fringe
-     * at the waterline (and mycelium all over, if they are mushroom islands);
-     * everything else is ordinary grass.
+     * What the top block of a land column should be: whatever suits the biome
+     * that governs the column. The biome already knows everything - islet or
+     * island, beach fringe at the waterline, mushroom fields - so the surface
+     * simply follows it: sand under a desert, mud under a mangrove swamp, red
+     * sand in the badlands, snowpack on the slopes, grass for everything else.
      *
      * @param blockX block x
      * @param blockZ block z
      * @return the surface kind
      */
     public SurfaceKind surfaceKindAt(int blockX, int blockZ) {
-        Optional<Islet> islet = isletAt(blockX, blockZ);
-        if (islet.isEmpty()) {
-            return SurfaceKind.GRASS;
-        }
-        if (islet.get().isMushroom()) {
-            return SurfaceKind.MYCELIUM;
-        }
-        return isShoreAt(blockX, blockZ) ? SurfaceKind.SAND : SurfaceKind.GRASS;
+        return biomeKeyAt(blockX, blockZ)
+                .map(key -> BIOME_SURFACES.getOrDefault(key, SurfaceKind.GRASS))
+                .orElse(SurfaceKind.GRASS);
     }
 
     /**
@@ -725,7 +847,8 @@ public class GalaxyEngine {
      * @return the islet biomes
      */
     public static List<String> isletBiomes() {
-        List<String> all = new ArrayList<>(WILD_BIOMES);
+        List<String> all = new ArrayList<>();
+        WILD_BIOMES.forEach(band -> band.stream().filter(k -> !all.contains(k)).forEach(all::add));
         all.add(MUSHROOM_BIOME);
         all.add(BEACH_BIOME);
         all.add(SNOWY_BEACH_BIOME);

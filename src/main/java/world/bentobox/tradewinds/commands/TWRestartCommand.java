@@ -48,6 +48,13 @@ public class TWRestartCommand extends ConfirmableCommand {
         addon.getPlugin().getVault().ifPresent(vault -> vault.withdraw(user, vault.getBalance(user)));
         data.setStarterKitGiven(false);
         addon.getPlayerDataManager().save(user.getUniqueId());
+        // A fresh career means a fresh hold: the old boat and everything in
+        // it are struck from the record (only the chart survives - knowledge
+        // is not wealth)
+        addon.getHoldManager().activeBoat(user.getUniqueId())
+                .ifPresent(hold -> addon.getHoldManager().delete(hold.getUniqueId()));
+        addon.getHoldManager().setActiveBoat(user.getUniqueId(), null);
+        addon.getHoldManager().clearOldBoat(user.getUniqueId());
         // Back to the spawn islet with a fresh kit
         user.getPlayer().teleport(addon.getOverWorld().getSpawnLocation());
         addon.getStarterKit().onSpawnArrival(user.getPlayer());

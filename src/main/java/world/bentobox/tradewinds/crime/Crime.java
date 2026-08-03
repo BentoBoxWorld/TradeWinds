@@ -12,15 +12,15 @@ public enum Crime {
     /** Struck a resident villager. Cheap on its own; it adds up. */
     HURT_VILLAGER(-5, 0),
     /** Killed a resident. The market recovers; your name does not. */
-    KILL_VILLAGER(-25, 100),
+    KILL_VILLAGER(-25, 1000),
     /** Killed a police unit - golem, guardian or phantom. */
-    KILL_POLICE(-15, 150),
+    KILL_POLICE(-15, 1500),
     /** Killed a player who was not a lawful target. */
-    KILL_INNOCENT(-100, 500),
+    KILL_INNOCENT(-100, 5000),
     /** Caught by a customs scan with contraband aboard. */
-    SMUGGLING(-30, 200),
+    SMUGGLING(-30, 2000),
     /** Sold a villager as a passenger. */
-    PASSENGER_TRADE(-20, 150);
+    PASSENGER_TRADE(-20, 1500);
 
     private final int defaultPenalty;
     private final int defaultBounty;

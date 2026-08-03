@@ -116,6 +116,14 @@ class IslandDecoratorTest extends CommonTestSetup {
         // Residents
         assertFalse(villagers.isEmpty(), "No villagers spawned");
         assertEquals(IslandDecorator.golemCount(spec.band()), golems.size());
+        // The galley: every plaza offers a public workbench and cooking hearth,
+        // so a sailor can craft and cook their catch (both visitor-usable)
+        assertTrue(placed.contains(Material.CRAFTING_TABLE), "No public workbench placed");
+        assertTrue(placed.contains(Material.CAMPFIRE), "No cooking hearth placed");
+        assertTrue(placed.contains(Material.COBBLESTONE), "The campfire must stand on a hearth block");
+        // And the tech level furnishes the amenity row beyond it
+        IslandPalette.amenities(spec.techLevel())
+                .forEach(a -> assertTrue(placed.contains(a), "Missing tech amenity " + a));
         // Workstations and the type landmark are present
         assertTrue(placed.contains(IslandPalette.workstations(spec.type()).get(0)), "No workstation placed");
         assertTrue(placed.stream().anyMatch(LANDMARK_SIGNATURES.get(spec.type())::contains),
@@ -127,6 +135,23 @@ class IslandDecoratorTest extends CommonTestSetup {
         // Playtest regression: without trade XP the brain resets professions to
         // unemployed (or the stall barrels turn everyone fisherman)
         villagers.forEach(v -> verify(v).setVillagerExperience(1));
+    }
+
+    @Test
+    void testAmenitiesGrowWithTech() {
+        // Low tech gets only the galley; the ladder adds smelting, smithing,
+        // brewing, an anvil, and finally enchanting - cumulative
+        assertTrue(IslandPalette.amenities(1).isEmpty());
+        assertTrue(IslandPalette.amenities(2).isEmpty());
+        java.util.List<Material> t3 = IslandPalette.amenities(3);
+        assertTrue(t3.contains(Material.FURNACE) && t3.contains(Material.STONECUTTER));
+        assertFalse(t3.contains(Material.BREWING_STAND));
+        java.util.List<Material> t5 = IslandPalette.amenities(5);
+        assertTrue(t5.contains(Material.BREWING_STAND) && t5.contains(Material.CAULDRON));
+        assertFalse(t5.contains(Material.ENCHANTING_TABLE));
+        java.util.List<Material> t7 = IslandPalette.amenities(7);
+        assertTrue(t7.contains(Material.ENCHANTING_TABLE) && t7.contains(Material.ANVIL));
+        assertTrue(t7.containsAll(t5), "Tiers must be cumulative");
     }
 
     @Test

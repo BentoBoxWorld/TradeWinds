@@ -15,6 +15,22 @@ public enum TradeCategory {
     CROPS, FOOD, FISH, WOOD, STONE, ORES, METALS, GEMS, LUXURY, MISC;
 
     /**
+     * Raw goods - what low-tech islands live on. High-tech ports pay over the
+     * odds for these (they feed the works), low-tech ports sell them cheap.
+     */
+    public boolean isRaw() {
+        return this == ORES || this == CROPS || this == WOOD || this == FISH || this == STONE;
+    }
+
+    /**
+     * Finished goods - what high-tech islands produce. High-tech ports sell
+     * these cheap, low-tech ports pay dearly for them.
+     */
+    public boolean isFinished() {
+        return this == METALS || this == FOOD;
+    }
+
+    /**
      * Classify a material by name heuristics. MISC means "no special island
      * affinity" - still tradeable at base price everywhere.
      */

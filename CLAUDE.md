@@ -26,14 +26,18 @@ procedurally generated ocean of NPC trading islands — buy low, sell high,
 smuggle, hunt bounties, turn pirate. Requirements live in `TRADEWINDS_SPEC.md`
 (the authoritative spec; read it first). Design rationale is in
 `tradewinds-design-decisions.md`, the stage plan in `tradewinds-dev-plan.md`.
-`docs/PROGRESS.md` records what is done and pitfalls hit; `TESTING.md` holds
-the manual in-game test checklist per stage. Update both as features land.
+`docs/PROGRESS.md` records what is done and pitfalls hit; `TESTING.md` is the
+manual test plan, ordered by risk (Tier 1 smoke first) - add new checks to the
+right tier, not to the end; `docs/TESTING-archive.md` is the old per-stage list,
+history only. Update PROGRESS and TESTING as features land.
 
 Load-bearing design rules (from the spec — breaking one is a bug):
-trading transacts only against bundles/boat hold; everything downstream of the
-galaxy seed is a pure function of (seed, position) with **no Bukkit imports**
-(package `world.bentobox.tradewinds.galaxy`), unit-tested headlessly; no End
-world ever; interstice re-engage is always free; police mobs never drop loot.
+trading transacts only against the **virtual hold** (DB-backed, sized by the
+player's ONE boat — see `tradewinds-hold-plan.md`, normative); cargo leaves the
+hold only by sale or destruction; everything downstream of the galaxy seed is a
+pure function of (seed, position) with **no Bukkit imports** (package
+`world.bentobox.tradewinds.galaxy`), unit-tested headlessly; no End world ever;
+interstice re-engage is always free; police mobs never drop loot.
 
 ## Environment (verified — do not "upgrade" blindly)
 

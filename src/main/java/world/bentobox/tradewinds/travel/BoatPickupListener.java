@@ -6,7 +6,6 @@ import java.util.List;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Boat;
-import org.bukkit.entity.ChestBoat;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -50,17 +49,18 @@ public class BoatPickupListener implements Listener {
             player.leaveVehicle();
             return;
         }
-        // Gather the hull and any cargo, then remove the entity
+        // Gather the hull, then remove the entity. The item MUST carry the
+        // boat's record id: without it a teleport quietly turns a ship into
+        // an anonymous hull and orphans its cargo.
         List<ItemStack> items = new ArrayList<>();
-        items.add(boatItem(boat));
-        if (boat instanceof ChestBoat chestBoat) {
-            for (ItemStack stack : chestBoat.getInventory().getContents()) {
-                if (stack != null && !stack.getType().isAir()) {
-                    items.add(stack.clone());
-                }
-            }
-            chestBoat.getInventory().clear();
-        }
+        ItemStack hull = boatItem(boat);
+        addon.getHoldManager().boat(BoatService.boatId(boat)).ifPresent(hold -> {
+            addon.getBoatService().stamp(hull, hold);
+            addon.getHoldManager().rememberPosition(hold, player.getLocation());
+        });
+        items.add(hull);
+        // A chest boat's REAL inventory is not the hold any more (the hold is
+        // the record), so there is nothing in there to rescue
         boat.eject();
         boat.remove();
         // Into the inventory now (it travels with the player); overflow drops

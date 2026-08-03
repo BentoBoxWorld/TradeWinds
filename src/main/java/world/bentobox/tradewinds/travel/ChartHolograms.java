@@ -35,14 +35,32 @@ public class ChartHolograms {
 
     /** Bearing sector width for stacking, degrees. */
     private static final double SECTOR_DEGREES = 20.0;
-    private static final double BASE_HEIGHT = 1.2;
-    /** The dock marker hangs below the island names, clear of their stack. */
-    private static final double DOCK_HEIGHT = 0.2;
+    private static final double BASE_HEIGHT = 2.5;
+    /**
+     * The dock marker hangs below the island names, clear of their stack, but
+     * never below the horizon: heights are relative to a sailor sitting at sea
+     * level, and at 0.2 the sign floated IN the water ten blocks out.
+     */
+    private static final double DOCK_HEIGHT = 1.5;
     private static final double STACK_STEP = 0.8;
+    /**
+     * A boat closer than this needs no marker: an arrow pointing eight blocks
+     * at your own feet is noise, and a boat in your pack is not lost at all.
+     */
+    private static final int MARKER_MIN_DISTANCE = 32;
     private static final int ZOOM_TICKS = 12;
 
     private final TradeWinds addon;
     private final Map<UUID, List<TextDisplay>> active = new ConcurrentHashMap<>();
+    /**
+     * Which set of holograms is current per player. Each show() bumps it, and
+     * the fade timer only clears the generation it belongs to - otherwise the
+     * FIRST call's timer wipes the SECOND call's holograms seconds after they
+     * appear, which is exactly the "run it again and it vanishes" the
+     * 2026-08-02 playtest saw (arriving raised a set, /tw chart raised
+     * another, the older timer killed it).
+     */
+    private final Map<UUID, Integer> generation = new ConcurrentHashMap<>();
 
     public ChartHolograms(TradeWinds addon) {
         this.addon = addon;
@@ -55,6 +73,33 @@ public class ChartHolograms {
      *        than at a distant island
      */
     record Marker(double dx, double dy, double dz, IslandSpec island, int distance, boolean dock) {
+    }
+
+    /** A marker pointing at a boat rather than an island. */
+    record BoatMarker(double dx, double dy, double dz, int distance, boolean old) {
+    }
+
+    /**
+     * Where your boat is, from anywhere in the world (ruled 2026-08-02): the
+     * active BOAT, and the OLD BOAT you abandoned by boarding another. Pure,
+     * so the bearing is testable.
+     *
+     * @param boatX boat block x
+     * @param boatZ boat block z
+     * @param px player block x
+     * @param pz player block z
+     * @param radius ring radius in blocks
+     * @param old true for the abandoned boat
+     * @return the marker
+     */
+    static BoatMarker boatMarker(int boatX, int boatZ, int px, int pz, double radius, boolean old) {
+        double dx = (double) boatX - px;
+        double dz = (double) boatZ - pz;
+        double dist = Math.max(1.0, Math.hypot(dx, dz));
+        // Above the dock marker, below the island stack: your own ship is the
+        // second thing you look for after the quay
+        return new BoatMarker(dx / dist * radius, old ? DOCK_HEIGHT + 0.6 : DOCK_HEIGHT + 1.2,
+                dz / dist * radius, (int) dist, old);
     }
 
     /**
@@ -116,6 +161,21 @@ public class ChartHolograms {
     }
 
     /**
+     * Whether a boat is far enough away - and out of hand - to be worth a
+     * marker at all.
+     */
+    private boolean worthMarking(Player player, world.bentobox.tradewinds.dataobjects.BoatHold hold,
+            Location eye) {
+        if (!hold.getWorld().equals(player.getWorld().getName())
+                || addon.getBoatService().isCarrying(player, hold)) {
+            return false;
+        }
+        double dx = (double) hold.getX() - eye.getBlockX();
+        double dz = (double) hold.getZ() - eye.getBlockZ();
+        return dx * dx + dz * dz > (double) MARKER_MIN_DISTANCE * MARKER_MIN_DISTANCE;
+    }
+
+    /**
      * Show the compass to a player: clears any previous set, spawns the
      * holograms at the player and zooms them out to the ring.
      */
@@ -138,10 +198,48 @@ public class ChartHolograms {
                 eye.getBlockZ(), radius)));
         markers.addAll(markers(chartedIslands(player), eye.getBlockX(), eye.getBlockZ(), radius,
                 addon.getSettings().getChartHologramMax()));
-        if (markers.isEmpty()) {
+        List<BoatMarker> boats = new ArrayList<>();
+        // Only mark a boat you have to GO to: not the one under you, not the
+        // one in your pack, and not one a few paces away (2026-08-02: both
+        // markers pointed 8m at the player's own feet).
+        if (!(player.getVehicle() instanceof org.bukkit.entity.Boat)) {
+            addon.getHoldManager().activeBoat(player.getUniqueId())
+                    .filter(hold -> worthMarking(player, hold, eye))
+                    .ifPresent(hold -> boats.add(boatMarker(hold.getX(), hold.getZ(), eye.getBlockX(),
+                            eye.getBlockZ(), radius, false)));
+        }
+        addon.getHoldManager().oldBoat(player.getUniqueId())
+                .filter(hold -> worthMarking(player, hold, eye))
+                .ifPresent(hold -> boats.add(boatMarker(hold.getX(), hold.getZ(), eye.getBlockX(),
+                        eye.getBlockZ(), radius, true)));
+        if (markers.isEmpty() && boats.isEmpty()) {
             return;
         }
         List<TextDisplay> spawned = new ArrayList<>();
+        for (BoatMarker boat : boats) {
+            TextDisplay display = eye.getWorld().spawn(eye.clone().add(0, 1.0, 0), TextDisplay.class);
+            display.text(User.getInstance(player).getTranslationAsComponent(
+                    boat.old() ? "tradewinds.hologram.old-boat" : "tradewinds.hologram.boat",
+                    "[distance]", String.valueOf(boat.distance())));
+            display.setBillboard(Billboard.CENTER);
+            display.setSeeThrough(true);
+            display.setBackgroundColor(boat.old() ? Color.fromARGB(140, 60, 0, 0)
+                    : Color.fromARGB(140, 0, 60, 30));
+            display.setPersistent(false);
+            display.setTeleportDuration(ZOOM_TICKS);
+            for (Player other : Bukkit.getOnlinePlayers()) {
+                if (!other.equals(player)) {
+                    other.hideEntity(addon.getPlugin(), display);
+                }
+            }
+            spawned.add(display);
+            Location target = eye.clone().add(boat.dx(), boat.dy(), boat.dz());
+            Bukkit.getScheduler().runTask(addon.getPlugin(), () -> {
+                if (display.isValid()) {
+                    display.teleport(target);
+                }
+            });
+        }
         for (Marker marker : markers) {
             TextDisplay display = eye.getWorld().spawn(eye.clone().add(0, 1.0, 0), TextDisplay.class);
             display.text(label(player, marker));
@@ -167,9 +265,14 @@ public class ChartHolograms {
             });
         }
         active.put(player.getUniqueId(), spawned);
-        // Fade out after the configured time
-        Bukkit.getScheduler().runTaskLater(addon.getPlugin(), () -> clear(player.getUniqueId()),
-                addon.getSettings().getChartHologramSeconds() * 20L);
+        int mine = generation.merge(player.getUniqueId(), 1, Integer::sum);
+        // Fade out after the configured time - but only if nothing newer has
+        // replaced this set in the meantime
+        Bukkit.getScheduler().runTaskLater(addon.getPlugin(), () -> {
+            if (generation.getOrDefault(player.getUniqueId(), 0) == mine) {
+                clear(player.getUniqueId());
+            }
+        }, addon.getSettings().getChartHologramSeconds() * 20L);
     }
 
     /**
@@ -195,6 +298,7 @@ public class ChartHolograms {
         return User.getInstance(player).getTranslationAsComponent("tradewinds.hologram.island",
                 "[name]", spec.name(),
                 "[type]", spec.type().name(),
+                "[tech]", String.valueOf(spec.techLevel()),
                 "[band]", User.getInstance(player).getTranslation(spec.band().getLocaleKey()),
                 "[distance]", String.valueOf(marker.distance()));
     }

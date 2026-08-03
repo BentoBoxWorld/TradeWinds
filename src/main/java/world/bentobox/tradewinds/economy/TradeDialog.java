@@ -56,6 +56,11 @@ public class TradeDialog {
             User.getInstance(player).sendMessage("tradewinds.trade.barred");
             return;
         }
+        // The cargo is IN the boat, so buying and selling need the ship at
+        // the quay - but the OUTFITTER and the SHIPWRIGHT must always be
+        // open, or a sailor who has lost their boat can never get another
+        // and is stranded on the island for good (playtest 2026-08-02).
+        boolean boatHere = addon.getMarketService().boatIsHere(player, spec);
         // Too poor in fuel to warp anywhere from here? Then the most useful
         // thing this screen can do is point at where the fuel is sold. An
         // action bar fades; a button that says "buy fuel here" does not.
@@ -64,10 +69,10 @@ public class TradeDialog {
 
         List<ActionButton> buttons = new ArrayList<>();
         // No sell button when the hold has nothing this island pays for
-        if (!sellOffers(player, spec).isEmpty()) {
+        if (boatHere && !sellOffers(player, spec).isEmpty()) {
             buttons.add(button(player, "market.sell", "market.sell-tooltip", () -> openSell(player, spec)));
         }
-        if (!addon.getMarketService().saleCatalog(spec).isEmpty()) {
+        if (boatHere && !addon.getMarketService().saleCatalog(spec).isEmpty()) {
             buttons.add(button(player, fuelInTradeCatalog ? "market.buy-fuel" : "market.buy",
                     fuelInTradeCatalog ? "market.buy-fuel-tooltip" : "market.buy-tooltip",
                     () -> openBuy(player, spec, addon.getMarketService().saleCatalog(spec), "buying")));
@@ -81,10 +86,14 @@ public class TradeDialog {
         buttons.add(button(player, "market.shipwright", "market.shipwright-tooltip",
                 () -> openShipwright(player, spec)));
         List<Component> body = new ArrayList<>(List.of(
-                ui(player, "market.subtitle", "[type]", spec.type().name(), "[band]",
+                ui(player, "market.subtitle", "[type]", spec.type().name(), "[tech]",
+                        String.valueOf(spec.techLevel()), "[band]",
                         User.getInstance(player).getTranslation(spec.band().getLocaleKey())),
                 statusLine(player)));
-        if (lowFuel) {
+        if (!boatHere) {
+            body.add(ui(player, "market.no-ship-here", NO_VARS));
+        }
+        if (lowFuel && boatHere) {
             body.add(ui(player, "market.low-fuel", NO_VARS));
         }
         show(player, ui(player, "market.title", "[name]", spec.name()), body, buttons, closeButton(player), 1);
@@ -123,14 +132,14 @@ public class TradeDialog {
         for (SellOffer offer : offers.subList(0, Math.min(MAX_ROWS, offers.size()))) {
             String name = MarketService.pretty(offer.material());
             Component each = ui(player, "market.sell-tooltip-each", "[price]",
-                    String.format("%.2f", offer.unitPrice()));
+                    Money.format(addon, offer.unitPrice()));
             buttons.add(button(ui(player, "market.sell-one", "[material]", name), each,
                     () -> sellThenReopen(player, spec, offer.material(), 1)));
             buttons.add(button(ui(player, "market.sell-batch", "[material]", name, "[amount]",
                     String.valueOf(MID_BATCH)), each,
                     () -> sellThenReopen(player, spec, offer.material(), MID_BATCH)));
             buttons.add(button(ui(player, "market.sell-all", "[amount]", String.valueOf(offer.amount()),
-                    "[price]", String.format("%.2f", offer.total())), each,
+                    "[price]", Money.format(addon, offer.total())), each,
                     () -> sellThenReopen(player, spec, offer.material(), Integer.MAX_VALUE)));
         }
         List<Component> body = new ArrayList<>(List.of(ui(player, "market.selling-body", NO_VARS),
@@ -156,15 +165,15 @@ public class TradeDialog {
             Optional<Double> price = addon.getMarketService().playerBuysAt(spec, material);
             price.ifPresent(unit -> {
                 String name = MarketService.pretty(material);
-                Component each = ui(player, "market.buy-tooltip-each", "[price]", String.format("%.2f", unit));
+                Component each = ui(player, "market.buy-tooltip-each", "[price]", Money.format(addon, unit));
                 buttons.add(button(ui(player, "market.buy-one", "[material]", name, "[price]",
-                        String.format("%.2f", unit)), each,
+                        Money.format(addon, unit)), each,
                         () -> buyThenReopen(player, spec, material, 1, catalog, page)));
                 buttons.add(button(ui(player, "market.buy-batch", "[amount]", String.valueOf(MID_BATCH),
-                        "[price]", String.format("%.2f", unit * MID_BATCH)), each,
+                        "[price]", Money.format(addon, unit * MID_BATCH)), each,
                         () -> buyThenReopen(player, spec, material, MID_BATCH, catalog, page)));
                 buttons.add(button(ui(player, "market.buy-batch", "[amount]", String.valueOf(BIG_BATCH),
-                        "[price]", String.format("%.2f", unit * BIG_BATCH)), each,
+                        "[price]", Money.format(addon, unit * BIG_BATCH)), each,
                         () -> buyThenReopen(player, spec, material, BIG_BATCH, catalog, page)));
             });
         }
@@ -194,13 +203,13 @@ public class TradeDialog {
         for (Material material : addon.getMarketService().outfitterCatalog(spec)) {
             addon.getMarketService().playerBuysAt(spec, material).ifPresent(unit -> {
                 String name = MarketService.pretty(material);
-                Component each = ui(player, "market.outfit-tooltip", "[price]", String.format("%.2f", unit));
+                Component each = ui(player, "market.outfit-tooltip", "[price]", Money.format(addon, unit));
                 buttons.add(button(ui(player, "market.outfit-one", "[material]", name, "[price]",
-                        String.format("%.2f", unit)), each,
+                        Money.format(addon, unit)), each,
                         () -> outfitThenReopen(player, spec, material, 1)));
                 if (new org.bukkit.inventory.ItemStack(material).getMaxStackSize() > 1) {
                     buttons.add(button(ui(player, "market.outfit-batch", "[amount]", String.valueOf(MID_BATCH),
-                            "[price]", String.format("%.2f", unit * MID_BATCH)), each,
+                            "[price]", Money.format(addon, unit * MID_BATCH)), each,
                             () -> outfitThenReopen(player, spec, material, MID_BATCH)));
                 }
             });
@@ -221,43 +230,40 @@ public class TradeDialog {
     }
 
     /**
-     * The shipwright's slipway: hulls to your inventory, expanders to your
-     * hold. The cargo progression lives here: boat -> chest boat -> expanders.
+     * The shipwright's slipway: the boat ladder. Only boats BIGGER than yours
+     * are listed (an upgrade destroys the old boat; contents stay put), and
+     * only up to what this island's tech can build. Crafting bypasses all of
+     * this - the shop is the money route, rare wood is the exploration route.
      */
     public void openShipwright(Player player, IslandSpec spec) {
         List<ActionButton> buttons = new ArrayList<>();
-        for (Material hull : addon.getMarketService().shipwrightCatalog()) {
-            addon.getMarketService().playerBuysAt(spec, hull).ifPresent(unit -> buttons.add(button(
-                    ui(player, "market.hull", "[material]", MarketService.pretty(hull), "[price]",
-                            String.format("%.2f", unit)),
-                    ui(player, "market.hull-tooltip", NO_VARS),
+        Material current = addon.getHoldService().boat(player);
+        for (world.bentobox.tradewinds.travel.BoatRanks.Rank rank : addon.getBoatRanks()
+                .shopListing(current, spec.techLevel())) {
+            double price = addon.getBoatRanks().price(rank);
+            buttons.add(button(
+                    ui(player, "market.hull", "[material]", MarketService.pretty(rank.material()), "[price]",
+                            Money.format(addon, price)),
+                    ui(player, "market.hull-tooltip", "[slots]", String.valueOf(rank.slots())),
                     () -> {
-                        addon.getMarketService().buyToInventory(player, spec, hull, 1);
-                        openShipwright(player, spec);
-                    })));
-        }
-        int pouches = addon.getHoldService().pouchCount(player);
-        int maxPouches = addon.getSettings().getMaxBundles();
-        if (pouches < maxPouches) {
-            buttons.add(button(ui(player, "market.pouch", "[price]",
-                    String.format("%.0f", addon.getMarketService().pouchPrice(player))),
-                    ui(player, "market.pouch-tooltip", "[owned]", String.valueOf(pouches), "[cap]",
-                            String.valueOf(maxPouches)),
-                    () -> {
-                        addon.getMarketService().buyPouch(player);
+                        addon.getMarketService().buyBoat(player, spec, rank);
                         openShipwright(player, spec);
                     }));
         }
-        int owned = addon.getPlayerDataManager().get(player.getUniqueId()).getExpandersPurchased();
-        if (owned < addon.getSettings().getExpanderCap()) {
-            double price = PriceModel.expanderPrice(addon.getSettings().getExpanderBasePrice(), owned);
-            buttons.add(button(ui(player, "market.expander", "[price]", String.format("%.0f", price)),
-                    ui(player, "market.expander-tooltip", "[owned]", String.valueOf(owned), "[cap]",
-                            String.valueOf(addon.getSettings().getExpanderCap())),
+        // Expanders: the endgame sink, sold only where the tech tops out
+        if (spec.techLevel() >= world.bentobox.tradewinds.galaxy.GalaxyEngine.MAX_TECH_LEVEL) {
+            int installed = addon.getHoldService().expanderCount(player.getUniqueId());
+            double price = PriceModel.expanderPrice(addon.getSettings().getExpanderBasePrice(), installed);
+            buttons.add(button(ui(player, "market.expander", "[price]", Money.format(addon, price)),
+                    ui(player, "market.expander-tooltip", "[owned]", String.valueOf(installed)),
                     () -> {
-                        addon.getMarketService().buyExpander(player);
+                        addon.getMarketService().buyExpander(player, spec);
                         openShipwright(player, spec);
                     }));
+        }
+        if (buttons.isEmpty()) {
+            // Nothing on the slipway: the sailor has out-teched this port
+            buttons.add(button(player, "market.no-hulls", "market.no-hulls-tooltip", () -> openMain(player, spec)));
         }
         if (addon.getMarketService().isDestitute(player)) {
             buttons.add(button(player, "market.charity", "market.charity-tooltip",
@@ -272,6 +278,59 @@ public class TradeDialog {
     }
 
     /**
+     * The confirmation every boat capture gets: taking this hull abandons
+     * your own, cargo and all, wherever it lies. Yes/no, no default.
+     *
+     * @param player the player
+     * @param taking pretty name of the boat they would take
+     * @param leaving pretty name of the boat they would abandon
+     * @param onConfirm what to do if they accept
+     */
+    public void confirmBoatCapture(Player player, String taking, String leaving, Runnable onConfirm) {
+        confirmBoatFound(player, taking, leaving, null, onConfirm, null);
+    }
+
+    /**
+     * What to do with a hull you have come across (ruled 2026-08-02). Taking
+     * it abandons your own boat where it lies; moving its cargo across is
+     * offered ONLY when your own boat is close enough to load - cargo is not
+     * teleported across the ocean.
+     *
+     * @param player the player
+     * @param taking pretty name of the hull found
+     * @param leaving pretty name of their own boat, or null if they have none
+     * @param cargo a description of what it carries, or null if empty
+     * @param onTake take the hull
+     * @param onTransfer move the cargo into their own boat, or null if their
+     *        boat is out of range (or the hull is empty)
+     */
+    public void confirmBoatFound(Player player, String taking, String leaving, String cargo, Runnable onTake,
+            Runnable onTransfer) {
+        List<ActionButton> buttons = new ArrayList<>();
+        buttons.add(button(ui(player, "capture.confirm", "[material]", taking),
+                ui(player, "capture.confirm-tooltip", NO_VARS), onTake));
+        if (onTransfer != null) {
+            buttons.add(button(ui(player, "capture.transfer", NO_VARS),
+                    ui(player, "capture.transfer-tooltip", NO_VARS), onTransfer));
+        }
+        List<Component> body = new ArrayList<>();
+        if (leaving == null) {
+            body.add(ui(player, "capture.body-no-boat", "[taking]", taking));
+        } else {
+            body.add(ui(player, "capture.body", "[taking]", taking, "[leaving]", leaving));
+            if (onTransfer == null && cargo != null) {
+                // Say WHY the cargo option is missing, or it reads as a bug
+                body.add(ui(player, "capture.body-too-far", "[leaving]", leaving));
+            }
+        }
+        if (cargo != null) {
+            body.add(ui(player, "capture.body-cargo", "[cargo]", cargo));
+        }
+        show(player, ui(player, "capture.title", "[material]", taking), body, buttons,
+                ActionButton.builder(ui(player, "capture.cancel", NO_VARS)).width(300).build(), 1);
+    }
+
+    /**
      * One sellable line: what the hold has and what this island pays. Package
      * visible for tests.
      */
@@ -280,9 +339,9 @@ public class TradeDialog {
 
     List<SellOffer> sellOffers(Player player, IslandSpec spec) {
         List<SellOffer> offers = new ArrayList<>();
-        // Traders only buy customs-stamped goods (plus the illegal exceptions)
-        for (Map.Entry<Material, Integer> entry : addon.getHoldService()
-                .contents(player, addon.getMarketService().sellableFilter()).entrySet()) {
+        // No stamps: everything aboard (expanders included) is sellable
+        // wherever a price and the port's own rules (contraband bands) allow
+        for (Map.Entry<Material, Integer> entry : addon.getHoldService().tradeContents(player).entrySet()) {
             // Do not quote a price for something this port will refuse at the
             // counter: the sell page used to offer a dollar for contraband that
             // a safe island would then decline, which reads as a broken market
@@ -311,8 +370,9 @@ public class TradeDialog {
 
     private Component statusLine(Player player) {
         double balance = addon.getPlugin().getVault().map(v -> v.getBalance(User.getInstance(player))).orElse(0.0);
-        return ui(player, "market.status", "[balance]", String.format("%.2f", balance), "[space]",
-                String.valueOf(addon.getHoldService().freeSpace(player)));
+        return ui(player, "market.status", "[balance]", Money.format(addon, balance), "[space]",
+                addon.getHoldService().slotsUsed(player.getUniqueId()) + "/"
+                        + addon.getHoldService().capacitySlots(player));
     }
 
     private ActionButton backButton(Player player, IslandSpec spec) {

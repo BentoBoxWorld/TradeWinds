@@ -112,7 +112,8 @@ public class WarpService {
                 dest.affordable() ? "tradewinds.ui.warp.destination" : "tradewinds.ui.warp.destination-poor",
                 "[name]", spec.name(), "[fuel]", String.valueOf(dest.fuelCost()));
         Component tooltip = user(player).getTranslationAsComponent("tradewinds.ui.warp.destination-tooltip",
-                "[type]", spec.type().name(), "[band]", spec.band().getDisplayName(), "[distance]",
+                "[type]", spec.type().name(), "[tech]", String.valueOf(spec.techLevel()),
+                "[band]", spec.band().getDisplayName(), "[distance]",
                 String.valueOf((int) Math.sqrt(spec.distanceSquared(origin.centerX(), origin.centerZ()))));
         DialogAction action = DialogAction.customClick(
                 (response, audience) -> {
@@ -185,18 +186,15 @@ public class WarpService {
     }
 
     /**
-     * Give back fuel value after an aborted warp, as charcoal into the hold
-     * (or at the player's feet if the hold is full).
+     * Give back fuel value after an aborted warp, as charcoal into the fuel
+     * slots (or at the player's feet if the fuel row is full).
      */
     private void refund(Player player, int fuelUnits) {
         double charcoalValue = Math.max(1.0, addon.getSettings().getFuelValues().getOrDefault("CHARCOAL", 3.0));
-        int amount = (int) Math.ceil(fuelUnits / charcoalValue);
-        ItemStack refund = new ItemStack(Material.CHARCOAL, Math.max(1, amount));
-        int added = addon.getHoldService().add(player, refund);
-        if (added < refund.getAmount()) {
-            ItemStack rest = refund.clone();
-            rest.setAmount(refund.getAmount() - added);
-            player.getWorld().dropItem(player.getLocation(), rest);
+        int amount = Math.max(1, (int) Math.ceil(fuelUnits / charcoalValue));
+        int added = addon.getHoldService().addFuel(player, Material.CHARCOAL, amount);
+        if (added < amount) {
+            player.getWorld().dropItem(player.getLocation(), new ItemStack(Material.CHARCOAL, amount - added));
         }
     }
 
@@ -240,6 +238,21 @@ public class WarpService {
         Location target = SeaArrival.openSeaOutward(addon.getGalaxyEngine(addon.getOverWorld().getSeed()),
                 addon.getOverWorld(), to.centerX(), to.centerZ(), arrive[0], arrive[1],
                 addon.getSettings().getSeaHeight());
+        // Face the boat (and the sailor) at the destination's PIER: paddling
+        // straight ahead from a warp arrival is always the way in
+        world.bentobox.tradewinds.galaxy.DockPlan plan = addon
+                .getGalaxyEngine(addon.getOverWorld().getSeed()).dockPlan(to);
+        // The dock FLAG: the banner at the pier end, which is what a sailor
+        // actually steers for (IslandDecorator plants it 2 blocks short)
+        double pierX = to.centerX() + Math.cos(plan.bearing()) * (plan.dockEnd() - 2);
+        double pierZ = to.centerZ() + Math.sin(plan.bearing()) * (plan.dockEnd() - 2);
+        // The plain look-at yaw IS correct: the console proved it (computed
+        // 45.8 where the sailor's own F3 read 46.3 for the right heading).
+        // The quarter-turn "hull offset" of the first fix was chasing a
+        // different problem - the mount was resetting the facing, not the
+        // maths being sideways - and it only turned the boat the other way.
+        float lookYaw = yawToward(target.getX(), target.getZ(), pierX, pierZ);
+        target.setYaw(lookYaw);
 
         addon.log("Warp: " + player.getName() + " arriving at " + to.name() + " ("
                 + target.getBlockX() + "," + target.getBlockY() + "," + target.getBlockZ() + ") - "
@@ -252,10 +265,30 @@ public class WarpService {
         }
         Util.teleportAsync(player, target).thenRun(() -> {
             if (vehicle instanceof Boat boat && boat.isValid()) {
-                boat.teleportAsync(target).thenRun(() -> Bukkit.getScheduler().runTask(addon.getPlugin(),
-                        () -> boat.addPassenger(player)));
+                boat.teleportAsync(target).thenRun(() -> Bukkit.getScheduler().runTask(addon.getPlugin(), () -> {
+                    boat.addPassenger(player);
+                    // Mounting drags the facing about (the sailor sees the
+                    // boat pointing wherever they are looking), so set BOTH
+                    // rotations after the re-seat rather than trusting the
+                    // teleport to have stuck
+                    Bukkit.getScheduler().runTaskLater(addon.getPlugin(), () -> {
+                        float yaw = target.getYaw();
+                        boat.setRotation(yaw, 0f);
+                        player.setRotation(yaw, player.getLocation().getPitch());
+                    }, 2L);
+                }));
             }
             arrivalEffects(player, target);
+            // The re-seat raises the chart, but arrival blindness hides it -
+            // hence "sometimes I see the holograms, sometimes I do not"
+            // (playtest 2026-08-02). Raise it again once vision returns.
+            if (addon.getSettings().isChartOnBoarding()) {
+                Bukkit.getScheduler().runTaskLater(addon.getPlugin(), () -> {
+                    if (player.isOnline() && player.getWorld().equals(addon.getOverWorld())) {
+                        addon.getChartHolograms().show(player);
+                    }
+                }, (addon.getSettings().getWarpBlindnessSeconds() + 1) * 20L);
+            }
             user(player).sendMessage("tradewinds.warp.arrived", "[name]", to.name());
             Bukkit.getPluginManager().callEvent(new TWWarpCompletedEvent(player, bearingFrom, to, fuelCost));
         });
@@ -280,6 +313,32 @@ public class WarpService {
         }
         target.getWorld().spawnParticle(Particle.PORTAL, target, 80, 1, 1, 1, 0.5);
         target.getWorld().playSound(target, Sound.BLOCK_PORTAL_TRAVEL, 0.4f, 0.8f);
+    }
+
+    /**
+     * The Minecraft yaw that looks from one point at another: 0 = south (+Z),
+     * -90 = east (+X). Pure, so the bearing is testable.
+     *
+     * @param fromX looker x
+     * @param fromZ looker z
+     * @param toX target x
+     * @param toZ target z
+     * @return yaw in degrees
+     */
+    static float yawToward(double fromX, double fromZ, double toX, double toZ) {
+        return (float) Math.toDegrees(Math.atan2(-(toX - fromX), toZ - fromZ));
+    }
+
+    /**
+     * Wrap a yaw into (-180, 180] - the range Minecraft hands back, so a
+     * corrected value compares like an uncorrected one.
+     */
+    static float normalise(float yaw) {
+        float wrapped = (yaw + 180f) % 360f;
+        if (wrapped < 0) {
+            wrapped += 360f;
+        }
+        return wrapped - 180f;
     }
 
     private world.bentobox.bentobox.api.user.User user(Player player) {

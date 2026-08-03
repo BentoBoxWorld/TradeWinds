@@ -108,7 +108,7 @@ public class BountyBoard {
 
     private String format(double amount) {
         return addon.getPlugin().getVault().map(vault -> vault.format(amount))
-                .orElse(String.format("%.0f", amount));
+                .orElse(world.bentobox.tradewinds.economy.Money.format(addon, amount));
     }
 
     /**
@@ -121,7 +121,7 @@ public class BountyBoard {
         placeholders.registerPlaceholder(addon, "bounty",
                 user -> user == null ? "0" : format(addon.getReputationService().bounty(user.getUniqueId())));
         placeholders.registerPlaceholder(addon, "bounty_raw", user -> user == null ? "0"
-                : String.format("%.2f", addon.getReputationService().bounty(user.getUniqueId())));
+                : world.bentobox.tradewinds.economy.Money.format(addon, addon.getReputationService().bounty(user.getUniqueId())));
         placeholders.registerPlaceholder(addon, "standing",
                 user -> user == null ? "" : addon.getPlayerStanding(user, user.getUniqueId()));
         placeholders.registerPlaceholder(addon, "reputation", user -> user == null ? "0"

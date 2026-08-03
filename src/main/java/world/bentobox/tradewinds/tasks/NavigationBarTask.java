@@ -112,6 +112,7 @@ public class NavigationBarTask implements Runnable {
         User user = User.getInstance(player);
         Component name = user.getTranslationAsComponent("tradewinds.hud.navigation",
                 "[name]", reading.island().name(),
+                "[tech]", String.valueOf(reading.island().techLevel()),
                 "[band]", user.getTranslation(reading.island().band().getLocaleKey()),
                 "[standing]", addon.getPlayerStanding(user, player.getUniqueId()),
                 "[distance]", String.valueOf(reading.dockDistance()));

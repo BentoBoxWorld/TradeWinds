@@ -48,14 +48,16 @@ class BorderPromptListenerTest extends CommonTestSetup {
 
     @Test
     void testOfferedAtVisibleBorder() {
-        // The visible border is the protection edge (400) - the offer fires
-        // exactly where "Now leaving..." appears (playtest regression: it used
-        // to sit at the range edge ~1000, 550 blocks of dead ocean later)
-        Optional<IslandSpec> inside = listener.originIslandNearBorder(spec.centerX() + 390, spec.centerZ());
+        // The ring hugs the protection edge (400) tightly now - you have to
+        // touch the RED curtain (ruled 2026-08-02), so +-5 blocks only
+        Optional<IslandSpec> inside = listener.originIslandNearBorder(spec.centerX() + 397, spec.centerZ());
         assertTrue(inside.isPresent());
         assertEquals(spec, inside.get());
-        Optional<IslandSpec> outside = listener.originIslandNearBorder(spec.centerX() + 410, spec.centerZ());
+        Optional<IslandSpec> outside = listener.originIslandNearBorder(spec.centerX() + 403, spec.centerZ());
         assertTrue(outside.isPresent());
+        // Just short of the curtain, or just past it: no dialog
+        assertTrue(listener.originIslandNearBorder(spec.centerX() + 390, spec.centerZ()).isEmpty());
+        assertTrue(listener.originIslandNearBorder(spec.centerX() + 410, spec.centerZ()).isEmpty());
     }
 
     @Test

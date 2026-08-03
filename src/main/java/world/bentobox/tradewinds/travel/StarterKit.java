@@ -5,21 +5,18 @@ import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.persistence.PersistentDataType;
 
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import world.bentobox.bentobox.api.user.User;
 import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.dataobjects.TWPlayerData;
 
 /**
- * The start of every trading career: a boat and one trading bundle (spec §4).
- * Given once, on the player's first spawn. When the spawn point is water the
- * boat is launched and the player seated in it; on land the boat goes in the
- * inventory instead. Repeat visitors to spawn who carry a boat item get
- * auto-launched too - nobody treads water at spawn.
+ * The start of every trading career: an Oak Boat (rank 2 of the ladder - the
+ * boat IS the hold) with the starter coal already in its fuel slots, and the
+ * starting balance. Given once, on the player's first spawn. When the spawn
+ * point is water the boat is launched and the player seated in it; on land
+ * the boat item goes in the pack instead. Repeat visitors to spawn who own a
+ * boat item get auto-launched too - nobody treads water at spawn.
  *
  * @author tastybento
  */
@@ -27,6 +24,9 @@ public class StarterKit {
 
     /** PDC key on boats recording the owning player's UUID (spec §4). */
     public static final NamespacedKey BOAT_OWNER_KEY = NamespacedKey.fromString("tradewinds:owner");
+
+    /** The rung a career starts on. */
+    public static final Material STARTER_BOAT = Material.OAK_BOAT;
 
     private final TradeWinds addon;
 
@@ -48,70 +48,57 @@ public class StarterKit {
         if (!data.isStarterKitGiven()) {
             data.setStarterKitGiven(true);
             addon.getPlayerDataManager().save(player.getUniqueId());
-            player.getInventory().addItem(tradingBundle());
-            if (onWater) {
-                launchBoat(player, spawn, Material.OAK_BOAT);
-            } else {
-                player.getInventory().addItem(new ItemStack(Material.OAK_BOAT));
-            }
-            // Seed money for the first cargo
-            addon.getPlugin().getVault()
-                    .ifPresent(vault -> vault.deposit(User.getInstance(player),
-                            addon.getSettings().getStartingBalance()));
-            User.getInstance(player).sendMessage("tradewinds.starter-kit.given");
+            give(player, spawn, onWater);
             return;
         }
-        // Repeat arrival: auto-launch a carried boat so nobody swims at spawn
+        // Repeat arrival: auto-launch the carried boat so nobody swims at spawn
         if (onWater && player.getVehicle() == null) {
-            Material carried = consumeBoatItem(player);
-            if (carried != null) {
-                launchBoat(player, spawn, carried);
-            }
+            addon.getHoldService().active(player.getUniqueId()).ifPresent(hold -> {
+                if (consumeBoatItem(player) != null) {
+                    addon.getBoatService().launch(player, spawn, hold);
+                }
+            });
         }
-    }
-
-    private ItemStack tradingBundle() {
-        ItemStack pouch = addon.getMarketService().pouchItem();
-        // A little coal in the pouch: it is hold cargo, so the first island hop
-        // can be a warp instead of a long row
-        int coal = addon.getSettings().getStarterCoal();
-        if (coal > 0 && pouch.getItemMeta() instanceof org.bukkit.inventory.meta.BundleMeta bundleMeta) {
-            bundleMeta.setItems(java.util.List.of(new ItemStack(Material.COAL, coal)));
-            pouch.setItemMeta(bundleMeta);
-        }
-        return pouch;
-    }
-
-    private void launchBoat(Player player, Location spawn, Material boatMaterial) {
-        // Boat item materials and boat entity types share names (OAK_BOAT...)
-        org.bukkit.entity.EntityType type;
-        try {
-            type = org.bukkit.entity.EntityType.valueOf(boatMaterial.name());
-        } catch (IllegalArgumentException e) {
-            type = org.bukkit.entity.EntityType.OAK_BOAT;
-        }
-        org.bukkit.entity.Entity boat = spawn.getWorld().spawnEntity(spawn, type);
-        boat.getPersistentDataContainer().set(BOAT_OWNER_KEY, PersistentDataType.STRING,
-                player.getUniqueId().toString());
-        boat.setPersistent(true);
-        boat.addPassenger(player);
     }
 
     /**
-     * Remove one boat item from the inventory, plain boats preferred over
-     * chest boats.
+     * The kit itself: boat on the hold record, coal in the fuel slots, coin
+     * in the purse. Also used by {@code /tw restart}.
+     */
+    public void give(Player player, Location spawn, boolean onWater) {
+        var hold = addon.getBoatService().createFor(player, STARTER_BOAT);
+        // Coal straight into the fuel slots: the first island hop can be a
+        // warp instead of a long row
+        int coal = addon.getSettings().getStarterCoal();
+        if (coal > 0) {
+            addon.getHoldService().addFuel(player, Material.COAL, coal);
+        }
+        if (onWater) {
+            addon.getBoatService().launch(player, spawn, hold);
+        } else {
+            addon.getBoatService().giveBoatItem(player, hold);
+        }
+        addon.getPlugin().getVault()
+                .ifPresent(vault -> vault.deposit(User.getInstance(player),
+                        addon.getSettings().getStartingBalance()));
+        User.getInstance(player).sendMessage("tradewinds.starter-kit.given");
+    }
+
+    /**
+     * Remove one boat item the player OWNS from the inventory - the hold
+     * record's boat, so a stray vanilla boat is never mistaken for theirs.
+     *
      * @return the removed boat material, or null if none carried
      */
     private Material consumeBoatItem(Player player) {
-        Material found = null;
-        for (boolean allowChest : new boolean[] { false, true }) {
-            for (ItemStack stack : player.getInventory().getContents()) {
-                if (stack != null && stack.getType().name().endsWith("_BOAT")
-                        && (allowChest || !stack.getType().name().contains("CHEST"))) {
-                    found = stack.getType();
-                    stack.setAmount(stack.getAmount() - 1);
-                    return found;
-                }
+        Material owned = addon.getHoldService().boat(player);
+        if (owned == null) {
+            return null;
+        }
+        for (ItemStack stack : player.getInventory().getContents()) {
+            if (stack != null && stack.getType() == owned) {
+                stack.setAmount(stack.getAmount() - 1);
+                return owned;
             }
         }
         return null;

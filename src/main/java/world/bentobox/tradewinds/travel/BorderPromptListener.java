@@ -14,6 +14,7 @@ import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.vehicle.VehicleMoveEvent;
 
 import world.bentobox.tradewinds.TradeWinds;
+import world.bentobox.tradewinds.api.events.TWWarpCompletedEvent;
 import world.bentobox.tradewinds.galaxy.GalaxyEngine;
 import world.bentobox.tradewinds.galaxy.IslandSpec;
 
@@ -33,6 +34,18 @@ public class BorderPromptListener implements Listener {
 
     public BorderPromptListener(TradeWinds addon) {
         this.addon = addon;
+    }
+
+    /**
+     * A warp arrival lands at the island's border - on or near the offer ring,
+     * where the first oar stroke would cross it. Seed the cooldown so the
+     * dialog the sailor just warped through does not immediately reopen at the
+     * destination.
+     */
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onWarpCompleted(TWWarpCompletedEvent event) {
+        lastPrompt.put(event.getPlayer().getUniqueId(),
+                event.getTo().cellX() + "," + event.getTo().cellZ() + "@" + System.currentTimeMillis() / 1000);
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)

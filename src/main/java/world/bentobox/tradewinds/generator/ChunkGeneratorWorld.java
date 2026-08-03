@@ -416,7 +416,7 @@ public class ChunkGeneratorWorld extends ChunkGenerator {
         if (decorator == null) {
             decorator = new IslandDecorator(addon);
         }
-        return List.of(decorator);
+        return List.of(decorator, new IsletDecorator(addon));
     }
 
     @Override

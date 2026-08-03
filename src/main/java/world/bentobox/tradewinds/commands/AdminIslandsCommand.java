@@ -59,6 +59,7 @@ public class AdminIslandsCommand extends CompositeCommand {
                     "[index]", String.valueOf(i + 1),
                     TextVariables.NAME, s.name(),
                     "[type]", s.type().name(),
+                    "[tech]", String.valueOf(s.techLevel()),
                     "[band]", s.band().getDisplayName(),
                     "[x]", String.valueOf(s.centerX()),
                     "[z]", String.valueOf(s.centerZ()),

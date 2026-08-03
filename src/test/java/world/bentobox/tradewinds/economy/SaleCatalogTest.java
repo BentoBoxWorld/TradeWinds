@@ -79,13 +79,24 @@ class SaleCatalogTest extends CommonTestSetup {
     }
 
     @Test
-    void testShipwrightSellsHulls() {
-        // Boats purchasable everywhere - lose your boat, buy your way afloat
-        assertTrue(service.shipwrightCatalog().contains(Material.OAK_BOAT));
-        assertTrue(service.shipwrightCatalog().contains(Material.OAK_CHEST_BOAT));
-        // Priced (explicit base prices - above raw plank cost)
-        assertTrue(service.basePrice(Material.OAK_BOAT).orElse(0.0) >= 20.0);
-        assertTrue(service.basePrice(Material.OAK_CHEST_BOAT).orElse(0.0) > service.basePrice(Material.OAK_BOAT).orElse(0.0));
+    void testBoatLadderShop() {
+        world.bentobox.tradewinds.travel.BoatRanks ranks = new world.bentobox.tradewinds.travel.BoatRanks(addon);
+        // The full ladder: 20 rungs, bamboo raft to pale oak chest boat
+        var ladder = ranks.ladder();
+        assertTrue(ladder.size() == 20, "Ladder has " + ladder.size() + " rungs");
+        assertTrue(ladder.get(0).material() == Material.BAMBOO_RAFT && ladder.get(0).slots() == 2);
+        assertTrue(ladder.get(19).material() == Material.PALE_OAK_CHEST_BOAT && ladder.get(19).slots() == 21);
+        // Quadratic prices, in whole coins: raft 1000, top boat 110250
+        assertTrue(ranks.price(ladder.get(0)) == 1000.0);
+        assertTrue(ranks.price(ladder.get(19)) == 110250.0);
+        // Shops list bigger-only, tech-gated: TL1 sells ranks 1-3 only
+        var tl1 = ranks.shopListing(null, 1);
+        assertTrue(tl1.size() == 3 && tl1.get(2).material() == Material.SPRUCE_BOAT);
+        // With a spruce boat at TL1 there is nothing left to buy
+        assertTrue(ranks.shopListing(Material.SPRUCE_BOAT, 1).isEmpty());
+        // TL7 sells everything bigger than yours
+        assertTrue(ranks.shopListing(Material.CHERRY_CHEST_BOAT, 7).size() == 1);
+        assertTrue(ranks.shopListing(Material.PALE_OAK_CHEST_BOAT, 7).isEmpty(), "Top of the tree");
     }
 
     @Test

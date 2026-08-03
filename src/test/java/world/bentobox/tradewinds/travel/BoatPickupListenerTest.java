@@ -23,6 +23,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import world.bentobox.tradewinds.CommonTestSetup;
+import world.bentobox.tradewinds.TestHolds;
 import world.bentobox.tradewinds.TradeWinds;
 
 /**
@@ -43,6 +44,8 @@ class BoatPickupListenerTest extends CommonTestSetup {
         super.setUp();
         addon = mock(TradeWinds.class);
         when(addon.getOverWorld()).thenReturn(world);
+        TestHolds.install(addon);
+        when(addon.getBoatService()).thenReturn(new BoatService(addon));
         listener = new BoatPickupListener(addon);
         inventory = mock(PlayerInventory.class);
         when(inventory.addItem(any(ItemStack.class))).thenReturn(new HashMap<>());
@@ -72,17 +75,17 @@ class BoatPickupListenerTest extends CommonTestSetup {
     }
 
     @Test
-    void testChestBoatCargoComesAlong() {
+    void testChestBoatTakesOnlyItsHull() {
+        // The cargo is the RECORD's now, not the chest boat's real inventory,
+        // so a teleport carries the hull alone - and the hull carries the id
         ChestBoat boat = (ChestBoat) boat(ChestBoat.class);
         when(boat.getType()).thenReturn(org.bukkit.entity.EntityType.OAK_CHEST_BOAT);
         Inventory cargo = mock(Inventory.class);
-        when(cargo.getContents()).thenReturn(new ItemStack[] { new ItemStack(Material.COAL, 8), null });
         when(boat.getInventory()).thenReturn(cargo);
         listener.onTeleport(teleport());
         verify(boat).remove();
-        verify(cargo).clear();
-        // Hull + one cargo stack
-        verify(inventory, org.mockito.Mockito.times(2)).addItem(any(ItemStack.class));
+        verify(cargo, never()).clear();
+        verify(inventory, org.mockito.Mockito.times(1)).addItem(any(ItemStack.class));
     }
 
     @Test

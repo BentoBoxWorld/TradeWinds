@@ -22,6 +22,20 @@ public class TWPlayerData implements DataObject {
     private String uniqueId;
 
     /**
+     * The boat that IS this player's hold (a {@link BoatHold} id), or "" if
+     * they have none. One boat, always.
+     */
+    @Expose
+    private String activeBoat = "";
+
+    /**
+     * The boat they abandoned by boarding another: unowned, capturable, and
+     * remembered only so the chart can point them back to it. Exactly one.
+     */
+    @Expose
+    private String oldBoat = "";
+
+    /**
      * Charted island cell keys ("cellX,cellZ"). Only charted islands appear in
      * the warp dialog.
      */
@@ -33,12 +47,6 @@ public class TWPlayerData implements DataObject {
      */
     @Expose
     private boolean starterKitGiven;
-
-    /**
-     * Cargo expanders bought so far - drives the doubling price and the cap.
-     */
-    @Expose
-    private int expandersPurchased;
 
     /**
      * Career restarts consumed (/tw restart).
@@ -120,12 +128,20 @@ public class TWPlayerData implements DataObject {
         this.uniqueId = uniqueId;
     }
 
-    public int getExpandersPurchased() {
-        return expandersPurchased;
+    public String getActiveBoat() {
+        return activeBoat;
     }
 
-    public void setExpandersPurchased(int expandersPurchased) {
-        this.expandersPurchased = expandersPurchased;
+    public void setActiveBoat(String activeBoat) {
+        this.activeBoat = activeBoat == null ? "" : activeBoat;
+    }
+
+    public String getOldBoat() {
+        return oldBoat;
+    }
+
+    public void setOldBoat(String oldBoat) {
+        this.oldBoat = oldBoat == null ? "" : oldBoat;
     }
 
     public long getLastCharity() {
