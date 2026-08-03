@@ -17,7 +17,15 @@ Deploy for in-game testing: `./scripts/deploy.sh` (builds, then installs to
 refuses to. The plugin classloader reads classes lazily from the jar, so
 replacing it invalidates the handle and any not-yet-loaded class throws
 `NoClassDefFoundError`. When that lands inside chunk generation, Paper calls it
-an unrecoverable chunk system failure and stops the server.
+an unrecoverable chunk system failure and stops the server. The script has a
+second guard: it also refuses while `latest.log` has been written in the last
+minute, so a just-stopped server needs about a minute's wait - wait it out
+rather than bypass it.
+
+After any change to the hold, boat or galaxy model, the test server needs a
+**clean slate**: delete the `tradewinds_world*` folders and the `BoatHold`,
+`TWPlayerData`, `TWIslandData` database folders. Stale records from a previous
+model are indistinguishable from bugs. Say so when handing a build over.
 
 ## Project
 
@@ -32,12 +40,37 @@ right tier, not to the end; `docs/TESTING-archive.md` is the old per-stage list,
 history only. Update PROGRESS and TESTING as features land.
 
 Load-bearing design rules (from the spec — breaking one is a bug):
-trading transacts only against the **virtual hold** (DB-backed, sized by the
-player's ONE boat — see `tradewinds-hold-plan.md`, normative); cargo leaves the
-hold only by sale or destruction; everything downstream of the galaxy seed is a
-pure function of (seed, position) with **no Bukkit imports** (package
+trading transacts only against the **virtual hold**; cargo leaves the hold only
+by sale or destruction; everything downstream of the galaxy seed is a pure
+function of (seed, position) with **no Bukkit imports** (package
 `world.bentobox.tradewinds.galaxy`), unit-tested headlessly; no End world ever;
 interstice re-engage is always free; police mobs never drop loot.
+
+## The boat/hold model (read before touching cargo or boats)
+
+`tradewinds-hold-plan.md` is **normative** here — it wins over the spec on
+hold and boat mechanics.
+
+- **The hold belongs to the BOAT, not the player.** One `BoatHold` record
+  (material, cargo, fuel, expanders, owner, last-seen position, item TTL) is
+  identified by a PDC id (`tradewinds:boat-id`) stamped on **both** the boat
+  entity and its item form. `TWPlayerData` only points at `activeBoat` and
+  `oldBoat`. Cargo therefore exists exactly once, however the avatar travels.
+- **Any new route that produces a boat must stamp it** (`BoatService.stamp`).
+  An unstamped hull has no lore and can never open its hold. This has bitten
+  three times: vanilla placement (`EntityPlaceEvent`), teleport pickup, and
+  crafting (the item lands on the **cursor**, not in a slot). `HoldGui`
+  self-heals one narrow case; do not rely on it.
+- **Match boats by identity, never by material.** Two oak boats are not the
+  same boat.
+- **Losing a boat is not abandoning one.** `HoldManager.setActiveBoat` demotes
+  the previous boat to an unowned OLD BOAT; `clearActiveBoat` just drops the
+  pointer. Taking a boat also strips its former owner — miss that and the
+  victim keeps phantom slots and the login path hands the boat back.
+- **Money is whole coins.** Buy prices `ceil`, sell prices `floor` — the
+  direction stops the spread closing (nearest-rounding is exploitable). Never
+  format money by hand: `economy.Money.format(addon, amount)` asks the server's
+  Vault economy.
 
 ## Environment (verified — do not "upgrade" blindly)
 
@@ -65,6 +98,24 @@ Force-init `org.bukkit.Tag.LEAVES` before static-mocking Bukkit (stale-mock
 trap). Tests extend `world.bentobox.tradewinds.CommonTestSetup` (adapted from
 Gusher/AOneBlock). Never leave stale files in `target/test-classes` when
 renaming resources.
+
+More traps, each of which cost a playtest:
+- **`ItemStack` meta does not work** under this setup (the item factory is a
+  bare mock, so `getItemMeta()` returns null). To test PDC behaviour, mock the
+  ItemStack with a mocked `ItemMeta` and `PersistentDataContainer`.
+- **Do not test against a hand-written stand-in for a manager.** `TestHolds`
+  drives the REAL `HoldManager` over an in-memory `Database` (see
+  `dataobjects/TestHoldManager`); an earlier fake "passed" rules the production
+  code did not implement, and five bugs shipped.
+- The inherited `world` field in `CommonTestSetup` **shadows the `world.`
+  package root**, so fully-qualified `world.bentobox...` references fail to
+  compile inside those tests. Import the simple names.
+- `PlayerInteractEvent` at AIR is *born cancelled*: never pair
+  `ignoreCancelled = true` with RIGHT_CLICK_AIR handling. Check
+  `useItemInHand() == DENY` instead.
+- Bare `yes`/`no`/`on`/`off` are YAML 1.1 **booleans** — never use them as
+  locale keys. `ResourceYamlTest` fails the build on duplicate keys, because
+  Bukkit only warns and then silently drops one.
 
 ## Reference repos (all local)
 
