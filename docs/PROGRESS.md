@@ -3,6 +3,23 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## Known 26.2 quirk: clocks spin in every plugin world (2026-08-03)
+
+Not ours. Clocks spin (Nether-style) in the TradeWinds world AND in BSkyBlock's
+world on the same server; they tick correctly in the main `world`. Paper 26.2
+moved API-created worlds into real custom dimensions
+(`world/dimensions/minecraft/<name>`, via `WorldFolderMigration`), and the
+client no longer treats them as "natural" for the clock dial - even though
+CraftServer's createWorld still selects the vanilla overworld stem
+(`natural=true`; verified in the decompiled 26.2 jar). Multiverse records,
+gamerules and our createWorlds (stock AcidIsland pattern) are all clean.
+
+Upstream Paper issue - do not burn time re-investigating from the addon side.
+Diagnostic to pin which side broke, if ever needed: a compass spinning + beds
+refusing spawn in a plugin world means the dimension registered natural=false
+(server bug); compass and beds fine means the clock's client logic changed
+(client bug - the likely one, or bed complaints would predate us).
+
 ## The logbook is parked behind a flag (2026-08-03)
 
 Ben's call after playtest: the price logbook and harbour reports are not
