@@ -83,6 +83,13 @@ Each stage produces a testable, playable increment. Stages are sized so a stage 
 
 **Accept:** purchased islands appear in open ocean, never overlapping any range; AcidIsland-equivalent island life works.
 
+## Stage 7.5 — Salvage economy & free trading
+Scavengers, farmers and pirates need a market; the hold needs to carry NBT and
+work in both directions. Planned in full in **`tradewinds-salvage-plan.md`**
+(normative): trader's purse (value-weighted drift) → price coverage + salvage
+bucket → tech gating → NBT hold → two-way hold → price discovery (depth at the
+counter, chart logbook, market reports) → resale shelves.
+
 ## Stage 8 — Post-MVP backlog (seeded, unscheduled)
 - Player market stalls rentable on NPC islands (goods enter that island's trade pool; rent as money sink).
 - Chart data as a purchasable good; wanted-player "last seen" intel for bounty hunters.

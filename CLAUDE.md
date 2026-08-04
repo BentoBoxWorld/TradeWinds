@@ -49,7 +49,10 @@ interstice re-engage is always free; police mobs never drop loot.
 ## The boat/hold model (read before touching cargo or boats)
 
 `tradewinds-hold-plan.md` is **normative** here — it wins over the spec on
-hold and boat mechanics.
+hold and boat mechanics. `tradewinds-salvage-plan.md` is normative for the
+salvage economy, the NBT-aware hold and price discovery — read it before
+touching pricing, drift or hold contents, because it deliberately narrows the
+one-way-cargo rule below to trader-bought cargo only.
 
 - **The hold belongs to the BOAT, not the player.** One `BoatHold` record
   (material, cargo, fuel, expanders, owner, last-seen position, item TTL) is

@@ -52,6 +52,7 @@ Lose yours and the chart remembers where you left it.
 |---|---|
 | [`TRADEWINDS_SPEC.md`](TRADEWINDS_SPEC.md) | The authoritative spec — read first |
 | [`tradewinds-hold-plan.md`](tradewinds-hold-plan.md) | Normative detail for the hold, boats and capture rules |
+| [`tradewinds-salvage-plan.md`](tradewinds-salvage-plan.md) | Normative plan for the salvage economy, NBT hold and price discovery |
 | [`tradewinds-design-decisions.md`](tradewinds-design-decisions.md) | What was decided, why, and what is still open |
 | [`tradewinds-dev-plan.md`](tradewinds-dev-plan.md) | The stage plan |
 | [`tradewinds-overview.md`](tradewinds-overview.md) | The short pitch, for server admins |
