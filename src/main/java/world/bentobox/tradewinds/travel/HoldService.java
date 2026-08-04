@@ -314,7 +314,20 @@ public class HoldService {
      * @return how many moved
      */
     public int moveCargoToFuel(Player player, Material material, int amount) {
-        if (addon.getFuelService().fuelValue(material) <= 0 || amount <= 0) {
+        return moveCargoToFuel(player, new ItemStack(material), amount);
+    }
+
+    /**
+     * As {@link #moveCargoToFuel(Player, Material, int)} but matching the exact
+     * stack. This matters for trader-bought fuel: the purchase mark makes a
+     * bought coal fail {@code isSimilar} against a plain one, so matching by
+     * bare material silently moved nothing - which is how "I bought coal for
+     * fuel and cannot fuel with it" happened (playtest 2026-08-03). The mark
+     * evaporates in the tank: fuel is material-keyed because fuel is fungible,
+     * and fuel is explicitly exempt from the one-way rule.
+     */
+    public int moveCargoToFuel(Player player, ItemStack like, int amount) {
+        if (like == null || addon.getFuelService().fuelValue(like.getType()) <= 0 || amount <= 0) {
             return 0;
         }
         UUID playerId = player.getUniqueId();
@@ -322,15 +335,15 @@ public class HoldService {
         if (hold.isEmpty()) {
             return 0;
         }
-        int fit = Math.min(amount, fuelCapacityFor(playerId, material));
+        int fit = Math.min(amount, fuelCapacityFor(playerId, like.getType()));
         if (fit <= 0) {
             return 0;
         }
-        int taken = remove(player, new ItemStack(material), fit);
+        int taken = remove(player, like, fit);
         if (taken <= 0) {
             return 0;
         }
-        hold.get().getFuel().merge(material.name(), taken, Integer::sum);
+        hold.get().getFuel().merge(like.getType().name(), taken, Integer::sum);
         addon.getHoldManager().save(hold.get());
         return taken;
     }

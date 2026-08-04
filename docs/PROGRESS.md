@@ -3,6 +3,31 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## Fuel by mouse, and the marked-coal bug (2026-08-03)
+
+**Bought coal could not be fuelled.** The purchase mark makes a bought stack
+fail `isSimilar` against a plain one, and `moveCargoToFuel` matched with
+`new ItemStack(material)` - so the transfer silently moved nothing, and the
+withdraw path answered with the one-way message instead. Fixed with a stack-
+matching overload; the mark evaporates in the tank (fuel is material-keyed and
+explicitly exempt from the one-way rule). Regression-tested.
+
+**The hold window now moves cargo with ordinary mouse gestures.** Left-click
+picks a stack up onto the cursor; drop it on the fuel row to fuel it (right-
+click feeds one at a time, like a furnace), drop it in your own inventory to
+take it ashore (refused for trader-bought cargo), drop it anywhere else in the
+window to put it back. Shift-click keeps the quick route (fuel to the tank,
+anything else ashore); right-click still selects for the TNT.
+
+**The safety property that makes this simple:** the pickup is *cosmetic*.
+Nothing leaves the database until the drop lands somewhere meaningful, so a
+window closed - or a session dropped - with a full cursor loses nothing. The
+three places the cursor copy could have become real are each guarded: every
+click in the window is already cancelled; drags are refused entirely while the
+cursor carries cargo (a drag over the player's own slots would deposit the
+copy); and on close the cursor is cleared before the server can hand the copy
+to the player. Render hides the held amount so the stack never shows twice.
+
 ## Money formats itself (2026-08-03)
 
 "Coal x1 - $27.00 Dollars": the server economy's `format()` put the cents back

@@ -98,8 +98,15 @@ noise.
       sale or by the TNT. Selling it still works.
 - [ ] **Bought and mined goods do not merge.** Buy 5 diamonds and mine 20: they
       occupy separate slots, and only the mined 20 can be withdrawn.
-- [ ] Hold gestures: left-click withdraws, shift-click sends coal to the fuel
-      row, right-click selects for the TNT.
+- [ ] **Fuel moves by mouse.** Pick up coal in the hold window (left-click),
+      drop it on the fuel row: it fuels. Right-click on the fuel row feeds one
+      lump at a time. Works with coal BOUGHT at a market, not just mined coal.
+- [ ] **The cursor cannot dupe.** Pick up a stack and press Escape: the window
+      closes, nothing lands in your inventory, and the cargo is still in the
+      hold. Try dragging the held stack across your own inventory: refused.
+- [ ] Hold gestures: left-click picks up, drop on fuel row fuels, drop in your
+      inventory takes ashore (bought cargo refused), drop elsewhere puts back;
+      shift-click is the quick route; right-click selects for the TNT.
 - [ ] **Boat capacity matches the ladder.** An oak boat's hold says **3 slots**,
       a bamboo raft 2, a pale oak chest boat 21. If any reads a multiple of ten,
       `config.yml` has drifted from the code defaults - `ConfigAgreementTest`

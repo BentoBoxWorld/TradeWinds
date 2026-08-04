@@ -85,11 +85,20 @@ public class HoldGui implements Listener {
     private record Nested(Inventory inventory, int index) {
     }
 
+    /**
+     * A cargo stack "on the cursor". The pickup is cosmetic - nothing leaves
+     * the database until the stack is dropped somewhere that means something -
+     * so closing the window with a full cursor loses nothing.
+     */
+    private record Held(ItemStack item, int amount) {
+    }
+
     private final TradeWinds addon;
     private final Map<UUID, Inventory> open = new HashMap<>();
     private final Map<UUID, Selection> selected = new HashMap<>();
     private final Map<UUID, Nested> nested = new HashMap<>();
     private final Map<UUID, Selection> nestedSelected = new HashMap<>();
+    private final Map<UUID, Held> held = new HashMap<>();
 
     public HoldGui(TradeWinds addon) {
         this.addon = addon;
@@ -130,8 +139,9 @@ public class HoldGui implements Listener {
             inv.setItem(slot, border);
         }
         inv.setItem(TNT_SLOT, tnt(user));
-        // Cargo: consolidated stacks, then installed expanders, then space
-        List<ItemStack> stacks = hold.cargo(id);
+        // Cargo: consolidated stacks, then installed expanders, then space.
+        // A stack riding the cursor is hidden here, or it would show twice.
+        List<ItemStack> stacks = displayCargo(id);
         int expanders = hold.expanderCount(id);
         int capacity = hold.capacitySlots(player);
         for (int i = 0; i < CARGO.length; i++) {
@@ -188,6 +198,29 @@ public class HoldGui implements Listener {
         meta.lore(List.of(user.getTranslationAsComponent(loreKey, new String[0])));
         item.setItemMeta(meta);
         return item;
+    }
+
+    /**
+     * The cargo stacks as the window should draw them: the database's, minus
+     * whatever is currently riding the cursor. Copies - the database's own
+     * stacks must never be mutated for display.
+     */
+    private List<ItemStack> displayCargo(UUID id) {
+        Held holding = held.get(id);
+        List<ItemStack> out = new ArrayList<>();
+        int hide = holding == null ? 0 : holding.amount();
+        for (ItemStack stack : addon.getHoldService().cargo(id)) {
+            int amount = stack.getAmount();
+            if (hide > 0 && CargoStore.stacksTogether(stack, holding.item())) {
+                int hidden = Math.min(hide, amount);
+                amount -= hidden;
+                hide -= hidden;
+            }
+            if (amount > 0) {
+                out.add(CargoStore.copyOf(stack, amount));
+            }
+        }
+        return out;
     }
 
     /**
@@ -294,7 +327,10 @@ public class HoldGui implements Listener {
         if (top.equals(open.get(id))) {
             event.setCancelled(true);
             Inventory clicked = event.getClickedInventory();
-            if (clicked != null && clicked != top) {
+            Held holding = held.get(id);
+            if (holding != null) {
+                heldClick(player, clicked, top, event.getSlot(), event.getClick(), holding);
+            } else if (clicked != null && clicked != top) {
                 deposit(player, event.getCurrentItem());
             } else if (clicked == top) {
                 topClick(player, event.getSlot(), event.getCurrentItem(), event.getClick());
@@ -455,19 +491,125 @@ public class HoldGui implements Listener {
             Bukkit.getScheduler().runTask(addon.getPlugin(), () -> openNested(player, expander));
             return;
         }
-        // Right-click selects for the TNT; shift-click sends burnable cargo to
-        // the fuel row; a plain left-click takes the goods back out
+        // Right-click selects for the TNT; shift-click is the quick path (fuel
+        // to the tank, anything else ashore); a plain left-click picks the
+        // stack UP, to be dropped where it should go - the fuel row, back into
+        // the hold, or your inventory - with ordinary mouse movement.
         if (click == ClickType.RIGHT) {
             selected.put(id, new Selection(shown, shown.getAmount(), -1));
             user.sendMessage("tradewinds.hold.selected", "[amount]", String.valueOf(shown.getAmount()),
                     "[material]", world.bentobox.tradewinds.economy.PriceEngine.prettify(shown.getType().name()));
             return;
         }
-        if (click.isShiftClick() && addon.getFuelService().fuelValue(shown.getType()) > 0) {
-            moveCargoFuel(player, shown);
+        if (click.isShiftClick()) {
+            if (addon.getFuelService().fuelValue(shown.getType()) > 0) {
+                moveCargoFuel(player, shown);
+            } else {
+                withdrawCargo(player, shown);
+            }
             return;
         }
-        withdrawCargo(player, shown);
+        held.put(id, new Held(shown, shown.getAmount()));
+        cursor(player, CargoStore.copyOf(shown, shown.getAmount()));
+    }
+
+    /**
+     * A click while a cargo stack rides the cursor. Vanilla semantics as far as
+     * they translate: drop on the fuel row to fuel it (right-click feeds one at
+     * a time), drop in your own inventory to take it ashore (refused for
+     * trader-bought cargo), anywhere else in the window puts it back.
+     */
+    private void heldClick(Player player, Inventory clicked, Inventory top, int slot, ClickType click,
+            Held holding) {
+        UUID id = player.getUniqueId();
+        User user = User.getInstance(player);
+        if (clicked == top) {
+            if (isFuelSlot(slot)) {
+                placeFuel(player, holding, click == ClickType.RIGHT ? 1 : holding.amount());
+                return;
+            }
+            putBack(player);
+            return;
+        }
+        if (clicked == null) {
+            // Clicked outside the window entirely: put it back, never overboard
+            putBack(player);
+            return;
+        }
+        // Dropped in the player's own inventory: take it ashore
+        int taken = addon.getHoldService().withdraw(player, holding.item(), holding.amount());
+        if (taken < 0) {
+            user.sendMessage("tradewinds.hold.bought-cargo-locked");
+            thud(player);
+            putBack(player);
+            return;
+        }
+        if (taken == 0) {
+            user.sendMessage("tradewinds.hold.withdraw-failed");
+            thud(player);
+            putBack(player);
+            return;
+        }
+        user.sendMessage("tradewinds.hold.withdrawn", "[amount]", String.valueOf(taken), "[material]",
+                world.bentobox.tradewinds.economy.PriceEngine.prettify(holding.item().getType().name()));
+        chime(player);
+        clearHeld(player);
+    }
+
+    /**
+     * Feed the tank from the cursor. Whatever does not fit stays on the cursor,
+     * exactly as a furnace refuses what its fuel slot cannot take.
+     */
+    private void placeFuel(Player player, Held holding, int amount) {
+        UUID id = player.getUniqueId();
+        User user = User.getInstance(player);
+        if (addon.getFuelService().fuelValue(holding.item().getType()) <= 0) {
+            user.sendMessage("tradewinds.hold.fuel-only");
+            thud(player);
+            return;
+        }
+        int moved = addon.getHoldService().moveCargoToFuel(player, holding.item(),
+                Math.min(amount, holding.amount()));
+        if (moved <= 0) {
+            user.sendMessage("tradewinds.hold.fuel-full");
+            thud(player);
+            return;
+        }
+        chime(player);
+        int left = holding.amount() - moved;
+        if (left <= 0) {
+            clearHeld(player);
+        } else {
+            held.put(id, new Held(holding.item(), left));
+            cursor(player, CargoStore.copyOf(holding.item(), left));
+        }
+    }
+
+    private void putBack(Player player) {
+        // The pickup never touched the database, so putting back is forgetting
+        clearHeld(player);
+    }
+
+    private void clearHeld(Player player) {
+        held.remove(player.getUniqueId());
+        cursor(player, null);
+    }
+
+    /**
+     * Show (or clear) the cursor stack. A tick later, because the server
+     * restates the cursor after a cancelled click and would wipe it.
+     */
+    private void cursor(Player player, ItemStack item) {
+        Bukkit.getScheduler().runTask(addon.getPlugin(), () -> player.setItemOnCursor(item));
+    }
+
+    private static boolean isFuelSlot(int slot) {
+        for (int fuelSlot : FUEL) {
+            if (fuelSlot == slot) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -586,8 +728,12 @@ public class HoldGui implements Listener {
         Nested nestedView = nested.get(id);
         boolean ours = top.equals(open.get(id))
                 || (nestedView != null && top.equals(nestedView.inventory()));
-        // Any drag touching a hold window is refused - deposits are clicks
-        if (ours && event.getRawSlots().stream().anyMatch(raw -> raw < top.getSize())) {
+        // Any drag touching a hold window is refused - deposits are clicks.
+        // While cargo rides the cursor, ALL drags are refused: a drag over the
+        // player's own slots would deposit the cursor copy for real, which is
+        // duplication.
+        if (ours && (held.containsKey(id)
+                || event.getRawSlots().stream().anyMatch(raw -> raw < top.getSize()))) {
             event.setCancelled(true);
         }
     }
@@ -605,6 +751,12 @@ public class HoldGui implements Listener {
         if (closing.equals(open.get(id))) {
             open.remove(id);
             selected.remove(id);
+            // A stack still on the cursor was never taken out of the database,
+            // so clearing the cursor loses nothing - but NOT clearing it would
+            // let the server hand the copy to the player, which duplicates it
+            if (held.remove(id) != null && event.getPlayer() instanceof Player p) {
+                p.setItemOnCursor(null);
+            }
             // The carried boat item's lore shows cargo/fuel: keep it true
             if (event.getPlayer() instanceof Player player) {
                 addon.getHoldService().active(id)

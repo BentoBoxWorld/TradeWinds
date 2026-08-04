@@ -128,6 +128,33 @@ class HoldServiceTest extends CommonTestSetup {
     }
 
     @Test
+    void testBoughtFuelStillFuels() {
+        // "I bought coal for fuel, but I cannot take it out of the hold"
+        // (playtest 2026-08-03): the purchase mark made bought coal fail
+        // isSimilar against the plain stack the fuel path matched with, so the
+        // transfer silently moved nothing. Fuel is exempt from the one-way rule.
+        holds.giveBoat(uuid, Material.OAK_BOAT);
+        ItemStack boughtCoal = markedStack(Material.COAL);
+        assertEquals(16, service.add(mockPlayer, boughtCoal, 16));
+        assertEquals(16, service.moveCargoToFuel(mockPlayer, boughtCoal, 16),
+                "Bought coal must reach the tank");
+        assertEquals(0, service.count(mockPlayer, boughtCoal), "and leave the cargo slots");
+        // The tank is material-keyed - the mark evaporates - so it comes back
+        // out freely, like any fuel
+        assertEquals(16, service.removeFuel(uuid, Material.COAL, 16));
+    }
+
+    @Test
+    void testPartialFuelTransferLeavesTheRestAboard() {
+        holds.giveBoat(uuid, Material.OAK_BOAT);
+        ItemStack coal = markedStack(Material.COAL);
+        assertEquals(16, service.add(mockPlayer, coal, 16));
+        // One lump at a time - the right-click gesture
+        assertEquals(1, service.moveCargoToFuel(mockPlayer, coal, 1));
+        assertEquals(15, service.count(mockPlayer, coal));
+    }
+
+    @Test
     void testNoBoatNoHold() {
         holds.clearBoat(uuid);
         assertNull(service.boat(mockPlayer));
