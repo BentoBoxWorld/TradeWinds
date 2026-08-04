@@ -720,6 +720,36 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "economy.base-prices")
     private Map<String, Double> basePrices = defaultBasePrices();
 
+    /**
+     * Coerce a config-loaded number map to actual Doubles.
+     * <p>
+     * BentoBox's YAML deserializer promotes Integer to Long but <b>not</b> to
+     * Double, so a config value written as {@code 20} rather than {@code 20.0}
+     * arrives as an Integer inside a {@code Map<String, Double>} - generics are
+     * erased, so nothing complains until the first read throws
+     * ClassCastException. An admin editing prices by hand will write {@code 20}
+     * every time, so this cannot be left to the config file being tidy.
+     * <p>
+     * The wildcard parameter type is load-bearing: declaring it
+     * {@code Map<String, Double>} would make the compiler insert the very cast
+     * that blows up.
+     *
+     * @param raw the map as the config loader left it
+     * @return a map whose values really are Doubles
+     */
+    private static Map<String, Double> asDoubles(Map<String, ?> raw) {
+        Map<String, Double> clean = new HashMap<>();
+        if (raw == null) {
+            return clean;
+        }
+        raw.forEach((key, value) -> {
+            if (value instanceof Number number) {
+                clean.put(key, number.doubleValue());
+            }
+        });
+        return clean;
+    }
+
     private static Map<String, Double> defaultBasePrices() {
         Map<String, Double> map = new HashMap<>();
         map.put("WHEAT", 20.0); map.put("CARROT", 15.0); map.put("POTATO", 15.0); map.put("BEETROOT", 15.0);
@@ -3012,9 +3042,9 @@ public class Settings implements WorldSettings {
     public double getFuelWarningMargin() { return fuelWarningMargin; }
     public void setFuelWarningMargin(double v) { this.fuelWarningMargin = v; }
     public Map<String, Double> getFuelValues() { return fuelValues; }
-    public void setFuelValues(Map<String, Double> fuelValues) { this.fuelValues = fuelValues; }
+    public void setFuelValues(Map<String, Double> fuelValues) { this.fuelValues = asDoubles(fuelValues); }
     public Map<String, Double> getEdgeOverrides() { return edgeOverrides; }
-    public void setEdgeOverrides(Map<String, Double> edgeOverrides) { this.edgeOverrides = edgeOverrides; }
+    public void setEdgeOverrides(Map<String, Double> edgeOverrides) { this.edgeOverrides = asDoubles(edgeOverrides); }
     public Map<String, Boolean> getBandMonsterSpawn() { return bandMonsterSpawn; }
     public void setBandMonsterSpawn(Map<String, Boolean> bandMonsterSpawn) { this.bandMonsterSpawn = bandMonsterSpawn; }
     public Map<String, Boolean> getBandPvp() { return bandPvp; }
@@ -3061,7 +3091,7 @@ public class Settings implements WorldSettings {
     public Map<String, Integer> getCrimePenalties() { return crimePenalties; }
     public void setCrimePenalties(Map<String, Integer> m) { this.crimePenalties = m; }
     public Map<String, Double> getCrimeBounties() { return crimeBounties; }
-    public void setCrimeBounties(Map<String, Double> m) { this.crimeBounties = m; }
+    public void setCrimeBounties(Map<String, Double> m) { this.crimeBounties = asDoubles(m); }
     public List<String> getPortDeniedFlags() { return portDeniedFlags; }
     public void setPortDeniedFlags(List<String> portDeniedFlags) { this.portDeniedFlags = portDeniedFlags; }
     public List<String> getPortAllowedFlags() { return portAllowedFlags; }
@@ -3167,7 +3197,7 @@ public class Settings implements WorldSettings {
     public double getSalvageDiscount() { return salvageDiscount; }
     public void setSalvageDiscount(double salvageDiscount) { this.salvageDiscount = salvageDiscount; }
     public Map<String, Double> getBasePrices() { return basePrices; }
-    public void setBasePrices(Map<String, Double> basePrices) { this.basePrices = basePrices; }
+    public void setBasePrices(Map<String, Double> basePrices) { this.basePrices = asDoubles(basePrices); }
     public double getIntersticeGhastChance() { return intersticeGhastChance; }
     public void setIntersticeGhastChance(double v) { this.intersticeGhastChance = v; }
     public double getIntersticeGhastDistance() { return intersticeGhastDistance; }

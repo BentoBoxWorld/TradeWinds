@@ -4,6 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.bukkit.Material;
 import org.bukkit.block.Biome;
 import org.junit.jupiter.api.BeforeEach;
@@ -110,6 +113,61 @@ class SettingsTest extends CommonTestSetup {
         }
         for (String name : settings.getFuelValues().keySet()) {
             assertTrue(Material.matchMaterial(name) != null, "Not a fuel material: " + name);
+        }
+    }
+
+    @Test
+    void testWholeNumberConfigPricesDoNotExplode() {
+        // The playtest crash of 2026-08-03: BentoBox's YAML deserializer promotes
+        // Integer to Long but NOT to Double, so a price written "20" instead of
+        // "20.0" arrives as an Integer inside a Map<String, Double>. Generics are
+        // erased, so nothing complains until the first read throws
+        // ClassCastException - at the trader, mid-dialog.
+        Map<String, Object> raw = new HashMap<>();
+        raw.put("WHEAT", 20);            // Integer, as YAML "20" gives
+        raw.put("DIAMOND", 1000L);       // Long, as BentoBox's Long promotion gives
+        raw.put("COAL", 40.0);           // already a Double
+        raw.put("BEDROCK", "nonsense");  // not a number at all
+        @SuppressWarnings({ "unchecked", "rawtypes" })
+        Map<String, Double> pretendDoubles = (Map) raw;
+        settings.setBasePrices(pretendDoubles);
+
+        // Reading these must not throw, and must give the right numbers
+        assertEquals(20.0, settings.getBasePrices().get("WHEAT"));
+        assertEquals(1000.0, settings.getBasePrices().get("DIAMOND"));
+        assertEquals(40.0, settings.getBasePrices().get("COAL"));
+        assertFalse(settings.getBasePrices().containsKey("BEDROCK"), "Junk values are dropped, not kept");
+        // And every value really is a Double now
+        settings.getBasePrices().values().forEach(value -> assertEquals(Double.class, value.getClass()));
+    }
+
+    @Test
+    void testEveryNumericMapSettingIsCoerced() {
+        // Same trap, same fix, for every Map<String, Double> the config carries
+        Map<String, Object> raw = new HashMap<>();
+        raw.put("COAL", 8);
+        @SuppressWarnings({ "unchecked", "rawtypes" })
+        Map<String, Double> ints = (Map) raw;
+        settings.setFuelValues(ints);
+        settings.setCrimeBounties(ints);
+        settings.setEdgeOverrides(ints);
+        assertEquals(8.0, settings.getFuelValues().get("COAL"));
+        assertEquals(8.0, settings.getCrimeBounties().get("COAL"));
+        assertEquals(8.0, settings.getEdgeOverrides().get("COAL"));
+    }
+
+    @Test
+    void testShippedConfigPricesAreWrittenAsDecimals() throws Exception {
+        // Belt and braces: the coercion above makes this cosmetic, but a config
+        // that reads "20.0" tells an admin the field is a decimal
+        var config = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(
+                new java.io.InputStreamReader(
+                        getClass().getClassLoader().getResourceAsStream("config.yml")));
+        var section = config.getConfigurationSection("economy.base-prices");
+        for (String key : section.getKeys(false)) {
+            assertTrue(section.get(key) instanceof Double,
+                    key + " is written as " + section.get(key).getClass().getSimpleName()
+                            + " - write it with a decimal point");
         }
     }
 
