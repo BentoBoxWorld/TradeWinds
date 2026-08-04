@@ -70,6 +70,15 @@ noise.
 - [ ] Warp: you and the boat arrive facing the **dock**; hold forward and you
       reach it.
 - [ ] Sell the cargo at the new island at a different price than you paid.
+- [ ] **Scavenged loot sells.** Kill a few mobs on an islet, load bones, string,
+      rotten flesh and gunpowder into the hold, and sell at any port: every one
+      of them has a price, visibly lower than a trade good of similar book value.
+- [ ] `/twadmin priceaudit` writes `price-audit.txt` to the addon folder. Read
+      the UNPRICEABLE list: anything a player could plausibly acquire and carry
+      wants a base price adding.
+- [ ] **Dumping junk does not move honest cargo.** Note a port's iron price, sell
+      it a boatload of dirt and rotten flesh, and check the iron price is
+      unchanged - salvage drifts in its own pool.
 - [ ] **Selling in saturates a port by value, not volume.** Sell ~7 diamonds (or
       12 emeralds) at one island: the unit price should fall to the floor and
       stop falling. Selling a few hundred wheat should move it about as much as

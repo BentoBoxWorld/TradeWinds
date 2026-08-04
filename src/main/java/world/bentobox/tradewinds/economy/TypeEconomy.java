@@ -93,4 +93,33 @@ public final class TypeEconomy {
     public static List<Material> catalog(IslandType type) {
         return produces(type).stream().flatMap(cat -> CATALOG.get(cat).stream()).toList();
     }
+
+    /**
+     * Every material that is a recognised trade good <i>somewhere</i> in the
+     * galaxy: the union of all type catalogs plus every outfitter shelf.
+     * Anything else a player turns up - mob drops, worn gear, odd blocks - is
+     * salvage, priced at a discount into its own stock pool.
+     * <p>
+     * Defining salvage by the shelves rather than by category leaves the
+     * existing trade economy completely untouched: an iron ingot is cargo
+     * everywhere it always was, while a rabbit's foot was never on anyone's
+     * manifest.
+     *
+     * @return the trade-good set, immutable
+     */
+    public static Set<Material> tradeGoods() {
+        return TRADE_GOODS;
+    }
+
+    private static final Set<Material> TRADE_GOODS = buildTradeGoods();
+
+    private static Set<Material> buildTradeGoods() {
+        Set<Material> goods = java.util.EnumSet.noneOf(Material.class);
+        CATALOG.values().forEach(goods::addAll);
+        OUTFITTER_EXTRAS.values().forEach(goods::addAll);
+        // The universal outfitter essentials, guaranteed at every port
+        goods.add(Material.BREAD);
+        goods.add(Material.CHARCOAL);
+        return java.util.Collections.unmodifiableSet(goods);
+    }
 }

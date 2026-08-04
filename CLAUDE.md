@@ -119,6 +119,13 @@ More traps, each of which cost a playtest:
 - Bare `yes`/`no`/`on`/`off` are YAML 1.1 **booleans** — never use them as
   locale keys. `ResourceYamlTest` fails the build on duplicate keys, because
   Bukkit only warns and then silently drops one.
+- **BentoBox REPLACES `Map` settings from `config.yml`, it does not merge them**
+  (`YamlDatabaseHandler.deserializeMap`). A partial map in the shipped config
+  silently overrides the whole code default — `economy.base-prices` shipped 27
+  of 112 entries, so ~50 goods were unsellable on every real server while the
+  unit tests, which read the code default, were perfectly happy. Any `@ConfigEntry`
+  map must be complete in `config.yml`; `SettingsTest` now fails the build if the
+  two drift.
 
 ## Reference repos (all local)
 

@@ -12,7 +12,21 @@ import org.bukkit.Material;
  * @author tastybento
  */
 public enum TradeCategory {
-    CROPS, FOOD, FISH, WOOD, STONE, ORES, METALS, GEMS, LUXURY, MISC;
+    CROPS, FOOD, FISH, WOOD, STONE, ORES, METALS, GEMS, LUXURY, MISC,
+
+    /**
+     * Not a recognised trade good anywhere in the galaxy - scavenged loot,
+     * worn gear, mob drops, odd blocks. No island type produces or demands it,
+     * so it gets neutral type affinity, its own stock pool, and a discount
+     * (see {@code economy.salvage-discount}).
+     * <p>
+     * A separate pool is the load-bearing part: without it, dumping a boatload
+     * of junk would crater the price of the same category's legitimate cargo
+     * for every honest trader at that port - a griefing vector on a small
+     * server. {@link #of(Material)} never returns this; salvage is decided by
+     * whether the material is on any island's shelves, not by its name.
+     */
+    SALVAGE;
 
     /**
      * Raw goods - what low-tech islands live on. High-tech ports pay over the
@@ -20,6 +34,13 @@ public enum TradeCategory {
      */
     public boolean isRaw() {
         return this == ORES || this == CROPS || this == WOOD || this == FISH || this == STONE;
+    }
+
+    /**
+     * Whether this is the salvage pool rather than a real trade category.
+     */
+    public boolean isSalvage() {
+        return this == SALVAGE;
     }
 
     /**

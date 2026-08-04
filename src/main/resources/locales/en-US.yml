@@ -42,6 +42,14 @@ tradewinds:
         parameters: "[number]"
         unknown: "<red>No island with that number - run /twadmin islands first.</red>"
         teleported: "<aqua>Arrived at [name].</aqua>"
+      priceaudit:
+        description: "audit price coverage: what can be sold, what is salvage, what is unsellable"
+        header: "<aqua>Price audit:</aqua>"
+        trade-goods: "<gray>Priced trade goods: </gray><white>[number]</white>"
+        salvage: "<gray>Priced salvage: </gray><white>[number]</white>"
+        unpriceable: "<gray>Unpriceable (carryable but unsellable): </gray><white>[number]</white>"
+        written: "<green>Full report written to </green><white>[file]</white>"
+        write-failed: "<red>Could not write the report - see the console.</red>"
       customs:
         description: "show what customs make of you here: contraband aboard, scan odds, patrol"
         header: "<aqua>Customs report:</aqua>"

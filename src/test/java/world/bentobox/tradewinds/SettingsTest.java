@@ -102,6 +102,37 @@ class SettingsTest extends CommonTestSetup {
     }
 
     @Test
+    void testEveryPricedMaterialIsReal() {
+        // A typo or a Minecraft rename (SCUTE -> TURTLE_SCUTE) would silently
+        // make a good unsellable rather than fail anything
+        for (String name : settings.getBasePrices().keySet()) {
+            assertTrue(Material.matchMaterial(name) != null, "Not a material: " + name);
+        }
+        for (String name : settings.getFuelValues().keySet()) {
+            assertTrue(Material.matchMaterial(name) != null, "Not a fuel material: " + name);
+        }
+    }
+
+    @Test
+    void testShippedConfigCarriesEveryPrice() throws Exception {
+        // BentoBox REPLACES map settings from config.yml instead of merging them
+        // (YamlDatabaseHandler.deserializeMap), so a price missing from the
+        // shipped config is a good that cannot be sold at all - it does not fall
+        // back to the built-in table. The shipped config was 27 of 112 entries,
+        // which is most of why scavenged goods looked untradeable.
+        var config = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(
+                new java.io.InputStreamReader(
+                        getClass().getClassLoader().getResourceAsStream("config.yml")));
+        var section = config.getConfigurationSection("economy.base-prices");
+        assertTrue(section != null, "config.yml has no economy.base-prices");
+        for (String name : settings.getBasePrices().keySet()) {
+            assertTrue(section.contains(name), "config.yml is missing a base price for " + name);
+        }
+        assertEquals(settings.getBasePrices().size(), section.getKeys(false).size(),
+                "config.yml and the code default table have drifted");
+    }
+
+    @Test
     void testGameplayGates() {
         assertTrue(settings.isIllegalTradeEnabled());
         assertEquals(0.01, settings.getFuelPerBlock());

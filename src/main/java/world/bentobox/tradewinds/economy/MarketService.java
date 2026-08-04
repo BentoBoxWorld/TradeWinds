@@ -207,22 +207,58 @@ public class MarketService {
         return Math.max(1.0, addon.getSettings().getContrabandPriceMultiplier());
     }
 
+    /**
+     * Whether a material is a recognised trade good somewhere in the galaxy.
+     * Everything else is salvage: still sellable, but at a discount and into a
+     * pool of its own.
+     *
+     * @param material the material
+     * @return true if any island type stocks it
+     */
+    public boolean isTradeGood(Material material) {
+        // Contraband is nobody's shelf stock but is emphatically not junk - it
+        // has the smuggler's premium instead
+        if (addon.getCustomsService() != null && addon.getCustomsService().isContraband(material)) {
+            return true;
+        }
+        return TypeEconomy.tradeGoods().contains(material);
+    }
+
+    /**
+     * Which stock pool a material's trade drifts against. Salvage has its own,
+     * so dumping junk cannot crater the legitimate cargo of the same category.
+     *
+     * @param material the material
+     * @return the pool
+     */
+    public TradeCategory driftPool(Material material) {
+        return isTradeGood(material) ? TradeCategory.of(material) : TradeCategory.SALVAGE;
+    }
+
     private double factor(IslandSpec spec, Material material) {
         TradeCategory category = TradeCategory.of(material);
         boolean contraband = addon.getCustomsService() != null
                 && addon.getCustomsService().isContraband(material);
+        boolean salvage = !isTradeGood(material);
         // A port that deals in contraband always wants it - it is not on
         // anybody's official produce list, and demand is what makes the band
-        // bonus apply, so the rougher the port the better it pays
-        boolean demands = contraband || TypeEconomy.demands(spec.type()).contains(category);
-        boolean produces = !contraband && TypeEconomy.produces(spec.type()).contains(category);
+        // bonus apply, so the rougher the port the better it pays.
+        // Salvage is on nobody's manifest either, but unlike contraband nobody
+        // is short of it: neutral affinity, no band bonus.
+        boolean demands = contraband || (!salvage && TypeEconomy.demands(spec.type()).contains(category));
+        boolean produces = !contraband && !salvage && TypeEconomy.produces(spec.type()).contains(category);
         double economic = model().economicFactor(produces, demands, spec.band().ordinal(),
-                addon.getIslandDataManager().getStockValue(spec, category));
+                addon.getIslandDataManager().getStockValue(spec, driftPool(material)));
         // The tech tilt: high tech sells finished cheap and buys raw dear, so
         // the best routes are tech DIFFERENTIALS. Contraband is exempt - the
         // black market premium is its own lever and answers to nothing else.
         if (!contraband) {
             economic *= model().techFactor(category.isFinished(), category.isRaw(), spec.techLevel());
+        }
+        // Salvage pays worse than proper cargo, or scavenging and piracy would
+        // out-earn the trade game they are supposed to orbit
+        if (salvage) {
+            economic *= addon.getSettings().getSalvageDiscount();
         }
         return economic;
     }
@@ -270,8 +306,7 @@ public class MarketService {
         // Drift moves on the VALUE of the trade, not the item count: a port that
         // has just paid out for ten diamonds is far closer to saturated than one
         // that bought ten wheat
-        addon.getIslandDataManager().adjustStockValue(spec, TradeCategory.of(material),
-                (int) Math.round(total));
+        addon.getIslandDataManager().adjustStockValue(spec, driftPool(material), (int) Math.round(total));
         User.getInstance(player).sendMessage("tradewinds.trade.sold", "[amount]", String.valueOf(removed),
                 "[material]", pretty(material), "[price]", Money.format(addon, total));
         chime(player);
@@ -319,8 +354,7 @@ public class MarketService {
         }
         double total = PriceModel.round2(added * unitPrice.get());
         vault.get().withdraw(user, total);
-        addon.getIslandDataManager().adjustStockValue(spec, TradeCategory.of(material),
-                -(int) Math.round(total));
+        addon.getIslandDataManager().adjustStockValue(spec, driftPool(material), -(int) Math.round(total));
         user.sendMessage("tradewinds.trade.bought", "[amount]", String.valueOf(added), "[material]",
                 pretty(material), "[price]", Money.format(addon, total));
         chime(player);

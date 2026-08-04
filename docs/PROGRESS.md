@@ -3,6 +3,42 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## Stage 7.5 Phase 2 — salvage has a market (2026-08-03)
+
+Scavenged loot is now sellable, at a discount, into a stock pool of its own.
+
+- **`TradeCategory.SALVAGE`**, which `of()` never returns: salvage is decided by
+  whether a material is on any island's shelves (`TypeEconomy.tradeGoods()` -
+  the union of every type catalog and outfitter shelf), not by its name. That
+  leaves the existing trade economy completely untouched; an iron ingot is cargo
+  exactly where it always was. No type produces or demands SALVAGE, so it is
+  affinity- and tech-neutral, and `economy.salvage-discount` (0.375) is applied
+  on top.
+- A **separate stock pool** is the load-bearing part: without it, dumping a
+  boatload of junk would crater the same category's honest cargo prices for every
+  trader at that port, which is a griefing vector on a small server.
+- **~50 natural drops priced** (mob loot, foraged food, dug blocks). None of
+  these has any recipe, so the engine could never derive them however deep it
+  recursed - they had to be stated or a scavenger's whole haul was unsellable.
+- **`/twadmin priceaudit`** writes a full coverage report (unpriceable / salvage /
+  trade goods) to `price-audit.txt`.
+
+**The real bug behind the complaint.** BentoBox **replaces** `Map` settings from
+`config.yml` rather than merging them (`YamlDatabaseHandler.deserializeMap`), and
+the shipped `config.yml` carried **27 of 112** base prices. So ~50 goods were
+unsellable on every real server while the unit tests - which read the code
+default - passed happily. The config block is now complete and generated from the
+code table, and `SettingsTest` fails the build if the two ever drift again. A
+second new test asserts every price key resolves to a real `Material`, which also
+catches Minecraft renames like `SCUTE` -> `TURTLE_SCUTE`.
+
+**Why the audit is a command and not a unit test.** The plan called for a
+headless coverage test, but most prices are *derived* from crafting recipes and
+MockBukkit ships no vanilla recipe set - headless, nearly everything reports
+unpriceable, which is a confident wrong answer. The live registry is the only
+place the truth lives. The headless guards test what they can actually see: name
+validity and config/code agreement.
+
 ## Stage 7.5 Phase 1 — the trader's purse (2026-08-03)
 
 Planned in `tradewinds-salvage-plan.md`. Stock drift was counted in **items**,

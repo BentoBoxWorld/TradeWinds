@@ -36,6 +36,46 @@ class TradeCategoryTest extends CommonTestSetup {
     }
 
     @Test
+    void testTradeGoodsAreTheShelves() {
+        // Salvage is defined by the shelves, not by category name, so that the
+        // existing trade economy is untouched: an iron ingot is cargo wherever
+        // it always was, and a rabbit's foot was never on anyone's manifest
+        assertTrue(TypeEconomy.tradeGoods().contains(Material.IRON_INGOT));
+        assertTrue(TypeEconomy.tradeGoods().contains(Material.WHEAT));
+        assertTrue(TypeEconomy.tradeGoods().contains(Material.DIAMOND));
+        // Outfitter stock counts - a smith who sells iron swords will buy one back
+        assertTrue(TypeEconomy.tradeGoods().contains(Material.IRON_SWORD));
+        assertTrue(TypeEconomy.tradeGoods().contains(Material.FISHING_ROD));
+        // The universal essentials
+        assertTrue(TypeEconomy.tradeGoods().contains(Material.BREAD));
+        assertTrue(TypeEconomy.tradeGoods().contains(Material.CHARCOAL));
+        // Scavenged loot is not
+        assertFalse(TypeEconomy.tradeGoods().contains(Material.RABBIT_FOOT));
+        assertFalse(TypeEconomy.tradeGoods().contains(Material.ROTTEN_FLESH));
+        assertFalse(TypeEconomy.tradeGoods().contains(Material.DIRT));
+        assertFalse(TypeEconomy.tradeGoods().contains(Material.ENDER_PEARL));
+    }
+
+    @Test
+    void testSalvageIsItsOwnPoolAndNobodyTradesIt() {
+        // No island type produces or demands salvage - that is what makes it
+        // neutral, and what keeps it out of the real categories' stock pools
+        for (IslandType type : IslandType.values()) {
+            assertFalse(TypeEconomy.produces(type).contains(TradeCategory.SALVAGE));
+            assertFalse(TypeEconomy.demands(type).contains(TradeCategory.SALVAGE));
+        }
+        // And it is tech-neutral: neither raw nor finished
+        assertFalse(TradeCategory.SALVAGE.isRaw());
+        assertFalse(TradeCategory.SALVAGE.isFinished());
+        assertTrue(TradeCategory.SALVAGE.isSalvage());
+        // of() never returns it: name heuristics do not decide salvage
+        for (Material material : new Material[] { Material.DIRT, Material.ROTTEN_FLESH, Material.RABBIT_FOOT,
+                Material.DIAMOND, Material.WHEAT }) {
+            assertFalse(TradeCategory.of(material).isSalvage(), material + " classified as salvage by name");
+        }
+    }
+
+    @Test
     void testEveryTypeDemandsSomething() {
         for (IslandType type : IslandType.values()) {
             assertFalse(TypeEconomy.demands(type).isEmpty(), type + " must demand something");

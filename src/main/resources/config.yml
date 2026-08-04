@@ -290,38 +290,130 @@ economy:
   # Materials traders buy even WITHOUT a customs stamp - the contraband exceptions.
   unstamped-sellables:
     - SUGAR
+  # What a port pays for SALVAGE - anything not a recognised trade good on some
+  # island's shelves: mob drops, worn gear, odd blocks. A fraction of book price.
+  # Keep well under 1: if scavenging and piracy pay as well as trading they replace
+  # it rather than feeding it. Salvage drifts against its own stock pool, so dumping
+  # junk cannot crater a port's legitimate cargo prices.
+  salvage-discount: 0.375
   # Base prices (Material -> price). Anything not listed is priced by deriving from
   # its crafting recipe (BlueBook logic, embedded); underivable = untradeable.
   base-prices:
     WHEAT: 20
     CARROT: 15
     POTATO: 15
+    BEETROOT: 15
     SUGAR_CANE: 10
     SUGAR: 15
+    PUMPKIN: 30
+    MELON_SLICE: 5
     BREAD: 30
     COOKED_BEEF: 40
+    COOKED_COD: 30
+    CAKE: 200
+    GOLDEN_APPLE: 1500
+    EGG: 10
+    HAY_BLOCK: 180
     COD: 20
     SALMON: 30
+    TROPICAL_FISH: 50
+    PUFFERFISH: 40
+    KELP: 3
     OAK_LOG: 15
     SPRUCE_LOG: 15
+    BIRCH_LOG: 15
     DARK_OAK_LOG: 15
+    ACACIA_LOG: 15
+    JUNGLE_LOG: 15
+    CHERRY_LOG: 20
     STONE: 5
+    COBBLESTONE: 3
+    GRANITE: 4
+    DIORITE: 4
+    ANDESITE: 4
+    DEEPSLATE: 6
+    SAND: 3
+    GRAVEL: 3
     COAL: 40
     CHARCOAL: 30
     RAW_IRON: 60
     RAW_COPPER: 30
     RAW_GOLD: 120
+    FLINT: 10
     IRON_INGOT: 90
     COPPER_INGOT: 40
     GOLD_INGOT: 180
+    IRON_NUGGET: 10
+    GOLD_NUGGET: 20
     DIAMOND: 1000
     EMERALD: 600
     AMETHYST_SHARD: 100
-    CAKE: 200
-    GOLDEN_APPLE: 1500
+    QUARTZ: 80
+    LAPIS_LAZULI: 60
+    REDSTONE: 30
+    LEATHER: 40
+    WHITE_WOOL: 20
+    STRING: 15
+    BEEF: 25
+    PORKCHOP: 25
+    CHICKEN: 20
+    MUTTON: 20
+    BONE: 20
+    BONE_MEAL: 8
+    GUNPOWDER: 50
+    SPIDER_EYE: 30
+    ROTTEN_FLESH: 5
+    FEATHER: 15
+    INK_SAC: 25
+    GLOW_INK_SAC: 90
+    SLIME_BALL: 40
+    RABBIT: 20
+    RABBIT_HIDE: 15
+    RABBIT_FOOT: 150
+    ENDER_PEARL: 250
+    BLAZE_ROD: 200
+    GHAST_TEAR: 400
+    PHANTOM_MEMBRANE: 180
+    NETHER_STAR: 5000
+    PRISMARINE_SHARD: 60
+    PRISMARINE_CRYSTALS: 90
+    NAUTILUS_SHELL: 300
+    HEART_OF_THE_SEA: 2500
+    SHULKER_SHELL: 800
+    ECHO_SHARD: 600
+    TOTEM_OF_UNDYING: 4000
+    DRAGON_BREATH: 500
+    TURTLE_SCUTE: 120
+    ARMADILLO_SCUTE: 60
+    HONEYCOMB: 40
+    SADDLE: 300
+    NAME_TAG: 400
+    APPLE: 25
+    MELON: 35
+    SWEET_BERRIES: 10
+    GLOW_BERRIES: 30
+    COCOA_BEANS: 20
+    BAMBOO: 5
+    CACTUS: 10
+    BROWN_MUSHROOM: 15
+    RED_MUSHROOM: 15
+    SEA_PICKLE: 25
+    SPONGE: 200
+    NETHER_WART: 30
+    CLAY_BALL: 8
+    SNOWBALL: 3
+    DIRT: 2
+    OBSIDIAN: 80
+    NETHERRACK: 3
+    SOUL_SAND: 15
+    END_STONE: 20
+    GLOWSTONE_DUST: 40
+    MAGMA_CREAM: 90
     OAK_BOAT: 200
     OAK_CHEST_BOAT: 600
-    # (the full default table ships in code; add or override entries here)
+    # This is the COMPLETE table. BentoBox REPLACES map settings from config
+    # rather than merging them, so an entry deleted here is a good that can no
+    # longer be sold at all - not a fallback to the built-in price.
 border:
   # Show island boundaries as particle curtains: the warp-offer ring at the
   # protection edge (red - where the warp dialog fires) and the edge of island

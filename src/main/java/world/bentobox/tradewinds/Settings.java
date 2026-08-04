@@ -646,6 +646,14 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "player.max-restarts")
     private int maxRestarts = 3;
 
+    @ConfigComment("What a port pays for SALVAGE - anything that is not a recognised trade good")
+    @ConfigComment("on some island's shelves: mob drops, worn gear, odd blocks. A fraction of book")
+    @ConfigComment("price. Keep this well under 1: if scavenging and piracy pay as well as trading,")
+    @ConfigComment("they replace it rather than feeding it. Salvage also drifts against its own")
+    @ConfigComment("stock pool, so dumping junk cannot crater a port's legitimate cargo prices.")
+    @ConfigEntry(path = "economy.salvage-discount")
+    private double salvageDiscount = 0.375;
+
     @ConfigComment("Base prices (Material -> price). Anything not listed is priced by deriving")
     @ConfigComment("from its crafting recipe (BlueBook logic, embedded); underivable = untradeable.")
     @ConfigEntry(path = "economy.base-prices")
@@ -671,6 +679,31 @@ public class Settings implements WorldSettings {
         map.put("QUARTZ", 80.0); map.put("LAPIS_LAZULI", 60.0); map.put("REDSTONE", 30.0);
         map.put("LEATHER", 40.0); map.put("WHITE_WOOL", 20.0); map.put("STRING", 15.0);
         map.put("BEEF", 25.0); map.put("PORKCHOP", 25.0); map.put("CHICKEN", 20.0); map.put("MUTTON", 20.0);
+        // Natural drops: no recipe exists for any of these, so the engine can
+        // never derive them however deep it recurses - they have to be stated or
+        // a scavenger's whole haul is unsellable. This is the salvage economy's
+        // raw material (Stage 7.5 Phase 2).
+        map.put("BONE", 20.0); map.put("BONE_MEAL", 8.0); map.put("GUNPOWDER", 50.0);
+        map.put("SPIDER_EYE", 30.0); map.put("ROTTEN_FLESH", 5.0); map.put("FEATHER", 15.0);
+        map.put("INK_SAC", 25.0); map.put("GLOW_INK_SAC", 90.0); map.put("SLIME_BALL", 40.0);
+        map.put("RABBIT", 20.0); map.put("RABBIT_HIDE", 15.0); map.put("RABBIT_FOOT", 150.0);
+        map.put("ENDER_PEARL", 250.0); map.put("BLAZE_ROD", 200.0); map.put("GHAST_TEAR", 400.0);
+        map.put("PHANTOM_MEMBRANE", 180.0); map.put("NETHER_STAR", 5000.0);
+        map.put("PRISMARINE_SHARD", 60.0); map.put("PRISMARINE_CRYSTALS", 90.0);
+        map.put("NAUTILUS_SHELL", 300.0); map.put("HEART_OF_THE_SEA", 2500.0);
+        map.put("SHULKER_SHELL", 800.0); map.put("ECHO_SHARD", 600.0);
+        map.put("TOTEM_OF_UNDYING", 4000.0); map.put("DRAGON_BREATH", 500.0);
+        map.put("TURTLE_SCUTE", 120.0); map.put("ARMADILLO_SCUTE", 60.0); map.put("HONEYCOMB", 40.0);
+        map.put("SADDLE", 300.0); map.put("NAME_TAG", 400.0);
+        // Foraged and gathered: apple and melon drop from leaves and vines, the
+        // rest are picked, dug or fished up
+        map.put("APPLE", 25.0); map.put("MELON", 35.0); map.put("SWEET_BERRIES", 10.0);
+        map.put("GLOW_BERRIES", 30.0); map.put("COCOA_BEANS", 20.0); map.put("BAMBOO", 5.0);
+        map.put("CACTUS", 10.0); map.put("BROWN_MUSHROOM", 15.0); map.put("RED_MUSHROOM", 15.0);
+        map.put("SEA_PICKLE", 25.0); map.put("SPONGE", 200.0); map.put("NETHER_WART", 30.0);
+        map.put("CLAY_BALL", 8.0); map.put("SNOWBALL", 3.0); map.put("DIRT", 2.0);
+        map.put("OBSIDIAN", 80.0); map.put("NETHERRACK", 3.0); map.put("SOUL_SAND", 15.0);
+        map.put("END_STONE", 20.0); map.put("GLOWSTONE_DUST", 40.0); map.put("MAGMA_CREAM", 90.0);
         // Hulls: priced above raw plank cost - shipwright labor. Frugal
         // players craft their own from wild-islet timber.
         map.put("OAK_BOAT", 200.0);
@@ -3045,6 +3078,8 @@ public class Settings implements WorldSettings {
     public void setContrabandMaterials(List<String> contrabandMaterials) { this.contrabandMaterials = contrabandMaterials; }
     public int getMaxRestarts() { return maxRestarts; }
     public void setMaxRestarts(int maxRestarts) { this.maxRestarts = maxRestarts; }
+    public double getSalvageDiscount() { return salvageDiscount; }
+    public void setSalvageDiscount(double salvageDiscount) { this.salvageDiscount = salvageDiscount; }
     public Map<String, Double> getBasePrices() { return basePrices; }
     public void setBasePrices(Map<String, Double> basePrices) { this.basePrices = basePrices; }
     public double getIntersticeGhastChance() { return intersticeGhastChance; }
