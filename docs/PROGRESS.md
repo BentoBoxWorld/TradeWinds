@@ -3,6 +3,31 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## Stage 7.5 Phase 7 — the secondhand shelf (2026-08-03)
+
+Notable goods sold to a trader go back out for sale instead of vanishing, so the
+world feels inhabited: *someone dumped a Silk Touch pick at Baker's Reach*.
+
+- `TWIslandData.shelf` is a bounded `List<ShelfItem>` (item + listed-at), swept by
+  `economy.resale-ttl-hours` (72) on access, `economy.resale-slots` (2) deep, with
+  the oldest listing making way for an arrival.
+- **Only notable goods resurface**: enchanted, renamed, or worth at least
+  `economy.resale-notable-value` (500). Ordinary cargo is not interesting to find
+  and would bury the things that are.
+- **They surface at a DIFFERENT port** than the one they were sold at, within
+  `economy.resale-ship-radius` (8000) - the trader shipped it on. This is the
+  load-bearing part: an unpredictable destination is what stops shelves becoming
+  an alt-account laundering channel. The destination is *seeded* from the item and
+  the selling port rather than random, so it cannot be re-rolled by retrying.
+- `economy.resale-markup` (1.6) sits above book price, and a test asserts the
+  shelf price exceeds what the same port would PAY for the item - otherwise buy
+  from the shelf, sell at the counter, repeat.
+- Shelf purchases arrive **marked as trader-bought**, so they are subject to the
+  one-way rule like anything else a market sells.
+
+**Ordering detail worth keeping:** `buyFromShelf` adds to the hold *before*
+removing the listing, so a full hold cannot destroy a one-of-a-kind item.
+
 ## Stage 7.5 Phase 6 — price discovery (2026-08-03)
 
 Two different questions, and only one of them is hard.

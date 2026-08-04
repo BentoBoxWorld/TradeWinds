@@ -70,6 +70,15 @@ noise.
 - [ ] Warp: you and the boat arrive facing the **dock**; hold forward and you
       reach it.
 - [ ] Sell the cargo at the new island at a different price than you paid.
+- [ ] **Notable goods resurface elsewhere.** Sell an enchanted tool at a port,
+      then check the *neighbouring* ports' Secondhand shelves: it appears at one
+      of them, not at the port you sold it to. Ordinary cargo never appears.
+- [ ] **The shelf is not a money printer.** A shelf item costs visibly more than
+      the same port would pay you for it.
+- [ ] **A full hold does not eat a listing.** With no free slots, try to buy a
+      shelf item: refused, and the item is still on the shelf.
+- [ ] Shelf items cannot be withdrawn from the hold afterwards (they are bought
+      cargo), and listings disappear after `resale-ttl-hours`.
 - [ ] **The counter says when to stop.** On the sell page, a good's tooltip states
       how many more the port will take at that price. Sell that many: the price
       drops and the depth reads near zero.

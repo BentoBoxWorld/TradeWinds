@@ -646,6 +646,37 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "player.max-restarts")
     private int maxRestarts = 3;
 
+    @ConfigComment("The secondhand shelf: notable goods sold to a trader go back out for sale")
+    @ConfigComment("instead of vanishing, so the world feels inhabited - 'someone dumped a Silk")
+    @ConfigComment("Touch pick at Baker's Reach'. They surface at a DIFFERENT port from the one")
+    @ConfigComment("they were sold at (the trader shipped it on), which is what stops shelves")
+    @ConfigComment("becoming an alt-account laundering channel: you cannot predict where your own")
+    @ConfigComment("goods reappear. false disables resale entirely.")
+    @ConfigEntry(path = "economy.resale-enabled")
+    private boolean resaleEnabled = true;
+
+    @ConfigComment("Only NOTABLE goods resurface: enchanted, renamed, or worth at least this much.")
+    @ConfigComment("Ordinary cargo is not interesting to find and would only clutter the shelves.")
+    @ConfigEntry(path = "economy.resale-notable-value")
+    private double resaleNotableValue = 500.0;
+
+    @ConfigComment("Listings a port may carry at once; the oldest makes way for a new arrival.")
+    @ConfigEntry(path = "economy.resale-slots")
+    private int resaleSlots = 2;
+
+    @ConfigComment("How long a listing lasts, in hours. 0 for never expiring.")
+    @ConfigEntry(path = "economy.resale-ttl-hours")
+    private int resaleTtlHours = 72;
+
+    @ConfigComment("What the trader adds on top of book price to resell. Must be above 1 or the")
+    @ConfigComment("shelf becomes a way to buy back your own goods at a profit.")
+    @ConfigEntry(path = "economy.resale-markup")
+    private double resaleMarkup = 1.6;
+
+    @ConfigComment("How far a trader will ship a consignment to put it on someone else's shelf.")
+    @ConfigEntry(path = "economy.resale-ship-radius")
+    private int resaleShipRadius = 8000;
+
     @ConfigComment("Harbour reports: what a broker charges PER PORT to fill in your logbook, and")
     @ConfigComment("how far the report reaches per tech level of the island selling it. This gives")
     @ConfigComment("a developed port a role beyond its shelves, and a reason to call somewhere you")
@@ -3111,6 +3142,18 @@ public class Settings implements WorldSettings {
     public void setContrabandMaterials(List<String> contrabandMaterials) { this.contrabandMaterials = contrabandMaterials; }
     public int getMaxRestarts() { return maxRestarts; }
     public void setMaxRestarts(int maxRestarts) { this.maxRestarts = maxRestarts; }
+    public boolean isResaleEnabled() { return resaleEnabled; }
+    public void setResaleEnabled(boolean resaleEnabled) { this.resaleEnabled = resaleEnabled; }
+    public double getResaleNotableValue() { return resaleNotableValue; }
+    public void setResaleNotableValue(double v) { this.resaleNotableValue = v; }
+    public int getResaleSlots() { return resaleSlots; }
+    public void setResaleSlots(int resaleSlots) { this.resaleSlots = resaleSlots; }
+    public int getResaleTtlHours() { return resaleTtlHours; }
+    public void setResaleTtlHours(int resaleTtlHours) { this.resaleTtlHours = resaleTtlHours; }
+    public double getResaleMarkup() { return resaleMarkup; }
+    public void setResaleMarkup(double resaleMarkup) { this.resaleMarkup = resaleMarkup; }
+    public int getResaleShipRadius() { return resaleShipRadius; }
+    public void setResaleShipRadius(int resaleShipRadius) { this.resaleShipRadius = resaleShipRadius; }
     public double getMarketReportPricePerIsland() { return marketReportPricePerIsland; }
     public void setMarketReportPricePerIsland(double v) { this.marketReportPricePerIsland = v; }
     public double getMarketReportRadiusPerTechLevel() { return marketReportRadiusPerTechLevel; }

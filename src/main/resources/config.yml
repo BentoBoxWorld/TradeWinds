@@ -290,6 +290,22 @@ economy:
   # Materials traders buy even WITHOUT a customs stamp - the contraband exceptions.
   unstamped-sellables:
     - SUGAR
+  # The secondhand shelf: notable goods sold to a trader go back out for sale
+  # instead of vanishing, so the world feels inhabited. They surface at a DIFFERENT
+  # port from the one they were sold at (the trader shipped it on), which stops
+  # shelves becoming an alt-account laundering channel - you cannot predict where
+  # your own goods reappear. false disables resale entirely.
+  resale-enabled: true
+  # Only NOTABLE goods resurface: enchanted, renamed, or worth at least this much.
+  resale-notable-value: 500.0
+  # Listings a port carries at once; oldest makes way. TTL in hours, 0 = forever.
+  resale-slots: 2
+  resale-ttl-hours: 72
+  # Trader's markup on book price. Must exceed 1 or the shelf lets players buy back
+  # their own goods at a profit.
+  resale-markup: 1.6
+  # How far a trader ships a consignment to reach another port's shelf.
+  resale-ship-radius: 8000
   # Harbour reports: what a broker charges PER PORT to fill in your logbook, and how
   # far the report reaches per tech level of the island selling it. Gives a developed
   # port a role beyond its shelves. 0 for either disables reports.

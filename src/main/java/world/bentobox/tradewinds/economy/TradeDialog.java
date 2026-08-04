@@ -89,6 +89,11 @@ public class TradeDialog {
                 () -> openOutfitter(player, spec)));
         buttons.add(button(player, "market.shipwright", "market.shipwright-tooltip",
                 () -> openShipwright(player, spec)));
+        // The secondhand shelf, when this port has anything on it
+        if (boatHere && !addon.getMarketService().shelf(spec).isEmpty()) {
+            buttons.add(button(player, "market.shelf", "market.shelf-tooltip",
+                    () -> openShelf(player, spec)));
+        }
         // The broker: pay to have your logbook filled in for the ports within
         // this one's reach. No boat needed - it is information, not cargo.
         int reportable = addon.getMarketService().reportablePorts(spec).size();
@@ -166,6 +171,52 @@ public class TradeDialog {
         }
         show(player, ui(player, "market.selling-title", "[name]", spec.name()), body, buttons,
                 backButton(player, spec), 3);
+    }
+
+    /**
+     * The secondhand shelf: notable goods other sailors sold on, shipped here by
+     * their traders. One button per listing.
+     */
+    public void openShelf(Player player, IslandSpec spec) {
+        List<ItemStack> shelf = addon.getMarketService().shelf(spec);
+        if (shelf.isEmpty()) {
+            User.getInstance(player).sendMessage("tradewinds.trade.shelf-empty");
+            openMain(player, spec);
+            return;
+        }
+        List<ActionButton> buttons = new ArrayList<>();
+        for (int i = 0; i < Math.min(MAX_ROWS, shelf.size()); i++) {
+            ItemStack item = shelf.get(i);
+            final int index = i;
+            String price = addon.getMarketService().shelfPrice(item)
+                    .map(value -> Money.format(addon, value)).orElse("-");
+            buttons.add(button(ui(player, "market.shelf-buy", "[material]", MarketService.pretty(item.getType()),
+                    "[price]", price), ui(player, "market.shelf-buy-tooltip", "[details]", details(item)),
+                    () -> {
+                        addon.getMarketService().buyFromShelf(player, spec, index);
+                        openShelf(player, spec);
+                    }));
+        }
+        show(player, ui(player, "market.shelf-title", "[name]", spec.name()),
+                new ArrayList<>(List.of(ui(player, "market.shelf-body", NO_VARS), statusLine(player))),
+                buttons, backButton(player, spec), 2);
+    }
+
+    /**
+     * What makes a shelf item worth looking at - its name, or its enchantments.
+     */
+    private String details(ItemStack item) {
+        var meta = item.getItemMeta();
+        if (meta != null && meta.hasDisplayName()) {
+            return net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText()
+                    .serialize(meta.displayName());
+        }
+        if (!item.getEnchantments().isEmpty()) {
+            return item.getEnchantments().entrySet().stream()
+                    .map(e -> PriceEngine.prettify(e.getKey().getKey().getKey()) + " " + e.getValue())
+                    .reduce((a, b) -> a + ", " + b).orElse("");
+        }
+        return MarketService.pretty(item.getType());
     }
 
     /**

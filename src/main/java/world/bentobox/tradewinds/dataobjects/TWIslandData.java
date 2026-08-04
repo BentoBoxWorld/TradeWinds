@@ -1,7 +1,11 @@
 package world.bentobox.tradewinds.dataobjects;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+
+import org.bukkit.inventory.ItemStack;
 
 import com.google.gson.annotations.Expose;
 
@@ -39,6 +43,63 @@ public class TWIslandData implements DataObject {
      */
     @Expose
     private long lastDecay;
+
+    /**
+     * The secondhand shelf: notable goods a trader took in and put back out for
+     * sale. Bounded and swept by TTL.
+     * <p>
+     * Items surface at a DIFFERENT island from the one they were sold at - the
+     * trader shipped it on - which is what stops port shelves becoming an
+     * alt-account laundering channel: you cannot predict where your own goods
+     * will reappear.
+     */
+    @Expose
+    private List<ShelfItem> shelf = new ArrayList<>();
+
+    /**
+     * One listing on a secondhand shelf.
+     */
+    public static class ShelfItem {
+
+        @Expose
+        private ItemStack item;
+
+        @Expose
+        private long listedAt;
+
+        public ShelfItem() {
+            // Required by the database
+        }
+
+        public ShelfItem(ItemStack item, long listedAt) {
+            this.item = item;
+            this.listedAt = listedAt;
+        }
+
+        public ItemStack getItem() {
+            return item;
+        }
+
+        public void setItem(ItemStack item) {
+            this.item = item;
+        }
+
+        public long getListedAt() {
+            return listedAt;
+        }
+
+        public void setListedAt(long listedAt) {
+            this.listedAt = listedAt;
+        }
+    }
+
+    public List<ShelfItem> getShelf() {
+        return shelf;
+    }
+
+    public void setShelf(List<ShelfItem> shelf) {
+        this.shelf = shelf == null ? new ArrayList<>() : shelf;
+    }
 
     public TWIslandData() {
         // Required by the database

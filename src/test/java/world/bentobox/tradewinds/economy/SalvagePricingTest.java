@@ -7,6 +7,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.bukkit.Material;
+import org.bukkit.inventory.ItemStack;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -147,6 +148,43 @@ class SalvagePricingTest extends CommonTestSetup {
             double buy = service.playerBuysAt(port, Material.ENDER_PEARL).orElseThrow();
             double sell = service.playerSellsAt(port, Material.ENDER_PEARL).orElseThrow();
             assertTrue(sell < buy, "Round trip profits at discount " + discount + ": " + sell + " >= " + buy);
+        }
+    }
+
+    @Test
+    void testOnlyNotableGoodsResurface() {
+        // Ordinary cargo is not interesting to find and would bury what is
+        assertFalse(service.isNotable(new ItemStack(Material.WHEAT)));
+        assertFalse(service.isNotable(new ItemStack(Material.COBBLESTONE)));
+        assertFalse(service.isNotable(null));
+        // Valuable things do, at the configured threshold of 500
+        assertTrue(service.isNotable(new ItemStack(Material.DIAMOND)));
+        assertTrue(service.isNotable(new ItemStack(Material.NETHER_STAR)));
+        // And the switch turns the whole feature off
+        settings.setResaleEnabled(false);
+        assertFalse(service.isNotable(new ItemStack(Material.DIAMOND)));
+    }
+
+    @Test
+    void testTheShelfNeverUndercutsTheCounter() {
+        // A shelf that sold below what the same port pays would be a money
+        // printer: buy from the shelf, sell at the counter, repeat
+        for (Material material : new Material[] { Material.DIAMOND, Material.ENDER_PEARL,
+                Material.IRON_INGOT, Material.NETHER_STAR }) {
+            ItemStack item = new ItemStack(material);
+            double shelf = service.shelfPrice(item).orElseThrow();
+            double counterPays = service.playerSellsAt(port, item).orElse(0.0);
+            assertTrue(shelf > counterPays,
+                    material + ": shelf " + shelf + " must exceed what the port pays " + counterPays);
+        }
+    }
+
+    @Test
+    void testShelfPriceIsAWholeCoinAndNeverFree() {
+        for (Material material : new Material[] { Material.ROTTEN_FLESH, Material.DIAMOND, Material.DIRT }) {
+            double price = service.shelfPrice(new ItemStack(material)).orElseThrow();
+            assertEquals(price, Math.floor(price), "Shelf price not whole: " + price);
+            assertTrue(price >= 1);
         }
     }
 }

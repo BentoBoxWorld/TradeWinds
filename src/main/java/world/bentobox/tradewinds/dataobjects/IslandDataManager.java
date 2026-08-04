@@ -129,6 +129,60 @@ public class IslandDataManager {
         return Math.min(0, stock + amount);
     }
 
+    /**
+     * A port's secondhand shelf, swept of expired listings.
+     *
+     * @param spec the island
+     * @param ttlHours how long a listing lasts, 0 or less for no expiry
+     * @return the live listings
+     */
+    public java.util.List<TWIslandData.ShelfItem> shelf(IslandSpec spec, int ttlHours) {
+        TWIslandData data = get(spec);
+        if (ttlHours > 0) {
+            long cutoff = System.currentTimeMillis() - ttlHours * 3_600_000L;
+            if (data.getShelf().removeIf(listing -> listing.getItem() == null
+                    || listing.getListedAt() < cutoff)) {
+                handler.saveObjectAsync(data);
+            }
+        }
+        return data.getShelf();
+    }
+
+    /**
+     * Put an item on a port's shelf, oldest listing making way when full.
+     *
+     * @param spec the island
+     * @param item the item
+     * @param slots how many listings this port may carry
+     */
+    public void consign(IslandSpec spec, org.bukkit.inventory.ItemStack item, int slots) {
+        if (item == null || slots <= 0) {
+            return;
+        }
+        TWIslandData data = get(spec);
+        data.getShelf().add(new TWIslandData.ShelfItem(item, System.currentTimeMillis()));
+        // Bounded: the oldest listing goes when a new one arrives
+        while (data.getShelf().size() > slots) {
+            data.getShelf().remove(0);
+        }
+        handler.saveObjectAsync(data);
+    }
+
+    /**
+     * Take a listing off a port's shelf.
+     *
+     * @return the item, or null if the index is stale
+     */
+    public org.bukkit.inventory.ItemStack takeFromShelf(IslandSpec spec, int index) {
+        TWIslandData data = get(spec);
+        if (index < 0 || index >= data.getShelf().size()) {
+            return null;
+        }
+        org.bukkit.inventory.ItemStack item = data.getShelf().remove(index).getItem();
+        handler.saveObjectAsync(data);
+        return item;
+    }
+
     public void saveAll() {
         cache.values().forEach(handler::saveObjectAsync);
     }

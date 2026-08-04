@@ -14,6 +14,7 @@ import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.api.events.TWTradeEvent;
 import world.bentobox.tradewinds.galaxy.IslandSpec;
 import world.bentobox.tradewinds.travel.BoatRanks;
+import world.bentobox.tradewinds.travel.CargoStore;
 
 /**
  * The market: prices and trades. Base prices come from the embedded
@@ -161,6 +162,119 @@ public class MarketService {
 
     public Optional<Double> playerSellsAt(IslandSpec spec, Material material) {
         return playerSellsAt(spec, new ItemStack(material));
+    }
+
+    /**
+     * Whether an item is worth putting back on a shelf: enchanted, renamed, or
+     * simply valuable. Ordinary cargo is not interesting to find, and would only
+     * bury the things that are.
+     *
+     * @param item the item
+     * @return true if it should resurface
+     */
+    public boolean isNotable(ItemStack item) {
+        if (item == null || !addon.getSettings().isResaleEnabled()) {
+            return false;
+        }
+        if (!item.getEnchantments().isEmpty()) {
+            return true;
+        }
+        var meta = item.getItemMeta();
+        if (meta != null && meta.hasDisplayName()) {
+            return true;
+        }
+        return basePrice(item).orElse(0.0) >= addon.getSettings().getResaleNotableValue();
+    }
+
+    /**
+     * Ship a notable item on to ANOTHER port's shelf, so it can be found by
+     * someone else. Never the port it was sold at: an unpredictable destination
+     * is what keeps shelves from becoming an alt-account laundering channel.
+     *
+     * @param soldAt where it was sold
+     * @param item the item, one unit
+     */
+    public void consign(IslandSpec soldAt, ItemStack item) {
+        if (!isNotable(item) || addon.getOverWorld() == null) {
+            return;
+        }
+        List<IslandSpec> elsewhere = addon.getGalaxyEngine(addon.getOverWorld().getSeed())
+                .islandsNear(soldAt.centerX(), soldAt.centerZ(), addon.getSettings().getResaleShipRadius())
+                .stream().filter(other -> other.cellX() != soldAt.cellX() || other.cellZ() != soldAt.cellZ())
+                .toList();
+        if (elsewhere.isEmpty()) {
+            return;
+        }
+        // Seeded by the item and the port, so it is arbitrary but not random -
+        // scripts cannot re-roll it, and it stays the same on a resumed sale
+        int pick = Math.abs((item.getType().name() + soldAt.cellX() + "," + soldAt.cellZ()).hashCode())
+                % elsewhere.size();
+        ItemStack one = CargoStore.copyOf(item, 1);
+        addon.getIslandDataManager().consign(elsewhere.get(pick), one, addon.getSettings().getResaleSlots());
+    }
+
+    /**
+     * A port's secondhand shelf.
+     */
+    public List<ItemStack> shelf(IslandSpec spec) {
+        if (!addon.getSettings().isResaleEnabled()) {
+            return List.of();
+        }
+        return addon.getIslandDataManager().shelf(spec, addon.getSettings().getResaleTtlHours()).stream()
+                .map(world.bentobox.tradewinds.dataobjects.TWIslandData.ShelfItem::getItem)
+                .filter(java.util.Objects::nonNull).toList();
+    }
+
+    /**
+     * What a shelf item costs: book price plus the trader's markup. Above what
+     * the same port would pay for it, or the shelf would be a money printer.
+     */
+    public Optional<Double> shelfPrice(ItemStack item) {
+        return basePrice(item)
+                .map(base -> Math.max(1, Math.ceil(base * addon.getSettings().getResaleMarkup())));
+    }
+
+    /**
+     * Buy one listing off a port's shelf, into the hold. It arrives MARKED as
+     * trader-bought, like anything else a market sells.
+     *
+     * @return true if bought
+     */
+    public boolean buyFromShelf(Player player, IslandSpec spec, int index) {
+        User user = User.getInstance(player);
+        Optional<VaultHook> vault = addon.getPlugin().getVault();
+        List<ItemStack> shelf = shelf(spec);
+        if (vault.isEmpty() || index < 0 || index >= shelf.size()) {
+            return false;
+        }
+        if (!boatIsHere(player, spec)) {
+            user.sendMessage("tradewinds.trade.boat-not-here");
+            thud(player);
+            return false;
+        }
+        ItemStack item = shelf.get(index);
+        Optional<Double> price = shelfPrice(item);
+        if (price.isEmpty()) {
+            return false;
+        }
+        if (vault.get().getBalance(user) < price.get()) {
+            user.sendMessage("tradewinds.trade.cannot-afford");
+            thud(player);
+            return false;
+        }
+        ItemStack marked = world.bentobox.tradewinds.travel.CargoMark.marked(item);
+        if (addon.getHoldService().add(player, marked, 1) <= 0) {
+            user.sendMessage("tradewinds.trade.no-hold-space");
+            thud(player);
+            return false;
+        }
+        // Only now take it off the shelf, so a full hold cannot destroy a listing
+        addon.getIslandDataManager().takeFromShelf(spec, index);
+        vault.get().withdraw(user, price.get());
+        user.sendMessage("tradewinds.trade.shelf-bought", "[material]", pretty(item.getType()), "[price]",
+                Money.format(addon, price.get()));
+        chime(player);
+        return true;
     }
 
     /**
@@ -443,6 +557,8 @@ public class MarketService {
         // has just paid out for ten diamonds is far closer to saturated than one
         // that bought ten wheat
         addon.getIslandDataManager().adjustStockValue(spec, driftPool(material), (int) Math.round(total));
+        // Notable goods go back out for sale somewhere else rather than vanishing
+        consign(spec, item);
         User.getInstance(player).sendMessage("tradewinds.trade.sold", "[amount]", String.valueOf(removed),
                 "[material]", pretty(material), "[price]", Money.format(addon, total));
         chime(player);
