@@ -5,6 +5,11 @@ Where this document and `TRADEWINDS_SPEC.md` disagree on those subjects, this
 one wins. It sits alongside `tradewinds-hold-plan.md`, which remains normative
 for boat identity, ownership and capture.
 
+> **Status: all seven phases delivered 2026-08-03.** See `docs/PROGRESS.md` for
+> what each landed, the deviations, and the traps hit. Two things were
+> deliberately not built: plaza rumours (Phase 6 - they duplicated the logbook)
+> and the chart-hologram price display (the logbook surfaces via `/tw prices`).
+
 ## The problem
 
 A player scavenging islets, farming, or taking prizes at sea accumulates goods
