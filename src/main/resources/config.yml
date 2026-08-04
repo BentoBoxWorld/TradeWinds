@@ -467,26 +467,26 @@ boats:
   # by slots; shops list only boats bigger than yours, up to the island's tech
   # (rank <= tech level x ranks-per-tech-level). Crafting ignores tech gates.
   ranks:
-    BAMBOO_RAFT: 20
-    OAK_BOAT: 30
-    SPRUCE_BOAT: 40
-    BAMBOO_CHEST_RAFT: 50
-    BIRCH_BOAT: 60
-    OAK_CHEST_BOAT: 70
-    JUNGLE_BOAT: 80
-    SPRUCE_CHEST_BOAT: 90
-    ACACIA_BOAT: 100
-    BIRCH_CHEST_BOAT: 110
-    DARK_OAK_BOAT: 120
-    JUNGLE_CHEST_BOAT: 130
-    MANGROVE_BOAT: 140
-    ACACIA_CHEST_BOAT: 150
-    CHERRY_BOAT: 160
-    DARK_OAK_CHEST_BOAT: 170
-    PALE_OAK_BOAT: 180
-    MANGROVE_CHEST_BOAT: 190
-    CHERRY_CHEST_BOAT: 200
-    PALE_OAK_CHEST_BOAT: 210
+    BAMBOO_RAFT: 2
+    OAK_BOAT: 3
+    SPRUCE_BOAT: 4
+    BAMBOO_CHEST_RAFT: 5
+    BIRCH_BOAT: 6
+    OAK_CHEST_BOAT: 7
+    JUNGLE_BOAT: 8
+    SPRUCE_CHEST_BOAT: 9
+    ACACIA_BOAT: 10
+    BIRCH_CHEST_BOAT: 11
+    DARK_OAK_BOAT: 12
+    JUNGLE_CHEST_BOAT: 13
+    MANGROVE_BOAT: 14
+    ACACIA_CHEST_BOAT: 15
+    CHERRY_BOAT: 16
+    DARK_OAK_CHEST_BOAT: 17
+    PALE_OAK_BOAT: 18
+    MANGROVE_CHEST_BOAT: 19
+    CHERRY_CHEST_BOAT: 20
+    PALE_OAK_CHEST_BOAT: 21
   # Boat shop price = this x slots squared. Bamboo Raft 1000, Pale Oak Chest 110250.
   price-per-slot-squared: 250.0
   # Boat ranks sold at an island = its tech level x this (TL7 sells all 20).

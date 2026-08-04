@@ -100,6 +100,14 @@ noise.
       occupy separate slots, and only the mined 20 can be withdrawn.
 - [ ] Hold gestures: left-click withdraws, shift-click sends coal to the fuel
       row, right-click selects for the TNT.
+- [ ] **Boat capacity matches the ladder.** An oak boat's hold says **3 slots**,
+      a bamboo raft 2, a pale oak chest boat 21. If any reads a multiple of ten,
+      `config.yml` has drifted from the code defaults - `ConfigAgreementTest`
+      should have caught it.
+- [ ] **The sell page tells identical goods apart.** With one enchanted and two
+      plain iron swords aboard, the sell page shows an item icon per row: hover it
+      for the real tooltip (enchantments, damage), and the enchanted row is marked
+      and priced higher.
 - [ ] **NBT survives the hold, and a restart.** Load an enchanted, a renamed and
       a half-broken tool into the hold. Each takes its own slot and keeps its
       name, enchantments and damage bar. Restart the server: all three are still

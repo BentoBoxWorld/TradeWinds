@@ -150,9 +150,10 @@ public class TradeDialog {
             openMain(player, spec);
             return;
         }
+        List<SellOffer> shown = offers.subList(0, Math.min(MAX_ROWS, offers.size()));
         List<ActionButton> buttons = new ArrayList<>();
-        for (SellOffer offer : offers.subList(0, Math.min(MAX_ROWS, offers.size()))) {
-            String name = MarketService.pretty(offer.material());
+        for (SellOffer offer : shown) {
+            String name = itemLabel(player, offer.item());
             Component each = ui(player, "market.sell-tooltip-each", "[price]",
                     Money.format(addon, offer.unitPrice()), "[depth]", depthOf(spec, offer));
             buttons.add(button(ui(player, "market.sell-one", "[material]", name), each,
@@ -164,13 +165,49 @@ public class TradeDialog {
                     "[price]", Money.format(addon, offer.total())), each,
                     () -> sellThenReopen(player, spec, offer.item(), Integer.MAX_VALUE)));
         }
-        List<Component> body = new ArrayList<>(List.of(ui(player, "market.selling-body", NO_VARS),
-                statusLine(player)));
-        if (offers.size() > MAX_ROWS) {
-            body.add(ui(player, "market.selling-truncated", "[number]", String.valueOf(MAX_ROWS)));
+        // One icon per row, in the SAME ORDER as the buttons below, each carrying
+        // the item's real hover tooltip. Three identical "Iron Sword" rows told a
+        // player nothing about which was the enchanted one (playtest 2026-08-03).
+        List<DialogBody> body = new ArrayList<>();
+        body.add(DialogBody.plainMessage(ui(player, "market.selling-body", NO_VARS)));
+        body.add(DialogBody.plainMessage(statusLine(player)));
+        for (SellOffer offer : shown) {
+            body.add(DialogBody.item(offer.item())
+                    .description(DialogBody.plainMessage(ui(player, "market.sell-item-line", "[material]",
+                            itemLabel(player, offer.item()), "[amount]", String.valueOf(offer.amount()),
+                            "[price]", Money.format(addon, offer.unitPrice()))))
+                    .showTooltip(true).showDecorations(true).build());
         }
-        show(player, ui(player, "market.selling-title", "[name]", spec.name()), body, buttons,
+        if (offers.size() > MAX_ROWS) {
+            body.add(DialogBody.plainMessage(ui(player, "market.selling-truncated", "[number]",
+                    String.valueOf(MAX_ROWS))));
+        }
+        showBodies(player, ui(player, "market.selling-title", "[name]", spec.name()), body, buttons,
                 backButton(player, spec), 3);
+    }
+
+    /**
+     * A short label that tells two otherwise identical goods apart: its given
+     * name if it has one, else a marker for enchanted or worn gear. Buttons are
+     * too narrow for a full enchantment list - that is what the icon tooltip
+     * beside it is for.
+     */
+    private String itemLabel(Player player, ItemStack item) {
+        User user = User.getInstance(player);
+        String material = MarketService.pretty(item.getType());
+        var meta = item.getItemMeta();
+        if (meta != null && meta.hasDisplayName()) {
+            return net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText()
+                    .serialize(meta.displayName());
+        }
+        if (!item.getEnchantments().isEmpty()) {
+            return user.getTranslation("tradewinds.market.item-enchanted", "[material]", material);
+        }
+        if (meta instanceof org.bukkit.inventory.meta.Damageable damaged && damaged.hasDamage()
+                && damaged.getDamage() > 0) {
+            return user.getTranslation("tradewinds.market.item-worn", "[material]", material);
+        }
+        return material;
     }
 
     /**
@@ -185,21 +222,29 @@ public class TradeDialog {
             return;
         }
         List<ActionButton> buttons = new ArrayList<>();
+        List<DialogBody> body = new ArrayList<>();
+        body.add(DialogBody.plainMessage(ui(player, "market.shelf-body", NO_VARS)));
+        body.add(DialogBody.plainMessage(statusLine(player)));
         for (int i = 0; i < Math.min(MAX_ROWS, shelf.size()); i++) {
             ItemStack item = shelf.get(i);
             final int index = i;
             String price = addon.getMarketService().shelfPrice(item)
                     .map(value -> Money.format(addon, value)).orElse("-");
-            buttons.add(button(ui(player, "market.shelf-buy", "[material]", MarketService.pretty(item.getType()),
+            // Secondhand goods are notable by definition, so the icon and its real
+            // tooltip are the whole point of the page
+            body.add(DialogBody.item(item)
+                    .description(DialogBody.plainMessage(ui(player, "market.shelf-item-line", "[material]",
+                            itemLabel(player, item), "[price]", price)))
+                    .showTooltip(true).showDecorations(true).build());
+            buttons.add(button(ui(player, "market.shelf-buy", "[material]", itemLabel(player, item),
                     "[price]", price), ui(player, "market.shelf-buy-tooltip", "[details]", details(item)),
                     () -> {
                         addon.getMarketService().buyFromShelf(player, spec, index);
                         openShelf(player, spec);
                     }));
         }
-        show(player, ui(player, "market.shelf-title", "[name]", spec.name()),
-                new ArrayList<>(List.of(ui(player, "market.shelf-body", NO_VARS), statusLine(player))),
-                buttons, backButton(player, spec), 2);
+        showBodies(player, ui(player, "market.shelf-title", "[name]", spec.name()), body, buttons,
+                backButton(player, spec), 2);
     }
 
     /**
@@ -521,7 +566,17 @@ public class TradeDialog {
 
     private void show(Player player, Component title, List<Component> bodyLines, List<ActionButton> buttons,
             ActionButton exitButton, int columns) {
-        List<DialogBody> body = bodyLines.stream().map(line -> (DialogBody) DialogBody.plainMessage(line)).toList();
+        showBodies(player, title,
+                bodyLines.stream().map(line -> (DialogBody) DialogBody.plainMessage(line)).toList(), buttons,
+                exitButton, columns);
+    }
+
+    /**
+     * As {@link #show} but with the body built by the caller, so it can carry
+     * item icons and not just text.
+     */
+    private void showBodies(Player player, Component title, List<DialogBody> body, List<ActionButton> buttons,
+            ActionButton exitButton, int columns) {
         Dialog dialog = Dialog.create(factory -> factory.empty()
                 .base(DialogBase.builder(title).body(body).build())
                 .type(DialogType.multiAction(buttons).exitAction(exitButton).columns(columns).build()));

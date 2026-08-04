@@ -3,6 +3,40 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## Playtest fixes — config drift and telling goods apart (2026-08-03)
+
+**An oak boat carried 30 slots.** The shipped `config.yml` had every value in
+`boats.ranks` multiplied by ten: cargo SLOT counts caught up in the whole-coin
+money migration. Slots are not money. Because BentoBox **replaces** map settings
+from config rather than merging them, the wrong values beat the correct code
+defaults - and every unit test reads the code default, so the build stayed green.
+
+That is the **second** time config/code drift shipped a broken game this way (the
+first was `economy.base-prices` at 27 of 112 entries). So the fix is not just the
+data: **`ConfigAgreementTest` now walks every `@ConfigEntry` map in `Settings` by
+reflection and asserts `config.yml` agrees with the code default**, key for key
+and value for value, comparing numbers by value so `20` and `20.0` are the same
+setting. Verified by deliberately corrupting two entries and watching it name both.
+A second test asserts the ranks ladder is 20 rungs of 2-21, which is the shape
+that a money migration would break again.
+
+**ClassCastException at the trader.** Integer cannot be cast to Double, from
+`base-prices` written as `20` rather than `20.0` - see the commit; fixed both by
+writing decimals and by coercing every numeric map in `Settings.asDoubles()`.
+
+**Three identical "Iron Sword" rows on the sell page.** With NBT preserved, the
+enchanted sword and the two plain ones were three rows of identical text at
+different prices, and nothing said which was which. The sell page (and the
+secondhand shelf) now render **one `ItemDialogBody` per row, in the same order as
+the buttons, with `showTooltip(true)`** - so hovering gives the item's real
+tooltip, enchantments and all. Buttons are far too narrow for an enchantment list,
+so they get a short marker instead (`✦` for enchanted, `(worn)` for damaged, or
+the item's given name if it has one).
+
+Paper's dialog API does support item icons - `DialogBody.item(ItemStack)` with a
+description and a real tooltip - but only in the dialog **body**, never in a
+button label. Hence icons above, markers on the buttons.
+
 ## Stage 7.5 Phase 7 — the secondhand shelf (2026-08-03)
 
 Notable goods sold to a trader go back out for sale instead of vanishing, so the
