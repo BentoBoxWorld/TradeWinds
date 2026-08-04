@@ -70,6 +70,16 @@ noise.
 - [ ] Warp: you and the boat arrive facing the **dock**; hold forward and you
       reach it.
 - [ ] Sell the cargo at the new island at a different price than you paid.
+- [ ] **The counter says when to stop.** On the sell page, a good's tooltip states
+      how many more the port will take at that price. Sell that many: the price
+      drops and the depth reads near zero.
+- [ ] **The logbook only knows where you have been.** `/tw prices` on a fresh
+      player says the logbook is empty. Open a port's market, run it again: that
+      port appears with an age. A port you have only *charted* never appears.
+- [ ] `/tw prices metals` sorts ports by what they paid for metals, best first.
+- [ ] **Harbour reports fill the logbook.** Buy one at a high-tech port: several
+      nearby ports appear in `/tw prices` at once, money leaves, and a low-tech
+      port offers a smaller report (or none).
 - [ ] **The hold works both ways.** Mine cobblestone on an islet, load it into
       the hold, then left-click it in the hold window: it comes back to your
       inventory. With a full inventory the overflow drops at your feet, never

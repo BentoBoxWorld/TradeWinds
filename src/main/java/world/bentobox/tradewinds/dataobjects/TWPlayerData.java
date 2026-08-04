@@ -1,6 +1,8 @@
 package world.bentobox.tradewinds.dataobjects;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import com.google.gson.annotations.Expose;
@@ -94,6 +96,65 @@ public class TWPlayerData implements DataObject {
 
     public TWPlayerData(String uniqueId) {
         this.uniqueId = uniqueId;
+    }
+
+    /**
+     * The price logbook: island key -> trade category -> the unit price SEEN
+     * there, and when. Prices for ports you have never visited are not knowable
+     * (Stage 7.5 Phase 6) - the market is learned, not published, which is what
+     * makes a veteran trader skilled rather than merely rich.
+     * <p>
+     * Category-level rather than per-material because that is the granularity
+     * prices actually vary at: type, tech, band and drift all move a whole
+     * category together.
+     */
+    @Expose
+    private Map<String, Map<String, Integer>> priceLog = new HashMap<>();
+
+    /** Island key -> when its prices were last observed, epoch millis. */
+    @Expose
+    private Map<String, Long> priceLogSeen = new HashMap<>();
+
+    /**
+     * Record what a port was paying, now.
+     *
+     * @param spec the island
+     * @param prices category name -> unit price seen
+     * @param now epoch millis
+     */
+    public void logPrices(IslandSpec spec, Map<String, Integer> prices, long now) {
+        priceLog.put(chartKey(spec), new HashMap<>(prices));
+        priceLogSeen.put(chartKey(spec), now);
+    }
+
+    /**
+     * @return remembered prices at an island, category name -> unit price
+     */
+    public Map<String, Integer> loggedPrices(IslandSpec spec) {
+        return priceLog.getOrDefault(chartKey(spec), Map.of());
+    }
+
+    /**
+     * @return when this island's prices were seen, or 0 if never
+     */
+    public long lastSeenPrices(IslandSpec spec) {
+        return priceLogSeen.getOrDefault(chartKey(spec), 0L);
+    }
+
+    public Map<String, Map<String, Integer>> getPriceLog() {
+        return priceLog;
+    }
+
+    public void setPriceLog(Map<String, Map<String, Integer>> priceLog) {
+        this.priceLog = priceLog == null ? new HashMap<>() : priceLog;
+    }
+
+    public Map<String, Long> getPriceLogSeen() {
+        return priceLogSeen;
+    }
+
+    public void setPriceLogSeen(Map<String, Long> priceLogSeen) {
+        this.priceLogSeen = priceLogSeen == null ? new HashMap<>() : priceLogSeen;
     }
 
     /**

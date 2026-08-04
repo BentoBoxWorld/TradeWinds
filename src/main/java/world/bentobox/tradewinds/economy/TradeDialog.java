@@ -62,6 +62,9 @@ public class TradeDialog {
         // open, or a sailor who has lost their boat can never get another
         // and is stranded on the island for good (playtest 2026-08-02).
         boolean boatHere = addon.getMarketService().boatIsHere(player, spec);
+        // Standing at the counter is how a trader learns a port's prices - and
+        // the only way, because the market is learned, not published
+        recordPrices(player, spec);
         // Too poor in fuel to warp anywhere from here? Then the most useful
         // thing this screen can do is point at where the fuel is sold. An
         // action bar fades; a button that says "buy fuel here" does not.
@@ -86,6 +89,19 @@ public class TradeDialog {
                 () -> openOutfitter(player, spec)));
         buttons.add(button(player, "market.shipwright", "market.shipwright-tooltip",
                 () -> openShipwright(player, spec)));
+        // The broker: pay to have your logbook filled in for the ports within
+        // this one's reach. No boat needed - it is information, not cargo.
+        int reportable = addon.getMarketService().reportablePorts(spec).size();
+        if (reportable > 0 && addon.getSettings().getMarketReportPricePerIsland() > 0) {
+            buttons.add(button(ui(player, "market.report", NO_VARS),
+                    ui(player, "market.report-tooltip", "[number]", String.valueOf(reportable),
+                            "[price]", Money.format(addon,
+                                    reportable * addon.getSettings().getMarketReportPricePerIsland())),
+                    () -> {
+                        addon.getMarketService().buyMarketReport(player, spec);
+                        openMain(player, spec);
+                    }));
+        }
         List<Component> body = new ArrayList<>(List.of(
                 ui(player, "market.subtitle", "[type]", spec.type().name(), "[tech]",
                         String.valueOf(spec.techLevel()), "[band]",
@@ -133,7 +149,7 @@ public class TradeDialog {
         for (SellOffer offer : offers.subList(0, Math.min(MAX_ROWS, offers.size()))) {
             String name = MarketService.pretty(offer.material());
             Component each = ui(player, "market.sell-tooltip-each", "[price]",
-                    Money.format(addon, offer.unitPrice()));
+                    Money.format(addon, offer.unitPrice()), "[depth]", depthOf(spec, offer));
             buttons.add(button(ui(player, "market.sell-one", "[material]", name), each,
                     () -> sellThenReopen(player, spec, offer.item(), 1)));
             buttons.add(button(ui(player, "market.sell-batch", "[material]", name, "[amount]",
@@ -150,6 +166,22 @@ public class TradeDialog {
         }
         show(player, ui(player, "market.selling-title", "[name]", spec.name()), body, buttons,
                 backButton(player, spec), 3);
+    }
+
+    /**
+     * How many MORE of this good the port will take before its price hits the
+     * floor - the number a seller actually needs, because it says when to stop
+     * selling and sail on. Beyond the floor, dumping more is pure waste.
+     *
+     * @return the count, or "-" where the port is already saturated
+     */
+    private String depthOf(IslandSpec spec, SellOffer offer) {
+        int headroom = addon.getIslandDataManager().absorbableValue(spec,
+                addon.getMarketService().driftPool(offer.material()));
+        if (offer.unitPrice() <= 0) {
+            return "-";
+        }
+        return String.valueOf((int) Math.floor(headroom / offer.unitPrice()));
     }
 
     private void sellThenReopen(Player player, IslandSpec spec, ItemStack item, int amount) {
@@ -397,6 +429,17 @@ public class TradeDialog {
      */
     private Component ui(Player player, String key, String... variables) {
         return User.getInstance(player).getTranslationAsComponent("tradewinds.ui." + key, variables);
+    }
+
+    /**
+     * Write this port's current prices into the player's logbook. Sell prices,
+     * because "where can I get a good price for this" is the question a trader
+     * actually asks.
+     */
+    private void recordPrices(Player player, IslandSpec spec) {
+        var data = addon.getPlayerDataManager().get(player.getUniqueId());
+        data.logPrices(spec, addon.getMarketService().currentPrices(spec), System.currentTimeMillis());
+        addon.getPlayerDataManager().save(player.getUniqueId());
     }
 
     private Component statusLine(Player player) {

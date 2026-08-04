@@ -646,6 +646,16 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "player.max-restarts")
     private int maxRestarts = 3;
 
+    @ConfigComment("Harbour reports: what a broker charges PER PORT to fill in your logbook, and")
+    @ConfigComment("how far the report reaches per tech level of the island selling it. This gives")
+    @ConfigComment("a developed port a role beyond its shelves, and a reason to call somewhere you")
+    @ConfigComment("are not trading with. 0 for either disables reports.")
+    @ConfigEntry(path = "economy.market-report-price-per-island")
+    private double marketReportPricePerIsland = 250.0;
+
+    @ConfigEntry(path = "economy.market-report-radius-per-tech-level")
+    private double marketReportRadiusPerTechLevel = 1500.0;
+
     @ConfigComment("Enchantment premium: an item's price is multiplied by (1 + quality x this),")
     @ConfigComment("where quality weights each enchantment by usefulness and level. 0 ignores")
     @ConfigComment("enchantments, so a Silk Touch pick sells as a plain one.")
@@ -3101,6 +3111,10 @@ public class Settings implements WorldSettings {
     public void setContrabandMaterials(List<String> contrabandMaterials) { this.contrabandMaterials = contrabandMaterials; }
     public int getMaxRestarts() { return maxRestarts; }
     public void setMaxRestarts(int maxRestarts) { this.maxRestarts = maxRestarts; }
+    public double getMarketReportPricePerIsland() { return marketReportPricePerIsland; }
+    public void setMarketReportPricePerIsland(double v) { this.marketReportPricePerIsland = v; }
+    public double getMarketReportRadiusPerTechLevel() { return marketReportRadiusPerTechLevel; }
+    public void setMarketReportRadiusPerTechLevel(double v) { this.marketReportRadiusPerTechLevel = v; }
     public double getEnchantmentPriceFactor() { return enchantmentPriceFactor; }
     public void setEnchantmentPriceFactor(double v) { this.enchantmentPriceFactor = v; }
     public double getPotionEffectPrice() { return potionEffectPrice; }

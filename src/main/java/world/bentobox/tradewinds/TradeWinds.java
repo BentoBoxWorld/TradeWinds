@@ -32,6 +32,7 @@ import world.bentobox.tradewinds.commands.AdminReflagCommand;
 import world.bentobox.tradewinds.commands.AdminTpIslandCommand;
 import world.bentobox.tradewinds.commands.AdminWarpFailCommand;
 import world.bentobox.tradewinds.commands.TWChartCommand;
+import world.bentobox.tradewinds.commands.TWPricesCommand;
 import world.bentobox.tradewinds.commands.TWFineCommand;
 import world.bentobox.tradewinds.commands.TWRestartCommand;
 import world.bentobox.tradewinds.commands.TWSpawnCommand;
@@ -189,6 +190,7 @@ public class TradeWinds extends GameModeAddon {
                 // hop through another game mode is a free ride to a market.
                 new TWWarpCommand(this);
                 new TWChartCommand(this);
+                new TWPricesCommand(this);
                 new TWStarChartCommand(this);
                 new TWTradeCommand(this);
                 new TWRestartCommand(this);

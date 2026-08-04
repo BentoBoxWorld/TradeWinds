@@ -95,6 +95,19 @@ public final class TypeEconomy {
     }
 
     /**
+     * A stand-in good for a category, for quoting a category-level price. The
+     * first entry of its catalog: prices move by category, so any member is
+     * representative of the rest.
+     *
+     * @param category the category
+     * @return a sample material, empty for categories with no catalog
+     */
+    public static java.util.Optional<Material> representative(TradeCategory category) {
+        List<Material> goods = CATALOG.getOrDefault(category, List.of());
+        return goods.isEmpty() ? java.util.Optional.empty() : java.util.Optional.of(goods.get(0));
+    }
+
+    /**
      * Every material that is a recognised trade good <i>somewhere</i> in the
      * galaxy: the union of all type catalogs plus every outfitter shelf.
      * Anything else a player turns up - mob drops, worn gear, odd blocks - is

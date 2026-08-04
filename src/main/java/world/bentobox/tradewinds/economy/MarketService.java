@@ -1,5 +1,6 @@
 package world.bentobox.tradewinds.economy;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.bukkit.Material;
@@ -160,6 +161,81 @@ public class MarketService {
 
     public Optional<Double> playerSellsAt(IslandSpec spec, Material material) {
         return playerSellsAt(spec, new ItemStack(material));
+    }
+
+    /**
+     * A snapshot of what this port pays, by trade category - what goes into a
+     * trader's logbook. One representative good per category, because prices
+     * move by category: type, tech, band and drift all shift a whole category
+     * together.
+     *
+     * @param spec the island
+     * @return category name -> unit sell price
+     */
+    public java.util.Map<String, Integer> currentPrices(IslandSpec spec) {
+        java.util.Map<String, Integer> prices = new java.util.HashMap<>();
+        for (TradeCategory category : TradeCategory.values()) {
+            TypeEconomy.representative(category).ifPresent(sample -> playerSellsAt(spec, sample)
+                    .ifPresent(unit -> prices.put(category.name(), unit.intValue())));
+        }
+        return prices;
+    }
+
+    /**
+     * Buy a harbour report: the broker fills in your logbook for the ports
+     * within reach of this one. Reach scales with the port's tech level, which
+     * gives a developed island a role beyond what is on its shelves - and a
+     * reason to call at a hub you are not trading with.
+     *
+     * @param player the player
+     * @param spec the island whose broker is selling
+     * @return how many ports were reported on, 0 if none or unaffordable
+     */
+    public int buyMarketReport(Player player, IslandSpec spec) {
+        User user = User.getInstance(player);
+        Optional<VaultHook> vault = addon.getPlugin().getVault();
+        if (vault.isEmpty() || addon.getOverWorld() == null) {
+            return 0;
+        }
+        List<IslandSpec> ports = reportablePorts(spec);
+        if (ports.isEmpty()) {
+            user.sendMessage("tradewinds.trade.report-nothing");
+            thud(player);
+            return 0;
+        }
+        double cost = Math.ceil(ports.size() * addon.getSettings().getMarketReportPricePerIsland());
+        if (vault.get().getBalance(user) < cost) {
+            user.sendMessage("tradewinds.trade.cannot-afford");
+            thud(player);
+            return 0;
+        }
+        vault.get().withdraw(user, cost);
+        var data = addon.getPlayerDataManager().get(player.getUniqueId());
+        long now = System.currentTimeMillis();
+        for (IslandSpec port : ports) {
+            data.chart(port);
+            data.logPrices(port, currentPrices(port), now);
+        }
+        addon.getPlayerDataManager().save(player.getUniqueId());
+        user.sendMessage("tradewinds.trade.report-bought", world.bentobox.bentobox.api.localization
+                .TextVariables.NUMBER, String.valueOf(ports.size()), "[price]", Money.format(addon, cost));
+        chime(player);
+        return ports.size();
+    }
+
+    /**
+     * The ports a broker here can report on: everything within this island's
+     * tech-scaled reach, itself excluded (you are standing in it).
+     */
+    public List<IslandSpec> reportablePorts(IslandSpec spec) {
+        int radius = (int) Math.round(addon.getSettings().getMarketReportRadiusPerTechLevel()
+                * spec.techLevel());
+        if (radius <= 0 || addon.getOverWorld() == null) {
+            return List.of();
+        }
+        return addon.getGalaxyEngine(addon.getOverWorld().getSeed())
+                .islandsNear(spec.centerX(), spec.centerZ(), radius).stream()
+                .filter(other -> other.cellX() != spec.cellX() || other.cellZ() != spec.cellZ()).toList();
     }
 
     /**

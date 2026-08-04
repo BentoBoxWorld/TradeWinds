@@ -290,6 +290,11 @@ economy:
   # Materials traders buy even WITHOUT a customs stamp - the contraband exceptions.
   unstamped-sellables:
     - SUGAR
+  # Harbour reports: what a broker charges PER PORT to fill in your logbook, and how
+  # far the report reaches per tech level of the island selling it. Gives a developed
+  # port a role beyond its shelves. 0 for either disables reports.
+  market-report-price-per-island: 250.0
+  market-report-radius-per-tech-level: 1500.0
   # Enchantment premium: price is multiplied by (1 + quality x this), where quality
   # weights each enchantment by usefulness and level. 0 ignores enchantments.
   enchantment-price-factor: 0.05

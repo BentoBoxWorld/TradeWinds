@@ -3,6 +3,40 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## Stage 7.5 Phase 6 — price discovery (2026-08-03)
+
+Two different questions, and only one of them is hard.
+
+**At the counter you know everything.** The sell tooltip now states the *depth*:
+"this port will take about N more at that price", from Phase 1's
+`absorbableValue` divided by the unit price. That is the number a seller actually
+needs, because it says when to stop selling and sail on.
+
+**Across the map you should not know.** A **logbook**, not an oracle:
+`TWPlayerData.priceLog` (island -> category -> price seen) plus `priceLogSeen`
+(when), written whenever a player opens a port's market. `/tw prices` lists ports
+you have *called at* with their age; `/tw prices metals` sorts by best price for
+one kind of goods. Prices for ports never visited are simply not knowable, and
+stale readings show their age - which is what makes a well-travelled trader more
+capable than a new one rather than merely richer.
+
+Category-level rather than per-material, because that is the granularity prices
+vary at: type, tech, band and drift all move a whole category together.
+
+**Harbour reports** (`economy.market-report-price-per-island` 250,
+`market-report-radius-per-tech-level` 1500) let a broker fill in your logbook for
+ports within the selling island's tech-scaled reach. This gives a developed port a
+role beyond its shelves and a reason to call at a hub you are not trading with.
+No boat needed - it is information, not cargo.
+
+**Deviations from the plan, both deliberate:**
+- The logbook surfaces through `/tw prices` rather than on the chart holograms.
+  The gameplay value ("where do I take this?") is identical, the risk is far
+  lower, and the hologram renderer can adopt the same data later.
+- **Plaza rumours were not built.** They were the cheap flavour version of
+  exactly what the logbook and harbour reports now do properly, so they would
+  add a third route to the same information. Worth revisiting only as flavour.
+
 ## Stage 7.5 Phase 5 — the hold works both ways (2026-08-03)
 
 A scavenger has to be able to use their hold as a hold. **This narrows a
