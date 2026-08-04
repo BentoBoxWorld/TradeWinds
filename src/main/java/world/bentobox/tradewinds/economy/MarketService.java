@@ -126,25 +126,40 @@ public class MarketService {
      * Base price of a material: configured, or derived from crafting recipes
      * by the embedded price engine. Empty means not tradeable.
      */
-    public Optional<Double> basePrice(Material material) {
-        double price = priceEngine.getPrice(new ItemStack(material));
+    public Optional<Double> basePrice(ItemStack item) {
+        double price = priceEngine.getPrice(item);
         return price > 0 ? Optional.of(price) : Optional.empty();
     }
 
-    /**
-     * What a player pays this island per unit, or empty if not tradeable.
-     */
-    public Optional<Double> playerBuysAt(IslandSpec spec, Material material) {
-        return basePrice(material)
-                .map(base -> model().playerBuysAt(base * contrabandPremium(material), factor(spec, material)));
+    public Optional<Double> basePrice(Material material) {
+        return basePrice(new ItemStack(material));
     }
 
     /**
-     * What this island pays a player per unit, or empty if not tradeable.
+     * What a player pays this island per unit of this exact item, or empty if
+     * not tradeable. The ITEM matters, not just its type: a worn bow and a mint
+     * one are different goods at the counter.
      */
+    public Optional<Double> playerBuysAt(IslandSpec spec, ItemStack item) {
+        return basePrice(item).map(base -> model().playerBuysAt(base * contrabandPremium(item.getType()),
+                factor(spec, item.getType())));
+    }
+
+    public Optional<Double> playerBuysAt(IslandSpec spec, Material material) {
+        return playerBuysAt(spec, new ItemStack(material));
+    }
+
+    /**
+     * What this island pays a player per unit of this exact item, or empty if
+     * not tradeable.
+     */
+    public Optional<Double> playerSellsAt(IslandSpec spec, ItemStack item) {
+        return basePrice(item).map(base -> model().playerSellsAt(base * contrabandPremium(item.getType()),
+                factor(spec, item.getType())));
+    }
+
     public Optional<Double> playerSellsAt(IslandSpec spec, Material material) {
-        return basePrice(material)
-                .map(base -> model().playerSellsAt(base * contrabandPremium(material), factor(spec, material)));
+        return playerSellsAt(spec, new ItemStack(material));
     }
 
     /**
@@ -249,12 +264,18 @@ public class MarketService {
      * @param material the material
      * @return true if the port will handle it
      */
-    public boolean handlesValue(IslandSpec spec, Material material) {
+    public boolean handlesValue(IslandSpec spec, ItemStack item) {
         double perLevel = addon.getSettings().getSalvageValuePerTechLevel();
-        if (perLevel <= 0 || isTradeGood(material)) {
+        if (perLevel <= 0 || isTradeGood(item.getType())) {
             return true;
         }
-        return basePrice(material).orElse(0.0) <= perLevel * spec.techLevel();
+        // The ITEM's value, so an enchanted sword can outgrow a port its plain
+        // twin would have been welcome at
+        return basePrice(item).orElse(0.0) <= perLevel * spec.techLevel();
+    }
+
+    public boolean handlesValue(IslandSpec spec, Material material) {
+        return handlesValue(spec, new ItemStack(material));
     }
 
     private double factor(IslandSpec spec, Material material) {
@@ -293,12 +314,22 @@ public class MarketService {
      * @return amount sold
      */
     public int sell(Player player, IslandSpec spec, Material material, int amount) {
+        return sell(player, spec, new ItemStack(material), amount);
+    }
+
+    /**
+     * Sell up to {@code amount} of one exact item from the hold.
+     *
+     * @return amount sold
+     */
+    public int sell(Player player, IslandSpec spec, ItemStack item, int amount) {
+        Material material = item.getType();
         if (!boatIsHere(player, spec)) {
             User.getInstance(player).sendMessage("tradewinds.trade.boat-not-here");
             thud(player);
             return 0;
         }
-        Optional<Double> unitPrice = playerSellsAt(spec, material);
+        Optional<Double> unitPrice = playerSellsAt(spec, item);
         Optional<VaultHook> vault = addon.getPlugin().getVault();
         if (unitPrice.isEmpty() || vault.isEmpty() || amount <= 0) {
             return 0;
@@ -312,13 +343,13 @@ public class MarketService {
             return 0;
         }
         // Too rich for this port to handle - take it somewhere more developed
-        if (!handlesValue(spec, material)) {
+        if (!handlesValue(spec, item)) {
             User.getInstance(player).sendMessage("tradewinds.trade.too-advanced", "[material]", pretty(material),
                     "[name]", spec.name());
             thud(player);
             return 0;
         }
-        int count = Math.min(addon.getHoldService().count(player, material), amount);
+        int count = Math.min(addon.getHoldService().count(player, item), amount);
         if (count <= 0) {
             User.getInstance(player).sendMessage("tradewinds.trade.nothing-of-that");
             thud(player);
@@ -329,7 +360,7 @@ public class MarketService {
         if (event.isCancelled()) {
             return 0;
         }
-        int removed = addon.getHoldService().remove(player, material, count);
+        int removed = addon.getHoldService().remove(player, item, count);
         double total = PriceModel.round2(removed * unitPrice.get());
         vault.get().deposit(User.getInstance(player), total);
         // Drift moves on the VALUE of the trade, not the item count: a port that

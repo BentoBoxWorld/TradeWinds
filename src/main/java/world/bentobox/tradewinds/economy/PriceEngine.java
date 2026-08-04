@@ -12,6 +12,8 @@ import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.CookingRecipe;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.PotionMeta;
+import org.bukkit.potion.PotionEffect;
 import org.bukkit.inventory.Recipe;
 import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.inventory.ShapelessRecipe;
@@ -82,7 +84,46 @@ public class PriceEngine {
         if (base < 0) {
             return base;
         }
-        return applyDurability(item, base);
+        // NBT is part of the price (Stage 7.5 Phase 4): a worn bow is worth less
+        // than a mint one, a Silk Touch pick more than a plain one, and a Potion
+        // of Strength II is not a bottle of water
+        return applyPotion(item, applyEnchantments(item, applyDurability(item, base)));
+    }
+
+    /**
+     * Enchantments as a price premium. {@link #getEnchantmentValue} was written
+     * long before anything called it - the hold used to discard NBT on the way
+     * in, so there was never an enchanted item left to price.
+     */
+    private double applyEnchantments(ItemStack item, double base) {
+        double factor = addon.getSettings().getEnchantmentPriceFactor();
+        if (factor <= 0) {
+            return base;
+        }
+        return base * (1.0 + getEnchantmentValue(item) * factor);
+    }
+
+    /**
+     * Potions by what is actually in them. Every potion shares one Material, so
+     * without this a Potion of Strength II and a bottle of water are the same
+     * good - which is the clearest case for pricing NBT at all.
+     */
+    private double applyPotion(ItemStack item, double base) {
+        double perEffect = addon.getSettings().getPotionEffectPrice();
+        if (perEffect <= 0 || !(item.getItemMeta() instanceof PotionMeta potion)) {
+            return base;
+        }
+        double value = 0.0;
+        // The base type carries the everyday brews; custom effects are stacked on
+        if (potion.getBasePotionType() != null) {
+            for (PotionEffect effect : potion.getBasePotionType().getPotionEffects()) {
+                value += perEffect * (1 + effect.getAmplifier());
+            }
+        }
+        for (PotionEffect effect : potion.getCustomEffects()) {
+            value += perEffect * (1 + effect.getAmplifier());
+        }
+        return base + value;
     }
 
     /**

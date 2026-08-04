@@ -290,6 +290,12 @@ economy:
   # Materials traders buy even WITHOUT a customs stamp - the contraband exceptions.
   unstamped-sellables:
     - SUGAR
+  # Enchantment premium: price is multiplied by (1 + quality x this), where quality
+  # weights each enchantment by usefulness and level. 0 ignores enchantments.
+  enchantment-price-factor: 0.05
+  # Coins per potion effect, times (1 + amplifier). Every potion shares one
+  # Material, so without this a Potion of Strength II prices as a water bottle.
+  potion-effect-price: 150.0
   # How much value a port will handle in a SINGLE salvage item, per tech level: a
   # TL1 fishing hamlet has no use for a diamond sword and nobody there could pay
   # for one, while a TL7 hub will take anything. This is what gives loot a
@@ -394,6 +400,9 @@ economy:
     HONEYCOMB: 40
     SADDLE: 300
     NAME_TAG: 400
+    POTION: 60
+    SPLASH_POTION: 80
+    LINGERING_POTION: 120
     APPLE: 25
     MELON: 35
     SWEET_BERRIES: 10

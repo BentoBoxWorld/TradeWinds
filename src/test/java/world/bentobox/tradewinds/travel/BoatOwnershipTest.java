@@ -87,23 +87,29 @@ class BoatOwnershipTest extends CommonTestSetup {
         assertFalse(listener.isProtected(hull, atIsland(100)));
     }
 
+    /** Total of one material in a boat's cargo. */
+    private static int cargoCount(BoatHold hold, Material material) {
+        return hold.getCargo().stream().filter(s -> s != null && s.getType() == material)
+                .mapToInt(ItemStack::getAmount).sum();
+    }
+
     @Test
     void testTakingABoatAbandonsTheOldOneWithItsCargo() {
         BoatHold mine = holds.giveBoat(uuid, Material.OAK_BOAT);
-        mine.getContents().put("DIAMOND", 12);
+        mine.getCargo().add(new ItemStack(Material.DIAMOND, 12));
         BoatHold prize = holds.unownedBoat(Material.CHERRY_CHEST_BOAT);
-        prize.getContents().put("EMERALD", 5);
+        prize.getCargo().add(new ItemStack(Material.EMERALD, 5));
 
         holds.manager().setActiveBoat(uuid, prize);
 
         // The prize is mine, cargo and all
         assertEquals(prize.getUniqueId(), holds.manager().activeBoat(uuid).orElseThrow().getUniqueId());
         assertEquals(uuid.toString(), prize.getOwner());
-        assertEquals(5, (int) prize.getContents().get("EMERALD"));
+        assertEquals(5, cargoCount(prize, Material.EMERALD));
         // The boat I left keeps MY cargo, and loses its owner: unowned,
         // capturable, and still findable on the chart
         assertTrue(mine.isUnowned(), "The abandoned boat is unowned");
-        assertEquals(12, (int) mine.getContents().get("DIAMOND"), "Its cargo stays aboard");
+        assertEquals(12, cargoCount(mine, Material.DIAMOND), "Its cargo stays aboard");
         assertEquals(mine.getUniqueId(), holds.manager().oldBoat(uuid).orElseThrow().getUniqueId());
     }
 
@@ -171,9 +177,10 @@ class BoatOwnershipTest extends CommonTestSetup {
         when(world.getName()).thenReturn("tradewinds_world");
         when(addon.getMarketService())
                 .thenReturn(mock(world.bentobox.tradewinds.economy.MarketService.class));
-        when(addon.getMarketService().basePrice(any())).thenReturn(java.util.Optional.of(1.0));
+        when(addon.getMarketService().basePrice(any(ItemStack.class)))
+                .thenReturn(java.util.Optional.of(1.0));
         BoatHold carried = holds.giveBoat(uuid, Material.OAK_BOAT);
-        carried.getContents().put("COD", 20);
+        carried.getCargo().add(new ItemStack(Material.COD, 20));
         carried.setWorld("tradewinds_world");
         BoatHold found = holds.unownedBoat(Material.CHERRY_CHEST_BOAT);
 
@@ -209,8 +216,8 @@ class BoatOwnershipTest extends CommonTestSetup {
         // The prize is theirs, the cargo came across, and the spare hull is
         // no longer in the pack
         assertEquals(found.getUniqueId(), holds.manager().activeBoat(uuid).orElseThrow().getUniqueId());
-        assertEquals(20, (int) found.getContents().get("COD"), "Cargo moved into the new hull");
-        assertTrue(carried.getContents().isEmpty(), "The old hull was emptied");
+        assertEquals(20, cargoCount(found, Material.COD), "Cargo moved into the new hull");
+        assertTrue(carried.getCargo().isEmpty(), "The old hull was emptied");
         org.mockito.Mockito.verify(spare).setAmount(0);
     }
 

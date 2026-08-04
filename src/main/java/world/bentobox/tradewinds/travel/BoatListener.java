@@ -436,7 +436,8 @@ public class BoatListener implements Listener {
             onTake.run();
             return;
         }
-        int carried = hold.getContents().values().stream().mapToInt(Integer::intValue).sum()
+        int carried = hold.getCargo().stream().filter(java.util.Objects::nonNull)
+                .mapToInt(ItemStack::getAmount).sum()
                 + hold.getFuel().values().stream().mapToInt(Integer::intValue).sum();
         String cargo = carried > 0 ? String.valueOf(carried) : null;
         Runnable onTransfer = carried > 0 && ownBoatWithinReach(player) ? () -> {
@@ -477,24 +478,19 @@ public class BoatListener implements Listener {
      */
     int salvage(Player player, BoatHold wreck) {
         int moved = 0;
-        java.util.List<Map.Entry<String, Integer>> entries = new java.util.ArrayList<>(
-                wreck.getContents().entrySet());
-        entries.sort(java.util.Comparator.comparingDouble((Map.Entry<String, Integer> e) -> {
-            Material m = Material.matchMaterial(e.getKey());
-            return m == null ? 0 : addon.getMarketService().basePrice(m).orElse(0.0);
-        }).reversed());
-        for (Map.Entry<String, Integer> entry : entries) {
-            Material material = Material.matchMaterial(entry.getKey());
-            if (material == null) {
-                wreck.getContents().remove(entry.getKey());
-                continue;
-            }
-            int added = addon.getHoldService().add(player, material, entry.getValue());
+        // Most valuable first: with limited slots, a partial rescue should save
+        // the cargo worth saving
+        CargoStore.compact(wreck.getCargo());
+        java.util.List<ItemStack> stacks = new java.util.ArrayList<>(wreck.getCargo());
+        stacks.sort(java.util.Comparator.comparingDouble(
+                (ItemStack stack) -> addon.getMarketService().basePrice(stack).orElse(0.0)).reversed());
+        for (ItemStack stack : stacks) {
+            int added = addon.getHoldService().add(player, stack, stack.getAmount());
             moved += added;
-            if (added >= entry.getValue()) {
-                wreck.getContents().remove(entry.getKey());
+            if (added >= stack.getAmount()) {
+                wreck.getCargo().remove(stack);
             } else if (added > 0) {
-                wreck.getContents().put(entry.getKey(), entry.getValue() - added);
+                stack.setAmount(stack.getAmount() - added);
             }
         }
         for (Map.Entry<String, Integer> entry : new java.util.ArrayList<>(wreck.getFuel().entrySet())) {

@@ -5,6 +5,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.bukkit.inventory.ItemStack;
+
 import com.google.gson.annotations.Expose;
 
 import world.bentobox.bentobox.database.objects.DataObject;
@@ -40,14 +42,25 @@ public class BoatHold implements DataObject {
     @Expose
     private String owner = "";
 
+    /**
+     * Cargo, <b>one stack per occupied slot</b>, exactly like a real inventory.
+     * <p>
+     * A list of stacks rather than material→amount because a worn bow, a mint
+     * bow and a Silk Touch pick are not the same good and must not merge.
+     * BentoBox's {@code ItemStackTypeAdapter} persists these through Bukkit's
+     * own YAML serializer, so enchantments, damage and potion data all survive
+     * a restart. Note the adapter clamps a stack to 99, which one-stack-per-slot
+     * can never exceed.
+     */
     @Expose
-    private Map<String, Integer> contents = new LinkedHashMap<>();
+    private List<ItemStack> cargo = new ArrayList<>();
 
     @Expose
     private Map<String, Integer> fuel = new LinkedHashMap<>();
 
+    /** Installed cargo expanders, each its own slot-per-stack store. */
     @Expose
-    private List<Map<String, Integer>> expanders = new ArrayList<>();
+    private List<List<ItemStack>> expanders = new ArrayList<>();
 
     /** Last known position, so the chart can point at it from anywhere. */
     @Expose
@@ -108,12 +121,12 @@ public class BoatHold implements DataObject {
         return owner == null || owner.isEmpty();
     }
 
-    public Map<String, Integer> getContents() {
-        return contents;
+    public List<ItemStack> getCargo() {
+        return cargo;
     }
 
-    public void setContents(Map<String, Integer> contents) {
-        this.contents = contents;
+    public void setCargo(List<ItemStack> cargo) {
+        this.cargo = cargo == null ? new ArrayList<>() : cargo;
     }
 
     public Map<String, Integer> getFuel() {
@@ -124,12 +137,12 @@ public class BoatHold implements DataObject {
         this.fuel = fuel;
     }
 
-    public List<Map<String, Integer>> getExpanders() {
+    public List<List<ItemStack>> getExpanders() {
         return expanders;
     }
 
-    public void setExpanders(List<Map<String, Integer>> expanders) {
-        this.expanders = expanders;
+    public void setExpanders(List<List<ItemStack>> expanders) {
+        this.expanders = expanders == null ? new ArrayList<>() : expanders;
     }
 
     public String getWorld() {
@@ -176,6 +189,6 @@ public class BoatHold implements DataObject {
      * @return true if this boat carries nothing at all
      */
     public boolean isEmpty() {
-        return contents.isEmpty() && fuel.isEmpty() && expanders.isEmpty();
+        return cargo.isEmpty() && fuel.isEmpty() && expanders.isEmpty();
     }
 }

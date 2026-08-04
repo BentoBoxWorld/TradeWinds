@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.bukkit.Material;
+import org.bukkit.inventory.ItemStack;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -177,6 +178,12 @@ class HoldServiceTest extends CommonTestSetup {
         assertEquals(20, service.slotsFree(uuid));
     }
 
+    /** Total of one material across a stack list. */
+    private static int countOf(java.util.List<ItemStack> stacks, Material material) {
+        return stacks.stream().filter(s -> s != null && s.getType() == material)
+                .mapToInt(ItemStack::getAmount).sum();
+    }
+
     @Test
     void testExpanderSpilloverAndAggregation() {
         holds.giveBoat(uuid, Material.PALE_OAK_CHEST_BOAT);
@@ -186,13 +193,13 @@ class HoldServiceTest extends CommonTestSetup {
         assertEquals(2624, service.add(mockPlayer, Material.WHEAT, 9999));
         // Aggregated count sees everything; main contents map does not
         assertEquals(2624, service.count(mockPlayer, Material.WHEAT));
-        assertEquals(1280, (int) service.contents(uuid).get(Material.WHEAT));
-        assertEquals(1344, (int) service.expanderContents(uuid, 0).get(Material.WHEAT));
-        assertEquals(2624, (int) service.tradeContents(mockPlayer).get(Material.WHEAT));
+        assertEquals(1280, countOf(service.cargo(uuid), Material.WHEAT));
+        assertEquals(1344, countOf(service.expanderCargo(uuid, 0), Material.WHEAT));
+        assertEquals(2624, countOf(service.tradeCargo(mockPlayer), Material.WHEAT));
         // Removal drains the main hold first, then the expander
         assertEquals(1300, service.remove(mockPlayer, Material.WHEAT, 1300));
-        assertEquals(0, service.contents(uuid).getOrDefault(Material.WHEAT, 0));
-        assertEquals(1324, (int) service.expanderContents(uuid, 0).get(Material.WHEAT));
+        assertEquals(0, countOf(service.cargo(uuid), Material.WHEAT));
+        assertEquals(1324, countOf(service.expanderCargo(uuid, 0), Material.WHEAT));
     }
 
     @Test
@@ -215,7 +222,7 @@ class HoldServiceTest extends CommonTestSetup {
         // not openable, contents intact and still counted aboard
         service.active(uuid).orElseThrow().setMaterial(Material.OAK_BOAT.name());
         assertFalse(service.expandersOpenable(uuid));
-        assertEquals(5, (int) service.expanderContents(uuid, 0).get(Material.DIAMOND));
+        assertEquals(5, countOf(service.expanderCargo(uuid, 0), Material.DIAMOND));
         assertEquals(5, service.count(mockPlayer, Material.DIAMOND));
     }
 

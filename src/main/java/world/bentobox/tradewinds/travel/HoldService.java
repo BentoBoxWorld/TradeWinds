@@ -1,5 +1,6 @@
 package world.bentobox.tradewinds.travel;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,6 +10,7 @@ import java.util.UUID;
 
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 
 import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.dataobjects.BoatHold;
@@ -20,11 +22,15 @@ import world.bentobox.tradewinds.dataobjects.BoatHold;
  * is no hold at all, and a two-slot raft carries two slots however rich its
  * captain used to be.
  * <p>
- * Contents are virtual: material → amount in the database, auto-consolidated,
- * so no inventory trick can extract them. One-way rule: anything non-container
- * can be added; cargo leaves only by being sold or destroyed. Fuel is exempt -
- * it moves freely both ways, and fuel-valued cargo can be shifted into the
- * fuel row.
+ * Contents are virtual: a list of stacks in the database, one per occupied
+ * slot, so no inventory trick can extract them. Cargo carries its full identity
+ * - a worn bow, a mint bow and a Silk Touch pick are three different goods -
+ * with the slot arithmetic in {@link CargoStore}. Fuel stays material→amount
+ * because fuel is genuinely fungible: a lump of coal is a lump of coal.
+ * <p>
+ * One-way rule: anything non-container can be added; cargo leaves only by being
+ * sold or destroyed. Fuel is exempt - it moves freely both ways, and fuel-valued
+ * cargo can be shifted into the fuel row.
  *
  * @author tastybento
  */
@@ -86,79 +92,66 @@ public class HoldService {
     // ----------------------------------------------------------------- cargo
 
     /**
-     * Cargo contents of a boat, materials in display order.
+     * The main hold's cargo stacks, in slot order. Live references: mutate only
+     * through this service so the record gets saved.
      */
-    public static Map<Material, Integer> contentsOf(BoatHold hold) {
-        Map<Material, Integer> result = new LinkedHashMap<>();
-        hold.getContents().forEach((name, amount) -> {
-            Material material = Material.matchMaterial(name);
-            if (material != null && amount != null && amount > 0) {
-                result.put(material, amount);
-            }
-        });
-        return result;
+    public static List<ItemStack> cargoOf(BoatHold hold) {
+        CargoStore.compact(hold.getCargo());
+        return hold.getCargo();
     }
 
-    public Map<Material, Integer> contents(Player player) {
-        return contents(player.getUniqueId());
+    public List<ItemStack> cargo(UUID playerId) {
+        return active(playerId).map(HoldService::cargoOf).orElseGet(ArrayList::new);
     }
 
-    public Map<Material, Integer> contents(UUID playerId) {
-        return active(playerId).map(HoldService::contentsOf).orElseGet(LinkedHashMap::new);
+    public List<ItemStack> cargo(Player player) {
+        return cargo(player.getUniqueId());
     }
 
     /**
-     * How many of one material the whole ship carries, expanders included.
+     * Everything aboard for trade purposes: main cargo plus every expander, as
+     * distinct stacks. Two enchanted swords with different enchantments appear
+     * separately, because they are worth different money.
      */
-    public int count(Player player, Material material) {
+    public List<ItemStack> tradeCargo(Player player) {
+        List<ItemStack> all = new ArrayList<>(cargo(player.getUniqueId()));
+        active(player.getUniqueId()).ifPresent(hold -> hold.getExpanders().forEach(expander -> {
+            CargoStore.compact(expander);
+            all.addAll(expander);
+        }));
+        return all;
+    }
+
+    /**
+     * How many matching items the whole ship carries, expanders included.
+     */
+    public int count(Player player, ItemStack like) {
         return active(player.getUniqueId()).map(hold -> {
-            int total = hold.getContents().getOrDefault(material.name(), 0);
-            for (Map<String, Integer> expander : hold.getExpanders()) {
-                total += expander.getOrDefault(material.name(), 0);
+            int total = CargoStore.count(hold.getCargo(), like);
+            for (List<ItemStack> expander : hold.getExpanders()) {
+                total += CargoStore.count(expander, like);
             }
             return total;
         }).orElse(0);
     }
 
     /**
-     * Everything aboard for trade purposes: main cargo plus every expander.
+     * Material convenience: how many plain items of this type are aboard.
      */
-    public Map<Material, Integer> tradeContents(Player player) {
-        Map<Material, Integer> result = contents(player.getUniqueId());
-        active(player.getUniqueId()).ifPresent(hold -> hold.getExpanders().forEach(expander ->
-                expander.forEach((name, amount) -> {
-                    Material material = Material.matchMaterial(name);
-                    if (material != null && amount != null && amount > 0) {
-                        result.merge(material, amount, Integer::sum);
-                    }
-                })));
-        return result;
+    public int count(Player player, Material material) {
+        return count(player, new ItemStack(material));
     }
 
     /**
-     * Slots one amount of a material occupies, consolidated.
-     */
-    public static int slotsFor(Material material, int amount) {
-        int max = Math.max(1, material.getMaxStackSize());
-        return (amount + max - 1) / max;
-    }
-
-    /**
-     * Cargo slots in use: consolidated stacks plus one per installed expander.
+     * Cargo slots in use: one per stack, plus one per installed expander.
      */
     public int slotsUsed(UUID playerId) {
         return active(playerId).map(HoldService::slotsUsedIn).orElse(0);
     }
 
     static int slotsUsedIn(BoatHold hold) {
-        int used = hold.getExpanders().size();
-        for (Map.Entry<String, Integer> entry : hold.getContents().entrySet()) {
-            Material material = Material.matchMaterial(entry.getKey());
-            if (material != null && entry.getValue() != null && entry.getValue() > 0) {
-                used += slotsFor(material, entry.getValue());
-            }
-        }
-        return used;
+        CargoStore.compact(hold.getCargo());
+        return hold.getExpanders().size() + hold.getCargo().size();
     }
 
     public int slotsFree(UUID playerId) {
@@ -169,43 +162,30 @@ public class HoldService {
      * How many MORE of a material fit anywhere aboard: the main hold's free
      * slots and headroom, plus every installed expander's.
      */
-    public int capacityFor(UUID playerId, Material material) {
-        if (refuses(material)) {
+    public int capacityFor(UUID playerId, ItemStack like) {
+        if (like == null || refuses(like.getType())) {
             return 0;
         }
         return active(playerId).map(hold -> {
-            int total = mainCapacityFor(hold, capacitySlots(playerId), material);
-            for (Map<String, Integer> expander : hold.getExpanders()) {
-                total += storeCapacityFor(expander, EXPANDER_SLOTS, material);
+            int total = mainCapacityFor(hold, capacitySlots(playerId), like);
+            for (List<ItemStack> expander : hold.getExpanders()) {
+                total += CargoStore.capacityFor(expander, EXPANDER_SLOTS, like);
             }
             return total;
         }).orElse(0);
     }
 
-    private static int mainCapacityFor(BoatHold hold, int capacitySlots, Material material) {
-        int max = Math.max(1, material.getMaxStackSize());
-        int current = hold.getContents().getOrDefault(material.name(), 0);
-        int headroom = current == 0 ? 0 : slotsFor(material, current) * max - current;
-        int free = Math.max(0, capacitySlots - slotsUsedIn(hold));
-        return free * max + headroom;
+    public int capacityFor(UUID playerId, Material material) {
+        return capacityFor(playerId, new ItemStack(material));
     }
 
     /**
-     * Room in one bounded store (an expander's contents map).
+     * Room in the main hold. The expanders each occupy a cargo slot, so the
+     * budget for loose stacks is the boat's capacity less the expander count.
      */
-    private static int storeCapacityFor(Map<String, Integer> store, int slotBudget, Material material) {
-        int used = 0;
-        for (Map.Entry<String, Integer> entry : store.entrySet()) {
-            Material m = Material.matchMaterial(entry.getKey());
-            if (m != null && entry.getValue() != null && entry.getValue() > 0) {
-                used += slotsFor(m, entry.getValue());
-            }
-        }
-        int free = Math.max(0, slotBudget - used);
-        int max = Math.max(1, material.getMaxStackSize());
-        int current = store.getOrDefault(material.name(), 0);
-        int headroom = current == 0 ? 0 : slotsFor(material, current) * max - current;
-        return free * max + headroom;
+    private static int mainCapacityFor(BoatHold hold, int capacitySlots, ItemStack like) {
+        int budget = Math.max(0, capacitySlots - hold.getExpanders().size());
+        return CargoStore.capacityFor(hold.getCargo(), budget, like);
     }
 
     /**
@@ -223,9 +203,13 @@ public class HoldService {
      *
      * @return how many were actually added
      */
-    public int add(Player player, Material material, int amount) {
+    public int add(Player player, ItemStack like, int amount) {
         return active(player.getUniqueId())
-                .map(hold -> addTo(hold, capacitySlots(player.getUniqueId()), material, amount)).orElse(0);
+                .map(hold -> addTo(hold, capacitySlots(player.getUniqueId()), like, amount)).orElse(0);
+    }
+
+    public int add(Player player, Material material, int amount) {
+        return add(player, new ItemStack(material), amount);
     }
 
     /**
@@ -233,25 +217,17 @@ public class HoldService {
      *
      * @return how many were actually added
      */
-    public int addTo(BoatHold hold, int capacitySlots, Material material, int amount) {
-        if (refuses(material) || amount <= 0) {
+    public int addTo(BoatHold hold, int capacitySlots, ItemStack like, int amount) {
+        if (like == null || refuses(like.getType()) || amount <= 0) {
             return 0;
         }
-        int left = amount;
-        int main = Math.min(left, mainCapacityFor(hold, capacitySlots, material));
-        if (main > 0) {
-            hold.getContents().merge(material.name(), main, Integer::sum);
-            left -= main;
-        }
-        for (Map<String, Integer> expander : hold.getExpanders()) {
+        int budget = Math.max(0, capacitySlots - hold.getExpanders().size());
+        int left = amount - CargoStore.added(hold.getCargo(), budget, like, amount);
+        for (List<ItemStack> expander : hold.getExpanders()) {
             if (left <= 0) {
                 break;
             }
-            int fit = Math.min(left, storeCapacityFor(expander, EXPANDER_SLOTS, material));
-            if (fit > 0) {
-                expander.merge(material.name(), fit, Integer::sum);
-                left -= fit;
-            }
+            left -= CargoStore.added(expander, EXPANDER_SLOTS, like, left);
         }
         int added = amount - left;
         if (added > 0) {
@@ -260,27 +236,34 @@ public class HoldService {
         return added;
     }
 
+    public int addTo(BoatHold hold, int capacitySlots, Material material, int amount) {
+        return addTo(hold, capacitySlots, new ItemStack(material), amount);
+    }
+
     /**
      * Remove cargo - ONLY the market (sell) and the TNT slot (destroy) may
      * call this; there is no path from here to a player inventory.
      *
      * @return how many were actually removed
      */
+    public int remove(Player player, ItemStack like, int amount) {
+        return active(player.getUniqueId()).map(hold -> removeFrom(hold, like, amount)).orElse(0);
+    }
+
     public int remove(Player player, Material material, int amount) {
-        return active(player.getUniqueId()).map(hold -> removeFrom(hold, material, amount)).orElse(0);
+        return remove(player, new ItemStack(material), amount);
     }
 
     /**
      * Remove cargo from a specific boat.
      */
-    public int removeFrom(BoatHold hold, Material material, int amount) {
-        int left = amount;
-        left -= drain(hold.getContents(), material, left);
-        for (Map<String, Integer> expander : hold.getExpanders()) {
+    public int removeFrom(BoatHold hold, ItemStack like, int amount) {
+        int left = amount - CargoStore.removed(hold.getCargo(), like, amount);
+        for (List<ItemStack> expander : hold.getExpanders()) {
             if (left <= 0) {
                 break;
             }
-            left -= drain(expander, material, left);
+            left -= CargoStore.removed(expander, like, left);
         }
         int taken = amount - left;
         if (taken > 0) {
@@ -289,18 +272,8 @@ public class HoldService {
         return taken;
     }
 
-    private static int drain(Map<String, Integer> store, Material material, int amount) {
-        int current = store.getOrDefault(material.name(), 0);
-        int taken = Math.min(current, amount);
-        if (taken <= 0) {
-            return 0;
-        }
-        if (taken == current) {
-            store.remove(material.name());
-        } else {
-            store.put(material.name(), current - taken);
-        }
-        return taken;
+    public int removeFrom(BoatHold hold, Material material, int amount) {
+        return removeFrom(hold, new ItemStack(material), amount);
     }
 
     /**
@@ -322,7 +295,7 @@ public class HoldService {
         if (fit <= 0) {
             return 0;
         }
-        int taken = remove(player, material, fit);
+        int taken = remove(player, new ItemStack(material), fit);
         if (taken <= 0) {
             return 0;
         }
@@ -350,7 +323,7 @@ public class HoldService {
             return false;
         }
         return active(playerId).map(hold -> {
-            hold.getExpanders().add(new LinkedHashMap<>());
+            hold.getExpanders().add(new ArrayList<>());
             addon.getHoldManager().save(hold);
             return true;
         }).orElse(false);
@@ -364,49 +337,48 @@ public class HoldService {
         return boat(playerId) == Material.PALE_OAK_CHEST_BOAT;
     }
 
-    public Map<Material, Integer> expanderContents(UUID playerId, int index) {
-        Map<Material, Integer> result = new LinkedHashMap<>();
-        active(playerId).ifPresent(hold -> {
-            List<Map<String, Integer>> expanders = hold.getExpanders();
-            if (index >= 0 && index < expanders.size()) {
-                expanders.get(index).forEach((name, amount) -> {
-                    Material material = Material.matchMaterial(name);
-                    if (material != null && amount != null && amount > 0) {
-                        result.put(material, amount);
-                    }
-                });
+    /**
+     * One expander's cargo stacks, in slot order.
+     */
+    public List<ItemStack> expanderCargo(UUID playerId, int index) {
+        return active(playerId).map(hold -> {
+            List<List<ItemStack>> expanders = hold.getExpanders();
+            if (index < 0 || index >= expanders.size()) {
+                return new ArrayList<ItemStack>();
             }
-        });
-        return result;
+            CargoStore.compact(expanders.get(index));
+            return new ArrayList<>(expanders.get(index));
+        }).orElseGet(ArrayList::new);
     }
 
-    public int addToExpander(Player player, int index, Material material, int amount) {
-        if (refuses(material) || amount <= 0) {
+    public int addToExpander(Player player, int index, ItemStack like, int amount) {
+        if (like == null || refuses(like.getType()) || amount <= 0) {
             return 0;
         }
         return active(player.getUniqueId()).map(hold -> {
-            List<Map<String, Integer>> expanders = hold.getExpanders();
+            List<List<ItemStack>> expanders = hold.getExpanders();
             if (index < 0 || index >= expanders.size()) {
                 return 0;
             }
-            Map<String, Integer> store = expanders.get(index);
-            int fit = Math.min(amount, storeCapacityFor(store, EXPANDER_SLOTS, material));
-            if (fit <= 0) {
-                return 0;
+            int fit = CargoStore.added(expanders.get(index), EXPANDER_SLOTS, like, amount);
+            if (fit > 0) {
+                addon.getHoldManager().save(hold);
             }
-            store.merge(material.name(), fit, Integer::sum);
-            addon.getHoldManager().save(hold);
             return fit;
         }).orElse(0);
     }
 
-    public int removeFromExpander(UUID playerId, int index, Material material, int amount) {
+    public int addToExpander(Player player, int index, Material material, int amount) {
+        return addToExpander(player, index, new ItemStack(material), amount);
+    }
+
+    public int removeFromExpander(UUID playerId, int index, ItemStack like, int amount) {
         return active(playerId).map(hold -> {
-            List<Map<String, Integer>> expanders = hold.getExpanders();
+            List<List<ItemStack>> expanders = hold.getExpanders();
             if (index < 0 || index >= expanders.size()) {
                 return 0;
             }
-            int taken = drain(expanders.get(index), material, amount);
+            int taken = CargoStore.removed(expanders.get(index), like, amount);
             if (taken > 0) {
                 addon.getHoldManager().save(hold);
             }
@@ -414,13 +386,21 @@ public class HoldService {
         }).orElse(0);
     }
 
+    public int removeFromExpander(UUID playerId, int index, Material material, int amount) {
+        return removeFromExpander(playerId, index, new ItemStack(material), amount);
+    }
+
     /**
      * Destroy an EMPTY expander (the TNT refuses a loaded one).
      */
     public boolean destroyExpander(UUID playerId, int index) {
         return active(playerId).map(hold -> {
-            List<Map<String, Integer>> expanders = hold.getExpanders();
-            if (index < 0 || index >= expanders.size() || !expanders.get(index).isEmpty()) {
+            List<List<ItemStack>> expanders = hold.getExpanders();
+            if (index < 0 || index >= expanders.size()) {
+                return false;
+            }
+            CargoStore.compact(expanders.get(index));
+            if (!expanders.get(index).isEmpty()) {
                 return false;
             }
             expanders.remove(index);
@@ -444,6 +424,15 @@ public class HoldService {
             }
         });
         return result;
+    }
+
+    /**
+     * Slots one amount of a material occupies, consolidated. Fuel only - cargo
+     * counts slots by stack now (see {@link CargoStore}).
+     */
+    public static int slotsFor(Material material, int amount) {
+        int max = Math.max(1, material.getMaxStackSize());
+        return (amount + max - 1) / max;
     }
 
     public int fuelSlotsUsed(UUID playerId) {
@@ -499,6 +488,24 @@ public class HoldService {
         hold.getFuel().merge(material.name(), fit, Integer::sum);
         addon.getHoldManager().save(hold);
         return fit;
+    }
+
+    /**
+     * Drain a fuel entry. Fuel is material-keyed and fungible, so it keeps the
+     * simple map arithmetic that cargo has outgrown.
+     */
+    private static int drain(Map<String, Integer> store, Material material, int amount) {
+        int current = store.getOrDefault(material.name(), 0);
+        int taken = Math.min(current, amount);
+        if (taken <= 0) {
+            return 0;
+        }
+        if (taken == current) {
+            store.remove(material.name());
+        } else {
+            store.put(material.name(), current - taken);
+        }
+        return taken;
     }
 
     /**

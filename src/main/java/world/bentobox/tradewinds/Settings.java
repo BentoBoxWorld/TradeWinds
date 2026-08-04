@@ -646,6 +646,17 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "player.max-restarts")
     private int maxRestarts = 3;
 
+    @ConfigComment("Enchantment premium: an item's price is multiplied by (1 + quality x this),")
+    @ConfigComment("where quality weights each enchantment by usefulness and level. 0 ignores")
+    @ConfigComment("enchantments, so a Silk Touch pick sells as a plain one.")
+    @ConfigEntry(path = "economy.enchantment-price-factor")
+    private double enchantmentPriceFactor = 0.05;
+
+    @ConfigComment("Coins added per potion effect, times (1 + amplifier). Every potion shares one")
+    @ConfigComment("Material, so without this a Potion of Strength II is priced as a water bottle.")
+    @ConfigEntry(path = "economy.potion-effect-price")
+    private double potionEffectPrice = 150.0;
+
     @ConfigComment("How much value a port will handle in a SINGLE salvage item, per tech level:")
     @ConfigComment("a TL1 fishing hamlet has no use for a diamond sword and nobody there could")
     @ConfigComment("pay for one, while a TL7 industrial hub will take anything. This is what gives")
@@ -704,6 +715,9 @@ public class Settings implements WorldSettings {
         map.put("TOTEM_OF_UNDYING", 4000.0); map.put("DRAGON_BREATH", 500.0);
         map.put("TURTLE_SCUTE", 120.0); map.put("ARMADILLO_SCUTE", 60.0); map.put("HONEYCOMB", 40.0);
         map.put("SADDLE", 300.0); map.put("NAME_TAG", 400.0);
+        // Potions: the bottle is nearly worthless; what is IN it is priced by
+        // effect (see economy.potion-effect-price)
+        map.put("POTION", 60.0); map.put("SPLASH_POTION", 80.0); map.put("LINGERING_POTION", 120.0);
         // Foraged and gathered: apple and melon drop from leaves and vines, the
         // rest are picked, dug or fished up
         map.put("APPLE", 25.0); map.put("MELON", 35.0); map.put("SWEET_BERRIES", 10.0);
@@ -3087,6 +3101,10 @@ public class Settings implements WorldSettings {
     public void setContrabandMaterials(List<String> contrabandMaterials) { this.contrabandMaterials = contrabandMaterials; }
     public int getMaxRestarts() { return maxRestarts; }
     public void setMaxRestarts(int maxRestarts) { this.maxRestarts = maxRestarts; }
+    public double getEnchantmentPriceFactor() { return enchantmentPriceFactor; }
+    public void setEnchantmentPriceFactor(double v) { this.enchantmentPriceFactor = v; }
+    public double getPotionEffectPrice() { return potionEffectPrice; }
+    public void setPotionEffectPrice(double v) { this.potionEffectPrice = v; }
     public double getSalvageValuePerTechLevel() { return salvageValuePerTechLevel; }
     public void setSalvageValuePerTechLevel(double v) { this.salvageValuePerTechLevel = v; }
     public double getSalvageDiscount() { return salvageDiscount; }

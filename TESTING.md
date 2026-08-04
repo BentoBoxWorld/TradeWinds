@@ -70,6 +70,18 @@ noise.
 - [ ] Warp: you and the boat arrive facing the **dock**; hold forward and you
       reach it.
 - [ ] Sell the cargo at the new island at a different price than you paid.
+- [ ] **NBT survives the hold, and a restart.** Load an enchanted, a renamed and
+      a half-broken tool into the hold. Each takes its own slot and keeps its
+      name, enchantments and damage bar. Restart the server: all three are still
+      exactly what they were. (This cannot be unit-tested - ItemStack
+      serialisation does not work headlessly.)
+- [ ] **Condition and enchantments move the price.** A worn tool sells for
+      visibly less than a mint one; a Silk Touch pick for more than a plain one;
+      a Potion of Strength II for far more than a water bottle. Two differently
+      enchanted swords appear as two separate rows on the sell page.
+- [ ] **The TNT destroys what you picked.** With both a plain and an enchanted
+      sword aboard, select the enchanted one and destroy it: the plain one is
+      still there.
 - [ ] **Scavenged loot sells.** Kill a few mobs on an islet, load bones, string,
       rotten flesh and gunpowder into the hold, and sell at any port: every one
       of them has a price, visibly lower than a trade good of similar book value.

@@ -7,6 +7,7 @@ import java.util.Optional;
 
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 
 import io.papermc.paper.dialog.Dialog;
 import io.papermc.paper.registry.data.dialog.ActionButton;
@@ -134,13 +135,13 @@ public class TradeDialog {
             Component each = ui(player, "market.sell-tooltip-each", "[price]",
                     Money.format(addon, offer.unitPrice()));
             buttons.add(button(ui(player, "market.sell-one", "[material]", name), each,
-                    () -> sellThenReopen(player, spec, offer.material(), 1)));
+                    () -> sellThenReopen(player, spec, offer.item(), 1)));
             buttons.add(button(ui(player, "market.sell-batch", "[material]", name, "[amount]",
                     String.valueOf(MID_BATCH)), each,
-                    () -> sellThenReopen(player, spec, offer.material(), MID_BATCH)));
+                    () -> sellThenReopen(player, spec, offer.item(), MID_BATCH)));
             buttons.add(button(ui(player, "market.sell-all", "[amount]", String.valueOf(offer.amount()),
                     "[price]", Money.format(addon, offer.total())), each,
-                    () -> sellThenReopen(player, spec, offer.material(), Integer.MAX_VALUE)));
+                    () -> sellThenReopen(player, spec, offer.item(), Integer.MAX_VALUE)));
         }
         List<Component> body = new ArrayList<>(List.of(ui(player, "market.selling-body", NO_VARS),
                 statusLine(player)));
@@ -151,8 +152,8 @@ public class TradeDialog {
                 backButton(player, spec), 3);
     }
 
-    private void sellThenReopen(Player player, IslandSpec spec, Material material, int amount) {
-        addon.getMarketService().sell(player, spec, material, amount);
+    private void sellThenReopen(Player player, IslandSpec spec, ItemStack item, int amount) {
+        addon.getMarketService().sell(player, spec, item, amount);
         openSell(player, spec);
     }
 
@@ -334,30 +335,56 @@ public class TradeDialog {
      * One sellable line: what the hold has and what this island pays. Package
      * visible for tests.
      */
-    record SellOffer(Material material, int amount, double unitPrice, double total) {
+    record SellOffer(ItemStack item, int amount, double unitPrice, double total) {
+
+        Material material() {
+            return item.getType();
+        }
     }
 
     List<SellOffer> sellOffers(Player player, IslandSpec spec) {
         List<SellOffer> offers = new ArrayList<>();
-        // No stamps: everything aboard (expanders included) is sellable
-        // wherever a price and the port's own rules (contraband bands) allow
-        for (Map.Entry<Material, Integer> entry : addon.getHoldService().tradeContents(player).entrySet()) {
+        // No stamps: everything aboard (expanders included) is sellable wherever
+        // a price and the port's own rules (contraband bands) allow
+        for (Map.Entry<ItemStack, Integer> entry : distinctGoods(player).entrySet()) {
+            ItemStack item = entry.getKey();
             // Do not quote a price for something this port will refuse at the
             // counter: the sell page used to offer a dollar for contraband that
             // a safe island would then decline, which reads as a broken market
-            if (addon.getCustomsService() != null && addon.getCustomsService().isContraband(entry.getKey())
+            if (addon.getCustomsService() != null && addon.getCustomsService().isContraband(item.getType())
                     && !addon.getCustomsService().buysContraband(spec.band())) {
                 continue;
             }
             // Nor for goods too rich for this port's tech to handle
-            if (!addon.getMarketService().handlesValue(spec, entry.getKey())) {
+            if (!addon.getMarketService().handlesValue(spec, item)) {
                 continue;
             }
-            addon.getMarketService().playerSellsAt(spec, entry.getKey())
-                    .ifPresent(unit -> offers.add(new SellOffer(entry.getKey(), entry.getValue(), unit,
+            addon.getMarketService().playerSellsAt(spec, item)
+                    .ifPresent(unit -> offers.add(new SellOffer(item, entry.getValue(), unit,
                             PriceModel.round2(unit * entry.getValue()))));
         }
         return offers;
+    }
+
+    /**
+     * Everything aboard, one entry per DISTINCT good with its total count. Two
+     * differently enchanted swords are two entries - they are worth different
+     * money and must be sellable separately - while cargo split across several
+     * slots collapses back into one line.
+     */
+    private java.util.Map<ItemStack, Integer> distinctGoods(Player player) {
+        java.util.Map<ItemStack, Integer> goods = new java.util.LinkedHashMap<>();
+        for (ItemStack stack : addon.getHoldService().tradeCargo(player)) {
+            ItemStack key = goods.keySet().stream()
+                    .filter(seen -> world.bentobox.tradewinds.travel.CargoStore.stacksTogether(seen, stack))
+                    .findFirst().orElse(null);
+            if (key == null) {
+                goods.put(stack, stack.getAmount());
+            } else {
+                goods.merge(key, stack.getAmount(), Integer::sum);
+            }
+        }
+        return goods;
     }
 
     /**

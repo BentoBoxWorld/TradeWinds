@@ -3,6 +3,52 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## Stage 7.5 Phase 4 — the hold carries NBT (2026-08-03)
+
+The hold stores **one ItemStack per slot** instead of material→amount, so a worn
+bow, a mint bow and a Silk Touch pick are three different goods.
+
+- `BoatHold.contents` -> `cargo` as `List<ItemStack>`; `expanders` as
+  `List<List<ItemStack>>`. **Fuel stays material-keyed** - a lump of coal is a
+  lump of coal. BentoBox's `ItemStackTypeAdapter` (registered in
+  `BentoboxTypeAdapterFactory`) persists these through Bukkit's own YAML
+  serializer, so meta survives a restart; its 99-amount clamp cannot be hit
+  because a slot never holds more than a stack.
+- New `travel/CargoStore` holds all the slot arithmetic - capacity, consolidation,
+  drain, compaction - as statics, which is what makes it testable.
+- `HoldService` keeps its Material-based API as thin overloads over the
+  ItemStack ones, so the buy path, fuel and starter kit were untouched.
+- `MarketService.basePrice/playerBuysAt/playerSellsAt/sell/handlesValue` now take
+  ItemStacks. The sell page groups by *distinct good*, so two differently
+  enchanted swords are two rows at two prices.
+- `PriceEngine` applies durability (already written), **enchantments** (
+  `getEnchantmentValue` existed and had never been called - there was never an
+  enchanted item left to price) and **potions** via `PotionMeta`. New knobs
+  `economy.enchantment-price-factor` 0.05 and `economy.potion-effect-price` 150.
+- `HoldGui.Selection` carries the ItemStack, not the Material - otherwise
+  selecting an enchanted sword and hitting the TNT destroyed a plain one.
+
+**MockBukkit findings that shaped the design** (probed rather than assumed - the
+CLAUDE.md note that "ItemStack meta does not work" was too coarse):
+- `isSimilar`, `getMaxStackSize`, `clone` and `equals` all work.
+- `new ItemStack(...)` attaches a phantom **UNSPECIFIC** meta and `clone()` drops
+  it, so a cloned plain item stops being `isSimilar` to an identical one. Hence
+  `CargoStore.copyOf` rebuilds plain items from their type and only clones items
+  with real meta - which is better production code anyway, and gives the same
+  answer in both worlds. `isPlain` compares against a pristine stack rather than
+  trusting `hasItemMeta()`, which lies here.
+- `new ItemStack(Material.AIR)` throws `AbstractMethodError`: never manufacture
+  an air stack, only detect one.
+- ItemStack **serialisation is dead** headlessly (`craftDelegate` is null), so
+  persistence of enchanted cargo is a manual check in `TESTING.md`. Potion
+  pricing is likewise manual-only - `PotionType`'s effect registry is not
+  available in tests.
+
+**Pitfall:** Maven does not recompile unchanged test sources, so four tests
+failed at *runtime* with `NoSuchMethodError` against the new signatures rather
+than failing to compile. If a rename looks like it broke tests mysteriously,
+that is what happened.
+
 ## Stage 7.5 Phase 3 — tech gates what a port will handle (2026-08-03)
 
 `economy.salvage-value-per-tech-level` (1500) caps the value of a single salvage
