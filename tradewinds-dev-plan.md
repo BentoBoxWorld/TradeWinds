@@ -87,7 +87,11 @@ Each stage produces a testable, playable increment. Stages are sized so a stage 
 - Player market stalls rentable on NPC islands (goods enter that island's trade pool; rent as money sink).
 - Chart data as a purchasable good; wanted-player "last seen" intel for bounty hunters.
 - Boat/expander insurance (cargo never insurable); boat destruction and death-drop rules tuning.
-- Delivery contracts/missions for positive reputation.
+- **Missions, as NPC requisition boards** — "Baker's Reach wants 200 wheat at
+  40/unit, 3 days", posted at the plaza, seeded from island type/tech/stock, paid
+  above market plus reputation. This is the intended pattern for *all* mission
+  types (delivery, bounty, passenger, salvage): the island is the counterparty,
+  so no escrow or player order book is needed. See the design-decisions entry.
 - Multiple galaxies as additional worlds; inter-galaxy warp as endgame.
 - Elder Guardian boss response for the most-wanted tier.
 

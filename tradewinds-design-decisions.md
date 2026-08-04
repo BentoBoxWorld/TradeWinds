@@ -46,6 +46,48 @@ These are the reasons the design works. If a future change breaks one of these, 
 - Everything in Minecraft is tradeable. **BlueBook** (`~/git/bluebook`) supplies base prices; modifiers from island type, biome, security band, and per-island stock/price drift persisted via the BentoBox database. Players may sell found/crafted items through the same market.
 - Margins scale with danger: the best prices live in the risky bands.
 
+### Salvage & free trading (decided 2026-08-03)
+The scavenger/farmer/pirate has loot and nowhere to put it. Ports buy almost
+anything, but **shallowly**: price decays as you sell in, recovers over time, so
+a stack of diamonds is several ports' worth of business rather than one payday.
+This is the existing stock-drift machinery (`IslandDataManager`, `TWIslandData`,
+`driftScale`/`stockDecayPerHour`) applied to found goods — the rate limit is
+what stops an infinite farm faucet outcompeting the trade game.
+- **Drift must be value-weighted, not unit-weighted.** Ten diamonds should move
+  a port's prices far more than ten wheat; `adjustStock` currently counts units.
+  Model it as the trader's **purse** — coins spent on a category, replenishing —
+  which is also how players naturally describe it.
+- **Salvage gets its own stock bucket** (not `MISC`) and a steeper discount than
+  proper trade goods. Otherwise dumping junk craters the legitimate price
+  gradient in that category, which is a griefing vector on a small server, and
+  piracy out-earns honest trading.
+- **Tech level gates what a port recognises**: a TL1 hamlet has no use for
+  netherite. Loot therefore has a *destination*, which is a route.
+- **NBT is preserved and priced.** A worn bow, a Potion of Strength II and a
+  Silk Touch pick are not their base materials. `PriceEngine` already applies
+  durability and can weigh enchantments (`getEnchantmentValue`, currently
+  unwired); potions need `PotionMeta` handling. The hold (`Map<String,Integer>`)
+  and the `Material`-typed `MarketService` signatures are what throw NBT away —
+  both must carry ItemStacks. Breaking data-model change: wipe on deploy.
+- **The hold becomes two-way for player-loaded goods.** This narrows the
+  load-bearing "cargo leaves only by sale or destruction" rule, which now
+  applies to **trader-bought cargo only** — that is what preserves cargo
+  commitment and keeps the hold from being an off-market transfer channel.
+  Player-loaded salvage can be withdrawn. Track provenance per stack and never
+  merge across it, or the flag becomes ambiguous.
+- **Sold goods resurface for players to buy**, but only notable items (enchanted,
+  named, above a value threshold), a slot or two per port, with a TTL — and they
+  surface at a *different* island than the one they were sold at ("the trader
+  shipped it on"). Unpredictable destination is what stops alt-account
+  laundering turning port shelves into a global auction house.
+- Price discovery is a **logbook**, not an oracle: prices cannot be shown for
+  ports you have not visited, and the chart remembers only what you saw and how
+  long ago (Elite/TradeWars precedent). At the counter, show the live price *and
+  the depth* — "this port will take ~40 more before the price falls" — which is
+  the number the player actually needs. Purchasable market reports at high-tech
+  ports, radius and freshness scaling with tech level, give TL a role beyond
+  goods; plaza rumours are the cheap flavour version.
+
 ### Contraband & customs
 - Master **config gate disables all illegal-goods mechanics** for family servers; on by default.
 - Contraband: **sugar** (never referred to as drugs, in code, config, or locale). Villager "passengers" in boats sellable at less-safe islands only (how the player boats a villager is their problem — emergent by design).
@@ -68,6 +110,23 @@ These are the reasons the design works. If a future change breaks one of these, 
 - Wanted players suffer a higher warp-failure chance (crime feeds the interstice ambush meta).
 - Interstice is a **shared** world (enabling warp-space interdiction/ambush — very Elite) rather than instanced pockets.
 - Post-MVP: stall rental on NPC islands for the player market (goods join the island's trade pool; rent as sink; stall location matters via the route graph); insurance (hull/expanders insurable, cargo never); "last seen" wanted-player intel sold at trade posts; Elder Guardian as the top-tier wanted response (its fatigue aura hits innocents — `EntityPotionEffectEvent` cancellation is possible but fights the mob's design, hence demoted from standard police).
+
+- **Missions as NPC requisitions** (Ben, 2026-08-03 — the intended shape for the
+  whole missions system, not just delivery jobs): a port posts a standing order —
+  *"Baker's Reach wants 200 wheat at 40/unit, expires in 3 days"* — seeded from
+  the island's type, tech level and current stock, on a board at the plaza. The
+  player fills it in whole or in part, at a price fixed above the drifting market
+  rate, and the reward is the premium plus reputation.
+  This is deliberately the **5% of an EVE order book that fits a 20-player
+  server**: it gives the farmer a goal and the scavenger a destination, and it
+  needs no escrow, no player-placed orders and no offline value transfer — the
+  counterparty is the island. Player-placed buy orders were considered and
+  rejected for now (an order book with three participants is a waiting room, not
+  a market, and "collect your goods from the trader" implies a warehouse, which
+  breaks the boat-is-the-hold rule). Revisit only if a server ever has the
+  population to support it, and then at spawn only.
+  Generalises to every mission type: bounty contracts, passenger runs, courier
+  jobs and salvage recovery are all "a board posts a job, you sail, you're paid."
 
 ## Open questions
 1. **Name — RESOLVED: TradeWinds** (one word, house style like BSkyBlock/AcidIsland; repo `TradeWinds` under BentoBoxWorld). "Trade Wars MC" rejected — the TradeWars 2002 mark is still live, and "Wars" mis-signals a trading game; Sandlot's Tradewinds series is defunct and the phrase is generic.
