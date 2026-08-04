@@ -683,6 +683,15 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "economy.currency-symbol")
     private String currencySymbol = "$";
 
+    @ConfigComment("FEATURE FLAG, off by default: the price logbook and harbour reports.")
+    @ConfigComment("Ruled not required for MVP (2026-08-03) and parked until the rough edges are")
+    @ConfigComment("fixed: the 'best' column compares absolute prices, so the priciest good wins")
+    @ConfigComment("everywhere (Gems at every port); the category argument has no tab-complete;")
+    @ConfigComment("and buying a report gives almost no feedback. When true: /tw prices exists,")
+    @ConfigComment("market visits write the logbook, and brokers sell harbour reports.")
+    @ConfigEntry(path = "economy.price-logbook-enabled")
+    private boolean priceLogbookEnabled = false;
+
     @ConfigComment("Harbour reports: what a broker charges PER PORT to fill in your logbook, and")
     @ConfigComment("how far the report reaches per tech level of the island selling it. This gives")
     @ConfigComment("a developed port a role beyond its shelves, and a reason to call somewhere you")
@@ -3192,6 +3201,8 @@ public class Settings implements WorldSettings {
     public void setResaleShipRadius(int resaleShipRadius) { this.resaleShipRadius = resaleShipRadius; }
     public String getCurrencySymbol() { return currencySymbol == null ? "$" : currencySymbol; }
     public void setCurrencySymbol(String currencySymbol) { this.currencySymbol = currencySymbol; }
+    public boolean isPriceLogbookEnabled() { return priceLogbookEnabled; }
+    public void setPriceLogbookEnabled(boolean priceLogbookEnabled) { this.priceLogbookEnabled = priceLogbookEnabled; }
     public double getMarketReportPricePerIsland() { return marketReportPricePerIsland; }
     public void setMarketReportPricePerIsland(double v) { this.marketReportPricePerIsland = v; }
     public double getMarketReportRadiusPerTechLevel() { return marketReportRadiusPerTechLevel; }

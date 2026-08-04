@@ -65,7 +65,9 @@ public class TradeDialog {
         boolean boatHere = addon.getMarketService().boatIsHere(player, spec);
         // Standing at the counter is how a trader learns a port's prices - and
         // the only way, because the market is learned, not published
-        recordPrices(player, spec);
+        if (addon.getSettings().isPriceLogbookEnabled()) {
+            recordPrices(player, spec);
+        }
         // Too poor in fuel to warp anywhere from here? Then the most useful
         // thing this screen can do is point at where the fuel is sold. An
         // action bar fades; a button that says "buy fuel here" does not.
@@ -97,7 +99,8 @@ public class TradeDialog {
         }
         // The broker: pay to have your logbook filled in for the ports within
         // this one's reach. No boat needed - it is information, not cargo.
-        int reportable = addon.getMarketService().reportablePorts(spec).size();
+        int reportable = addon.getSettings().isPriceLogbookEnabled()
+                ? addon.getMarketService().reportablePorts(spec).size() : 0;
         if (reportable > 0 && addon.getSettings().getMarketReportPricePerIsland() > 0) {
             buttons.add(button(ui(player, "market.report", NO_VARS),
                     ui(player, "market.report-tooltip", "[number]", String.valueOf(reportable),

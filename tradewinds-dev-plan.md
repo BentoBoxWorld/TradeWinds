@@ -91,6 +91,10 @@ bucket → tech gating → NBT hold → two-way hold → price discovery (depth 
 counter, chart logbook, market reports) → resale shelves.
 
 ## Stage 8 — Post-MVP backlog (seeded, unscheduled)
+- **Re-enable the price logbook + harbour reports** (`economy.price-logbook-enabled`,
+  built but parked 2026-08-03): fix the absolute-price "best" column, add category
+  tab-complete, make the report purchase visibly land. See the status note in
+  `tradewinds-salvage-plan.md`.
 - Player market stalls rentable on NPC islands (goods enter that island's trade pool; rent as money sink).
 - Chart data as a purchasable good; wanted-player "last seen" intel for bounty hunters.
 - Boat/expander insurance (cargo never insurable); boat destruction and death-drop rules tuning.

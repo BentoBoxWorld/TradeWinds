@@ -3,6 +3,21 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## The logbook is parked behind a flag (2026-08-03)
+
+Ben's call after playtest: the price logbook and harbour reports are not
+required for MVP. Now behind **`economy.price-logbook-enabled`**, default
+false: the command is not registered, market visits do not write the logbook,
+the broker button does not appear, and `buyMarketReport` refuses. Four
+surfaces, all gated on the one flag. Depth-at-the-counter is untouched - it
+works and stays.
+
+What the playtest showed, for the revisit (full list in the salvage plan's
+status note): every port read "best: Gems $850" because the unfiltered view
+compares ABSOLUTE prices and diamonds carry the highest base price everywhere -
+best needs to be relative to book; the category argument has no tab-complete;
+and a $500 report purchase produces one chat line.
+
 ## /tw prices shipped permission-less (2026-08-03)
 
 Phase 6's two new commands never got their permissions declared in `addon.yml`,

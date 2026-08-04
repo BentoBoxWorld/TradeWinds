@@ -190,7 +190,10 @@ public class TradeWinds extends GameModeAddon {
                 // hop through another game mode is a free ride to a market.
                 new TWWarpCommand(this);
                 new TWChartCommand(this);
-                new TWPricesCommand(this);
+                if (TradeWinds.this.getSettings().isPriceLogbookEnabled()) {
+                    // Behind a flag, off by default: parked pre-MVP (2026-08-03)
+                    new TWPricesCommand(this);
+                }
                 new TWStarChartCommand(this);
                 new TWTradeCommand(this);
                 new TWRestartCommand(this);

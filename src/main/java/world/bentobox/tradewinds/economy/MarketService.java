@@ -308,7 +308,7 @@ public class MarketService {
     public int buyMarketReport(Player player, IslandSpec spec) {
         User user = User.getInstance(player);
         Optional<VaultHook> vault = addon.getPlugin().getVault();
-        if (vault.isEmpty() || addon.getOverWorld() == null) {
+        if (!addon.getSettings().isPriceLogbookEnabled() || vault.isEmpty() || addon.getOverWorld() == null) {
             return 0;
         }
         List<IslandSpec> ports = reportablePorts(spec);

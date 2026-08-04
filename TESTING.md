@@ -85,6 +85,9 @@ noise.
 - [ ] **A fresh player can run every player command.** `/tw prices`, chart,
       go, starchart, restart, fine - none says "no permission" without an admin
       having turned it off.
+- [ ] **The logbook is OFF by default.** `/tw prices` is not a command, and no
+      "Harbour report" button appears at any market. (The checks below apply
+      only with `economy.price-logbook-enabled: true`.)
 - [ ] **The logbook only knows where you have been.** `/tw prices` on a fresh
       player says the logbook is empty. Open a port's market, run it again: that
       port appears with an age. A port you have only *charted* never appears.

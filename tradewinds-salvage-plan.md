@@ -9,6 +9,20 @@ for boat identity, ownership and capture.
 > what each landed, the deviations, and the traps hit. Two things were
 > deliberately not built: plaza rumours (Phase 6 - they duplicated the logbook)
 > and the chart-hologram price display (the logbook surfaces via `/tw prices`).
+>
+> **Phase 6's logbook and harbour reports are PARKED behind
+> `economy.price-logbook-enabled` (default false)** - ruled not required for MVP
+> after playtest (2026-08-03). Before re-enabling, fix:
+> - The unfiltered `/tw prices` "best" column compares **absolute** prices, so
+>   the priciest good wins everywhere - every port read "Gems $850". Best must
+>   be relative to book value (or the unfiltered view dropped for per-category
+>   only).
+> - The category argument has no tab-complete, and nothing tells the player what
+>   the categories are.
+> - Buying a report gives one chat line: no reach shown before paying, no list
+>   of covered ports after. A $500 purchase should visibly land.
+> - Consider folding the logbook into the chart holograms instead of a command.
+> Depth-at-the-counter (the sell tooltip) is NOT parked - it works and stays.
 
 ## The problem
 

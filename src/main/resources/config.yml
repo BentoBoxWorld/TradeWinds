@@ -310,6 +310,11 @@ economy:
   # whole coins by design, so TradeWinds formats money itself rather than asking
   # the economy plugin, whose formatter may add cents and a currency name.
   currency-symbol: "$"
+  # FEATURE FLAG, off by default: the price logbook and harbour reports. Parked as
+  # not required for MVP (2026-08-03) - see tradewinds-salvage-plan.md for what
+  # needs fixing before it returns. When true: /tw prices exists, market visits
+  # write the logbook, and brokers sell harbour reports.
+  price-logbook-enabled: false
   # Harbour reports: what a broker charges PER PORT to fill in your logbook, and how
   # far the report reaches per tech level of the island selling it. Gives a developed
   # port a role beyond its shelves. 0 for either disables reports.
