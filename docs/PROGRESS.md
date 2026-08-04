@@ -3,6 +3,36 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## Stage 7.5 Phase 5 — the hold works both ways (2026-08-03)
+
+A scavenger has to be able to use their hold as a hold. **This narrows a
+load-bearing rule**: "cargo leaves the hold only by sale or destruction" now
+applies to **trader-bought cargo only**.
+
+- `travel/CargoMark` marks bought cargo in the item's own persistent data
+  (`tradewinds:traded`). Because the mark lives in the meta it survives the
+  hold's serialisation, travels through a boat capture, stays visible if a bug
+  ever leaks one into an inventory - and makes marked and unmarked stacks fail
+  `isSimilar`, so one bought diamond can never lock up twenty mined ones.
+- `HoldService.withdraw` returns **-1** for trader-bought cargo rather than 0, so
+  the GUI can say *why* instead of just refusing. Overflow drops at the player's
+  feet rather than vanishing.
+- Hold GUI gestures: **left-click takes cargo out**, shift-click sends burnables
+  to the fuel row (the old plain-click behaviour), right-click selects for the
+  TNT. The border pane's lore states all three.
+- `MarketService.buy` marks what it sells you. Selling and destroying are
+  untouched - `remove()` is not gated, only `withdraw()`.
+
+**Bug found while doing it:** the existing `deposit` path added
+`hold.add(player, material, amount)`, so loading an enchanted sword into the hold
+stored a *plain* one. Harmless before Phase 4 (nothing had NBT to lose) and
+silently destructive after it.
+
+**Pitfall:** `CargoMark` first built its key with `new NamespacedKey(plugin, ...)`
+cached in a static - which needs a mocked plugin and outlives a reload.
+`BoatService` already had the right pattern: `NamespacedKey.fromString`, no
+Plugin instance at all.
+
 ## Stage 7.5 Phase 4 — the hold carries NBT (2026-08-03)
 
 The hold stores **one ItemStack per slot** instead of material→amount, so a worn

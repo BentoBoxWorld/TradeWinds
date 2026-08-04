@@ -23,9 +23,9 @@ import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.TestHolds;
 
 /**
- * Tests the VIRTUAL hold: capacity comes from the one boat, contents are
- * consolidated material→amount in the database, containers and vessels are
- * refused, and fuel lives in its own seven slots.
+ * Tests the VIRTUAL hold: capacity comes from the one boat, cargo is one stack
+ * per slot in the database, containers and vessels are refused, and fuel lives
+ * in its own seven slots.
  *
  * @author tastybento
  */
@@ -47,6 +47,84 @@ class HoldServiceTest extends CommonTestSetup {
         holds = TestHolds.install(addon);
         service = new HoldService(addon);
         when(addon.getHoldService()).thenReturn(service);
+    }
+
+    @Test
+    void testTheHoldIsTwoWayForYourOwnGoods() {
+        // A scavenger has to be able to use their hold as a hold (2026-08-03)
+        holds.giveBoat(uuid, Material.OAK_BOAT);
+        ItemStack mined = new ItemStack(Material.COBBLESTONE);
+        assertEquals(40, service.add(mockPlayer, mined, 40));
+        assertEquals(25, service.withdraw(mockPlayer, mined, 25));
+        assertEquals(15, service.count(mockPlayer, mined), "Only what was taken leaves");
+        assertEquals(15, service.withdraw(mockPlayer, mined, 999), "Asking for too much takes the rest");
+        assertEquals(0, service.count(mockPlayer, mined));
+    }
+
+    @Test
+    void testTraderBoughtCargoStaysOneWay() {
+        // The load-bearing half of the rule: speculate on a cargo and you must
+        // find a buyer, not warehouse it ashore
+        holds.giveBoat(uuid, Material.OAK_BOAT);
+        ItemStack bought = markedStack(Material.DIAMOND);
+        assertEquals(10, service.add(mockPlayer, bought, 10));
+        assertEquals(-1, service.withdraw(mockPlayer, bought, 10), "Bought cargo cannot be withdrawn");
+        assertEquals(10, service.count(mockPlayer, bought), "and it is still aboard");
+        // Selling and destroying still work - remove() is not gated
+        assertEquals(10, service.remove(mockPlayer, bought, 10));
+    }
+
+    @Test
+    void testBoughtAndMinedGoodsNeverMerge() {
+        // One bought diamond must not lock up twenty mined ones, so marked and
+        // unmarked stacks are different goods and keep separate slots
+        holds.giveBoat(uuid, Material.PALE_OAK_CHEST_BOAT);
+        ItemStack bought = markedStack(Material.DIAMOND);
+        ItemStack mined = new ItemStack(Material.DIAMOND);
+        assertEquals(5, service.add(mockPlayer, bought, 5));
+        assertEquals(20, service.add(mockPlayer, mined, 20));
+        assertFalse(CargoStore.stacksTogether(bought, mined), "Provenance must break similarity");
+        assertEquals(5, service.count(mockPlayer, bought));
+        assertEquals(20, service.count(mockPlayer, mined));
+        assertEquals(2, service.cargo(uuid).size(), "Two goods, two slots");
+        // And the mined ones come out while the bought ones stay put
+        assertEquals(20, service.withdraw(mockPlayer, mined, 20));
+        assertEquals(5, service.count(mockPlayer, bought));
+    }
+
+    /** Every marked mock made in this test, so they can recognise each other. */
+    private final java.util.Set<ItemStack> markedMocks = java.util.Collections.newSetFromMap(
+            new java.util.IdentityHashMap<>());
+
+    /**
+     * A stack carrying the trader-bought mark, with a mocked PDC and a working
+     * amount. Marked stacks are similar to each other and to nothing else, which
+     * is what the PDC mark does on a real server.
+     */
+    private ItemStack markedStack(Material material) {
+        ItemStack item = mock(ItemStack.class);
+        org.bukkit.inventory.meta.ItemMeta meta = mock(org.bukkit.inventory.meta.ItemMeta.class);
+        org.bukkit.persistence.PersistentDataContainer pdc =
+                mock(org.bukkit.persistence.PersistentDataContainer.class);
+        java.util.concurrent.atomic.AtomicInteger amount = new java.util.concurrent.atomic.AtomicInteger(1);
+        when(item.getType()).thenReturn(material);
+        when(item.getMaxStackSize()).thenReturn(material.getMaxStackSize());
+        when(item.getItemMeta()).thenReturn(meta);
+        when(meta.getPersistentDataContainer()).thenReturn(pdc);
+        when(pdc.has(any(), any())).thenReturn(true);
+        when(item.getAmount()).thenAnswer(inv -> amount.get());
+        org.mockito.Mockito.doAnswer(inv -> {
+            amount.set(inv.getArgument(0));
+            return null;
+        }).when(item).setAmount(org.mockito.ArgumentMatchers.anyInt());
+        when(item.isSimilar(any())).thenAnswer(inv -> {
+            Object other = inv.getArgument(0);
+            return other instanceof ItemStack stack && markedMocks.contains(stack)
+                    && stack.getType() == material;
+        });
+        when(item.clone()).thenAnswer(inv -> markedStack(material));
+        markedMocks.add(item);
+        return item;
     }
 
     @Test

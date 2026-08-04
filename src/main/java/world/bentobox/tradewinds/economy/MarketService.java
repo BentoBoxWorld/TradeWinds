@@ -405,8 +405,11 @@ public class MarketService {
             thud(player);
             return 0;
         }
-        // Limit by hold slots: add first, pay for what fit
-        int added = addon.getHoldService().add(player, material, affordable);
+        // Limit by hold slots: add first, pay for what fit. Bought cargo is
+        // MARKED, so it cannot be withdrawn ashore later - speculate on a cargo
+        // and you must find a buyer for it
+        int added = addon.getHoldService().add(player,
+                world.bentobox.tradewinds.travel.CargoMark.marked(new ItemStack(material)), affordable);
         if (added <= 0) {
             user.sendMessage("tradewinds.trade.no-hold-space");
             thud(player);

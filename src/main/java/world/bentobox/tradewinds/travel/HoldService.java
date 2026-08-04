@@ -277,6 +277,37 @@ public class HoldService {
     }
 
     /**
+     * Take cargo back OUT of the hold and into the player's hands - the second
+     * exit, added 2026-08-03. A scavenger has to be able to use their hold as a
+     * hold; what stays one-way is cargo <b>bought from a trader</b>, which may
+     * still only leave by sale or destruction (see {@link CargoMark}).
+     * <p>
+     * Anything that will not fit in the inventory is dropped at the player's
+     * feet rather than vanishing.
+     *
+     * @param player the player
+     * @param like the item to withdraw
+     * @param amount how many
+     * @return how many were withdrawn, or -1 if this cargo is trader-bought
+     */
+    public int withdraw(Player player, ItemStack like, int amount) {
+        if (like == null || amount <= 0) {
+            return 0;
+        }
+        if (CargoMark.isTraded(like)) {
+            return -1;
+        }
+        int taken = remove(player, like, amount);
+        if (taken <= 0) {
+            return 0;
+        }
+        ItemStack out = CargoStore.copyOf(like, taken);
+        player.getInventory().addItem(out).values()
+                .forEach(left -> player.getWorld().dropItem(player.getLocation(), left));
+        return taken;
+    }
+
+    /**
      * Move fuel-valued CARGO into the fuel row (e.g. coal bought at market) -
      * a sanctioned third exit from the cargo slots, into the tank.
      *

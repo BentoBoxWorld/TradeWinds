@@ -70,6 +70,17 @@ noise.
 - [ ] Warp: you and the boat arrive facing the **dock**; hold forward and you
       reach it.
 - [ ] Sell the cargo at the new island at a different price than you paid.
+- [ ] **The hold works both ways.** Mine cobblestone on an islet, load it into
+      the hold, then left-click it in the hold window: it comes back to your
+      inventory. With a full inventory the overflow drops at your feet, never
+      vanishes.
+- [ ] **Bought cargo cannot be withdrawn.** Buy cargo at a market, then try to
+      left-click it out of the hold: refused, with a message saying it leaves by
+      sale or by the TNT. Selling it still works.
+- [ ] **Bought and mined goods do not merge.** Buy 5 diamonds and mine 20: they
+      occupy separate slots, and only the mined 20 can be withdrawn.
+- [ ] Hold gestures: left-click withdraws, shift-click sends coal to the fuel
+      row, right-click selects for the TNT.
 - [ ] **NBT survives the hold, and a restart.** Load an enchanted, a renamed and
       a half-broken tool into the hold. Each takes its own slot and keeps its
       name, enchantments and damage bar. Restart the server: all three are still

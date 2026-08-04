@@ -40,8 +40,10 @@ right tier, not to the end; `docs/TESTING-archive.md` is the old per-stage list,
 history only. Update PROGRESS and TESTING as features land.
 
 Load-bearing design rules (from the spec — breaking one is a bug):
-trading transacts only against the **virtual hold**; cargo leaves the hold only
-by sale or destruction; everything downstream of the galaxy seed is a pure
+trading transacts only against the **virtual hold**; **trader-bought** cargo
+leaves the hold only by sale or destruction (player-loaded salvage may be
+withdrawn — narrowed 2026-08-03, see `tradewinds-salvage-plan.md`, and the
+distinction is a PDC mark, `travel/CargoMark`); everything downstream of the galaxy seed is a pure
 function of (seed, position) with **no Bukkit imports** (package
 `world.bentobox.tradewinds.galaxy`), unit-tested headlessly; no End world ever;
 interstice re-engage is always free; police mobs never drop loot.
@@ -70,6 +72,10 @@ one-way-cargo rule below to trader-bought cargo only.
   the previous boat to an unowned OLD BOAT; `clearActiveBoat` just drops the
   pointer. Taking a boat also strips its former owner — miss that and the
   victim keeps phantom slots and the login path hands the boat back.
+- **Cargo is a list of stacks, one per slot** (`BoatHold.cargo`), not
+  material→amount: a worn bow, a mint bow and a Silk Touch pick are three goods.
+  Slot arithmetic lives in `travel/CargoStore`; fuel stays material-keyed because
+  fuel is fungible. **Match cargo with `isSimilar`, never by material.**
 - **Money is whole coins.** Buy prices `ceil`, sell prices `floor` — the
   direction stops the spread closing (nearest-rounding is exploitable). Never
   format money by hand: `economy.Money.format(addon, amount)` asks the server's

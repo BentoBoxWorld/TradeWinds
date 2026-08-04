@@ -124,7 +124,8 @@ public class HoldGui implements Listener {
         HoldService hold = addon.getHoldService();
         User user = User.getInstance(player);
         UUID id = player.getUniqueId();
-        ItemStack border = pane(Material.LIGHT_BLUE_STAINED_GLASS_PANE, user, "tradewinds.hold.border", null);
+        ItemStack border = pane(Material.LIGHT_BLUE_STAINED_GLASS_PANE, user, "tradewinds.hold.border",
+                "tradewinds.hold.border-lore");
         for (int slot = 0; slot < SIZE; slot++) {
             inv.setItem(slot, border);
         }
@@ -362,7 +363,7 @@ public class HoldGui implements Listener {
             thud(player);
             return;
         }
-        int added = hold.add(player, material, stack.getAmount());
+        int added = hold.add(player, stack, stack.getAmount());
         if (added <= 0) {
             user.sendMessage("tradewinds.hold.cargo-full");
             thud(player);
@@ -454,15 +455,39 @@ public class HoldGui implements Listener {
             Bukkit.getScheduler().runTask(addon.getPlugin(), () -> openNested(player, expander));
             return;
         }
-        if (addon.getFuelService().fuelValue(shown.getType()) > 0) {
-            // Fuel-valued cargo (e.g. coal bought at market) moves to the
-            // fuel row on click - fuel is exempt from the one-way rule
+        // Right-click selects for the TNT; shift-click sends burnable cargo to
+        // the fuel row; a plain left-click takes the goods back out
+        if (click == ClickType.RIGHT) {
+            selected.put(id, new Selection(shown, shown.getAmount(), -1));
+            user.sendMessage("tradewinds.hold.selected", "[amount]", String.valueOf(shown.getAmount()),
+                    "[material]", world.bentobox.tradewinds.economy.PriceEngine.prettify(shown.getType().name()));
+            return;
+        }
+        if (click.isShiftClick() && addon.getFuelService().fuelValue(shown.getType()) > 0) {
             moveCargoFuel(player, shown);
             return;
         }
-        selected.put(id, new Selection(shown, shown.getAmount(), -1));
-        user.sendMessage("tradewinds.hold.selected", "[amount]", String.valueOf(shown.getAmount()),
-                "[material]", world.bentobox.tradewinds.economy.PriceEngine.prettify(shown.getType().name()));
+        withdrawCargo(player, shown);
+    }
+
+    /**
+     * Take cargo out of the hold. Trader-bought cargo is refused: the one-way
+     * rule still holds for anything a market sold you.
+     */
+    private void withdrawCargo(Player player, ItemStack shown) {
+        User user = User.getInstance(player);
+        int taken = addon.getHoldService().withdraw(player, shown, shown.getAmount());
+        if (taken < 0) {
+            user.sendMessage("tradewinds.hold.bought-cargo-locked");
+            thud(player);
+        } else if (taken == 0) {
+            user.sendMessage("tradewinds.hold.withdraw-failed");
+            thud(player);
+        } else {
+            user.sendMessage("tradewinds.hold.withdrawn", "[amount]", String.valueOf(taken), "[material]",
+                    world.bentobox.tradewinds.economy.PriceEngine.prettify(shown.getType().name()));
+            chime(player);
+        }
     }
 
     private void moveCargoFuel(Player player, ItemStack shown) {
