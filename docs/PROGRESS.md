@@ -3,6 +3,23 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## Money formats itself (2026-08-03)
+
+"Coal x1 - $27.00 Dollars": the server economy's `format()` put the cents back
+and appended a currency name, and the locale added a `$` of its own. Delegating
+to Vault for display - my earlier call - loses to reality: TradeWinds rounds
+every price to a whole coin precisely so dense dialogs read clean, then handed
+the number to a formatter that undid it.
+
+`Money.format` now renders "$1,728" itself: whole coins, US-style thousands
+separators, symbol from **`economy.currency-symbol`** (so a gems-or-credits
+server is not stuck with `$`). All 23 hand-written `$` were stripped from the
+locale - the symbol lives in exactly one place. Verified every money variable in
+every locale string is produced by `Money.format` before deciding this was safe.
+Vault still handles the actual accounts; only display changed. `MoneyTest` pins
+the format, including that a stray fraction rounds away rather than resurfacing
+as cents.
+
 ## Playtest fixes — config drift and telling goods apart (2026-08-03)
 
 **An oak boat carried 30 slots.** The shipped `config.yml` had every value in

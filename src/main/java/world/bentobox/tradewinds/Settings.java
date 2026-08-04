@@ -677,6 +677,12 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "economy.resale-ship-radius")
     private int resaleShipRadius = 8000;
 
+    @ConfigComment("The currency symbol shown before every price - \"$27\", \"$1,728\". Prices are")
+    @ConfigComment("whole coins by design, so TradeWinds formats money itself rather than asking")
+    @ConfigComment("the economy plugin, whose formatter may add cents and a currency name.")
+    @ConfigEntry(path = "economy.currency-symbol")
+    private String currencySymbol = "$";
+
     @ConfigComment("Harbour reports: what a broker charges PER PORT to fill in your logbook, and")
     @ConfigComment("how far the report reaches per tech level of the island selling it. This gives")
     @ConfigComment("a developed port a role beyond its shelves, and a reason to call somewhere you")
@@ -3184,6 +3190,8 @@ public class Settings implements WorldSettings {
     public void setResaleMarkup(double resaleMarkup) { this.resaleMarkup = resaleMarkup; }
     public int getResaleShipRadius() { return resaleShipRadius; }
     public void setResaleShipRadius(int resaleShipRadius) { this.resaleShipRadius = resaleShipRadius; }
+    public String getCurrencySymbol() { return currencySymbol == null ? "$" : currencySymbol; }
+    public void setCurrencySymbol(String currencySymbol) { this.currencySymbol = currencySymbol; }
     public double getMarketReportPricePerIsland() { return marketReportPricePerIsland; }
     public void setMarketReportPricePerIsland(double v) { this.marketReportPricePerIsland = v; }
     public double getMarketReportRadiusPerTechLevel() { return marketReportRadiusPerTechLevel; }

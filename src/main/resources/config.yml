@@ -306,6 +306,10 @@ economy:
   resale-markup: 1.6
   # How far a trader ships a consignment to reach another port's shelf.
   resale-ship-radius: 8000
+  # The currency symbol shown before every price - "$27", "$1,728". Prices are
+  # whole coins by design, so TradeWinds formats money itself rather than asking
+  # the economy plugin, whose formatter may add cents and a currency name.
+  currency-symbol: "$"
   # Harbour reports: what a broker charges PER PORT to fill in your logbook, and how
   # far the report reaches per tech level of the island selling it. Gives a developed
   # port a role beyond its shelves. 0 for either disables reports.

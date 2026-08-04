@@ -78,8 +78,11 @@ one-way-cargo rule below to trader-bought cargo only.
   fuel is fungible. **Match cargo with `isSimilar`, never by material.**
 - **Money is whole coins.** Buy prices `ceil`, sell prices `floor` — the
   direction stops the spread closing (nearest-rounding is exploitable). Never
-  format money by hand: `economy.Money.format(addon, amount)` asks the server's
-  Vault economy.
+  format money by hand: `economy.Money.format(addon, amount)` renders
+  "$1,728" — symbol from `economy.currency-symbol`, no cents. (It used to ask
+  Vault; reversed 2026-08-03 when the server economy printed "27.00 Dollars"
+  over our whole coins.) The locale never carries a `$` of its own — the symbol
+  arrives inside the formatted value.
 
 ## Environment (verified — do not "upgrade" blindly)
 

@@ -104,6 +104,9 @@ noise.
       a bamboo raft 2, a pale oak chest boat 21. If any reads a multiple of ten,
       `config.yml` has drifted from the code defaults - `ConfigAgreementTest`
       should have caught it.
+- [ ] **Money reads "$1,728" everywhere.** No price anywhere shows cents, a
+      doubled symbol, or a currency name - check the market pages, the status
+      line, fines, and the shipwright.
 - [ ] **The sell page tells identical goods apart.** With one enchanted and two
       plain iron swords aboard, the sell list shows two rows: "Iron Sword ✦ x1"
       and "Iron Sword x2", the enchanted one priced higher. No row shows a raw
