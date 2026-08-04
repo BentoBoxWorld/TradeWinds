@@ -646,6 +646,15 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "player.max-restarts")
     private int maxRestarts = 3;
 
+    @ConfigComment("How much value a port will handle in a SINGLE salvage item, per tech level:")
+    @ConfigComment("a TL1 fishing hamlet has no use for a diamond sword and nobody there could")
+    @ConfigComment("pay for one, while a TL7 industrial hub will take anything. This is what gives")
+    @ConfigComment("loot a DESTINATION - and a destination is a voyage. Recognised trade goods are")
+    @ConfigComment("exempt: a port always deals in what its own shelves stock, whatever its tech.")
+    @ConfigComment("0 disables the gate.")
+    @ConfigEntry(path = "economy.salvage-value-per-tech-level")
+    private double salvageValuePerTechLevel = 1500.0;
+
     @ConfigComment("What a port pays for SALVAGE - anything that is not a recognised trade good")
     @ConfigComment("on some island's shelves: mob drops, worn gear, odd blocks. A fraction of book")
     @ConfigComment("price. Keep this well under 1: if scavenging and piracy pay as well as trading,")
@@ -3078,6 +3087,8 @@ public class Settings implements WorldSettings {
     public void setContrabandMaterials(List<String> contrabandMaterials) { this.contrabandMaterials = contrabandMaterials; }
     public int getMaxRestarts() { return maxRestarts; }
     public void setMaxRestarts(int maxRestarts) { this.maxRestarts = maxRestarts; }
+    public double getSalvageValuePerTechLevel() { return salvageValuePerTechLevel; }
+    public void setSalvageValuePerTechLevel(double v) { this.salvageValuePerTechLevel = v; }
     public double getSalvageDiscount() { return salvageDiscount; }
     public void setSalvageDiscount(double salvageDiscount) { this.salvageDiscount = salvageDiscount; }
     public Map<String, Double> getBasePrices() { return basePrices; }

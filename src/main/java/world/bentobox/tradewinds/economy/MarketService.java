@@ -235,6 +235,28 @@ public class MarketService {
         return isTradeGood(material) ? TradeCategory.of(material) : TradeCategory.SALVAGE;
     }
 
+    /**
+     * Whether this port is developed enough to deal in a single item of this
+     * value at all. A TL1 fishing hamlet has no use for a diamond sword and
+     * nobody there could pay for one; a TL7 hub will take anything. This is what
+     * gives loot a destination, and a destination is a voyage.
+     * <p>
+     * Recognised trade goods are exempt. A port must always deal in what its own
+     * shelves stock, or a low-tech luxury island would refuse the very gems it
+     * demands - which reads as a broken market, not as a tech gate.
+     *
+     * @param spec the island
+     * @param material the material
+     * @return true if the port will handle it
+     */
+    public boolean handlesValue(IslandSpec spec, Material material) {
+        double perLevel = addon.getSettings().getSalvageValuePerTechLevel();
+        if (perLevel <= 0 || isTradeGood(material)) {
+            return true;
+        }
+        return basePrice(material).orElse(0.0) <= perLevel * spec.techLevel();
+    }
+
     private double factor(IslandSpec spec, Material material) {
         TradeCategory category = TradeCategory.of(material);
         boolean contraband = addon.getCustomsService() != null
@@ -286,6 +308,13 @@ public class MarketService {
         if (addon.getCustomsService() != null && addon.getCustomsService().isContraband(material)
                 && !addon.getCustomsService().buysContraband(spec.band())) {
             User.getInstance(player).sendMessage("tradewinds.trade.contraband-refused");
+            thud(player);
+            return 0;
+        }
+        // Too rich for this port to handle - take it somewhere more developed
+        if (!handlesValue(spec, material)) {
+            User.getInstance(player).sendMessage("tradewinds.trade.too-advanced", "[material]", pretty(material),
+                    "[name]", spec.name());
             thud(player);
             return 0;
         }

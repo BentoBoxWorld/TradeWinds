@@ -290,6 +290,12 @@ economy:
   # Materials traders buy even WITHOUT a customs stamp - the contraband exceptions.
   unstamped-sellables:
     - SUGAR
+  # How much value a port will handle in a SINGLE salvage item, per tech level: a
+  # TL1 fishing hamlet has no use for a diamond sword and nobody there could pay
+  # for one, while a TL7 hub will take anything. This is what gives loot a
+  # DESTINATION - and a destination is a voyage. Recognised trade goods are exempt:
+  # a port always deals in what its own shelves stock. 0 disables the gate.
+  salvage-value-per-tech-level: 1500.0
   # What a port pays for SALVAGE - anything not a recognised trade good on some
   # island's shelves: mob drops, worn gear, odd blocks. A fraction of book price.
   # Keep well under 1: if scavenging and piracy pay as well as trading they replace

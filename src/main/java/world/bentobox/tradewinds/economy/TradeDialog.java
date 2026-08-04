@@ -349,6 +349,10 @@ public class TradeDialog {
                     && !addon.getCustomsService().buysContraband(spec.band())) {
                 continue;
             }
+            // Nor for goods too rich for this port's tech to handle
+            if (!addon.getMarketService().handlesValue(spec, entry.getKey())) {
+                continue;
+            }
             addon.getMarketService().playerSellsAt(spec, entry.getKey())
                     .ifPresent(unit -> offers.add(new SellOffer(entry.getKey(), entry.getValue(), unit,
                             PriceModel.round2(unit * entry.getValue()))));

@@ -286,6 +286,7 @@ tradewinds:
     boat-not-sold-here: "<red>This yard cannot sell you that boat.</red>"
     boat-crafted: "<gold>You fit out the [material] - [slots] cargo slots. Your old boat is broken up; your cargo is aboard.</gold>"
     craft-smaller-refused: "<red>That boat is no bigger than yours - you would be burning good wood to shrink your hold.</red>"
+    too-advanced: "<gray>[name] has no use for [material] - nobody here could pay what it is worth. Try a more developed port.</gray>"
     contraband-refused: "<red>The trader looks at what you are offering, then at you. 'Not here. Try a rougher port.'</red>"
     barred: "<dark_red>The market closes as you approach. 'We know what you are. Take it somewhere lawless.'</dark_red>"
     nothing-to-sell: "<red>Nothing in your hold that this island will pay for.</red>"

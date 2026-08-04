@@ -76,6 +76,11 @@ noise.
 - [ ] `/twadmin priceaudit` writes `price-audit.txt` to the addon folder. Read
       the UNPRICEABLE list: anything a player could plausibly acquire and carry
       wants a base price adding.
+- [ ] **A backwater refuses treasure.** Carry something rich and exotic (totem,
+      nether star) into a low-tech port: it is absent from the sell page, and
+      selling it by any other route says the port has no use for it. The same
+      item sells at a high-tech island. Check a *low-tech luxury* island still
+      buys diamonds - trade goods are exempt from this gate.
 - [ ] **Dumping junk does not move honest cargo.** Note a port's iron price, sell
       it a boatload of dirt and rotten flesh, and check the iron price is
       unchanged - salvage drifts in its own pool.

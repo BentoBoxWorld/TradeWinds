@@ -3,6 +3,23 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## Stage 7.5 Phase 3 — tech gates what a port will handle (2026-08-03)
+
+`economy.salvage-value-per-tech-level` (1500) caps the value of a single salvage
+item a port will deal in: a TL1 hamlet takes mob loot but not diamond-grade gear,
+a TL7 hub takes anything. Loot therefore has a *destination*, and a destination
+is a voyage. Refused at the counter with `tradewinds.trade.too-advanced`, and
+hidden from the sell page the same way contraband already is.
+
+**Design correction made during implementation.** The plan said to gate on value
+by tech, full stop. Applied to everything that would have had a low-tech LUXURY
+island refusing the very diamonds it demands - gems are demanded by LUXURY but
+are not on its produce shelf, so a flat cap catches them. The gate therefore
+exempts recognised trade goods entirely: a port always deals in what its shelves
+stock, whatever its tech. That keeps the existing trade economy untouched (again)
+and leaves the gate doing only the job it was added for, which is turning exotic
+loot into a reason to sail somewhere.
+
 ## Stage 7.5 Phase 2 — salvage has a market (2026-08-03)
 
 Scavenged loot is now sellable, at a discount, into a stock pool of its own.

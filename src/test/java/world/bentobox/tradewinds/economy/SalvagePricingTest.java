@@ -102,6 +102,43 @@ class SalvagePricingTest extends CommonTestSetup {
     }
 
     @Test
+    void testTechGatesWhatAPortWillHandle() {
+        // 1500/level: a TL1 hamlet takes mob loot but not diamond-grade gear
+        IslandSpec hamlet = new IslandSpec(0, 0, 2500, 2500, IslandType.FISHING, SecurityBand.SAFE,
+                "minecraft:plains", "Hamlet", 1);
+        IslandSpec hub = new IslandSpec(0, 0, 2500, 2500, IslandType.INDUSTRIAL, SecurityBand.SAFE,
+                "minecraft:plains", "Hub", 7);
+        assertTrue(service.handlesValue(hamlet, Material.ENDER_PEARL));
+        assertTrue(service.handlesValue(hamlet, Material.BONE));
+        assertFalse(service.handlesValue(hamlet, Material.NETHER_STAR), "TL1 cannot handle a nether star");
+        assertFalse(service.handlesValue(hamlet, Material.TOTEM_OF_UNDYING));
+        // The hub takes the lot - loot has a destination, and that is a voyage
+        assertTrue(service.handlesValue(hub, Material.NETHER_STAR));
+        assertTrue(service.handlesValue(hub, Material.TOTEM_OF_UNDYING));
+    }
+
+    @Test
+    void testTheTechGateNeverRefusesAPortsOwnStock() {
+        // A low-tech LUXURY island DEMANDS gems. If the value gate applied to
+        // trade goods it would refuse the very diamonds it wants, which reads as
+        // a broken market rather than as a tech gate.
+        IslandSpec poorLuxury = new IslandSpec(0, 0, 2500, 2500, IslandType.LUXURY, SecurityBand.SAFE,
+                "minecraft:plains", "Faded Grandeur", 1);
+        assertTrue(service.handlesValue(poorLuxury, Material.DIAMOND));
+        assertTrue(service.handlesValue(poorLuxury, Material.GOLDEN_APPLE));
+        assertTrue(service.playerSellsAt(poorLuxury, Material.DIAMOND).orElseThrow() > 0);
+    }
+
+    @Test
+    void testTheGateCanBeSwitchedOff() {
+        IslandSpec hamlet = new IslandSpec(0, 0, 2500, 2500, IslandType.FISHING, SecurityBand.SAFE,
+                "minecraft:plains", "Hamlet", 1);
+        assertFalse(service.handlesValue(hamlet, Material.NETHER_STAR));
+        settings.setSalvageValuePerTechLevel(0);
+        assertTrue(service.handlesValue(hamlet, Material.NETHER_STAR));
+    }
+
+    @Test
     void testSalvageStillCannotBeArbitraged() {
         // Whatever the discount does to the level, the spread must stay open or
         // a port becomes a money printer
