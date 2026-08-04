@@ -82,6 +82,9 @@ noise.
 - [ ] **The counter says when to stop.** On the sell page, a good's tooltip states
       how many more the port will take at that price. Sell that many: the price
       drops and the depth reads near zero.
+- [ ] **A fresh player can run every player command.** `/tw prices`, chart,
+      go, starchart, restart, fine - none says "no permission" without an admin
+      having turned it off.
 - [ ] **The logbook only knows where you have been.** `/tw prices` on a fresh
       player says the logbook is empty. Open a port's market, run it again: that
       port appears with an age. A port you have only *charted* never appears.

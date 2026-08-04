@@ -3,6 +3,26 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## /tw prices shipped permission-less (2026-08-03)
+
+Phase 6's two new commands never got their permissions declared in `addon.yml`,
+so `tradewinds.island.prices` and `tradewinds.admin.priceaudit` had no default
+and permission plugins denied them - "I do not have permission to execute that
+command", on the command the harbour report tells you to run.
+
+Third member of the artifact-drift family, after the config maps BentoBox
+replaces rather than merges and the locale keys that render as themselves.
+Same shape every time: two artifacts must agree, disagreement breaks the game
+and not the build. Same cure: **`PermissionDeclarationTest`** scans every
+`setPermission()` call and asserts the prefixed permission is declared in
+`addon.yml` with a default and a description. Verified by re-removing the
+prices declaration and watching it name it.
+
+Trap inside the guard itself: permission names contain dots, which
+`YamlConfiguration` reads as NESTING - `getKeys(false)` on the permissions
+section returns path segments, not permissions. A node is a declaration iff it
+carries `default` or `description`.
+
 ## Fuel by mouse, and the marked-coal bug (2026-08-03)
 
 **Bought coal could not be fuelled.** The purchase mark makes a bought stack

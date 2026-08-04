@@ -39,6 +39,12 @@ permissions:
   tradewinds.island.restart:
     description: Allow restarting the trading career (config-capped)
     default: true
+  tradewinds.island.prices:
+    description: >
+      Allow the trader's logbook - what ports you have called at were paying,
+      and how long ago. Prices only enter it by visiting a market or buying a
+      harbour report, so this reads a player's own knowledge back to them.
+    default: true
   tradewinds.island.fine:
     description: >
       Allow settling a criminal record at a port. On by default - a player who
@@ -67,6 +73,9 @@ permissions:
     default: op
   tradewinds.admin.warpfail:
     description: Rig a player's next warp to fail, dropping them into the interstice
+    default: op
+  tradewinds.admin.priceaudit:
+    description: Audit price coverage and write the report to price-audit.txt
     default: op
   tradewinds.admin.reflag:
     description: Allow re-applying security-band flags to all islands
