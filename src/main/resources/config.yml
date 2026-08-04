@@ -271,11 +271,16 @@ economy:
   # goods (ores, crops, wood, fish, stone) by this fraction per step; low-tech
   # islands the inverse. The best routes are tech differentials. 0 disables.
   tech-price-step: 0.03
-  # Stock units for a full price swing; drift clamps; hourly decay toward equilibrium.
-  drift-scale: 500
+  # COINS of stock for a full price swing - the size of a trader's purse. A port's
+  # capacity is its capacity to SPEND, not to count crates: ten diamonds are far
+  # more business than ten wheat. With drift-min 0.7 a port saturates after
+  # absorbing 30% of this in one category, then pays the floor until it recovers.
+  drift-value-scale: 30000
   drift-min: 0.7
   drift-max: 1.3
-  stock-decay-per-hour: 50
+  # Coins of stock decaying back toward equilibrium per hour - markets recover as
+  # the trader works through the inventory (9000 coins saturated / 3000 = 3 hours).
+  stock-decay-value-per-hour: 3000
   # Cargo expanders: first price, doubling each purchase, hard cap per player.
   expander-base-price: 50000.0
   expander-cap: 4

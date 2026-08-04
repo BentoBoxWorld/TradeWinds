@@ -70,6 +70,11 @@ noise.
 - [ ] Warp: you and the boat arrive facing the **dock**; hold forward and you
       reach it.
 - [ ] Sell the cargo at the new island at a different price than you paid.
+- [ ] **Selling in saturates a port by value, not volume.** Sell ~7 diamonds (or
+      12 emeralds) at one island: the unit price should fall to the floor and
+      stop falling. Selling a few hundred wheat should move it about as much as
+      those 7 diamonds did, and a boatload of cobblestone barely at all.
+      Prices recover after ~3 hours of real time.
 - [ ] `/tw chart` raises holograms: island names and a DOCK marker, and no BOAT
       marker while you are sitting in the boat.
 

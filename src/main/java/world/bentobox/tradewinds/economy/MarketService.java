@@ -119,7 +119,7 @@ public class MarketService {
     public PriceModel model() {
         var s = addon.getSettings();
         return new PriceModel(s.getProduceFactor(), s.getDemandFactor(), s.getBandDemandBonus(), s.getBuySpread(),
-                s.getSellSpread(), s.getDriftScale(), s.getDriftMin(), s.getDriftMax(), s.getTechPriceStep());
+                s.getSellSpread(), s.getDriftValueScale(), s.getDriftMin(), s.getDriftMax(), s.getTechPriceStep());
     }
 
     /**
@@ -217,7 +217,7 @@ public class MarketService {
         boolean demands = contraband || TypeEconomy.demands(spec.type()).contains(category);
         boolean produces = !contraband && TypeEconomy.produces(spec.type()).contains(category);
         double economic = model().economicFactor(produces, demands, spec.band().ordinal(),
-                addon.getIslandDataManager().getStock(spec, category));
+                addon.getIslandDataManager().getStockValue(spec, category));
         // The tech tilt: high tech sells finished cheap and buys raw dear, so
         // the best routes are tech DIFFERENTIALS. Contraband is exempt - the
         // black market premium is its own lever and answers to nothing else.
@@ -267,7 +267,11 @@ public class MarketService {
         int removed = addon.getHoldService().remove(player, material, count);
         double total = PriceModel.round2(removed * unitPrice.get());
         vault.get().deposit(User.getInstance(player), total);
-        addon.getIslandDataManager().adjustStock(spec, TradeCategory.of(material), removed);
+        // Drift moves on the VALUE of the trade, not the item count: a port that
+        // has just paid out for ten diamonds is far closer to saturated than one
+        // that bought ten wheat
+        addon.getIslandDataManager().adjustStockValue(spec, TradeCategory.of(material),
+                (int) Math.round(total));
         User.getInstance(player).sendMessage("tradewinds.trade.sold", "[amount]", String.valueOf(removed),
                 "[material]", pretty(material), "[price]", Money.format(addon, total));
         chime(player);
@@ -315,7 +319,8 @@ public class MarketService {
         }
         double total = PriceModel.round2(added * unitPrice.get());
         vault.get().withdraw(user, total);
-        addon.getIslandDataManager().adjustStock(spec, TradeCategory.of(material), -added);
+        addon.getIslandDataManager().adjustStockValue(spec, TradeCategory.of(material),
+                -(int) Math.round(total));
         user.sendMessage("tradewinds.trade.bought", "[amount]", String.valueOf(added), "[material]",
                 pretty(material), "[price]", Money.format(addon, total));
         chime(player);

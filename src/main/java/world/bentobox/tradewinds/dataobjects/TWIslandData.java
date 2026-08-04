@@ -23,11 +23,16 @@ public class TWIslandData implements DataObject {
     private String uniqueId;
 
     /**
-     * Stock per trade category name. Positive = players sold a lot here
-     * (prices depressed); negative = bought out (prices raised).
+     * Stock per trade category name, measured in <b>coins of inventory
+     * position</b> rather than item count - the trader's purse. Positive =
+     * players sold a lot of value here (prices depressed); negative = bought
+     * out (prices raised).
+     * <p>
+     * Coins, not units, because ten diamonds and ten wheat are not the same
+     * business to a port, and counting units said they were.
      */
     @Expose
-    private Map<String, Integer> stock = new HashMap<>();
+    private Map<String, Integer> stockValue = new HashMap<>();
 
     /**
      * Epoch millis of the last stock decay pass.
@@ -54,12 +59,12 @@ public class TWIslandData implements DataObject {
         this.uniqueId = uniqueId;
     }
 
-    public Map<String, Integer> getStock() {
-        return stock;
+    public Map<String, Integer> getStockValue() {
+        return stockValue;
     }
 
-    public void setStock(Map<String, Integer> stock) {
-        this.stock = stock;
+    public void setStockValue(Map<String, Integer> stockValue) {
+        this.stockValue = stockValue;
     }
 
     public long getLastDecay() {

@@ -604,10 +604,13 @@ public class Settings implements WorldSettings {
         return ranks;
     }
 
-    @ConfigComment("Stock units for a full price swing. Selling this much of a category to one")
-    @ConfigComment("island drives its prices to the drift minimum.")
-    @ConfigEntry(path = "economy.drift-scale")
-    private int driftScale = 500;
+    @ConfigComment("COINS of stock for a full price swing - the size of a trader's purse.")
+    @ConfigComment("A port's capacity is its capacity to SPEND, not to count crates: ten")
+    @ConfigComment("diamonds are far more business than ten wheat, so drift is valued in money.")
+    @ConfigComment("Combined with drift-min below, a port saturates after absorbing")
+    @ConfigComment("(1 - drift-min) x this many coins of one category - then sail on.")
+    @ConfigEntry(path = "economy.drift-value-scale")
+    private int driftValueScale = 30000;
 
     @ConfigComment("Lower clamp of the stock drift price factor.")
     @ConfigEntry(path = "economy.drift-min")
@@ -617,9 +620,11 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "economy.drift-max")
     private double driftMax = 1.3;
 
-    @ConfigComment("Stock units that decay back toward equilibrium per hour - markets recover.")
-    @ConfigEntry(path = "economy.stock-decay-per-hour")
-    private int stockDecayPerHour = 50;
+    @ConfigComment("Coins of stock that decay back toward equilibrium per hour - markets recover")
+    @ConfigComment("as the trader works through the inventory. A fully saturated category")
+    @ConfigComment("recovers in about (1 - drift-min) x drift-value-scale / this many hours.")
+    @ConfigEntry(path = "economy.stock-decay-value-per-hour")
+    private int stockDecayValuePerHour = 3000;
 
     @ConfigComment("Base price of the first cargo expander. Each further one costs double.")
     @ConfigEntry(path = "economy.expander-base-price")
@@ -3024,14 +3029,14 @@ public class Settings implements WorldSettings {
     public void setRespawnBoat(String respawnBoat) { this.respawnBoat = respawnBoat; }
     public int getDroppedBoatTtlMinutes() { return droppedBoatTtlMinutes; }
     public void setDroppedBoatTtlMinutes(int droppedBoatTtlMinutes) { this.droppedBoatTtlMinutes = droppedBoatTtlMinutes; }
-    public int getDriftScale() { return driftScale; }
-    public void setDriftScale(int driftScale) { this.driftScale = driftScale; }
+    public int getDriftValueScale() { return driftValueScale; }
+    public void setDriftValueScale(int driftValueScale) { this.driftValueScale = driftValueScale; }
     public double getDriftMin() { return driftMin; }
     public void setDriftMin(double driftMin) { this.driftMin = driftMin; }
     public double getDriftMax() { return driftMax; }
     public void setDriftMax(double driftMax) { this.driftMax = driftMax; }
-    public int getStockDecayPerHour() { return stockDecayPerHour; }
-    public void setStockDecayPerHour(int stockDecayPerHour) { this.stockDecayPerHour = stockDecayPerHour; }
+    public int getStockDecayValuePerHour() { return stockDecayValuePerHour; }
+    public void setStockDecayValuePerHour(int stockDecayValuePerHour) { this.stockDecayValuePerHour = stockDecayValuePerHour; }
     public double getExpanderBasePrice() { return expanderBasePrice; }
     public void setExpanderBasePrice(double expanderBasePrice) { this.expanderBasePrice = expanderBasePrice; }
     public int getCharityCooldownMinutes() { return charityCooldownMinutes; }

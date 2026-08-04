@@ -8,13 +8,17 @@ package world.bentobox.tradewinds.economy;
  * and the stock drift (players selling into an island depress its prices;
  * buying it out raises them). The buy/sell spread means a same-island round
  * trip always loses money.
+ * <p>
+ * Stock is measured in <b>coins of inventory position</b>, not items: a port
+ * absorbing a thousand coins' worth of diamonds is doing far more business than
+ * one absorbing a thousand cobblestones, and counting units said otherwise.
  *
  * @param produceFactor price multiplier where the island produces the category
  * @param demandFactor price multiplier where the island demands the category
  * @param bandDemandBonus extra demand multiplier per security band step
  * @param buySpread multiplier on what players pay the island
  * @param sellSpread multiplier on what the island pays players
- * @param driftScale stock units for full drift swing
+ * @param driftValueScale coins of inventory position for a full drift swing
  * @param driftMin lower clamp of the drift factor
  * @param driftMax upper clamp of the drift factor
  * @param techPriceStep price tilt per tech-level step from 4: high tech sells
@@ -23,14 +27,14 @@ package world.bentobox.tradewinds.economy;
  * @author tastybento
  */
 public record PriceModel(double produceFactor, double demandFactor, double bandDemandBonus, double buySpread,
-        double sellSpread, int driftScale, double driftMin, double driftMax, double techPriceStep) {
+        double sellSpread, int driftValueScale, double driftMin, double driftMax, double techPriceStep) {
 
     /**
      * Convenience constructor without the tech tilt (tests, tech-neutral use).
      */
     public PriceModel(double produceFactor, double demandFactor, double bandDemandBonus, double buySpread,
-            double sellSpread, int driftScale, double driftMin, double driftMax) {
-        this(produceFactor, demandFactor, bandDemandBonus, buySpread, sellSpread, driftScale, driftMin, driftMax,
+            double sellSpread, int driftValueScale, double driftMin, double driftMax) {
+        this(produceFactor, demandFactor, bandDemandBonus, buySpread, sellSpread, driftValueScale, driftMin, driftMax,
                 0.0);
     }
 
@@ -55,12 +59,16 @@ public record PriceModel(double produceFactor, double demandFactor, double bandD
     /**
      * Stock drift: positive stock (players sold a lot here) depresses prices,
      * negative stock (players bought the island out) raises them.
+     * <p>
+     * The clamps mean only the first {@code (1 - driftMin) * driftValueScale}
+     * coins actually move the price - past that a port is simply saturated and
+     * the seller has to go somewhere else, which is the whole point.
      *
-     * @param stock current stock relative to equilibrium 0
+     * @param stockValue coins of inventory position, relative to equilibrium 0
      * @return clamped drift factor
      */
-    public double driftFactor(int stock) {
-        return Math.clamp(1.0 - (double) stock / driftScale, driftMin, driftMax);
+    public double driftFactor(int stockValue) {
+        return Math.clamp(1.0 - (double) stockValue / driftValueScale, driftMin, driftMax);
     }
 
     /**
@@ -69,17 +77,17 @@ public record PriceModel(double produceFactor, double demandFactor, double bandD
      * @param produces the island produces this category
      * @param demands the island demands this category
      * @param bandOrdinal security band ordinal (0 = SAFE)
-     * @param stock current stock
+     * @param stockValue coins of inventory position
      * @return combined price factor
      */
-    public double economicFactor(boolean produces, boolean demands, int bandOrdinal, int stock) {
+    public double economicFactor(boolean produces, boolean demands, int bandOrdinal, int stockValue) {
         double factor = 1.0;
         if (produces) {
             factor = produceFactor;
         } else if (demands) {
             factor = demandFactor * (1.0 + bandDemandBonus * bandOrdinal);
         }
-        return factor * driftFactor(stock);
+        return factor * driftFactor(stockValue);
     }
 
     /**

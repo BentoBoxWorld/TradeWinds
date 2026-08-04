@@ -3,6 +3,35 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## Stage 7.5 Phase 1 — the trader's purse (2026-08-03)
+
+Planned in `tradewinds-salvage-plan.md`. Stock drift was counted in **items**,
+so ten diamonds and ten wheat hit a port identically and a stack of diamonds
+was one payday rather than several ports' business. Drift is now denominated in
+**coins of inventory position** - a port's capacity is its capacity to *spend*.
+
+- `TWIslandData.stock` -> `stockValue`; `IslandDataManager.adjustStock` ->
+  `adjustStockValue(spec, category, coinDelta)`, fed the transaction total from
+  `MarketService.sell`/`buy` (its only two call sites).
+- `economy.drift-scale` 500 -> `economy.drift-value-scale` **30000**;
+  `economy.stock-decay-per-hour` 50 -> `economy.stock-decay-value-per-hour`
+  **3000**. Renamed rather than retuned in place so nobody has to guess the unit.
+- New `IslandDataManager.absorbableValue()` - headroom before the price floor.
+  This is Phase 6's "depth at the counter" number, built now because the drift
+  clamp is what defines it: only the first `(1 - driftMin) x scale` coins move a
+  price at all, so saturation is 9000 coins and recovery about 3 hours.
+
+**Tuning check** (demanded good, SAFE band, no drift): 7 diamonds, 12 emeralds,
+84 iron ingots, 391 wheat or 3000 cobblestone saturate one port. That puts a
+stack of diamonds at roughly nine ports' worth of business and a boatload of
+cobble at about half a port's - which is the intended shape: value-dense cargo
+is what forces the tour, and bulk junk was never going to pay well anyway.
+
+**Pitfall avoided:** the saturation/headroom math is in pure package-visible
+statics (`saturationValue`, `absorbable`) beside the existing `decayed`, because
+`IslandDataManager`'s constructor builds a real `Database` and is awkward to
+mock. Same reason `decayed` was already shaped that way.
+
 ## Whole coins, and the economy's own formatter (2026-08-03)
 
 "Oak Log x1 - $0.97" made every market chart ragged. Two independent faults:

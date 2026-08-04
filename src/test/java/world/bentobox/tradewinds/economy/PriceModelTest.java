@@ -48,13 +48,41 @@ class PriceModelTest {
 
     @Test
     void testStockDrift() {
-        // Flooding an island with goods depresses its prices
+        // Stock is COINS of inventory position, not item count. This model uses
+        // a 500-coin purse, so 250 coins sold in is half a swing.
+        // Flooding an island with value depresses its prices
         assertEquals(1.0, model.driftFactor(0));
         assertTrue(model.driftFactor(250) < 1.0);
         assertEquals(0.7, model.driftFactor(5000)); // clamped
         // Buying it out raises them
         assertTrue(model.driftFactor(-250) > 1.0);
         assertEquals(1.3, model.driftFactor(-5000)); // clamped
+    }
+
+    @Test
+    void testDriftFollowsMoneyNotVolume() {
+        // The point of valuing drift in coins (adopted 2026-08-03): ten diamonds
+        // and a boatload of wheat are the same business to a port if they cost
+        // the same, and counting units said the wheat mattered 100x more.
+        int tenDiamonds = 10 * 850;
+        int wheatByTheTonne = 850 * 10;
+        assertEquals(model.driftFactor(tenDiamonds), model.driftFactor(wheatByTheTonne));
+
+        // And a genuinely small sale barely registers, whatever it is made of
+        assertTrue(model.driftFactor(20) > 0.95);
+    }
+
+    @Test
+    void testAPortSaturatesAndTheSellerMustSailOn() {
+        // Selling in progressively saturates a port: each sale pays less...
+        double fresh = model.playerSellsAt(100.0, model.economicFactor(false, true, 0, 0));
+        double halfway = model.playerSellsAt(100.0, model.economicFactor(false, true, 0, 75));
+        double saturated = model.playerSellsAt(100.0, model.economicFactor(false, true, 0, 150));
+        assertTrue(halfway < fresh, "Selling in must depress the price: " + fresh + " -> " + halfway);
+        assertTrue(saturated < halfway);
+        // ...until the floor, past which dumping more is pure waste and the
+        // answer is another port, not another crate
+        assertEquals(saturated, model.playerSellsAt(100.0, model.economicFactor(false, true, 0, 10_000)));
     }
 
     @Test
