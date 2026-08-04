@@ -21,6 +21,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import world.bentobox.bentobox.api.user.User;
 import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.galaxy.IslandSpec;
+import world.bentobox.tradewinds.travel.CargoStore;
 import world.bentobox.tradewinds.travel.FuelWarning;
 
 /**
@@ -150,40 +151,79 @@ public class TradeDialog {
             openMain(player, spec);
             return;
         }
-        List<SellOffer> shown = offers.subList(0, Math.min(MAX_ROWS, offers.size()));
+        // One row per DISTINCT good, not three. The quantity buttons live on the
+        // next page, where the item's own icon and a live price sit beside them -
+        // an icon cannot go in a button label, and repeating every good three
+        // times across a wall of buttons told a player less, not more
+        // (playtest 2026-08-03).
         List<ActionButton> buttons = new ArrayList<>();
-        for (SellOffer offer : shown) {
-            String name = itemLabel(player, offer.item());
-            Component each = ui(player, "market.sell-tooltip-each", "[price]",
-                    Money.format(addon, offer.unitPrice()), "[depth]", depthOf(spec, offer));
-            buttons.add(button(ui(player, "market.sell-one", "[material]", name), each,
-                    () -> sellThenReopen(player, spec, offer.item(), 1)));
-            buttons.add(button(ui(player, "market.sell-batch", "[material]", name, "[amount]",
-                    String.valueOf(MID_BATCH)), each,
-                    () -> sellThenReopen(player, spec, offer.item(), MID_BATCH)));
-            buttons.add(button(ui(player, "market.sell-all", "[amount]", String.valueOf(offer.amount()),
-                    "[price]", Money.format(addon, offer.total())), each,
-                    () -> sellThenReopen(player, spec, offer.item(), Integer.MAX_VALUE)));
+        for (SellOffer offer : offers.subList(0, Math.min(MAX_ROWS, offers.size()))) {
+            buttons.add(button(
+                    ui(player, "market.sell-pick", "[material]", itemLabel(player, offer.item()), "[amount]",
+                            String.valueOf(offer.amount()), "[price]", Money.format(addon, offer.unitPrice())),
+                    ui(player, "market.sell-pick-tooltip", "[price]", Money.format(addon, offer.unitPrice()),
+                            "[depth]", depthOf(spec, offer)),
+                    () -> openSellItem(player, spec, offer.item())));
         }
-        // One icon per row, in the SAME ORDER as the buttons below, each carrying
-        // the item's real hover tooltip. Three identical "Iron Sword" rows told a
-        // player nothing about which was the enchanted one (playtest 2026-08-03).
-        List<DialogBody> body = new ArrayList<>();
-        body.add(DialogBody.plainMessage(ui(player, "market.selling-body", NO_VARS)));
-        body.add(DialogBody.plainMessage(statusLine(player)));
-        for (SellOffer offer : shown) {
-            body.add(DialogBody.item(offer.item())
-                    .description(DialogBody.plainMessage(ui(player, "market.sell-item-line", "[material]",
-                            itemLabel(player, offer.item()), "[amount]", String.valueOf(offer.amount()),
-                            "[price]", Money.format(addon, offer.unitPrice()))))
-                    .showTooltip(true).showDecorations(true).build());
-        }
+        List<Component> body = new ArrayList<>(List.of(ui(player, "market.selling-body", NO_VARS),
+                statusLine(player)));
         if (offers.size() > MAX_ROWS) {
-            body.add(DialogBody.plainMessage(ui(player, "market.selling-truncated", "[number]",
-                    String.valueOf(MAX_ROWS))));
+            body.add(ui(player, "market.selling-truncated", "[number]", String.valueOf(MAX_ROWS)));
         }
+        show(player, ui(player, "market.selling-title", "[name]", spec.name()), body, buttons,
+                backButton(player, spec), 2);
+    }
+
+    /**
+     * The quantity page for ONE good: its icon with the real hover tooltip, the
+     * live unit price and how much more this port will absorb, then 1 / 16 / all.
+     * <p>
+     * Reopened after every sale, so the price and the remaining depth update as
+     * the port fills up - which is the whole point of selling in increments.
+     */
+    public void openSellItem(Player player, IslandSpec spec, ItemStack item) {
+        // Re-resolve against the hold: the price moves as you sell, and the good
+        // may be gone entirely
+        SellOffer offer = sellOffers(player, spec).stream()
+                .filter(candidate -> CargoStore.stacksTogether(candidate.item(), item)).findFirst()
+                .orElse(null);
+        if (offer == null) {
+            openSell(player, spec);
+            return;
+        }
+        String each = Money.format(addon, offer.unitPrice());
+        List<DialogBody> body = new ArrayList<>();
+        body.add(DialogBody.item(offer.item())
+                .description(DialogBody.plainMessage(ui(player, "market.sell-item-line", "[material]",
+                        itemLabel(player, offer.item()), "[amount]", String.valueOf(offer.amount()),
+                        "[price]", each)))
+                .showTooltip(true).showDecorations(true).width(32).height(32).build());
+        body.add(DialogBody.plainMessage(ui(player, "market.sell-item-depth", "[depth]",
+                depthOf(spec, offer))));
+        body.add(DialogBody.plainMessage(statusLine(player)));
+
+        int batch = Math.min(MID_BATCH, offer.amount());
+        List<ActionButton> buttons = new ArrayList<>();
+        buttons.add(button(ui(player, "market.sell-qty-one", "[price]", each),
+                ui(player, "market.sell-qty-tooltip", NO_VARS),
+                () -> sellThenReopen(player, spec, offer.item(), 1)));
+        if (batch > 1) {
+            buttons.add(button(
+                    ui(player, "market.sell-qty-batch", "[amount]", String.valueOf(batch), "[price]",
+                            Money.format(addon, batch * offer.unitPrice())),
+                    ui(player, "market.sell-qty-tooltip", NO_VARS),
+                    () -> sellThenReopen(player, spec, offer.item(), batch)));
+        }
+        buttons.add(button(
+                ui(player, "market.sell-qty-all", "[amount]", String.valueOf(offer.amount()), "[price]",
+                        Money.format(addon, offer.total())),
+                ui(player, "market.sell-qty-tooltip", NO_VARS),
+                () -> sellThenReopen(player, spec, offer.item(), Integer.MAX_VALUE)));
+
         showBodies(player, ui(player, "market.selling-title", "[name]", spec.name()), body, buttons,
-                backButton(player, spec), 3);
+                button(ui(player, "market.back", NO_VARS), ui(player, "market.back-tooltip", NO_VARS),
+                        () -> openSell(player, spec)),
+                3);
     }
 
     /**
@@ -193,7 +233,6 @@ public class TradeDialog {
      * beside it is for.
      */
     private String itemLabel(Player player, ItemStack item) {
-        User user = User.getInstance(player);
         String material = MarketService.pretty(item.getType());
         var meta = item.getItemMeta();
         if (meta != null && meta.hasDisplayName()) {
@@ -201,11 +240,11 @@ public class TradeDialog {
                     .serialize(meta.displayName());
         }
         if (!item.getEnchantments().isEmpty()) {
-            return user.getTranslation("tradewinds.market.item-enchanted", "[material]", material);
+            return uiText(player, "market.item-enchanted", "[material]", material);
         }
         if (meta instanceof org.bukkit.inventory.meta.Damageable damaged && damaged.hasDamage()
                 && damaged.getDamage() > 0) {
-            return user.getTranslation("tradewinds.market.item-worn", "[material]", material);
+            return uiText(player, "market.item-worn", "[material]", material);
         }
         return material;
     }
@@ -282,7 +321,7 @@ public class TradeDialog {
 
     private void sellThenReopen(Player player, IslandSpec spec, ItemStack item, int amount) {
         addon.getMarketService().sell(player, spec, item, amount);
-        openSell(player, spec);
+        openSellItem(player, spec, item);
     }
 
     /**
@@ -525,6 +564,15 @@ public class TradeDialog {
      */
     private Component ui(Player player, String key, String... variables) {
         return User.getInstance(player).getTranslationAsComponent("tradewinds.ui." + key, variables);
+    }
+
+    /**
+     * The same key space as {@link #ui} but as plain text, for values that get
+     * substituted INTO another translation. Sharing the prefix matters: a hand
+     * written "tradewinds.market.x" silently renders as the key itself.
+     */
+    private String uiText(Player player, String key, String... variables) {
+        return User.getInstance(player).getTranslation("tradewinds.ui." + key, variables);
     }
 
     /**

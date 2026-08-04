@@ -24,6 +24,31 @@ that a money migration would break again.
 `base-prices` written as `20` rather than `20.0` - see the commit; fixed both by
 writing decimals and by coercing every numeric map in `Settings.asDoubles()`.
 
+**The sell page redesigned: pick a good, then a quantity (2026-08-03).** The
+first attempt put an icon per row above a wall of three buttons per good, which
+duplicated every good twice over and still could not put the icon *beside* its
+buttons - Paper's dialog API renders items only in the **body**, never in a
+button label, and body and buttons are separate regions. So selling is two pages:
+- `openSell` lists one row per distinct good, labelled and priced.
+- `openSellItem` shows that good's icon at 32px with its real hover tooltip, the
+  live unit price, the remaining depth, and 1 / 16 / all.
+
+Selling reopens the item page rather than the list, so **the price and depth
+visibly move as the port fills up** - which is the entire reason to sell in
+increments rather than all at once.
+
+**A locale key rendered as itself.** `itemLabel` asked for
+`tradewinds.market.item-enchanted` while the dialog helper prefixes
+`tradewinds.ui.` - so the button read "tradewinds.market.item-enchanted x1".
+A missing key does not throw; BentoBox renders the key. That is the **third**
+locale failure of this kind after YAML-boolean key names and a silently dropped
+duplicate, so **`LocaleKeyTest` now scans every `.java` source for locale keys and
+asserts each resolves to a leaf string in `en-US.yml`**. It strips comments and
+`@ConfigEntry` paths (both quote keys that are not lookups), ignores concatenated
+keys, and asserts the four runtime-built page keys explicitly rather than skipping
+them. Verified by renaming a key and watching it fail. A new `uiText()` helper
+shares the prefix with `ui()` so the two cannot drift again.
+
 **Three identical "Iron Sword" rows on the sell page.** With NBT preserved, the
 enchanted sword and the two plain ones were three rows of identical text at
 different prices, and nothing said which was which. The sell page (and the

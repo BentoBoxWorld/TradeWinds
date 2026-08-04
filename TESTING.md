@@ -105,9 +105,14 @@ noise.
       `config.yml` has drifted from the code defaults - `ConfigAgreementTest`
       should have caught it.
 - [ ] **The sell page tells identical goods apart.** With one enchanted and two
-      plain iron swords aboard, the sell page shows an item icon per row: hover it
-      for the real tooltip (enchantments, damage), and the enchanted row is marked
-      and priced higher.
+      plain iron swords aboard, the sell list shows two rows: "Iron Sword ✦ x1"
+      and "Iron Sword x2", the enchanted one priced higher. No row shows a raw
+      locale key like `tradewinds.ui.market.item-enchanted`.
+- [ ] **Picking a good shows it and prices it live.** Click a row: its icon
+      appears (hover for the real tooltip - enchantments, damage), with the unit
+      price and how much more the port will take. Sell 1: the page stays open and
+      the price and depth **move**. Sell the last one and you drop back to the
+      list.
 - [ ] **NBT survives the hold, and a restart.** Load an enchanted, a renamed and
       a half-broken tool into the hold. Each takes its own slot and keeps its
       name, enchantments and damage bar. Restart the server: all three are still
