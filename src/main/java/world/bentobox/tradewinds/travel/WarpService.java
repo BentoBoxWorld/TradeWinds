@@ -284,8 +284,8 @@ public class WarpService {
         } else {
             world.bentobox.tradewinds.galaxy.DockPlan plan = addon
                     .getGalaxyEngine(addon.getOverWorld().getSeed()).dockPlan(to);
-            // The dock FLAG: the banner at the pier end, which is what a sailor
-            // actually steers for (IslandDecorator plants it 2 blocks short)
+            // The dock FLAG: the banner near the pier end - the decorator
+            // plants it two blocks short, and it is what a sailor steers for
             pierX = to.centerX() + Math.cos(plan.bearing()) * (plan.dockEnd() - 2);
             pierZ = to.centerZ() + Math.sin(plan.bearing()) * (plan.dockEnd() - 2);
         }

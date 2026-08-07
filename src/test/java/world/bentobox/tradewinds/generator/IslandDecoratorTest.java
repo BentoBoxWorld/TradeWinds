@@ -118,8 +118,8 @@ class IslandDecoratorTest extends CommonTestSetup {
         // Residents
         assertFalse(villagers.isEmpty(), "No villagers spawned");
         assertEquals(IslandDecorator.golemCount(spec.band()), golems.size());
-        // The galley: every plaza offers a public workbench and cooking hearth,
-        // so a sailor can craft and cook their catch (both visitor-usable)
+        // The galley: every plaza offers a public workbench and cooking
+        // hearth - visitor-usable - so a sailor can craft and cook the catch
         assertTrue(placed.contains(Material.CRAFTING_TABLE), "No public workbench placed");
         assertTrue(placed.contains(Material.CAMPFIRE), "No cooking hearth placed");
         assertTrue(placed.contains(Material.COBBLESTONE), "The campfire must stand on a hearth block");

@@ -303,7 +303,7 @@ public class TradeDialog {
                         openShelf(player, spec);
                     }));
         }
-        showBodies(player, ui(player, "market.shelf-title", "[name]", spec.name()), body, buttons,
+        showBodies(player, ui(player, "market.shelf-title", VAR_NAME, spec.name()), body, buttons,
                 backButton(player, spec), 2);
     }
 
