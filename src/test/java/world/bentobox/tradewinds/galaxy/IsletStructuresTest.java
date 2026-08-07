@@ -1,6 +1,7 @@
 package world.bentobox.tradewinds.galaxy;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.HashSet;
@@ -78,9 +79,11 @@ class IsletStructuresTest {
             }
             for (int i = 0; i < 60; i++) {
                 IsletStructures.pick(SEED + i, islet(i * 811, i * 47, biome), 1.0).ifPresent(p -> {
-                    assertTrue(p.jigsawFill() != null && !p.jigsawFill().isBlank(),
+                    assertNotNull(p.jigsawFill(),
                             p.template() + " does not say what its jigsaws become");
-                    assertTrue(org.bukkit.Material.matchMaterial(p.jigsawFill()) != null,
+                    assertTrue(!p.jigsawFill().isBlank(),
+                            p.template() + " jigsaw fill is blank");
+                    assertNotNull(org.bukkit.Material.matchMaterial(p.jigsawFill()),
                             p.template() + " names an unknown material: " + p.jigsawFill());
                     if (p.template().matches("ruined_portal/portal_[1245]")) {
                         assertEquals("NETHERRACK", p.jigsawFill(),

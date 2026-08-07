@@ -100,14 +100,6 @@ public class BorderPromptListener implements Listener {
     }
 
     /**
-     * The island whose VISIBLE border the position is at, if any. The visible
-     * border is the protection range (where BentoBox announces "Now leaving
-     * ..." and the Border addon draws the wall) - the warp offer fires right
-     * at that moment, not out at the far edge of island space. The ring spans
-     * trigger-distance either side of the line so an outbound crossing cannot
-     * skip it.
-     */
-    /**
      * The player's own claimed island, as a warp origin, if this position is
      * at its protection border. The ring test mirrors the trading islands',
      * with the claim's own (smaller) protection range.
@@ -125,6 +117,14 @@ public class BorderPromptListener implements Listener {
                 });
     }
 
+    /**
+     * The island whose VISIBLE border the position is at, if any. The visible
+     * border is the protection range (where BentoBox announces "Now leaving
+     * ..." and the Border addon draws the wall) - the warp offer fires right
+     * at that moment, not out at the far edge of island space. The ring spans
+     * trigger-distance either side of the line so an outbound crossing cannot
+     * skip it.
+     */
     Optional<IslandSpec> originIslandNearBorder(int x, int z) {
         GalaxyEngine engine = addon.getGalaxyEngine(addon.getOverWorld().getSeed());
         int border = addon.getSettings().getIslandProtectionRange();

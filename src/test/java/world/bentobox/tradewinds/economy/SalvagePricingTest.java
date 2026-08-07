@@ -42,7 +42,8 @@ class SalvagePricingTest extends CommonTestSetup {
         addon = mock(TradeWinds.class);
         settings = new Settings();
         when(addon.getSettings()).thenReturn(settings);
-        when(addon.getIslandDataManager()).thenReturn(mock(IslandDataManager.class));
+        IslandDataManager idm = mock(IslandDataManager.class);
+        when(addon.getIslandDataManager()).thenReturn(idm);
         service = new MarketService(addon);
     }
 

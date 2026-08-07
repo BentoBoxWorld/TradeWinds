@@ -47,18 +47,17 @@ public class TWRankCommand extends CompositeCommand {
                         TextVariables.NUMBER, String.valueOf(next.threshold() - charted)),
                 () -> user.sendMessage("tradewinds.rank.top-of-ladder"));
         List<ChartLeaderboard.Entry> board = addon.getChartLeaderboard().top(TOP);
-        if (board.isEmpty()) {
-            return true;
-        }
-        user.sendMessage("tradewinds.rank.board-header");
-        for (int place = 1; place <= board.size(); place++) {
-            ChartLeaderboard.Entry entry = board.get(place - 1);
-            String name = addon.getPlayers().getName(entry.playerId());
-            user.sendMessage("tradewinds.rank.board-entry",
-                    "[place]", String.valueOf(place),
-                    TextVariables.NAME, name == null || name.isEmpty() ? "?" : name,
-                    TextVariables.NUMBER, String.valueOf(entry.charted()),
-                    RANK_PLACEHOLDER, user.getTranslation(ranks.rankFor(entry.charted()).localeKey()));
+        if (!board.isEmpty()) {
+            user.sendMessage("tradewinds.rank.board-header");
+            for (int place = 1; place <= board.size(); place++) {
+                ChartLeaderboard.Entry entry = board.get(place - 1);
+                String name = addon.getPlayers().getName(entry.playerId());
+                user.sendMessage("tradewinds.rank.board-entry",
+                        "[place]", String.valueOf(place),
+                        TextVariables.NAME, name.isEmpty() ? "?" : name,
+                        TextVariables.NUMBER, String.valueOf(entry.charted()),
+                        RANK_PLACEHOLDER, user.getTranslation(ranks.rankFor(entry.charted()).localeKey()));
+            }
         }
         return true;
     }

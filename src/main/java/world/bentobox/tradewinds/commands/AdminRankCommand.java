@@ -78,7 +78,7 @@ public class AdminRankCommand extends CompositeCommand {
     private void report(User user, TradeWinds addon, RankService ranks, UUID target, String name) {
         var data = addon.getPlayerDataManager().get(target);
         user.sendMessage("tradewinds.commands.admin.rank.current",
-                TextVariables.NAME, getPlayers().getName(target) == null ? name : getPlayers().getName(target),
+                TextVariables.NAME, getPlayers().getName(target).isEmpty() ? name : getPlayers().getName(target),
                 "[rank]", user.getTranslation(ranks.rankFor(data.effectiveCharted()).localeKey()),
                 TextVariables.NUMBER, String.valueOf(data.effectiveCharted()),
                 "[real]", String.valueOf(data.getChartedIslands().size()),

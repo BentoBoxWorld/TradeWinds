@@ -112,8 +112,8 @@ public class ChartLeaderboard implements Listener {
         if (board.size() < place) {
             return "";
         }
-        String name = addon.getPlayers().getName(board.get(place - 1).playerId());
-        return name == null ? "" : name;
+        // getName is empty (never null) for a player the server has forgotten
+        return addon.getPlayers().getName(board.get(place - 1).playerId());
     }
 
     private String rowCount(int place) {

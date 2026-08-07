@@ -16,7 +16,6 @@ import org.bukkit.map.MinecraftFont;
 
 import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.galaxy.GalaxyEngine;
-import world.bentobox.tradewinds.galaxy.IslandSpec;
 import world.bentobox.tradewinds.galaxy.SecurityBand;
 
 /**
@@ -214,7 +213,7 @@ public class StarChartRenderer extends MapRenderer {
     private void drawName(MapCanvas canvas, int x, int z, String name) {
         int width = MinecraftFont.Font.getWidth(name);
         int textX = (int) Math.clamp((long) x - width / 2, 1L, 127L - width);
-        int textZ = Math.clamp(z + 3, 1, 119);
+        int textZ = (int) Math.clamp((long) z + 3, 1L, 119L);
         canvas.drawText(textX, textZ, MinecraftFont.Font, colored(name));
     }
 

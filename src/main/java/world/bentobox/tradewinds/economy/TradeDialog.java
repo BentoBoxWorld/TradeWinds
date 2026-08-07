@@ -17,7 +17,6 @@ import io.papermc.paper.registry.data.dialog.body.DialogBody;
 import io.papermc.paper.registry.data.dialog.type.DialogType;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickCallback;
-import net.kyori.adventure.text.format.NamedTextColor;
 import world.bentobox.bentobox.api.user.User;
 import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.galaxy.IslandSpec;
@@ -105,6 +104,11 @@ public class TradeDialog {
             buttons.add(button(player, "market.shelf", "market.shelf-tooltip",
                     () -> openShelf(player, spec)));
         }
+        addReportButton(buttons, player, spec);
+        return buttons;
+    }
+
+    private void addReportButton(List<ActionButton> buttons, Player player, IslandSpec spec) {
         // The broker: pay to have your logbook filled in for the ports within
         // this one's reach. No boat needed - it is information, not cargo.
         int reportable = addon.getSettings().isPriceLogbookEnabled()
@@ -119,7 +123,6 @@ public class TradeDialog {
                         openMain(player, spec);
                     }));
         }
-        return buttons;
     }
 
     /**
@@ -188,7 +191,7 @@ public class TradeDialog {
         if (offers.size() > MAX_ROWS) {
             body.add(ui(player, "market.selling-truncated", "[number]", String.valueOf(MAX_ROWS)));
         }
-        show(player, ui(player, "market.selling-title", "[name]", spec.name()), body, buttons,
+        show(player, ui(player, "market.selling-title", VAR_NAME, spec.name()), body, buttons,
                 backButton(player, spec), 2);
     }
 
@@ -258,11 +261,11 @@ public class TradeDialog {
                     .serialize(meta.displayName());
         }
         if (!item.getEnchantments().isEmpty()) {
-            return uiText(player, "market.item-enchanted", "[material]", material);
+            return uiText(player, "market.item-enchanted", VAR_MATERIAL, material);
         }
         if (meta instanceof org.bukkit.inventory.meta.Damageable damaged && damaged.hasDamage()
                 && damaged.getDamage() > 0) {
-            return uiText(player, "market.item-worn", "[material]", material);
+            return uiText(player, "market.item-worn", VAR_MATERIAL, material);
         }
         return material;
     }
@@ -456,7 +459,7 @@ public class TradeDialog {
         if (spec.techLevel() >= world.bentobox.tradewinds.galaxy.GalaxyEngine.MAX_TECH_LEVEL) {
             int installed = addon.getHoldService().expanderCount(player.getUniqueId());
             double price = PriceModel.expanderPrice(addon.getSettings().getExpanderBasePrice(), installed);
-            buttons.add(button(ui(player, "market.expander", "[price]", Money.format(addon, price)),
+            buttons.add(button(ui(player, "market.expander", VAR_PRICE, Money.format(addon, price)),
                     ui(player, "market.expander-tooltip", "[owned]", String.valueOf(installed)),
                     () -> {
                         addon.getMarketService().buyExpander(player, spec);
@@ -516,7 +519,7 @@ public class TradeDialog {
     public void confirmBoatFound(Player player, String taking, String leaving, String cargo, Runnable onTake,
             Runnable onTransfer) {
         List<ActionButton> buttons = new ArrayList<>();
-        buttons.add(button(ui(player, "capture.confirm", "[material]", taking),
+        buttons.add(button(ui(player, "capture.confirm", VAR_MATERIAL, taking),
                 ui(player, "capture.confirm-tooltip", NO_VARS), onTake));
         if (onTransfer != null) {
             buttons.add(button(ui(player, "capture.transfer", NO_VARS),
@@ -535,7 +538,7 @@ public class TradeDialog {
         if (cargo != null) {
             body.add(ui(player, "capture.body-cargo", "[cargo]", cargo));
         }
-        show(player, ui(player, "capture.title", "[material]", taking), body, buttons,
+        show(player, ui(player, "capture.title", VAR_MATERIAL, taking), body, buttons,
                 ActionButton.builder(ui(player, "capture.cancel", NO_VARS)).width(300).build(), 1);
     }
 

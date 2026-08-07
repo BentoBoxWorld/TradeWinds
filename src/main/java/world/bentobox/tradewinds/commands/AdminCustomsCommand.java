@@ -56,9 +56,13 @@ public class AdminCustomsCommand extends CompositeCommand {
                 addon.getPlayerStanding(user, user.getUniqueId()));
         if (here.isEmpty()) {
             user.sendMessage("tradewinds.commands.admin.customs.open-sea");
-            return true;
+        } else {
+            reportIslandCustoms(user, addon, here.get());
         }
-        IslandSpec island = here.get();
+        return true;
+    }
+
+    private void reportIslandCustoms(User user, TradeWinds addon, IslandSpec island) {
         double base = addon.getSettings().getScanChance().getOrDefault(island.band().name(), 0.0);
         double effective = Contraband.scanChance(base,
                 addon.getReputationService().standing(user.getUniqueId()),
@@ -73,6 +77,5 @@ public class AdminCustomsCommand extends CompositeCommand {
                 String.valueOf(addon.getSettings().getPatrolSize().getOrDefault(island.band().name(), 0)));
         user.sendMessage("tradewinds.commands.admin.customs.chased", VALUE_PLACEHOLDER,
                 String.valueOf(addon.getCustomsService().isChased(user.getUniqueId())));
-        return true;
     }
 }

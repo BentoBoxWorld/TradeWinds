@@ -48,8 +48,17 @@ public class TWChartCommand extends CompositeCommand {
         if (!wantList && getWorld().equals(user.getWorld())) {
             addon.getChartHolograms().show(user.getPlayer());
             user.sendMessage("tradewinds.chart.holograms-shown");
-            return true;
+        } else {
+            chartList(addon, user);
         }
+        return true;
+    }
+
+    /**
+     * The text chart: every charted island with distance and the fuel to get
+     * there, nearest first, plus where your boats lie.
+     */
+    private void chartList(TradeWinds addon, User user) {
         GalaxyEngine engine = addon.getGalaxyEngine(addon.getOverWorld().getSeed());
         int x = getWorld().equals(user.getWorld()) ? user.getLocation().getBlockX() : 0;
         int z = getWorld().equals(user.getWorld()) ? user.getLocation().getBlockZ() : 0;
@@ -61,7 +70,7 @@ public class TWChartCommand extends CompositeCommand {
                 .toList();
         if (charted.isEmpty()) {
             user.sendMessage("tradewinds.chart.empty");
-            return true;
+            return;
         }
         // What the fuel aboard can actually reach. A list of places you cannot
         // afford to go is a list of disappointments, so say which is which.
@@ -82,7 +91,6 @@ public class TWChartCommand extends CompositeCommand {
                     "[distance]", String.valueOf((int) Math.sqrt(spec.distanceSquared(x, z))),
                     "[fuel]", String.valueOf(cost));
         });
-        return true;
     }
 
     /**

@@ -499,12 +499,17 @@ public class BoatListener implements Listener {
                 .mapToInt(ItemStack::getAmount).sum()
                 + hold.getFuel().values().stream().mapToInt(Integer::intValue).sum();
         String cargo = carried > 0 ? String.valueOf(carried) : null;
-        Runnable onTransfer = carried > 0 && ownBoatWithinReach(player) ? () -> {
-            int moved = salvage(player, hold);
-            String message = moved > 0 ? "tradewinds.boat.salvage-emptied"
-                    : "tradewinds.hold.cargo-full";
-            User.getInstance(player).sendMessage(message, "[amount]", String.valueOf(moved));
-        } : null;
+        Runnable onTransfer;
+        if (carried > 0 && ownBoatWithinReach(player)) {
+            onTransfer = () -> {
+                int moved = salvage(player, hold);
+                String message = moved > 0 ? "tradewinds.boat.salvage-emptied"
+                        : "tradewinds.hold.cargo-full";
+                User.getInstance(player).sendMessage(message, "[amount]", String.valueOf(moved));
+            };
+        } else {
+            onTransfer = null;
+        }
         addon.getTradeDialog().confirmBoatFound(player, pretty(taking), pretty(leaving), cargo, onTake,
                 onTransfer);
     }

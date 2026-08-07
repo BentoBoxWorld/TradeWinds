@@ -38,6 +38,13 @@ import world.bentobox.tradewinds.dataobjects.TWWorldData;
  * @author tastybento
  */
 public class StarChartService implements Listener {
+    /**
+     * Disambiguates User#getTranslationAsComponent, whose no-variable call is
+     * ambiguous between the String... and TagResolver... overloads - and a
+     * shared constant is not an array creation, which is Sonar's complaint.
+     */
+    private static final String[] NO_VARS = new String[0];
+
 
     /** Marks an item as a Star Chart, so it can be recognised and reclaimed. */
     private static final String CHART_KEY = "starchart";
@@ -90,7 +97,7 @@ public class StarChartService implements Listener {
         if (item.getItemMeta() instanceof MapMeta meta) {
             meta.setMapView(chartView());
             meta.displayName(User.getInstance(player).getTranslationAsComponent("tradewinds.item.starchart",
-                    new String[0]));
+                    NO_VARS));
             meta.getPersistentDataContainer().set(key(), PersistentDataType.BYTE, (byte) 1);
             item.setItemMeta(meta);
         }

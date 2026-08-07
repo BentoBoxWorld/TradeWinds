@@ -28,6 +28,13 @@ import world.bentobox.tradewinds.dataobjects.BoatHold;
  * @author tastybento
  */
 public class BoatService {
+    /**
+     * Disambiguates User#getTranslationAsComponent, whose no-variable call is
+     * ambiguous between the String... and TagResolver... overloads - and a
+     * shared constant is not an array creation, which is Sonar's complaint.
+     */
+    private static final String[] NO_VARS = new String[0];
+
 
     /** PDC key carrying the BoatHold id on boat entities AND boat items. */
     public static final NamespacedKey BOAT_ID_KEY = NamespacedKey.fromString("tradewinds:boat-id");
@@ -44,7 +51,7 @@ public class BoatService {
      * The BoatHold id stamped on an entity, or null.
      */
     public static String boatId(Entity entity) {
-        if (entity == null || entity.getPersistentDataContainer() == null) {
+        if (entity == null) {
             return null;
         }
         return entity.getPersistentDataContainer().get(BOAT_ID_KEY, PersistentDataType.STRING);
@@ -106,7 +113,7 @@ public class BoatService {
                             "[slots]", String.valueOf(addon.getBoatRanks().slots(material))),
                     console.getTranslationAsComponent("tradewinds.item.boat-lore-fuel",
                             "[units]", String.format("%.0f", addon.getFuelService().unitsOf(hold))),
-                    console.getTranslationAsComponent("tradewinds.item.boat-lore-open", new String[0])));
+                    console.getTranslationAsComponent("tradewinds.item.boat-lore-open", NO_VARS)));
             stack.setItemMeta(meta);
         }
         return stack;
@@ -212,7 +219,7 @@ public class BoatService {
         }
         User console = User.getInstance(Bukkit.getConsoleSender());
         if (hold.isUnowned()) {
-            boat.customName(console.getTranslationAsComponent("tradewinds.boat.label-unowned", new String[0]));
+            boat.customName(console.getTranslationAsComponent("tradewinds.boat.label-unowned", NO_VARS));
         } else {
             String name = Bukkit.getOfflinePlayer(UUID.fromString(hold.getOwner())).getName();
             boat.customName(console.getTranslationAsComponent("tradewinds.boat.label-owned", "[name]",

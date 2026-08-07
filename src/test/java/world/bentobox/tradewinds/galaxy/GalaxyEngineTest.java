@@ -3,6 +3,7 @@ package world.bentobox.tradewinds.galaxy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
@@ -498,7 +499,7 @@ class GalaxyEngineTest {
                 islet = engine.wildIsletInCell(cx, cz).filter(i -> !i.isMushroom()).orElse(null);
             }
         }
-        assertTrue(islet != null, "No ordinary islet found");
+        assertNotNull(islet, "No ordinary islet found");
         // Inland is grass, well above the water
         assertEquals(SurfaceKind.GRASS, engine.surfaceKindAt(islet.centerX(), islet.centerZ()));
         assertTrue(engine.surfaceHeightAt(islet.centerX(), islet.centerZ()) > 70 + 4);
@@ -533,7 +534,7 @@ class GalaxyEngineTest {
                 islet = engine.wildIsletInCell(cx, cz).orElse(null);
             }
         }
-        assertTrue(islet != null, "No islet found");
+        assertNotNull(islet, "No islet found");
         // Walk the compass, recording how far the land reaches on each bearing
         List<Integer> reach = new ArrayList<>();
         for (int deg = 0; deg < 360; deg += 5) {

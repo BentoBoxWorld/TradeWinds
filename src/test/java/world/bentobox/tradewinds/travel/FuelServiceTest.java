@@ -5,11 +5,11 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
@@ -90,7 +90,7 @@ class FuelServiceTest extends CommonTestSetup {
         assertTrue(service.consume(mockPlayer, 142));
         assertEquals(0.0, service.holdFuel(mockPlayer));
         org.mockito.ArgumentCaptor<ItemStack> given = org.mockito.ArgumentCaptor.forClass(ItemStack.class);
-        org.mockito.Mockito.verify(pockets).addItem(given.capture());
+        verify(pockets).addItem(given.capture());
         assertEquals(Material.BUCKET, given.getValue().getType());
     }
 

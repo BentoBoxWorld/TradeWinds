@@ -46,7 +46,8 @@ class ResidentProtectionListenerTest extends CommonTestSetup {
         when(taggedPdc.has(IslandDecorator.RESIDENT_KEY, PersistentDataType.STRING)).thenReturn(true);
         when(resident.getPersistentDataContainer()).thenReturn(taggedPdc);
         stranger = mock(Villager.class);
-        when(stranger.getPersistentDataContainer()).thenReturn(mock(PersistentDataContainer.class));
+        PersistentDataContainer strangerPdc = mock(PersistentDataContainer.class);
+        when(stranger.getPersistentDataContainer()).thenReturn(strangerPdc);
         zombie = mock(Zombie.class);
     }
 
@@ -85,7 +86,8 @@ class ResidentProtectionListenerTest extends CommonTestSetup {
         assertFalse(direct.isCancelled());
         // Player projectiles too
         Arrow arrow = mock(Arrow.class);
-        when(arrow.getShooter()).thenReturn(mock(Player.class));
+        Player shooter = mock(Player.class);
+        when(arrow.getShooter()).thenReturn(shooter);
         EntityDamageByEntityEvent shot = new EntityDamageByEntityEvent(arrow, resident,
                 EntityDamageEvent.DamageCause.PROJECTILE, source(), 4.0);
         listener.onDamage(shot);

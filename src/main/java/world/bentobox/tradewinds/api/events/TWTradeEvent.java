@@ -75,7 +75,7 @@ public class TWTradeEvent extends Event implements Cancellable {
 
     @Override
     public HandlerList getHandlers() {
-        return HANDLERS;
+        return getHandlerList();
     }
 
     public static HandlerList getHandlerList() {

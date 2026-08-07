@@ -70,7 +70,7 @@ public class AdminBoatCommand extends CompositeCommand {
         user.sendMessage("tradewinds.commands.admin.boat.header", TextVariables.NAME,
                 name(target, args.get(0)));
         if (active.isEmpty() && old.isEmpty()) {
-            user.sendMessage("tradewinds.commands.admin.boat.none", new String[0]);
+            user.sendMessage("tradewinds.commands.admin.boat.none");
             return true;
         }
         active.ifPresent(hold -> report(user, addon, "tradewinds.commands.admin.boat.active", hold));
@@ -113,19 +113,19 @@ public class AdminBoatCommand extends CompositeCommand {
                         online.getName());
             }
         }
-        return user.getTranslation("tradewinds.commands.admin.boat.avatar-unloaded", new String[0]);
+        return user.getTranslation("tradewinds.commands.admin.boat.avatar-unloaded");
     }
 
     private boolean restore(User user, TradeWinds addon, UUID target, String name) {
         Optional<BoatHold> active = addon.getHoldManager().activeBoat(target);
         if (active.isEmpty()) {
-            user.sendMessage("tradewinds.commands.admin.boat.none", new String[0]);
+            user.sendMessage("tradewinds.commands.admin.boat.none");
             return false;
         }
         BoatHold hold = active.get();
         Player player = Bukkit.getPlayer(target);
         if (player == null) {
-            user.sendMessage("general.errors.offline-player", new String[0]);
+            user.sendMessage("general.errors.offline-player");
             return false;
         }
         // A loaded avatar means the boat is NOT lost - restoring would mint a
@@ -140,7 +140,7 @@ public class AdminBoatCommand extends CompositeCommand {
             return false;
         }
         if (addon.getBoatService().isCarrying(player, hold)) {
-            user.sendMessage("tradewinds.commands.admin.boat.hull-carried", new String[0]);
+            user.sendMessage("tradewinds.commands.admin.boat.hull-carried");
             return false;
         }
         addon.getBoatService().logbook("restored from the database by " + user.getName(), hold,
@@ -153,7 +153,7 @@ public class AdminBoatCommand extends CompositeCommand {
 
     private String name(UUID target, String fallback) {
         String known = getPlayers().getName(target);
-        return known == null || known.isEmpty() ? fallback : known;
+        return known.isEmpty() ? fallback : known;
     }
 
     @Override

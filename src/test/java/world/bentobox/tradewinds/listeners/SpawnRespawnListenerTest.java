@@ -2,6 +2,8 @@ package world.bentobox.tradewinds.listeners;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.bukkit.Location;
@@ -66,7 +68,7 @@ class SpawnRespawnListenerTest extends CommonTestSetup {
     void testBoatlessRespawnerGetsTheLoaner() {
         PlayerRespawnEvent event = new PlayerRespawnEvent(mockPlayer, deathBed, false, false);
         listener.onRespawn(event);
-        org.mockito.Mockito.verify(boats).createFor(mockPlayer, org.bukkit.Material.BAMBOO_RAFT);
+        verify(boats).createFor(mockPlayer, org.bukkit.Material.BAMBOO_RAFT);
     }
 
     @Test
@@ -81,7 +83,7 @@ class SpawnRespawnListenerTest extends CommonTestSetup {
         assertEquals(islandHome, event.getRespawnLocation(),
                 "An island member's respawn must not be redirected to spawn");
         // The loaner still applies - their real boat is where they died
-        org.mockito.Mockito.verify(boats).createFor(mockPlayer, org.bukkit.Material.BAMBOO_RAFT);
+        verify(boats).createFor(mockPlayer, org.bukkit.Material.BAMBOO_RAFT);
     }
 
     @Test
@@ -93,7 +95,7 @@ class SpawnRespawnListenerTest extends CommonTestSetup {
         boat.setY(73);
         boat.setZ(72);
         listener.onRespawn(new PlayerRespawnEvent(mockPlayer, deathBed, false, false));
-        org.mockito.Mockito.verify(boats, org.mockito.Mockito.never()).createFor(
+        verify(boats, never()).createFor(
                 org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
     }
 
@@ -107,9 +109,9 @@ class SpawnRespawnListenerTest extends CommonTestSetup {
         listener.onRespawn(new PlayerRespawnEvent(mockPlayer, deathBed, false, false));
         // A loaner hull exists for them, and it did NOT displace the boat
         // they still own an ocean away
-        org.mockito.Mockito.verify(boats).giveBoatItem(org.mockito.ArgumentMatchers.eq(mockPlayer),
+        verify(boats).giveBoatItem(org.mockito.ArgumentMatchers.eq(mockPlayer),
                 org.mockito.ArgumentMatchers.any());
-        org.mockito.Mockito.verify(boats, org.mockito.Mockito.never()).createFor(
+        verify(boats, never()).createFor(
                 org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
     }
 
@@ -119,12 +121,12 @@ class SpawnRespawnListenerTest extends CommonTestSetup {
         settings.setRespawnBoat("NONE");
         when(addon.getSettings()).thenReturn(settings);
         listener.onRespawn(new PlayerRespawnEvent(mockPlayer, deathBed, false, false));
-        org.mockito.Mockito.verify(boats, org.mockito.Mockito.never()).createFor(
+        verify(boats, never()).createFor(
                 org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
         // An admin typo (off-ladder name) disables rather than granting junk
         settings.setRespawnBoat("DIRT");
         listener.onRespawn(new PlayerRespawnEvent(mockPlayer, deathBed, false, false));
-        org.mockito.Mockito.verify(boats, org.mockito.Mockito.never()).createFor(
+        verify(boats, never()).createFor(
                 org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
     }
 
@@ -157,7 +159,8 @@ class SpawnRespawnListenerTest extends CommonTestSetup {
 
     @Test
     void testOtherWorldsUntouched() {
-        when(mockPlayer.getWorld()).thenReturn(mock(World.class));
+        World otherWorld = mock(World.class);
+        when(mockPlayer.getWorld()).thenReturn(otherWorld);
         PlayerRespawnEvent event = new PlayerRespawnEvent(mockPlayer, deathBed, false, false);
         listener.onRespawn(event);
         assertEquals(deathBed, event.getRespawnLocation());

@@ -437,7 +437,8 @@ public class CustomsService {
         }
         Optional<IslandSpec> here = islandSpaceAt(player);
         String was = insideIsland.get(player.getUniqueId());
-        String now = here.map(CustomsService::key).orElse(null);
+        IslandSpec hereSpec = here.orElse(null);
+        String now = hereSpec == null ? null : key(hereSpec);
         if (java.util.Objects.equals(now, was)) {
             return;
         }
@@ -454,7 +455,7 @@ public class CustomsService {
         }
         insideIsland.put(player.getUniqueId(), now);
         if (scan) {
-            onEntry(player, here.get());
+            onEntry(player, hereSpec);
         }
     }
 

@@ -62,7 +62,7 @@ public class TWReputationChangeEvent extends Event {
 
     @Override
     public @NotNull HandlerList getHandlers() {
-        return HANDLERS;
+        return getHandlerList();
     }
 
     public static HandlerList getHandlerList() {

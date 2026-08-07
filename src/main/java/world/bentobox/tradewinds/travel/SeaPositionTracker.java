@@ -89,7 +89,7 @@ public class SeaPositionTracker implements Listener {
      */
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onTeleport(PlayerTeleportEvent event) {
-        if (event.getTo() == null || !addon.inWorld(event.getFrom().getWorld())
+        if (!addon.inWorld(event.getFrom().getWorld())
                 || addon.inWorld(event.getTo().getWorld())) {
             return;
         }

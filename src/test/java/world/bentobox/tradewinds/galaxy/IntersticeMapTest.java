@@ -2,6 +2,7 @@ package world.bentobox.tradewinds.galaxy;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Optional;
@@ -152,7 +153,7 @@ class IntersticeMapTest {
         for (int cx = 0; cx < 60 && wreck == null; cx++) {
             wreck = map.wreckInCell(cx, 9).orElse(null);
         }
-        assertTrue(wreck != null, "No wreck in 60 cells");
+        assertNotNull(wreck, "No wreck in 60 cells");
         // The reef crests a few blocks down, so the hull perched on it rides
         // mostly submerged with its top works just breaking the surface
         int crest = map.wreckSurfaceAt(wreck.centerX(), wreck.centerZ(), SEA).orElseThrow();

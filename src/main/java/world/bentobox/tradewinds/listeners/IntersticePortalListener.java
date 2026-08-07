@@ -57,7 +57,7 @@ public class IntersticePortalListener implements Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     public void onPlayerPortal(PlayerPortalEvent event) {
         if (inTradeWindsWorld(event.getFrom().getWorld())
-                || (event.getTo() != null && inTradeWindsWorld(event.getTo().getWorld()))) {
+                || inTradeWindsWorld(event.getTo().getWorld())) {
             event.setCancelled(true);
         }
     }
@@ -65,7 +65,7 @@ public class IntersticePortalListener implements Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     public void onEntityPortal(EntityPortalEvent event) {
         if (inTradeWindsWorld(event.getFrom().getWorld())
-                || (event.getTo() != null && inTradeWindsWorld(event.getTo().getWorld()))) {
+                || inTradeWindsWorld(event.getTo().getWorld())) {
             event.setCancelled(true);
         }
     }

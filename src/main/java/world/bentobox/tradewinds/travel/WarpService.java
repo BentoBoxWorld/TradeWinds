@@ -23,7 +23,6 @@ import io.papermc.paper.registry.data.dialog.body.DialogBody;
 import io.papermc.paper.registry.data.dialog.type.DialogType;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickCallback;
-import net.kyori.adventure.text.format.NamedTextColor;
 import world.bentobox.bentobox.util.Util;
 import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.api.events.TWWarpCompletedEvent;
@@ -290,8 +289,8 @@ public class WarpService {
             pierX = to.centerX() + Math.cos(plan.bearing()) * (plan.dockEnd() - 2);
             pierZ = to.centerZ() + Math.sin(plan.bearing()) * (plan.dockEnd() - 2);
         }
-        // The plain look-at yaw IS correct: the console proved it (computed
-        // 45.8 where the sailor's own F3 read 46.3 for the right heading).
+        // The plain look-at yaw IS correct: the console proved it, computing
+        // a yaw within half a degree of the sailor's own F3 reading.
         // The quarter-turn "hull offset" of the first fix was chasing a
         // different problem - the mount was resetting the facing, not the
         // maths being sideways - and it only turned the boat the other way.
@@ -333,7 +332,7 @@ public class WarpService {
                     }
                 }, (addon.getSettings().getWarpBlindnessSeconds() + 1) * 20L);
             }
-            user(player).sendMessage("tradewinds.warp.arrived", "[name]", to.name());
+            user(player).sendMessage("tradewinds.warp.arrived", NAME_PLACEHOLDER, to.name());
             Bukkit.getPluginManager().callEvent(new TWWarpCompletedEvent(player, bearingFrom, to, fuelCost));
         });
     }

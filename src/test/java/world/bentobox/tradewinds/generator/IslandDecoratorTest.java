@@ -88,13 +88,15 @@ class IslandDecoratorTest extends CommonTestSetup {
             Class<?> clazz = inv.getArgument(1);
             if (clazz == Villager.class) {
                 Villager villager = mock(Villager.class);
-                when(villager.getPersistentDataContainer()).thenReturn(mock(PersistentDataContainer.class));
+                PersistentDataContainer villagerPdc = mock(PersistentDataContainer.class);
+                when(villager.getPersistentDataContainer()).thenReturn(villagerPdc);
                 villagers.add(villager);
                 return villager;
             }
             if (clazz == IronGolem.class) {
                 IronGolem golem = mock(IronGolem.class);
-                when(golem.getPersistentDataContainer()).thenReturn(mock(PersistentDataContainer.class));
+                PersistentDataContainer golemPdc = mock(PersistentDataContainer.class);
+                when(golem.getPersistentDataContainer()).thenReturn(golemPdc);
                 golems.add(golem);
                 return golem;
             }

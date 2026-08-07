@@ -8,7 +8,6 @@ import java.util.Set;
 import java.util.function.Function;
 
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.CookingRecipe;
 import org.bukkit.inventory.ItemStack;

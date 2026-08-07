@@ -49,21 +49,21 @@ public class AdminIslandsCommand extends CompositeCommand {
         List<IslandSpec> list = nearest(addon, x, z);
         if (list.isEmpty()) {
             user.sendMessage("tradewinds.commands.admin.islands.none");
-            return true;
-        }
-        user.sendMessage("tradewinds.commands.admin.islands.header");
-        for (int i = 0; i < list.size(); i++) {
-            IslandSpec s = list.get(i);
-            int dist = (int) Math.sqrt(s.distanceSquared(x, z));
-            user.sendMessage("tradewinds.commands.admin.islands.entry",
-                    "[index]", String.valueOf(i + 1),
-                    TextVariables.NAME, s.name(),
-                    "[type]", s.type().name(),
-                    "[tech]", String.valueOf(s.techLevel()),
-                    "[band]", s.band().getDisplayName(),
-                    "[x]", String.valueOf(s.centerX()),
-                    "[z]", String.valueOf(s.centerZ()),
-                    "[distance]", String.valueOf(dist));
+        } else {
+            user.sendMessage("tradewinds.commands.admin.islands.header");
+            for (int i = 0; i < list.size(); i++) {
+                IslandSpec s = list.get(i);
+                int dist = (int) Math.sqrt(s.distanceSquared(x, z));
+                user.sendMessage("tradewinds.commands.admin.islands.entry",
+                        "[index]", String.valueOf(i + 1),
+                        TextVariables.NAME, s.name(),
+                        "[type]", s.type().name(),
+                        "[tech]", String.valueOf(s.techLevel()),
+                        "[band]", s.band().getDisplayName(),
+                        "[x]", String.valueOf(s.centerX()),
+                        "[z]", String.valueOf(s.centerZ()),
+                        "[distance]", String.valueOf(dist));
+            }
         }
         return true;
     }

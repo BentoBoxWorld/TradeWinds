@@ -63,8 +63,8 @@ class CustomsLocaleMarkerTest {
 
     @Test
     void testRoutingMarkersAreAtTheStart() {
-        // BentoBox anchors [title] and [actionbar] to the start of the string;
-        // one buried mid-message is simply printed to chat as text
+        // BentoBox anchors [title] and [actionbar] markers to the start of the string.
+        // Any marker buried mid-message is simply printed to chat as text
         walk(locale(), "", (path, text) -> {
             String lower = text.toLowerCase(java.util.Locale.ENGLISH);
             if (lower.contains("[title]")) {

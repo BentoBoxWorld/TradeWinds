@@ -1,5 +1,6 @@
 package world.bentobox.tradewinds;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -40,7 +41,7 @@ class PermissionDeclarationTest {
         YamlConfiguration addonYml = YamlConfiguration.loadConfiguration(new InputStreamReader(
                 getClass().getClassLoader().getResourceAsStream("addon.yml")));
         ConfigurationSection declared = addonYml.getConfigurationSection("permissions");
-        assertTrue(declared != null, "addon.yml has no permissions section");
+        assertNotNull(declared, "addon.yml has no permissions section");
 
         Set<String> used = new TreeSet<>();
         try (Stream<Path> sources = Files.walk(Path.of("src/main/java"))) {

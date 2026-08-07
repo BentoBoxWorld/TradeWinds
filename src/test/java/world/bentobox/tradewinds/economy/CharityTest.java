@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -52,7 +53,8 @@ class CharityTest extends CommonTestSetup {
         addon = mock(TradeWinds.class);
         settings = new Settings();
         when(addon.getSettings()).thenReturn(settings);
-        when(addon.getIslandDataManager()).thenReturn(mock(IslandDataManager.class));
+        IslandDataManager idm = mock(IslandDataManager.class);
+        when(addon.getIslandDataManager()).thenReturn(idm);
         when(addon.getPlugin()).thenReturn(plugin);
         when(addon.getBoatRanks()).thenReturn(new BoatRanks(addon));
         hold = mock(HoldService.class);
@@ -98,7 +100,7 @@ class CharityTest extends CommonTestSetup {
         assertTrue(service.claimCharity(mockPlayer));
         verify(boats).createFor(mockPlayer, Material.BAMBOO_RAFT);
         // Charity never hands out money
-        verify(vault, org.mockito.Mockito.never()).deposit(any(), anyDouble());
+        verify(vault, never()).deposit(any(), anyDouble());
     }
 
     @Test
@@ -130,6 +132,6 @@ class CharityTest extends CommonTestSetup {
         when(vault.getBalance(any())).thenReturn(0.0);
         when(hold.boat(mockPlayer)).thenReturn(Material.OAK_BOAT);
         assertFalse(service.claimCharity(mockPlayer));
-        verify(boats, org.mockito.Mockito.never()).createFor(any(), any());
+        verify(boats, never()).createFor(any(), any());
     }
 }

@@ -3,8 +3,6 @@ package world.bentobox.tradewinds.crime;
 import java.util.ArrayList;
 import java.util.List;
 
-import world.bentobox.tradewinds.galaxy.SecurityBand;
-
 /**
  * Who the law sends, and how many. Pure decision logic, unit tested headlessly
  * like the galaxy - the Bukkit half only turns these into entities.

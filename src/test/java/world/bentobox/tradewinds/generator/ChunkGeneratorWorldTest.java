@@ -2,6 +2,9 @@ package world.bentobox.tradewinds.generator;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -215,7 +218,7 @@ class ChunkGeneratorWorldTest extends CommonTestSetup {
         for (int cx = 0; cx < 30 && shoal == null; cx++) {
             shoal = map.shoalInCell(cx, 4).orElse(null);
         }
-        assertTrue(shoal != null, "No shoal in 30 cells - wrong seed?");
+        assertNotNull(shoal, "No shoal in 30 cells - wrong seed?");
         ChunkGeneratorWorld gen = new ChunkGeneratorWorld(addon);
         RecordingChunkData r = generate(gen, Environment.NETHER, SEED, shoal.centerX() >> 4,
                 shoal.centerZ() >> 4);
@@ -242,7 +245,7 @@ class ChunkGeneratorWorldTest extends CommonTestSetup {
                 .thenReturn(new GalaxyEngine(new GalaxyConfig(SEED + 1, 2500, 160, 45, 0.0, 0, 5000, 70,
                         GalaxyConfig.defaultTypeWeights(), null)));
         RecordingChunkData c = generate(new ChunkGeneratorWorld(addon), Environment.NORMAL, SEED, 3, -7);
-        assertFalse(a.blocks.equals(c.blocks));
+        assertNotEquals(a.blocks, c.blocks);
     }
 
     @Test
@@ -371,7 +374,7 @@ class ChunkGeneratorWorldTest extends CommonTestSetup {
         }
         // ... standing on a crust of floor, not a one-block roof over the void
         for (int y = solidTop - CRUST + 1; y <= solidTop; y++) {
-            assertTrue(r.get(carvedX, y, carvedZ) != Material.AIR, "Sea floor still open at y=" + y);
+            assertNotSame(Material.AIR, r.get(carvedX, y, carvedZ), "Sea floor still open at y=" + y);
         }
         // ... and the cave underneath survives: this is not a blanket infill
         assertEquals(Material.AIR, r.get(carvedX, solidTop - 20, carvedZ),

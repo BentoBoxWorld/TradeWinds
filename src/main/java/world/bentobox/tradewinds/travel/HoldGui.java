@@ -54,6 +54,13 @@ import world.bentobox.tradewinds.TradeWinds;
  * @author tastybento
  */
 public class HoldGui implements Listener {
+    /**
+     * Disambiguates User#getTranslationAsComponent, whose no-variable call is
+     * ambiguous between the String... and TagResolver... overloads - and a
+     * shared constant is not an array creation, which is Sonar's complaint.
+     */
+    private static final String[] NO_VARS = new String[0];
+
 
     private static final int SIZE = 54;
     private static final int NESTED_SIZE = 45;
@@ -187,8 +194,8 @@ public class HoldGui implements Listener {
     private ItemStack tnt(User user) {
         ItemStack tnt = new ItemStack(Material.TNT);
         ItemMeta meta = tnt.getItemMeta();
-        meta.displayName(user.getTranslationAsComponent("tradewinds.hold.tnt", new String[0]));
-        meta.lore(List.of(user.getTranslationAsComponent("tradewinds.hold.tnt-lore", new String[0])));
+        meta.displayName(user.getTranslationAsComponent("tradewinds.hold.tnt", NO_VARS));
+        meta.lore(List.of(user.getTranslationAsComponent("tradewinds.hold.tnt-lore", NO_VARS)));
         tnt.setItemMeta(meta);
         return tnt;
     }
@@ -200,7 +207,7 @@ public class HoldGui implements Listener {
                 PLACEHOLDER_NUMBER, String.valueOf(index + 1)));
         String loreKey = addon.getHoldService().expandersOpenable(id) ? "tradewinds.hold.expander-lore"
                 : "tradewinds.hold.expander-inert-lore";
-        meta.lore(List.of(user.getTranslationAsComponent(loreKey, new String[0])));
+        meta.lore(List.of(user.getTranslationAsComponent(loreKey, NO_VARS)));
         item.setItemMeta(meta);
         return item;
     }
@@ -249,9 +256,9 @@ public class HoldGui implements Listener {
     private ItemStack pane(Material material, User user, String nameKey, String loreKey) {
         ItemStack pane = new ItemStack(material);
         ItemMeta meta = pane.getItemMeta();
-        meta.displayName(user.getTranslationAsComponent(nameKey, new String[0]));
+        meta.displayName(user.getTranslationAsComponent(nameKey, NO_VARS));
         if (loreKey != null) {
-            meta.lore(List.of(user.getTranslationAsComponent(loreKey, new String[0])));
+            meta.lore(List.of(user.getTranslationAsComponent(loreKey, NO_VARS)));
         }
         pane.setItemMeta(meta);
         return pane;
@@ -353,7 +360,7 @@ public class HoldGui implements Listener {
     private void boatItemGesture(InventoryClickEvent event, Player player) {
         ItemStack item = event.getCurrentItem();
         if (event.getClick() != ClickType.RIGHT || item == null
-                || (event.getCursor() != null && !event.getCursor().getType().isAir())
+                || !event.getCursor().getType().isAir()
                 || event.getClickedInventory() != player.getInventory()) {
             return;
         }
@@ -454,7 +461,6 @@ public class HoldGui implements Listener {
     }
 
     private void topClick(Player player, int slot, ItemStack shown, ClickType click) {
-        User user = User.getInstance(player);
         UUID id = player.getUniqueId();
         HoldService hold = addon.getHoldService();
         if (slot == TNT_SLOT) {
@@ -471,14 +477,14 @@ public class HoldGui implements Listener {
             selected.remove(id);
             return;
         }
-        if (handleExpanderClick(player, hold, id, index, shown, click)) {
+        if (handleExpanderClick(player, hold, id, index, click)) {
             return;
         }
         handleCargoClick(player, id, shown, click);
     }
 
     private boolean handleExpanderClick(Player player, HoldService hold, UUID id, int index,
-            ItemStack shown, ClickType click) {
+            ClickType click) {
         int stackCount = hold.cargo(id).size();
         if (index >= stackCount && index < stackCount + hold.expanderCount(id)) {
             int expander = index - stackCount;

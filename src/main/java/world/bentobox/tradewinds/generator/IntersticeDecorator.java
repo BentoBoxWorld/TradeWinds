@@ -186,14 +186,19 @@ public class IntersticeDecorator extends BlockPopulator {
         double quartz = addon.getSettings().getIntersticeQuartzChance();
         for (int y = sea - ROOT_DEPTH; y <= top; y++) {
             int spread = y <= sea ? 1 : 0;
-            for (int dx = -spread; dx <= spread; dx++) {
-                for (int dz = -spread; dz <= spread; dz++) {
-                    if (region.isInRegion(x + dx, y, z + dz)) {
-                        // Quartz lives in the submerged roots (plan source 4)
-                        boolean ore = y < sea && random.nextDouble() < quartz;
-                        region.setType(x + dx, y, z + dz,
-                                ore ? Material.NETHER_QUARTZ_ORE : Material.NETHERRACK);
-                    }
+            placeBrazierBlock(random, region, x, z, y, spread, sea, quartz);
+        }
+    }
+
+    private void placeBrazierBlock(Random random, LimitedRegion region, int x, int z, int y, int spread, int sea,
+            double quartz) {
+        for (int dx = -spread; dx <= spread; dx++) {
+            for (int dz = -spread; dz <= spread; dz++) {
+                if (region.isInRegion(x + dx, y, z + dz)) {
+                    // Quartz lives in the submerged roots (plan source 4)
+                    boolean ore = y < sea && random.nextDouble() < quartz;
+                    region.setType(x + dx, y, z + dz,
+                            ore ? Material.NETHER_QUARTZ_ORE : Material.NETHERRACK);
                 }
             }
         }
@@ -335,7 +340,10 @@ public class IntersticeDecorator extends BlockPopulator {
                 region.setType(fx, base + y, fz, stem);
             }
         }
-        int capY = base + height;
+        placeGroveCap(random, region, fx, fz, base + height, cap);
+    }
+
+    private void placeGroveCap(Random random, LimitedRegion region, int fx, int fz, int capY, Material cap) {
         for (int dx = -1; dx <= 1; dx++) {
             for (int dz = -1; dz <= 1; dz++) {
                 if (region.isInRegion(fx + dx, capY, fz + dz)) {

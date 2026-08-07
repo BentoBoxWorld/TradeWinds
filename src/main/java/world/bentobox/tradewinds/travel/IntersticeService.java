@@ -26,9 +26,7 @@ import io.papermc.paper.registry.data.dialog.DialogBase;
 import io.papermc.paper.registry.data.dialog.action.DialogAction;
 import io.papermc.paper.registry.data.dialog.body.DialogBody;
 import io.papermc.paper.registry.data.dialog.type.DialogType;
-import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickCallback;
-import net.kyori.adventure.text.format.NamedTextColor;
 import world.bentobox.bentobox.api.user.User;
 import world.bentobox.bentobox.util.Util;
 import world.bentobox.tradewinds.TradeWinds;
@@ -285,7 +283,7 @@ public class IntersticeService {
         spawnedGhasts.clear();
         Bukkit.getScheduler().runTaskLater(addon.getPlugin(), () -> {
             long alive = watch.stream().filter(Entity::isValid).count();
-            addon.log("Interstice: " + alive + " of " + watch.size()
+            addon.log(LOG_PREFIX + alive + " of " + watch.size()
                     + " ghasts still present 5s after spawning");
         }, 100L);
     }

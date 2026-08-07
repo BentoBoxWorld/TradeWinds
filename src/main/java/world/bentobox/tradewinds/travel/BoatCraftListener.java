@@ -120,7 +120,7 @@ public class BoatCraftListener implements Listener {
      */
     private boolean stampCrafted(Player player, Material type, world.bentobox.tradewinds.dataobjects.BoatHold hold) {
         ItemStack cursor = player.getItemOnCursor();
-        if (cursor != null && cursor.getType() == type && BoatService.boatId(cursor) == null) {
+        if (cursor.getType() == type && BoatService.boatId(cursor) == null) {
             player.setItemOnCursor(addon.getBoatService().stamp(cursor, hold));
             return true;
         }

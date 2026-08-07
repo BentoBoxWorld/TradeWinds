@@ -1,7 +1,7 @@
 package world.bentobox.tradewinds.economy;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -38,7 +38,8 @@ class SaleCatalogTest extends CommonTestSetup {
         addon = mock(TradeWinds.class);
         settings = new Settings();
         when(addon.getSettings()).thenReturn(settings);
-        when(addon.getIslandDataManager()).thenReturn(mock(IslandDataManager.class));
+        IslandDataManager idm = mock(IslandDataManager.class);
+        when(addon.getIslandDataManager()).thenReturn(idm);
         service = new MarketService(addon);
     }
 
@@ -83,23 +84,26 @@ class SaleCatalogTest extends CommonTestSetup {
         world.bentobox.tradewinds.travel.BoatRanks ranks = new world.bentobox.tradewinds.travel.BoatRanks(addon);
         // The full ladder: 20 rungs, bamboo raft to pale oak chest boat
         var ladder = ranks.ladder();
-        assertTrue(ladder.size() == 20, "Ladder has " + ladder.size() + " rungs");
-        assertTrue(ladder.get(0).material() == Material.BAMBOO_RAFT && ladder.get(0).slots() == 2);
-        assertTrue(ladder.get(19).material() == Material.PALE_OAK_CHEST_BOAT && ladder.get(19).slots() == 21);
+        assertEquals(20, ladder.size(), "Ladder has " + ladder.size() + " rungs");
+        assertEquals(Material.BAMBOO_RAFT, ladder.get(0).material());
+        assertEquals(2, ladder.get(0).slots());
+        assertEquals(Material.PALE_OAK_CHEST_BOAT, ladder.get(19).material());
+        assertEquals(21, ladder.get(19).slots());
         // Quadratic prices, in whole coins: raft 1000, top boat 110250
-        assertTrue(ranks.price(ladder.get(0)) == 1000.0);
-        assertTrue(ranks.price(ladder.get(19)) == 110250.0);
+        assertEquals(1000.0, ranks.price(ladder.get(0)));
+        assertEquals(110250.0, ranks.price(ladder.get(19)));
         // Shops are tech-gated: TL1 sells ranks 1-3 only
         var tl1 = ranks.shopListing(null, 1);
-        assertTrue(tl1.size() == 3 && tl1.get(2).material() == Material.SPRUCE_BOAT);
+        assertEquals(3, tl1.size());
+        assertEquals(Material.SPRUCE_BOAT, tl1.get(2).material());
         // The yard ALWAYS sells (ruled 2026-08-05): with a spruce boat at TL1
         // the smaller hulls are still on offer - bought outright, the spruce
         // left unowned wherever it lies. Only the size you sail is excluded.
         var downgrade = ranks.shopListing(Material.SPRUCE_BOAT, 1);
-        assertTrue(downgrade.size() == 2, "TL1 with a spruce should offer the two smaller hulls");
+        assertEquals(2, downgrade.size(), "TL1 with a spruce should offer the two smaller hulls");
         assertTrue(downgrade.stream().noneMatch(r -> r.material() == Material.SPRUCE_BOAT));
         // TL7 sells the whole ladder except the size you sail
-        assertTrue(ranks.shopListing(Material.PALE_OAK_CHEST_BOAT, 7).size() == 19,
+        assertEquals(19, ranks.shopListing(Material.PALE_OAK_CHEST_BOAT, 7).size(),
                 "Top of the tree still gets everything smaller");
     }
 

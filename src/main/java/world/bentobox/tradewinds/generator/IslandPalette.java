@@ -95,14 +95,6 @@ public final class IslandPalette {
     }
 
     /**
-     * The top block of a land column. Vanilla decoration reads this to decide
-     * what will grow: grass gets trees and flowers, mycelium gets huge
-     * mushrooms, sand gets nothing much - which is what a beach should be.
-     *
-     * @param kind the surface kind
-     * @return the surface material
-     */
-    /**
      * The public plaza amenities an island's tech level provides, cumulative:
      * every port has the galley (workbench + campfire, placed separately);
      * real industry brings smelting and stonework; high tech brews; the top of

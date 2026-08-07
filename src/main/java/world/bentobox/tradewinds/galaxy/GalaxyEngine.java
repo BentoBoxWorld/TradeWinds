@@ -209,9 +209,9 @@ public class GalaxyEngine {
     private long computeBoostedTechCell() {
         long best = Long.MIN_VALUE;
         int bestRoll = -1;
-        for (long key : starterCells.stream().sorted().toList()) {
+        for (Long key : starterCells.stream().sorted().toList()) {
             int cellX = (int) (key >> 32);
-            int cellZ = (int) key;
+            int cellZ = key.intValue();
             IslandType type = cellX == 0 && cellZ == 0 && config.spawnIslandType() != null
                     ? config.spawnIslandType()
                     : rollType(cellX, cellZ);
@@ -338,7 +338,7 @@ public class GalaxyEngine {
     private int rollTech(int cellX, int cellZ, IslandType type) {
         int base = TECH_BASE.getOrDefault(type, 3);
         int wobble = Math.floorMod(Hashing.cellHash(config.seed(), cellX, cellZ, SALT_TECH), 5) - 2;
-        return Math.clamp(base + wobble, 1, MAX_TECH_LEVEL);
+        return Math.clamp((long) base + wobble, 1, MAX_TECH_LEVEL);
     }
 
     /**

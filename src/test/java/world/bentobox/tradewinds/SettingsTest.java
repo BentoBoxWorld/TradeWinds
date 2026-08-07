@@ -2,6 +2,7 @@ package world.bentobox.tradewinds;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.HashMap;
@@ -109,10 +110,10 @@ class SettingsTest extends CommonTestSetup {
         // A typo or a Minecraft rename (SCUTE -> TURTLE_SCUTE) would silently
         // make a good unsellable rather than fail anything
         for (String name : settings.getBasePrices().keySet()) {
-            assertTrue(Material.matchMaterial(name) != null, "Not a material: " + name);
+            assertNotNull(Material.matchMaterial(name), "Not a material: " + name);
         }
         for (String name : settings.getFuelValues().keySet()) {
-            assertTrue(Material.matchMaterial(name) != null, "Not a fuel material: " + name);
+            assertNotNull(Material.matchMaterial(name), "Not a fuel material: " + name);
         }
     }
 
@@ -157,7 +158,7 @@ class SettingsTest extends CommonTestSetup {
     }
 
     @Test
-    void testShippedConfigPricesAreWrittenAsDecimals() throws Exception {
+    void testShippedConfigPricesAreWrittenAsDecimals() {
         // Belt and braces: the coercion above makes this cosmetic, but a config
         // that reads "20.0" tells an admin the field is a decimal
         var config = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(
@@ -172,7 +173,7 @@ class SettingsTest extends CommonTestSetup {
     }
 
     @Test
-    void testShippedConfigCarriesEveryPrice() throws Exception {
+    void testShippedConfigCarriesEveryPrice() {
         // BentoBox REPLACES map settings from config.yml instead of merging them
         // (YamlDatabaseHandler.deserializeMap), so a price missing from the
         // shipped config is a good that cannot be sold at all - it does not fall
@@ -182,7 +183,7 @@ class SettingsTest extends CommonTestSetup {
                 new java.io.InputStreamReader(
                         getClass().getClassLoader().getResourceAsStream("config.yml")));
         var section = config.getConfigurationSection("economy.base-prices");
-        assertTrue(section != null, "config.yml has no economy.base-prices");
+        assertNotNull(section, "config.yml has no economy.base-prices");
         for (String name : settings.getBasePrices().keySet()) {
             assertTrue(section.contains(name), "config.yml is missing a base price for " + name);
         }

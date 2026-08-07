@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.HashSet;
@@ -101,7 +103,7 @@ class ChartLeaderboardTest extends CommonTestSetup {
         when(addon.getPlugin()).thenReturn(plugin);
         leaderboard.registerPlaceholders(ranks);
         // rank + charted + 10 names + 10 counts
-        org.mockito.Mockito.verify(phm, org.mockito.Mockito.times(22))
+        verify(phm, times(22))
                 .registerPlaceholder(any(TradeWinds.class), any(String.class), any());
     }
 }

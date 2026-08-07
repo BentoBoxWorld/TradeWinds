@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.UUID;
@@ -175,8 +176,9 @@ class BoatOwnershipTest extends CommonTestSetup {
         // current one left TWO boat items in the pack, both opening the same
         // hold, and the spare could be dropped and stripped for free fuel.
         when(world.getName()).thenReturn("tradewinds_world");
+        world.bentobox.tradewinds.economy.MarketService marketService = mock(world.bentobox.tradewinds.economy.MarketService.class);
         when(addon.getMarketService())
-                .thenReturn(mock(world.bentobox.tradewinds.economy.MarketService.class));
+                .thenReturn(marketService);
         when(addon.getMarketService().basePrice(any(ItemStack.class)))
                 .thenReturn(java.util.Optional.of(1.0));
         BoatHold carried = holds.giveBoat(uuid, Material.OAK_BOAT);
@@ -218,7 +220,7 @@ class BoatOwnershipTest extends CommonTestSetup {
         assertEquals(found.getUniqueId(), holds.manager().activeBoat(uuid).orElseThrow().getUniqueId());
         assertEquals(20, cargoCount(found, Material.COD), "Cargo moved into the new hull");
         assertTrue(carried.getCargo().isEmpty(), "The old hull was emptied");
-        org.mockito.Mockito.verify(spare).setAmount(0);
+        verify(spare).setAmount(0);
     }
 
     @Test

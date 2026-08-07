@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -62,6 +63,10 @@ class BoatPickupListenerTest extends CommonTestSetup {
         when(boat.getWorld()).thenReturn(world);
         when(boat.getPassengers()).thenReturn(List.of(mockPlayer));
         when(boat.getType()).thenReturn(org.bukkit.entity.EntityType.OAK_BOAT);
+        // A real entity ALWAYS has a container (the API says never-null, and
+        // production code is entitled to lean on that) - so the mock must too
+        when(boat.getPersistentDataContainer())
+                .thenReturn(mock(org.bukkit.persistence.PersistentDataContainer.class));
         when(mockPlayer.getVehicle()).thenReturn(boat);
         return boat;
     }
@@ -85,7 +90,7 @@ class BoatPickupListenerTest extends CommonTestSetup {
         listener.onTeleport(teleport());
         verify(boat).remove();
         verify(cargo, never()).clear();
-        verify(inventory, org.mockito.Mockito.times(1)).addItem(any(ItemStack.class));
+        verify(inventory, times(1)).addItem(any(ItemStack.class));
     }
 
     @Test

@@ -31,6 +31,13 @@ import world.bentobox.tradewinds.travel.CargoStore;
  * @author tastybento
  */
 public class MarketService {
+    /**
+     * Disambiguates User#getTranslationAsComponent, whose no-variable call is
+     * ambiguous between the String... and TagResolver... overloads - and a
+     * shared constant is not an array creation, which is Sonar's complaint.
+     */
+    private static final String[] NO_VARS = new String[0];
+
 
     private final TradeWinds addon;
     private final PriceEngine priceEngine;
@@ -143,9 +150,9 @@ public class MarketService {
             meta.setLodestone(home);
             meta.setLodestoneTracked(false);
             User console = User.getInstance(org.bukkit.Bukkit.getConsoleSender());
-            meta.displayName(console.getTranslationAsComponent("tradewinds.item.ships-compass", new String[0]));
+            meta.displayName(console.getTranslationAsComponent("tradewinds.item.ships-compass", NO_VARS));
             meta.lore(java.util.List.of(console.getTranslationAsComponent(
-                    "tradewinds.item.ships-compass-lore", new String[0])));
+                    "tradewinds.item.ships-compass-lore", NO_VARS)));
             compass.setItemMeta(meta);
         });
     }
@@ -242,8 +249,10 @@ public class MarketService {
         }
         // Seeded by the item and the port, so it is arbitrary but not random -
         // scripts cannot re-roll it, and it stays the same on a resumed sale
-        int pick = Math.abs((item.getType().name() + soldAt.cellX() + "," + soldAt.cellZ()).hashCode())
-                % elsewhere.size();
+        // floorMod, not Math.abs(...) %: abs(Integer.MIN_VALUE) is still
+        // negative, and one unlucky hash would throw on the index below
+        int pick = Math.floorMod((item.getType().name() + soldAt.cellX() + "," + soldAt.cellZ()).hashCode(),
+                elsewhere.size());
         ItemStack one = CargoStore.copyOf(item, 1);
         addon.getIslandDataManager().consign(elsewhere.get(pick), one, addon.getSettings().getResaleSlots());
     }
