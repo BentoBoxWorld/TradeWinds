@@ -102,9 +102,14 @@ one-way-cargo rule below to trader-bought cargo only.
 ## Testing quirks (important)
 
 MockBukkit has **no 26.2 release**; tests run against the locally patched jar
-`org.mockbukkit.mockbukkit:mockbukkit-v26.1.2:4.113.4-p262`, built by
-`~/git/GushBlock/scripts/build_patched_mockbukkit.py` (rerun it if the version
-disappears from `~/.m2`; prereq: unzip the paper-api jar to `/tmp/paperapi`).
+`org.mockbukkit.mockbukkit:mockbukkit-v26.1.2:4.113.4-p262-2`, which **ships
+inside this repo** (`libs/`, a file-based Maven repository declared in the
+pom) so CI and fresh clones build green. It was built by
+`~/git/GushBlock/scripts/build_patched_mockbukkit.py` (prereq: unzip the
+paper-api jar to `/tmp/paperapi`). To update it: rerun the script, **bump the
+`-2` suffix** (a shared CI agent once served a stale same-versioned copy from
+its cache - never reuse a version), copy jar+pom into `libs/`, update
+`mock-bukkit.version` in the pom.
 Two class-level shims are copied into test sources (Adventure 4→5 breakage):
 `org/mockbukkit/mockbukkit/adventure/PlainTextComponentProviderImpl` and
 `net/kyori/adventure/util/Buildable`. Surefire needs the long `--add-opens`

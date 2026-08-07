@@ -47,7 +47,7 @@
         <!-- Non-minecraft related dependencies -->
         <junit.version>5.10.2</junit.version>
         <mockito.version>5.11.0</mockito.version>
-        <mock-bukkit.version>4.113.4-p262</mock-bukkit.version>
+        <mock-bukkit.version>4.113.4-p262-2</mock-bukkit.version>
         <!-- Minecraft / BentoBox stack (verified against /Users/ben/Minecraft/26.2) -->
         <paper.version>26.2.build.40-alpha</paper.version>
         <bentobox.version>3.18.1</bentobox.version>
@@ -94,6 +94,16 @@
     </profiles>
 
     <repositories>
+        <!-- The locally patched MockBukkit for Paper 26.2 ships INSIDE this
+             repo (libs/): no public repository hosts it, and a shared CI
+             agent's cache once served a stale pre-registry-fix copy under
+             the same version - hence the -2 and the file repo. Rebuild with
+             ~/git/GushBlock/scripts/build_patched_mockbukkit.py, bump the
+             suffix, and copy jar+pom here. -->
+        <repository>
+            <id>project-libs</id>
+            <url>file://${project.basedir}/libs</url>
+        </repository>
         <repository>
             <id>jitpack.io</id>
             <url>https://jitpack.io</url>
