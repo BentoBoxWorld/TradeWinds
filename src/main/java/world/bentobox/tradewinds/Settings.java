@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.bukkit.Difficulty;
+
+import world.bentobox.tradewinds.galaxy.SecurityBand;
 import org.bukkit.Material;
 import org.bukkit.GameMode;
 import org.bukkit.block.Biome;
@@ -39,9 +41,10 @@ public class Settings implements WorldSettings {
     // PropertyDescriptor for EVERY declared field, and a field without a
     // getter/setter (any static final) makes loadConfigObject() throw - the
     // addon then boots with null settings and disables itself (found
-    // 2026-08-07 when a Sonar cleanup added band-name constants). Duplicated
-    // string keys here are the price of the loader; Sonar S1192 is wrong
-    // about this file.
+    // 2026-08-07 when a Sonar cleanup added band-name constants). Where a
+    // repeated key is really an enum name, write it as one -
+    // SecurityBand.POLICED.name() - which is no literal, no field, and a
+    // compile error the day a band is renamed.
 
     /* Commands */
     @ConfigComment("Player command. What command users will run to access their island.")
@@ -177,11 +180,11 @@ public class Settings implements WorldSettings {
 
     private static Map<String, Boolean> defaultBandMonsterSpawn() {
         Map<String, Boolean> map = new HashMap<>();
-        map.put("SAFE", false);
-        map.put("POLICED", false);
-        map.put("FRONTIER", true);
-        map.put("LAWLESS", true);
-        map.put("ANARCHIC", true);
+        map.put(SecurityBand.SAFE.name(), false);
+        map.put(SecurityBand.POLICED.name(), false);
+        map.put(SecurityBand.FRONTIER.name(), true);
+        map.put(SecurityBand.LAWLESS.name(), true);
+        map.put(SecurityBand.ANARCHIC.name(), true);
         return map;
     }
 
@@ -191,11 +194,11 @@ public class Settings implements WorldSettings {
 
     private static Map<String, Boolean> defaultBandPvp() {
         Map<String, Boolean> map = new HashMap<>();
-        map.put("SAFE", false);
-        map.put("POLICED", false);
-        map.put("FRONTIER", false);
-        map.put("LAWLESS", true);
-        map.put("ANARCHIC", true);
+        map.put(SecurityBand.SAFE.name(), false);
+        map.put(SecurityBand.POLICED.name(), false);
+        map.put(SecurityBand.FRONTIER.name(), false);
+        map.put(SecurityBand.LAWLESS.name(), true);
+        map.put(SecurityBand.ANARCHIC.name(), true);
         return map;
     }
 
@@ -207,11 +210,11 @@ public class Settings implements WorldSettings {
 
     private static Map<String, Integer> defaultBandHurtVillagers() {
         Map<String, Integer> map = new HashMap<>();
-        map.put("SAFE", 500);
-        map.put("POLICED", 0);
-        map.put("FRONTIER", 0);
-        map.put("LAWLESS", 0);
-        map.put("ANARCHIC", 0);
+        map.put(SecurityBand.SAFE.name(), 500);
+        map.put(SecurityBand.POLICED.name(), 0);
+        map.put(SecurityBand.FRONTIER.name(), 0);
+        map.put(SecurityBand.LAWLESS.name(), 0);
+        map.put(SecurityBand.ANARCHIC.name(), 0);
         return map;
     }
 
@@ -318,7 +321,7 @@ public class Settings implements WorldSettings {
     @ConfigComment("outright: having burned your name, the only markets left are where the law is")
     @ConfigComment("thin. One of SAFE, POLICED, FRONTIER, LAWLESS, ANARCHIC.")
     @ConfigEntry(path = "crime.safest-fugitive-trader")
-    private String safestFugitiveTrader = "FRONTIER";
+    private String safestFugitiveTrader = SecurityBand.FRONTIER.name();
 
     @ConfigComment("Show a player's bounty beside their name, via a scoreboard team suffix.")
     @ConfigComment("A bounty nobody can see is not a bounty - a hunter has to be able to tell at a")
@@ -1086,11 +1089,11 @@ public class Settings implements WorldSettings {
 
     private static Map<String, Double> defaultEncounterChance() {
         Map<String, Double> map = new HashMap<>();
-        map.put("SAFE", 0.02);
-        map.put("POLICED", 0.06);
-        map.put("FRONTIER", 0.12);
-        map.put("LAWLESS", 0.20);
-        map.put("ANARCHIC", 0.28);
+        map.put(SecurityBand.SAFE.name(), 0.02);
+        map.put(SecurityBand.POLICED.name(), 0.06);
+        map.put(SecurityBand.FRONTIER.name(), 0.12);
+        map.put(SecurityBand.LAWLESS.name(), 0.20);
+        map.put(SecurityBand.ANARCHIC.name(), 0.28);
         return map;
     }
 
@@ -1119,7 +1122,7 @@ public class Settings implements WorldSettings {
     @ConfigComment("which is what pushes smuggling runs outward - crime pays, into danger.")
     @ConfigComment("One of SAFE, POLICED, FRONTIER, LAWLESS, ANARCHIC.")
     @ConfigEntry(path = "illegal-trade.safest-contraband-buyer")
-    private String safestContrabandBuyer = "FRONTIER";
+    private String safestContrabandBuyer = SecurityBand.FRONTIER.name();
 
     @ConfigComment("What a black market pays for contraband, as a multiplier on its ordinary price.")
     @ConfigComment("This is the reward half of high-risk/high-reward, and the main lever on how")
@@ -1191,21 +1194,21 @@ public class Settings implements WorldSettings {
 
     private static Map<String, Double> defaultScanChance() {
         Map<String, Double> map = new HashMap<>();
-        map.put("SAFE", 0.9);
-        map.put("POLICED", 0.6);
-        map.put("FRONTIER", 0.3);
-        map.put("LAWLESS", 0.1);
-        map.put("ANARCHIC", 0.0);
+        map.put(SecurityBand.SAFE.name(), 0.9);
+        map.put(SecurityBand.POLICED.name(), 0.6);
+        map.put(SecurityBand.FRONTIER.name(), 0.3);
+        map.put(SecurityBand.LAWLESS.name(), 0.1);
+        map.put(SecurityBand.ANARCHIC.name(), 0.0);
         return map;
     }
 
     private static Map<String, Integer> defaultPatrolSize() {
         Map<String, Integer> map = new HashMap<>();
-        map.put("SAFE", 4);
-        map.put("POLICED", 3);
-        map.put("FRONTIER", 2);
-        map.put("LAWLESS", 1);
-        map.put("ANARCHIC", 0);
+        map.put(SecurityBand.SAFE.name(), 4);
+        map.put(SecurityBand.POLICED.name(), 3);
+        map.put(SecurityBand.FRONTIER.name(), 2);
+        map.put(SecurityBand.LAWLESS.name(), 1);
+        map.put(SecurityBand.ANARCHIC.name(), 0);
         return map;
     }
 
