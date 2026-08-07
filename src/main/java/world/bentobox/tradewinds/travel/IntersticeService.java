@@ -39,8 +39,12 @@ import world.bentobox.tradewinds.galaxy.IslandSpec;
  * Nether sea partway along the route with Ghasts inbound. The fuel was spent
  * at engagement, so <b>re-engaging to the original destination is always
  * free</b> - the failure is a detour, never a loss, and stranding is
- * impossible (spec §3.3). The way out is offered automatically while the
- * player floats there.
+ * impossible (spec §3.3). The way out is offered ONCE on arrival, and on
+ * demand ever after: {@code /tw go} (or {@code /tw warp}) raises the offer
+ * again, and a quiet action-bar line reminds castaways it exists. It used to
+ * re-open the dialog every prompt-seconds, which was fine while the
+ * interstice was empty water and unbearable once it had wart to harvest,
+ * blazes to fight and wrecks to dive (ruled by Ben, 2026-08-07).
  *
  * @author tastybento
  */
@@ -64,6 +68,8 @@ public class IntersticeService {
     /** Player -> the destination cell they are still owed, free of charge. */
     private final Map<UUID, String> pendingDestination = new ConcurrentHashMap<>();
     private final Map<UUID, Long> lastPrompt = new ConcurrentHashMap<>();
+    /** Players who have already seen this visit's dialog - it shows ONCE. */
+    private final java.util.Set<UUID> prompted = java.util.concurrent.ConcurrentHashMap.newKeySet();
     /** Players whose next warp is rigged to fail, consumed on use. */
     private final java.util.Set<UUID> rigged = java.util.concurrent.ConcurrentHashMap.newKeySet();
     /** Player -> when they were stranded, for the arrival grace. */
@@ -335,21 +341,33 @@ public class IntersticeService {
     }
 
     /**
-     * Offer the free re-engage to interstice castaways, and clean up.
+     * Offer the free re-engage to interstice castaways, and clean up. The
+     * DIALOG shows once per visit; after that the offer lives on the action
+     * bar (every prompt-seconds; 0 silences it) and behind {@code /tw go}.
      */
     private void tick() {
         if (addon.getNetherWorld() == null) {
             return;
         }
         long now = System.currentTimeMillis() / 1000;
+        java.util.Set<UUID> present = new java.util.HashSet<>();
         for (Player player : addon.getNetherWorld().getPlayers()) {
+            present.add(player.getUniqueId());
+            if (prompted.add(player.getUniqueId())) {
+                lastPrompt.put(player.getUniqueId(), now);
+                openReEngageDialog(player);
+                continue;
+            }
+            int period = addon.getSettings().getIntersticePromptSeconds();
             long last = lastPrompt.getOrDefault(player.getUniqueId(), 0L);
-            if (now - last < addon.getSettings().getIntersticePromptSeconds()) {
+            if (period <= 0 || now - last < period) {
                 continue;
             }
             lastPrompt.put(player.getUniqueId(), now);
-            openReEngageDialog(player);
+            User.getInstance(player).sendMessage("tradewinds.interstice.way-out");
         }
+        // Leaving the interstice (or logging out) re-arms the one-time dialog
+        prompted.retainAll(present);
         hunt();
         sweep();
     }
@@ -399,10 +417,10 @@ public class IntersticeService {
                         .body(java.util.List.of(DialogBody.plainMessage(
                                 user.getTranslationAsComponent("tradewinds.ui.interstice.body", NO_VARS))))
                         .build())
-                // A way to put the dialog down. The offer repeats every
-                // prompt-seconds and the fuel is already spent, so declining
-                // costs nothing - but without an exit the only way to look at
-                // the sea was to take the warp.
+                // A way to put the dialog down. The fuel is already spent and
+                // /tw go raises the offer again whenever, so declining costs
+                // nothing - but without an exit the only way to look at the
+                // sea was to take the warp.
                 .type(DialogType.multiAction(java.util.List.of(engage))
                         .exitAction(ActionButton.builder(
                                 user.getTranslationAsComponent("tradewinds.ui.interstice.stay", NO_VARS))
@@ -416,6 +434,7 @@ public class IntersticeService {
     private void reEngage(Player player, IslandSpec target) {
         pendingDestination.remove(player.getUniqueId());
         lastPrompt.remove(player.getUniqueId());
+        prompted.remove(player.getUniqueId());
         addon.getWarpService().deliver(player, target);
     }
 

@@ -9,6 +9,7 @@ import org.bukkit.block.BlockState;
 import org.bukkit.block.Chest;
 import org.bukkit.block.CreatureSpawner;
 import org.bukkit.block.data.Ageable;
+import org.bukkit.block.structure.StructureRotation;
 import org.bukkit.entity.EntityType;
 import org.bukkit.generator.BlockPopulator;
 import org.bukkit.generator.LimitedRegion;
@@ -30,8 +31,10 @@ import world.bentobox.tradewinds.galaxy.IntersticeMap;
  * <li>Glowstone clusters hanging from the ceiling lid - light as navigation
  * and destination at once.</li>
  * <li>Quartz ore seeded through shoal cores and brazier roots.</li>
- * <li>Wither watchtowers: the interstice's only structure - wither skeleton
- * spawner below, loot chest above, skulls to a nether star to a beacon.</li>
+ * <li>Wither watchtowers: wither skeleton spawner below, loot chest above,
+ * skulls to a nether star to a beacon.</li>
+ * <li>The ship graveyard: seeded vanilla shipwrecks on the seabed, chests
+ * re-pointed at nether-tier loot by wreck grade.</li>
  * </ul>
  * Geometry (where things are) comes from the pure {@link IntersticeMap};
  * this class only draws what the map declares.
@@ -64,6 +67,92 @@ public class IntersticeDecorator extends BlockPopulator {
         shoals(map, random, region, chunkX, chunkZ, sea);
         glowstoneCeiling(random, region, chunkX, chunkZ, worldInfo, sea);
         watchtower(map, region, chunkX, chunkZ, sea);
+        wrecks(map, random, region, chunkX, chunkZ, worldInfo, sea);
+        seafloor(random, region, chunkX, chunkZ, worldInfo, sea);
+    }
+
+    // ------------------------------------------------------------- seafloor
+
+    /**
+     * Bottom life: glow lichen beds, basalt spikes, magma vents, soul-sand
+     * seeps and blackstone boulders scattered on the seabed. None of it is a
+     * resource - it is what makes looking down through the water worth doing
+     * ("the floor does seem too flat, especially because nothing is growing
+     * on it" - playtest 2026-08-07).
+     */
+    private void seafloor(Random random, LimitedRegion region, int chunkX, int chunkZ, WorldInfo worldInfo,
+            int sea) {
+        double chance = addon.getSettings().getIntersticeSeafloorClutter();
+        if (chance <= 0) {
+            return;
+        }
+        for (int dx = 0; dx < 16; dx++) {
+            for (int dz = 0; dz < 16; dz++) {
+                if (random.nextDouble() >= chance) {
+                    continue;
+                }
+                int x = (chunkX << 4) + dx;
+                int z = (chunkZ << 4) + dz;
+                int floor = seabedAt(region, x, z, sea - 2, worldInfo.getMinHeight());
+                if (floor <= worldInfo.getMinHeight()) {
+                    continue; // dry land, a shoal crown, or nothing at all
+                }
+                double roll = random.nextDouble();
+                if (roll < 0.40) {
+                    lichenBed(random, region, x, floor, z);
+                } else if (roll < 0.65) {
+                    // A basalt spike, 2-5 tall, always fully submerged
+                    int height = Math.min(2 + random.nextInt(4), sea - 1 - floor);
+                    for (int y = 1; y <= height; y++) {
+                        if (region.isInRegion(x, floor + y, z)) {
+                            region.setType(x, floor + y, z, Material.BASALT);
+                        }
+                    }
+                } else if (roll < 0.80) {
+                    // A magma vent glowing up through the water
+                    patch(random, region, x, floor, z, Material.MAGMA_BLOCK);
+                } else if (roll < 0.90) {
+                    // A soul-sand seep
+                    patch(random, region, x, floor, z, Material.SOUL_SAND);
+                } else {
+                    // A blackstone boulder
+                    if (region.isInRegion(x, floor + 1, z)) {
+                        region.setType(x, floor + 1, z, Material.BLACKSTONE);
+                    }
+                    patch(random, region, x, floor, z, Material.BLACKSTONE);
+                }
+            }
+        }
+    }
+
+    /** Swap the floor block and a couple of neighbours to a material. */
+    private void patch(Random random, LimitedRegion region, int x, int floor, int z, Material material) {
+        region.setType(x, floor, z, material);
+        for (int i = 0; i < 2; i++) {
+            int nx = x + random.nextInt(3) - 1;
+            int nz = z + random.nextInt(3) - 1;
+            if (region.isInRegion(nx, floor, nz) && region.getType(nx, floor, nz) != Material.WATER) {
+                region.setType(nx, floor, nz, material);
+            }
+        }
+    }
+
+    /** A patch of waterlogged glow lichen lying on the seabed. */
+    private void lichenBed(Random random, LimitedRegion region, int x, int floor, int z) {
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                if ((dx == 0 && dz == 0 || random.nextBoolean())
+                        && region.isInRegion(x + dx, floor + 1, z + dz)
+                        && region.getType(x + dx, floor + 1, z + dz) == Material.WATER
+                        && region.getType(x + dx, floor, z + dz) != Material.WATER) {
+                    org.bukkit.block.data.type.GlowLichen lichen =
+                            (org.bukkit.block.data.type.GlowLichen) Material.GLOW_LICHEN.createBlockData();
+                    lichen.setFace(org.bukkit.block.BlockFace.DOWN, true);
+                    lichen.setWaterlogged(true);
+                    region.setBlockData(x + dx, floor + 1, z + dz, lichen);
+                }
+            }
+        }
     }
 
     // ------------------------------------------------------------- braziers
@@ -110,18 +199,38 @@ public class IntersticeDecorator extends BlockPopulator {
         }
     }
 
+    /** Blaze deck half-width: spawners place mobs up to 4 blocks out, so the
+     * deck must cover the full spawn radius or the blazes land in the sea
+     * and fizzle on the spot (playtest 2026-08-07 - the 3x3 crow's nest
+     * drowned every blaze it ever spawned). */
+    private static final int DECK_HALF = 4;
+
     /**
-     * A blaze picket: a nether-brick crow's nest on the brazier with a blaze
-     * spawner burning where the fire would have been.
+     * A blaze picket: a nether-brick platform on the brazier, wide enough
+     * that everything the spawner produces lands on dry deck, with a wall
+     * ring and legs down to the waterline.
      */
     private void picket(LimitedRegion region, int x, int top, int z) {
-        for (int dx = -1; dx <= 1; dx++) {
-            for (int dz = -1; dz <= 1; dz++) {
+        for (int dx = -DECK_HALF; dx <= DECK_HALF; dx++) {
+            for (int dz = -DECK_HALF; dz <= DECK_HALF; dz++) {
                 if (region.isInRegion(x + dx, top + 1, z + dz)) {
                     region.setType(x + dx, top + 1, z + dz, Material.NETHER_BRICKS);
                 }
-                if (dx != 0 && dz != 0 && region.isInRegion(x + dx, top + 2, z + dz)) {
-                    region.setType(x + dx, top + 2, z + dz, Material.NETHER_BRICK_WALL);
+                boolean edge = Math.abs(dx) == DECK_HALF || Math.abs(dz) == DECK_HALF;
+                boolean corner = Math.abs(dx) == DECK_HALF && Math.abs(dz) == DECK_HALF;
+                if (edge && region.isInRegion(x + dx, top + 2, z + dz)) {
+                    region.setType(x + dx, top + 2, z + dz,
+                            corner ? Material.NETHER_BRICKS : Material.NETHER_BRICK_WALL);
+                }
+                // Corner legs down into the water: a stilt fort, not a UFO
+                if (corner) {
+                    for (int y = top; y > top - 6 && region.isInRegion(x + dx, y, z + dz); y--) {
+                        Material below = region.getType(x + dx, y, z + dz);
+                        if (below != Material.WATER && below != Material.AIR) {
+                            break; // found footing
+                        }
+                        region.setType(x + dx, y, z + dz, Material.NETHER_BRICK_WALL);
+                    }
                 }
             }
         }
@@ -315,6 +424,191 @@ public class IntersticeDecorator extends BlockPopulator {
                         continue;
                     }
                     region.setType(cx + dx, y, cz + dz, !hollow || wall ? material : Material.AIR);
+                }
+            }
+        }
+    }
+
+    // --------------------------------------------------------------- wrecks
+
+    /**
+     * The ship graveyard: hulls that misjumped and never re-engaged, lying
+     * where the interstice keeps them. Each wreck is a vanilla shipwreck
+     * template (config-swappable), seeded for position, variant, rotation and
+     * burial by the pure map. Drawn once, from the chunk holding its centre -
+     * templates are at most 28 blocks long, so a centre-anchored wreck always
+     * fits inside this chunk plus the populator's buffer.
+     */
+    private void wrecks(IntersticeMap map, Random random, LimitedRegion region, int chunkX, int chunkZ,
+            WorldInfo worldInfo, int sea) {
+        java.util.List<String> templates = addon.getSettings().getIntersticeWreckTemplates();
+        if (templates.isEmpty()) {
+            return;
+        }
+        int minX = chunkX << 4;
+        int minZ = chunkZ << 4;
+        map.wrecksNear(minX + 8, minZ + 8, 16).stream()
+                .filter(w -> w.centerX() >= minX && w.centerX() < minX + 16
+                        && w.centerZ() >= minZ && w.centerZ() < minZ + 16)
+                .forEach(w -> placeWreck(region, random, worldInfo, sea, w,
+                        templates.get(w.variant() % templates.size())));
+    }
+
+    private void placeWreck(LimitedRegion region, Random random, WorldInfo worldInfo, int sea,
+            IntersticeMap.Wreck wreck, String templateKey) {
+        NamespacedKey key = NamespacedKey.fromString(templateKey);
+        org.bukkit.structure.Structure template = key == null ? null
+                : Bukkit.getStructureManager().loadStructure(key);
+        if (template == null) {
+            addon.logError("interstice.wreck-templates: '" + templateKey + "' is not a structure");
+            return;
+        }
+        // Keel on the seabed (minus the seeded burial), found at the centre
+        int floor = seabedAt(region, wreck.centerX(), wreck.centerZ(), sea, worldInfo.getMinHeight());
+        if (floor <= worldInfo.getMinHeight()) {
+            return; // no seabed here (should not happen; be safe)
+        }
+        org.bukkit.util.BlockVector size = template.getSize();
+        int sx = size.getBlockX();
+        int sz = size.getBlockZ();
+        // Keel settled one block into the reef crest: the mound (generator)
+        // already set the height so the hull rides half out of the water -
+        // wreck.sink() shaped the CREST, so it is not applied again here
+        int y = Math.max(worldInfo.getMinHeight() + 1, floor);
+        StructureRotation rotation = switch (wreck.rotation()) {
+            case 1 -> StructureRotation.CLOCKWISE_90;
+            case 2 -> StructureRotation.CLOCKWISE_180;
+            case 3 -> StructureRotation.COUNTERCLOCKWISE_90;
+            default -> StructureRotation.NONE;
+        };
+        // place() rotates around the origin block, so the origin that CENTRES
+        // the hull on the wreck point depends on the rotation. Centring is
+        // what keeps every block inside this chunk plus the buffer.
+        org.bukkit.util.BlockVector origin = switch (rotation) {
+            case CLOCKWISE_90 -> new org.bukkit.util.BlockVector(wreck.centerX() + (sz - 1) / 2, y,
+                    wreck.centerZ() - (sx - 1) / 2);
+            case CLOCKWISE_180 -> new org.bukkit.util.BlockVector(wreck.centerX() + (sx - 1) / 2, y,
+                    wreck.centerZ() + (sz - 1) / 2);
+            case COUNTERCLOCKWISE_90 -> new org.bukkit.util.BlockVector(wreck.centerX() - (sz - 1) / 2, y,
+                    wreck.centerZ() + (sx - 1) / 2);
+            default -> new org.bukkit.util.BlockVector(wreck.centerX() - (sx - 1) / 2, y,
+                    wreck.centerZ() - (sz - 1) / 2);
+        };
+        try {
+            template.place(region, origin, false, rotation, org.bukkit.block.structure.Mirror.NONE, -1, 1.0f,
+                    random);
+        } catch (Exception e) {
+            addon.logError("Wreck " + templateKey + " at " + wreck.centerX() + "," + wreck.centerZ()
+                    + " failed to place: " + e.getMessage());
+            return;
+        }
+        wreckLoot(region, wreck, size, y);
+        graveLight(region, wreck, sea);
+    }
+
+    /**
+     * A soul flame over every wreck - the grave candle. On a hull riding
+     * above the water it burns on the highest timber; on a sunken one a
+     * charred basalt mast carries it up past the surface. At night the
+     * graveyard is a field of cold blue lights.
+     */
+    private void graveLight(LimitedRegion region, IntersticeMap.Wreck wreck, int sea) {
+        if (!addon.getSettings().isIntersticeWreckFlames()) {
+            return;
+        }
+        int x = wreck.centerX();
+        int z = wreck.centerZ();
+        // The hull's highest timber at the centre column
+        int top = Integer.MIN_VALUE;
+        for (int y = sea + 24; y >= sea - 24; y--) {
+            if (!region.isInRegion(x, y, z)) {
+                return;
+            }
+            Material here = region.getType(x, y, z);
+            if (here != Material.WATER && here != Material.AIR) {
+                top = y;
+                break;
+            }
+        }
+        if (top == Integer.MIN_VALUE) {
+            return; // nothing under the centre at all
+        }
+        if (top < sea) {
+            // Sunken: a mast up out of the water to carry the flame
+            for (int y = top + 1; y <= sea; y++) {
+                if (region.isInRegion(x, y, z)) {
+                    region.setType(x, y, z, Material.BASALT);
+                }
+            }
+            top = sea;
+        }
+        if (region.isInRegion(x, top + 1, z)) {
+            region.setType(x, top + 1, z, Material.SOUL_SAND);
+        }
+        if (region.isInRegion(x, top + 2, z)) {
+            region.setType(x, top + 2, z, Material.SOUL_FIRE);
+        }
+    }
+
+    /** The first solid column top at or under the sea surface. */
+    private int seabedAt(LimitedRegion region, int x, int z, int sea, int minHeight) {
+        for (int y = sea; y > minHeight; y--) {
+            if (!region.isInRegion(x, y, z)) {
+                return minHeight;
+            }
+            Material type = region.getType(x, y, z);
+            if (type != Material.WATER && type != Material.AIR) {
+                return y;
+            }
+        }
+        return minHeight;
+    }
+
+    /**
+     * Settle every chest the template shipped. Most wrecks are SCENERY
+     * (ruled 2026-08-07: the graveyard is there to see, not to farm) - their
+     * chests are emptied, because a template chest left alone rolls
+     * vanilla's shipwreck tables, buried-treasure map included. On a loot
+     * wreck the first chest carries the wreck's grade; on a TREASURE wreck
+     * any further chest is the captain's locker (piglin-bartering goods).
+     */
+    private void wreckLoot(LimitedRegion region, IntersticeMap.Wreck wreck,
+            org.bukkit.util.BlockVector size, int keelY) {
+        // The rotated hull lies somewhere inside this box around the centre
+        int reach = Math.max(size.getBlockX(), size.getBlockZ()) / 2 + 1;
+        int found = 0;
+        for (int y = keelY; y <= keelY + size.getBlockY(); y++) {
+            for (int x = wreck.centerX() - reach; x <= wreck.centerX() + reach; x++) {
+                for (int z = wreck.centerZ() - reach; z <= wreck.centerZ() + reach; z++) {
+                    if (!region.isInRegion(x, y, z)) {
+                        continue;
+                    }
+                    Material type = region.getType(x, y, z);
+                    if (type != Material.CHEST && type != Material.TRAPPED_CHEST) {
+                        continue;
+                    }
+                    LootTable loot = null;
+                    if (wreck.loot()) {
+                        String gradeKey = found > 0 && wreck.grade() == IntersticeMap.WreckGrade.TREASURE
+                                ? "LOCKER"
+                                : wreck.grade().name();
+                        String tableName = addon.getSettings().getIntersticeWreckLoot().get(gradeKey);
+                        NamespacedKey tableKey = tableName == null ? null
+                                : NamespacedKey.fromString(tableName);
+                        loot = tableKey == null ? null : Bukkit.getLootTable(tableKey);
+                        if (loot == null) {
+                            addon.logError("interstice.wreck-loot." + gradeKey + " '" + tableName
+                                    + "' is not a loot table");
+                        }
+                    }
+                    found++;
+                    BlockState state = region.getBlockState(x, y, z);
+                    if (state instanceof Chest chestState) {
+                        // null clears the template's vanilla table: an empty
+                        // sea chest, not a broken treasure map
+                        chestState.setLootTable(loot);
+                        chestState.update();
+                    }
                 }
             }
         }

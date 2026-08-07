@@ -32,6 +32,7 @@ public class Seabed {
     private static final long SALT_RIFT = 0x5EABED03L;
     private static final long SALT_SEAMOUNT = 0x5EABED04L;
     private static final long SALT_SEDIMENT = 0x5EABED05L;
+    private static final long SALT_DUNE = 0x5EABED06L;
 
     /** Scale of the basins, in blocks: a long swim from shelf to deep water. */
     private static final int BASIN_LATTICE = 2200;
@@ -43,6 +44,8 @@ public class Seabed {
     private static final int SEAMOUNT_LATTICE = 1400;
     /** Scale of the sediment patches (sand, gravel, clay), in blocks. */
     private static final int SEDIMENT_LATTICE = 26;
+    /** Scale of the short dunes - visible within one glance down from a boat. */
+    private static final int DUNE_LATTICE = 32;
 
     /**
      * Minimum water depth over open sea. Seamounts and shoals stop here so no
@@ -100,6 +103,14 @@ public class Seabed {
         double relief = (Noise.fbm(seed, SALT_RELIEF, blockX, blockZ, RELIEF_LATTICE, 3, 0.5) - 0.5) * 2
                 * config.relief();
         depth += relief * (1 - blend / 2);
+        // Short dunes: the 220-block relief swells read as dead flat from a
+        // boat ("I don't see the sea floor undulating", 2026-08-07); these
+        // are the waves you can actually watch roll under the hull
+        if (config.duneHeight() > 0) {
+            double dune = (Noise.fbm(seed, SALT_DUNE, blockX, blockZ, DUNE_LATTICE, 2, 0.5) - 0.5) * 2
+                    * config.duneHeight();
+            depth += dune * (1 - blend / 2);
+        }
         depth += riftCut(blockX, blockZ) * (1 - blend);
         depth -= seamountRise(blockX, blockZ, basin) * (1 - blend);
         // Open water everywhere: a shoal that reached the surface would be land
@@ -201,7 +212,7 @@ public class Seabed {
      * @return minimum floor Y
      */
     public int minFloorY() {
-        return seaLevel - config.maxDepth() - config.relief();
+        return seaLevel - config.maxDepth() - config.relief() - config.duneHeight();
     }
 
     /**

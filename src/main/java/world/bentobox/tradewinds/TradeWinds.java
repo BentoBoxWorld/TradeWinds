@@ -742,20 +742,27 @@ public class TradeWinds extends GameModeAddon {
     }
 
     /**
-     * The interstice's feature map (wart shoals, watchtowers) - pure seeded
-     * geometry, salted off the same seed the interstice sea floor uses so one
-     * number still decides the whole world.
+     * The interstice's feature map (wart shoals, watchtowers, the ship
+     * graveyard) - pure seeded geometry off the GALAXY seed (fixed
+     * 2026-08-07; it used to salt the interstice world's own seed, which is
+     * random on every world creation, so each nether regen shuffled every
+     * feature and two servers sharing a galaxy seed got different
+     * interstices - against spec principle 5, "the seed is the world").
+     * The world-seed fallback only applies when galaxy.seed is 0.
      *
-     * @param worldSeed the interstice world's seed
+     * @param worldSeed the interstice world's seed, used only as the
+     *        galaxy.seed=0 fallback
      * @return the map
      */
     public world.bentobox.tradewinds.galaxy.IntersticeMap getIntersticeMap(long worldSeed) {
         if (intersticeMap == null) {
             Settings s = getSettings();
-            intersticeMap = new world.bentobox.tradewinds.galaxy.IntersticeMap(worldSeed ^ 0x1E7E2571CEL,
+            long seed = s.getGalaxySeed() != 0 ? s.getGalaxySeed() : worldSeed;
+            intersticeMap = new world.bentobox.tradewinds.galaxy.IntersticeMap(seed ^ 0x1E7E2571CEL,
                     s.getIntersticeShoalGrid(), s.getIntersticeShoalChance(), s.getIntersticeShoalRadius(),
                     s.getIntersticeGrandShoalChance(), s.getIntersticeWatchtowerGrid(),
-                    s.getIntersticeWatchtowerChance());
+                    s.getIntersticeWatchtowerChance(), s.getIntersticeWreckGrid(),
+                    s.getIntersticeWreckChance(), s.getIntersticeWreckLootChance());
         }
         return intersticeMap;
     }

@@ -47,10 +47,14 @@ public class ChunkGeneratorWorld extends ChunkGenerator {
     }
 
     /**
-     * The interstice's sea floor: shallower, tighter, and no seamounts - it is
-     * meant to feel like a dead end, not a place to explore.
+     * The interstice's sea floor: shallower than the ocean's but restless -
+     * pale banks near the surface, basins falling away dark, rifts, blunt
+     * seamounts looming under the hull. It was flat-by-design back when the
+     * interstice was a dead end nobody explored; once it grew wart, wrecks
+     * and blazes worth visiting, "the floor does seem too flat" (playtest
+     * 2026-08-07) - a destination deserves scenery.
      */
-    private static final SeabedConfig INTERSTICE_SEABED = new SeabedConfig(10, 26, 10, 6, 12, 0.85, 0);
+    private static final SeabedConfig INTERSTICE_SEABED = new SeabedConfig(6, 34, 10, 10, 16, 0.82, 12, 4);
     /** Salt so the interstice floor does not mirror the overworld's. */
     private static final long INTERSTICE_SALT = 0x1E7E2571CEL;
 
@@ -260,10 +264,17 @@ public class ChunkGeneratorWorld extends ChunkGenerator {
         if (worldInfo.getEnvironment() == Environment.NETHER) {
             // Wart shoals: the interstice's only land, a low soul-sand dome
             // the natural floor rises to meet (interstice plan, source 1)
-            var wanted = addon.getIntersticeMap(worldInfo.getSeed()).shoalSurfaceAt(worldX, worldZ,
-                    wc.seaHeight());
+            var map = addon.getIntersticeMap(worldInfo.getSeed());
+            var wanted = map.shoalSurfaceAt(worldX, worldZ, wc.seaHeight());
             if (wanted.isPresent()) {
                 floorTop = Math.max(floorTop, wanted.getAsInt());
+            }
+            // Wreck reefs: the seabed rises under every wreck so the hull
+            // perches half out of the water instead of vanishing into the
+            // deep (interstice plan, source 7)
+            var reef = map.wreckSurfaceAt(worldX, worldZ, wc.seaHeight());
+            if (reef.isPresent()) {
+                floorTop = Math.max(floorTop, reef.getAsInt());
             }
         }
         return Math.clamp(floorTop, worldInfo.getMinHeight() + 2, worldInfo.getMaxHeight() - 1);

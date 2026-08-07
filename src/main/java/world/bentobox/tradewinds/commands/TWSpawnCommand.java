@@ -49,6 +49,14 @@ public class TWSpawnCommand extends DelayedTeleportCommand {
     @Override
     public boolean execute(User user, String label, List<String> args) {
         TradeWinds addon = getAddon();
+        // In the interstice, the door out is the free re-engage: raise the
+        // offer on demand. The dialog only pops by itself once per stranding
+        // (ruled 2026-08-07 - the repeats were unbearable once the interstice
+        // had wart, blazes and wrecks worth staying for).
+        if (user.getWorld().equals(addon.getNetherWorld())) {
+            addon.getIntersticeService().openReEngageDialog(user.getPlayer());
+            return true;
+        }
         if (addon.inWorld(user.getWorld())) {
             return goAtSea(addon, user);
         }

@@ -43,8 +43,12 @@ intended: the most lawless water feeds the most dangerous market.
 | Wither skeleton skull | nether star → beacon | wither watchtowers (5) |
 | Netherrack / nether bricks | building, watchtower salvage | interstice crust (already); towers (5) |
 | Crimson/warped wood, shroomlight | building | groves on grand shoals (1) |
-| Netherite scrap / templates | netherite gear | LOOT ONLY: tower chests, encounter booty, secondhand shelves — never mineable |
-| Dragon's breath, ender pearls, shulker shells, echo shards | lingering potions, endgame | TRADE ONLY: "goods from beyond the horizon" — rare secondhand/booty items, never gatherable. No End, ever. |
+| Netherite scrap / templates | netherite gear | LOOT ONLY: tower chests, wreck chests (7), encounter booty, secondhand shelves — never mineable |
+| Diamonds, horse armor, saddles, obsidian | gear, riding | wreck chests (7): COMMON grade = the vanilla fortress table |
+| Pigstep, armor trims, netherite upgrade template | cosmetics, netherite | wreck chests (7): RARE grade = the vanilla bastion table |
+| Crying obsidian, soul speed, fire res potions | respawn anchor, soul-sand travel | wreck chests (7): captain's locker = piglin bartering table |
+| Dragon's breath, shulker shells, echo shards | lingering potions, endgame | TRADE ONLY: "goods from beyond the horizon" — rare secondhand/booty items, never gatherable. No End, ever. |
+| Ender pearls | ender eyes, teleport | mostly trade; SMALL amounts loot-findable in the captain's locker (ruled by Ben 2026-08-06: the wreck loot mirrors vanilla nether loot, and bartering includes pearls — locker quantities are flavor, not a faucet) |
 
 Already covered in the overworld and unchanged: redstone, gunpowder, spider
 eye, sugar, rabbit's foot, pufferfish, golden carrot, phantom membrane
@@ -94,6 +98,24 @@ headlessly. Numbered for reference; suggested phases at the end.
 destination, which is a route" — mineable debris collapses the netherite
 trade); no piglin bartering (cut for scope; revisit only if a use appears);
 no End portals, stronghold, or elytra, ever.
+
+7. **The ship graveyard (added 2026-08-06, BUILT).** Vanilla shipwreck
+   templates seeded across the interstice seabed (`IntersticeMap.Wreck`:
+   grid 320, chance 0.4, variant/rotation/burial from the cell hash) —
+   ships that misjumped and never re-engaged, which is the entry-by-accident
+   lore told in scenery. Placed by the decorator via
+   `Bukkit.getStructureManager()` into the `LimitedRegion` (center-anchored
+   so even the 28-block hulls fit chunk+buffer; the RegionAccessor overload
+   of `Structure.place`). Every chest in a wreck is re-pointed by grade —
+   COMMON 70% → `minecraft:chests/nether_bridge` (the fortress list:
+   diamonds, horse armor, saddles, obsidian, wart), RARE 25% →
+   `minecraft:chests/bastion_other` (Pigstep, trims, upgrade-template
+   chance), TREASURE 5% → `minecraft:chests/bastion_treasure`, with any
+   second chest on a TREASURE wreck becoming the captain's locker →
+   `minecraft:gameplay/piglin_bartering` (pearls, crying obsidian, soul
+   speed). Re-pointing also kills vanilla's buried-treasure maps, which
+   would point at structures this ocean does not generate. All tables and
+   the template list are config (`interstice.wreck-*`).
 
 ## Nether portals (decided 2026-08-05)
 

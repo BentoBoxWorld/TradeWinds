@@ -7,10 +7,10 @@ import java.util.OptionalInt;
 
 /**
  * The interstice's features, as pure seeded geometry: wart shoals (small
- * soul-sand banks breaking the dark sea) and wither watchtowers (its only
- * structure). Everything is a pure function of (seed, position) - no Bukkit
- * imports, headlessly testable - mirroring how the galaxy treats wild islets
- * (spec principle 5).
+ * soul-sand banks breaking the dark sea), wither watchtowers, and the ship
+ * graveyard (wrecks of hulls that misjumped and never re-engaged). Everything
+ * is a pure function of (seed, position) - no Bukkit imports, headlessly
+ * testable - mirroring how the galaxy treats wild islets (spec principle 5).
  * <p>
  * Interstice-plan sources 1 and 5; the decorator draws crops, groves, quartz
  * and the tower masonry on top of what this class places.
@@ -28,6 +28,28 @@ public class IntersticeMap {
     private static final long SALT_TOWER = 0x70E51L;
     private static final long SALT_TOWER_X = 0x70E52L;
     private static final long SALT_TOWER_Z = 0x70E53L;
+    private static final long SALT_WRECK = 0x3EC0D1L;
+    private static final long SALT_WRECK_X = 0x3EC0D2L;
+    private static final long SALT_WRECK_Z = 0x3EC0D3L;
+    private static final long SALT_WRECK_KIND = 0x3EC0D4L;
+    private static final long SALT_WRECK_ROT = 0x3EC0D5L;
+    private static final long SALT_WRECK_GRADE = 0x3EC0D6L;
+    private static final long SALT_WRECK_SINK = 0x3EC0D7L;
+    private static final long SALT_WRECK_LOOT = 0x3EC0D8L;
+
+    /** Radius of the reef mound raised under every wreck. */
+    private static final int WRECK_MOUND_RADIUS = 18;
+    /** The shallowest a wreck mound crests: this far under the sea surface.
+     * Deep enough that a hull perched on it rides mostly UNDER the water -
+     * a stern, a cabin roof, a mast poking out (tuned 2026-08-07: at 2 the
+     * hulls stood proud like beached ships; Ben wants them just breaking
+     * the surface). */
+    private static final int WRECK_CREST_DEPTH = 6;
+
+    /** Fraction of wrecks that are COMMON (fortress-grade loot). */
+    private static final double GRADE_COMMON = 0.70;
+    /** COMMON plus this fraction are RARE (bastion finds); the rest TREASURE. */
+    private static final double GRADE_RARE = 0.25;
 
     /** Shoal radii roll between these fractions of the nominal radius. */
     private static final double MIN_SCALE = 0.6;
@@ -58,6 +80,35 @@ public class IntersticeMap {
     public record Tower(int centerX, int centerZ) {
     }
 
+    /** A wreck's loot grade - most hulls carried ordinary cargo. */
+    public enum WreckGrade {
+        COMMON, RARE, TREASURE
+    }
+
+    /**
+     * A shipwreck perched on its own reef mound, half in and half out of the
+     * water: a ship that misjumped and never re-engaged. Most are scenery -
+     * only {@code loot} wrecks carry stocked chests.
+     *
+     * @param centerX block x of the hull's centre
+     * @param centerZ block z of the hull's centre
+     * @param variant non-negative pick for the template list (mod list size)
+     * @param rotation quarter-turns, 0-3
+     * @param grade what its chests are worth, when they are worth anything
+     * @param sink how much deeper than the shallowest crest this reef sits,
+     *        0-2 - the undulation that puts some hulls high and dry and some
+     *        just awash
+     * @param loot whether this wreck's chests are stocked at all
+     */
+    public record Wreck(int centerX, int centerZ, int variant, int rotation, WreckGrade grade, int sink,
+            boolean loot) {
+        public long distanceSquared(int blockX, int blockZ) {
+            long dx = (long) blockX - centerX;
+            long dz = (long) blockZ - centerZ;
+            return dx * dx + dz * dz;
+        }
+    }
+
     private final long seed;
     private final int shoalGrid;
     private final double shoalChance;
@@ -65,9 +116,13 @@ public class IntersticeMap {
     private final double grandShoalChance;
     private final int towerGrid;
     private final double towerChance;
+    private final int wreckGrid;
+    private final double wreckChance;
+    private final double wreckLootChance;
 
     public IntersticeMap(long seed, int shoalGrid, double shoalChance, int shoalRadius,
-            double grandShoalChance, int towerGrid, double towerChance) {
+            double grandShoalChance, int towerGrid, double towerChance, int wreckGrid,
+            double wreckChance, double wreckLootChance) {
         this.seed = seed;
         this.shoalGrid = Math.max(64, shoalGrid);
         this.shoalChance = shoalChance;
@@ -75,6 +130,9 @@ public class IntersticeMap {
         this.grandShoalChance = grandShoalChance;
         this.towerGrid = Math.max(256, towerGrid);
         this.towerChance = towerChance;
+        this.wreckGrid = Math.max(64, wreckGrid);
+        this.wreckChance = wreckChance;
+        this.wreckLootChance = wreckLootChance;
     }
 
     /**
@@ -153,6 +211,10 @@ public class IntersticeMap {
         if (shoalSurfaceAt(blockX, blockZ, 0).isPresent()) {
             return false;
         }
+        // Wreck reefs crest just under the surface - not water to strand in
+        if (!wrecksNear(blockX, blockZ, WRECK_MOUND_RADIUS + 2).isEmpty()) {
+            return false;
+        }
         return towersNear(blockX, blockZ, 12).isEmpty();
     }
 
@@ -172,6 +234,82 @@ public class IntersticeMap {
         int x = (int) Math.round((cellX + 0.5) * towerGrid + jx * jitter);
         int z = (int) Math.round((cellZ + 0.5) * towerGrid + jz * jitter);
         return Optional.of(new Tower(x, z));
+    }
+
+    /**
+     * The wreck hosted by a wreck-grid cell, if any. Grade is weighted -
+     * most hulls carried ordinary cargo, a few were worth chasing.
+     */
+    public Optional<Wreck> wreckInCell(int cellX, int cellZ) {
+        if (wreckChance <= 0) {
+            return Optional.empty();
+        }
+        if (Hashing.toUnit(Hashing.cellHash(seed, cellX, cellZ, SALT_WRECK)) >= wreckChance) {
+            return Optional.empty();
+        }
+        int jitter = wreckGrid / 4;
+        double jx = Hashing.toUnit(Hashing.cellHash(seed, cellX, cellZ, SALT_WRECK_X)) * 2 - 1;
+        double jz = Hashing.toUnit(Hashing.cellHash(seed, cellX, cellZ, SALT_WRECK_Z)) * 2 - 1;
+        int x = (int) Math.round((cellX + 0.5) * wreckGrid + jx * jitter);
+        int z = (int) Math.round((cellZ + 0.5) * wreckGrid + jz * jitter);
+        int variant = (int) (Math.abs(Hashing.cellHash(seed, cellX, cellZ, SALT_WRECK_KIND)) % 1024);
+        int rotation = (int) Math.floorMod(Hashing.cellHash(seed, cellX, cellZ, SALT_WRECK_ROT), 4);
+        double roll = Hashing.toUnit(Hashing.cellHash(seed, cellX, cellZ, SALT_WRECK_GRADE));
+        WreckGrade grade = roll < GRADE_COMMON ? WreckGrade.COMMON
+                : roll < GRADE_COMMON + GRADE_RARE ? WreckGrade.RARE : WreckGrade.TREASURE;
+        int sink = (int) Math.floorMod(Hashing.cellHash(seed, cellX, cellZ, SALT_WRECK_SINK), 3);
+        boolean loot = Hashing.toUnit(Hashing.cellHash(seed, cellX, cellZ, SALT_WRECK_LOOT)) < wreckLootChance;
+        return Optional.of(new Wreck(x, z, variant, rotation, grade, sink, loot));
+    }
+
+    /**
+     * The floor-top Y a wreck's reef mound wants at a column, if any wreck's
+     * mound reaches it: a steep dome cresting {@code WRECK_CREST_DEPTH +
+     * sink} blocks under the surface, so the hull perched on it rides half
+     * in and half out of the water - visible from the deck of a passing
+     * boat, which is the whole point of a graveyard (ruled by Ben,
+     * 2026-08-07: wrecks on the deep seabed read as empty water). The
+     * generator takes the max of this and the natural floor.
+     *
+     * @param blockX block x
+     * @param blockZ block z
+     * @param seaLevel the interstice sea surface Y
+     * @return the wanted floor-top Y, or empty when no mound reaches here
+     */
+    public OptionalInt wreckSurfaceAt(int blockX, int blockZ, int seaLevel) {
+        int best = Integer.MIN_VALUE;
+        for (Wreck wreck : wrecksNear(blockX, blockZ, WRECK_MOUND_RADIUS)) {
+            double r = Math.sqrt(wreck.distanceSquared(blockX, blockZ));
+            if (r > WRECK_MOUND_RADIUS) {
+                continue;
+            }
+            int crest = seaLevel - WRECK_CREST_DEPTH - wreck.sink();
+            int y = crest - (int) Math.round(Math.pow(r / WRECK_MOUND_RADIUS, 1.3) * 14);
+            best = Math.max(best, y);
+        }
+        return best == Integer.MIN_VALUE ? OptionalInt.empty() : OptionalInt.of(best);
+    }
+
+    /**
+     * Wrecks whose centre lies within range of a position.
+     */
+    public List<Wreck> wrecksNear(int blockX, int blockZ, int range) {
+        List<Wreck> found = new ArrayList<>();
+        int reach = range + wreckGrid / 4;
+        int minCellX = Math.floorDiv(blockX - reach, wreckGrid);
+        int maxCellX = Math.floorDiv(blockX + reach, wreckGrid);
+        int minCellZ = Math.floorDiv(blockZ - reach, wreckGrid);
+        int maxCellZ = Math.floorDiv(blockZ + reach, wreckGrid);
+        for (int cx = minCellX; cx <= maxCellX; cx++) {
+            for (int cz = minCellZ; cz <= maxCellZ; cz++) {
+                wreckInCell(cx, cz).filter(w -> {
+                    long dx = (long) w.centerX() - blockX;
+                    long dz = (long) w.centerZ() - blockZ;
+                    return dx * dx + dz * dz <= (long) (range + 1) * (range + 1) || range <= 0;
+                }).ifPresent(found::add);
+            }
+        }
+        return found;
     }
 
     /**

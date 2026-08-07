@@ -70,7 +70,7 @@ class ChunkGeneratorWorldTest extends CommonTestSetup {
         // Default: a featureless interstice (no shoals, no towers) - pure dark sea
         when(addon.getIntersticeMap(org.mockito.ArgumentMatchers.anyLong()))
                 .thenReturn(new world.bentobox.tradewinds.galaxy.IntersticeMap(SEED, 256, 0.0, 9, 0.2, 1536,
-                        0.0));
+                        0.0, 320, 0.0, 0.0));
     }
 
     private WorldInfo worldInfo(Environment env, long seed) {
@@ -209,7 +209,7 @@ class ChunkGeneratorWorldTest extends CommonTestSetup {
     void testWartShoalsBreakTheIntersticeSurface() {
         // Shoals on at defaults: find one and generate its chunk
         world.bentobox.tradewinds.galaxy.IntersticeMap map = new world.bentobox.tradewinds.galaxy.IntersticeMap(
-                SEED, 256, 0.5, 9, 0.2, 1536, 0.0);
+                SEED, 256, 0.5, 9, 0.2, 1536, 0.0, 320, 0.0, 0.0);
         when(addon.getIntersticeMap(org.mockito.ArgumentMatchers.anyLong())).thenReturn(map);
         world.bentobox.tradewinds.galaxy.IntersticeMap.Shoal shoal = null;
         for (int cx = 0; cx < 30 && shoal == null; cx++) {

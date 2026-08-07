@@ -3,7 +3,119 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
-## The lost-boat archaeology - four bugs and a logbook (2026-08-06)
+## Interstice playtest: the once-only dialog, invisible wrecks, drowned blazes (2026-08-07)
+
+Three rulings from the first interstice-resources playtest:
+
+**The re-engage dialog shows ONCE per stranding** (ruled by Ben: the
+repeats were irritating). It used to re-open every prompt-seconds - fine
+while the interstice was empty water, unbearable once it had wart, blazes
+and wrecks worth staying for. Now: dialog once on arrival; after that a
+quiet action-bar line every `prompt-seconds` (0 silences it), and
+**`/tw go` or `/tw warp` raises the offer again on demand** - both
+previously gave useless refusals in the nether world ("already at sea" /
+"wrong world"). Leaving the interstice re-arms the one-time dialog;
+`IntersticeService.prompted` tracks it, `tick()` retains only players
+still in the world.
+
+**The wrecks were generating all along - they were just invisible AND far
+too rare.** Region-file scans found exactly one wreck per regen in the
+flown area (a hull spanning chunk borders - so Structure.place into
+LimitedRegion works on the live server), on the deep seabed of a dark sea
+where it reads as empty water. Ruled by Ben: the point is a VISIBLE,
+DENSE ship graveyard - hulls half in, half out of the water, and they do
+not all need loot. Graveyard v2:
+
+- **Reef mounds in the terrain.** `IntersticeMap.wreckSurfaceAt` raises
+  the seabed under every wreck (dome, radius 18, crest 2-4 blocks under
+  the surface - the seeded `sink` now varies the crest, so hulls ride
+  high and dry, awash, or just under: the undulation). The generator
+  maxes it into the nether floor exactly like shoal domes; the decorator
+  perches the keel ON the crest instead of burying it in the deep.
+- **Density up 10x**: grid 320→96, chance 0.4→0.5 - a hull roughly every
+  140 blocks, always one in sight from a boat.
+- **Loot rationed**: `interstice.wreck-loot-chance` 0.3 - only that
+  fraction of wrecks carry stocked chests (grades as before); the REST
+  ARE SCENERY, chests explicitly emptied (a template chest left alone
+  rolls vanilla's shipwreck tables, buried-treasure map included).
+- **Grave-lights v2** (`interstice.wreck-flames`): the soul flame now
+  burns on the hull's highest timber; only fully sunken hulls get the
+  basalt mast to carry it above the surface. At night the graveyard is a
+  field of cold blue lights.
+- Wreck reefs are excluded from `isOpenWater`, so strandings never drop
+  a sailor into a hull.
+- **Graveyard tuning after Ben found them (2026-08-07)**: crest depth
+  2→6 blocks under (hulls now ride mostly submerged, top works just
+  breaking the surface - at 2 they stood proud like beached ships);
+  density grid 96→64 at 0.5 (a hull every ~90 blocks; "make it denser to
+  see how much feels right" - back it off in config if it is too much).
+  The live server config had kept the OLD sparse values across the jar
+  update - BentoBox preserves existing config keys, so changed DEFAULTS
+  never reach an existing install; the coordinates handed over were
+  computed for the new grid and the world was running the old one.
+  Updated the live config by hand (server stopped). Remember this trap
+  for every future default change.
+- **Dunes (2026-08-07, after "I don't see the sea floor undulating")**: the
+  Seabed's finest wavelength was RELIEF_LATTICE 220 - +/-10 blocks spread
+  over 200-block swells is 1-3 blocks across one glance, i.e. visually
+  flat. New short dune field in `Seabed` (SeabedConfig gains `duneHeight`,
+  DUNE_LATTICE 32): the interstice runs dunes 4, and the 7-arg
+  SeabedConfig constructor keeps dunes 0 so every pre-dune world's floor
+  is byte-identical under its generated chunks (SeabedTest pins both).
+- **The interstice seafloor got scenery (2026-08-07)**: seabed profile
+  deepened and roughed up (shelf 6/abyss 34/relief 10/rifts 16@0.82/
+  seamounts 12 - was 10/26/relief 6/no seamounts, flat by design from
+  when the interstice was a dead end); and a seafloor-clutter pass in the
+  decorator (interstice.seafloor-clutter, 0.03/column) scatters glow
+  lichen beds, basalt spikes, magma vents, soul-sand seeps and blackstone
+  boulders on the bottom. None of it is a resource - it is what makes
+  looking down through the water worth doing.
+- **The interstice map now seeds off the GALAXY seed**, not the interstice
+  world's own (random-per-creation) seed. Found while trying to hand Ben a
+  wreck coordinate: with a random world seed, every nether regen shuffled
+  every feature and no coordinate could be predicted - and two servers
+  sharing a galaxy seed got different interstices, against spec principle
+  5. Now `galaxy.seed` decides the interstice too (world seed only as the
+  seed-0 fallback), regens are reproducible, and features are computable
+  offline: with the default seed 20260729, wrecks lie at (32,-40),
+  (29,55), (-42,68), (-122,164 - loot), ... verified by running
+  `IntersticeMap` in jshell against a Python port of `Hashing`.
+
+**Blazes drowned on spawn.** Spawners place mobs up to 4 blocks out
+horizontally; the picket's 3x3 crow's nest dumped nearly every blaze into
+the sea, where it died on contact. The picket is now a 9x9 nether-brick
+deck (DECK_HALF = spawner spawn radius) with a wall ring and corner legs -
+every spawn lands on dry deck. Both decorator fixes need a
+`tradewinds_world_nether` regen.
+
+## The ship graveyard - wrecks in the interstice (2026-08-06)
+
+Ben's idea: the interstice should feel like a ship graveyard. Built the same
+day. `IntersticeMap.Wreck` (pure, seeded: grid 320 / chance 0.4, variant,
+quarter-turn rotation, 0-2 blocks of burial all from the cell hash) and a
+`wrecks()` pass in `IntersticeDecorator` that places the 20 vanilla shipwreck
+templates through `Bukkit.getStructureManager().loadStructure` into the
+`LimitedRegion` - the `RegionAccessor` overload of `Structure.place`, with
+the origin computed per rotation so the hull is CENTERED on the wreck point
+(that is what keeps a 28-block template inside chunk+buffer; the rotation
+pivots on the origin block, so each rotation wants a different corner).
+
+Loot mirrors the vanilla nether, by wreck grade (ruled by Ben): COMMON 70% →
+fortress chest table, RARE 25% → bastion_other (Pigstep, trims, netherite
+upgrade template chance), TREASURE 5% → bastion_treasure plus a captain's
+locker chest rolling piglin bartering (pearls, crying obsidian, soul speed).
+Every template chest is re-pointed, which also removes vanilla's
+buried-treasure maps - nothing in this ocean for them to point at. Pearls
+in locker quantities slightly relax the "End goods trade-only" ruling -
+recorded in the interstice plan.
+
+Config: `interstice.wreck-grid/-chance` (needsReset), `wreck-templates`
+(any loadable structure key works - servers can add custom wrecks),
+`wreck-loot` map (must stay complete in config.yml, as ever). Needs a
+`tradewinds_world_nether` regen to appear. NOT yet live-verified: the
+`Structure.place`-into-`LimitedRegion` path is API-correct but has not run
+on the real server - first playtest should confirm wrecks appear at all
+before judging their looks (TESTING.md Tier 6).
 
 Playtest: Ben died (phantom, 28s after login, 4,400 blocks from home)
 carrying his spruce boat; two real days later the chart still pointed the

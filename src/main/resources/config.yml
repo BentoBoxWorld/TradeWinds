@@ -606,13 +606,71 @@ interstice:
   watchtower-grid: 1536
   watchtower-chance: 0.6
   watchtower-loot-table: "minecraft:chests/bastion_treasure"
+  # Shipwrecks: the interstice is a graveyard of ships that misjumped and never
+  # re-engaged. Grid size in blocks and chance (0-1) a cell holds a wreck -
+  # the defaults put a hull roughly every 130 blocks - a graveyard, not a
+  # scattering. Each wreck perches on its own reef with its top works just
+  # breaking the surface. 0 chance disables the graveyard.
+  wreck-grid: 64
+  wreck-chance: 0.25
+  # Fraction of wrecks (0-1) whose chests are stocked at all. The rest are
+  # scenery - there to see, their chests empty. Dense graveyard, scarce gold.
+  wreck-loot-chance: 0.3
+  # The structure templates wrecks are drawn from - vanilla shipwreck variants
+  # by default; any structure key the server can load works. Which template,
+  # rotation and burial depth a wreck gets is seeded, like everything else.
+  wreck-templates:
+    - "minecraft:shipwreck/with_mast"
+    - "minecraft:shipwreck/with_mast_degraded"
+    - "minecraft:shipwreck/upsidedown_full"
+    - "minecraft:shipwreck/upsidedown_full_degraded"
+    - "minecraft:shipwreck/upsidedown_fronthalf"
+    - "minecraft:shipwreck/upsidedown_fronthalf_degraded"
+    - "minecraft:shipwreck/upsidedown_backhalf"
+    - "minecraft:shipwreck/upsidedown_backhalf_degraded"
+    - "minecraft:shipwreck/sideways_full"
+    - "minecraft:shipwreck/sideways_full_degraded"
+    - "minecraft:shipwreck/sideways_fronthalf"
+    - "minecraft:shipwreck/sideways_fronthalf_degraded"
+    - "minecraft:shipwreck/sideways_backhalf"
+    - "minecraft:shipwreck/sideways_backhalf_degraded"
+    - "minecraft:shipwreck/rightsideup_full"
+    - "minecraft:shipwreck/rightsideup_full_degraded"
+    - "minecraft:shipwreck/rightsideup_fronthalf"
+    - "minecraft:shipwreck/rightsideup_fronthalf_degraded"
+    - "minecraft:shipwreck/rightsideup_backhalf"
+    - "minecraft:shipwreck/rightsideup_backhalf_degraded"
+  # Chance per seafloor column of a piece of bottom life: glow lichen beds,
+  # basalt spikes, magma vents, soul-sand seeps, blackstone boulders. This is
+  # what keeps the interstice floor from reading as a snooker table when you
+  # look down through the water. 0 leaves it bare.
+  seafloor-clutter: 0.03
+  # Mark every wreck with a soul flame: a charred basalt mast rising through the
+  # hull to just above the surface, blue fire on top. Without it the graveyard
+  # is invisible - hulls on the seabed of a dark sea read as empty water.
+  wreck-flames: true
+  # Loot tables by wreck grade. COMMON wrecks (most) carry fortress-style chest
+  # loot; RARE ones carry bastion finds (Pigstep, armor trims, the netherite
+  # upgrade template chance); TREASURE wrecks carry the bastion treasure room -
+  # and their second chest, the captain's locker, rolls LOCKER: piglin-bartering
+  # goods (ender pearls, crying obsidian, soul speed). Every chest in a wreck is
+  # re-pointed at these tables, which also removes vanilla's buried-treasure maps
+  # (there is nothing in this ocean for them to point at).
+  wreck-loot:
+    COMMON: "minecraft:chests/nether_bridge"
+    RARE: "minecraft:chests/bastion_other"
+    TREASURE: "minecraft:chests/bastion_treasure"
+    LOCKER: "minecraft:gameplay/piglin_bartering"
   # Seconds after a failed warp during which nothing in the interstice may target or
   # hurt the player - long enough to read the dialog and take the free way out.
   grace-seconds: 20
   # Ghasts spawned around a stranded sailor, when any come at all.
   ghasts-min: 1
   ghasts-max: 3
-  # Seconds between offers of the free re-engage while adrift.
+  # Seconds between quiet action-bar reminders that the free way out exists,
+  # while adrift in the interstice. The re-engage DIALOG shows once per
+  # stranding; /tw go (or /tw warp) raises it again on demand. 0 silences
+  # the reminders entirely.
   prompt-seconds: 20
 encounters:
   # Random mob encounters at sea - the risk that balances free rowing against

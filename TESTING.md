@@ -427,8 +427,10 @@ data bug - test on a throwaway world first.
             nether wart growing on it; harvest and replant works; the rim is
             wadable, not a cliff. Rarely, a shoal carries a crimson/warped
             grove with shroomlights.
-      - [ ] Some braziers are **blaze pickets**: nether-brick crow's nest,
-            blazes spawning - fight from the boat, rods drop.
+      - [ ] Some braziers are **blaze pickets**: a 9x9 nether-brick deck on
+            legs, blazes spawning - and STAYING on the deck (regression
+            2026-08-07: the old 3x3 nest dropped every blaze into the sea).
+            Fight from the boat, rods drop.
       - [ ] **Glowstone clusters** hang from the ceiling lid, visible far
             off across the water.
       - [ ] **Quartz ore** in shoal cores and brazier roots, under the
@@ -437,9 +439,37 @@ data bug - test on a throwaway world first.
             repeatedly): wither skeletons in the waterline room, doorway on
             the north face, loot chest on the sealed floor above (bastion
             treasure table - check it fills on first open), open top.
+      - [ ] **The ship graveyard** (v3, 2026-08-07): wrecks are DENSE (a
+            hull roughly every 130 blocks - regularly in sight) and ride
+            LOW - mostly submerged, with masts, sterncastles and keels
+            just breaking the surface (crest 6-8 under; at the first
+            tuning they stood proud like beached ships). A blue soul
+            flame burns on every hull's highest timber (mast-carried on
+            the fully sunken ones). Varied rotations, upside-down and
+            sideways hulls, no chunk-edge clipping. Most wrecks are
+            scenery with EMPTY chests; roughly one in three carries loot
+            - fortress-style, or on a lucky hull bastion finds (Pigstep,
+            trims) / a treasure wreck whose second chest holds bartering
+            goods (pearls, crying obsidian). Never a buried-treasure map.
+      - [ ] **The seafloor is scenery now** (2026-08-07): looking down
+            through the water shows glow lichen beds, basalt spikes,
+            magma vents, soul-sand seeps and boulders; the floor itself
+            rolls - shallow pale banks, dark basins, rifts, and blunt
+            seamounts that never break the surface. If it still reads
+            flat, raise interstice.seafloor-clutter.
+      - [ ] **Config-drift check** (the 2026-08-07 trap): after ANY jar
+            update that changes config defaults, verify the live
+            config.yml actually carries the new values - BentoBox keeps
+            existing keys, so new defaults never reach an existing
+            install on their own.
+      - [ ] **The dialog shows ONCE** (changed 2026-08-07): stranding pops
+            the re-engage dialog a single time; declining leaves only a
+            quiet action-bar reminder every prompt-seconds. `/tw go` and
+            `/tw warp` raise the offer again on demand. Leave and get
+            stranded again: the dialog pops once again.
       - [ ] A rigged failure never strands you INSIDE a shoal or tower -
             always open water.
-      - [ ] The free re-engage still offers after any amount of lingering,
+      - [ ] The free re-engage still works after any amount of lingering,
             and ghast tears float where ghasts die.
       - [ ] Nether wart and ghast tears occasionally drop as encounter booty
             in the overworld.

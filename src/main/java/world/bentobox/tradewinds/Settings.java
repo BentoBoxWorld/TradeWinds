@@ -976,6 +976,71 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "interstice.watchtower-loot-table")
     private String intersticeWatchtowerLootTable = "minecraft:chests/bastion_treasure";
 
+    @ConfigComment("Shipwrecks: the interstice is a graveyard of ships that misjumped and never")
+    @ConfigComment("re-engaged. Grid size in blocks and chance (0-1) a cell holds a wreck -")
+    @ConfigComment("the defaults put a hull roughly every 130 blocks - a graveyard, not a")
+    @ConfigComment("scattering. Each wreck perches on its own reef with its top works just")
+    @ConfigComment("breaking the surface. 0 chance disables the graveyard.")
+    @ConfigEntry(path = "interstice.wreck-grid", needsReset = true)
+    private int intersticeWreckGrid = 64;
+
+    @ConfigEntry(path = "interstice.wreck-chance", needsReset = true)
+    private double intersticeWreckChance = 0.25;
+
+    @ConfigComment("Fraction of wrecks (0-1) whose chests are stocked at all. The rest are")
+    @ConfigComment("scenery - there to see, their chests empty. Dense graveyard, scarce gold.")
+    @ConfigEntry(path = "interstice.wreck-loot-chance", needsReset = true)
+    private double intersticeWreckLootChance = 0.3;
+
+    @ConfigComment("The structure templates wrecks are drawn from - vanilla shipwreck variants")
+    @ConfigComment("by default; any structure key the server can load works. Which template,")
+    @ConfigComment("rotation and burial depth a wreck gets is seeded, like everything else.")
+    @ConfigEntry(path = "interstice.wreck-templates")
+    private List<String> intersticeWreckTemplates = defaultWreckTemplates();
+
+    @ConfigComment("Chance per seafloor column of a piece of bottom life: glow lichen beds,")
+    @ConfigComment("basalt spikes, magma vents, soul-sand seeps, blackstone boulders. This is")
+    @ConfigComment("what keeps the interstice floor from reading as a snooker table when you")
+    @ConfigComment("look down through the water. 0 leaves it bare.")
+    @ConfigEntry(path = "interstice.seafloor-clutter")
+    private double intersticeSeafloorClutter = 0.03;
+
+    @ConfigComment("Mark every wreck with a soul flame: a charred basalt mast rising through the")
+    @ConfigComment("hull to just above the surface, blue fire on top. Without it the graveyard")
+    @ConfigComment("is invisible - hulls on the seabed of a dark sea read as empty water.")
+    @ConfigEntry(path = "interstice.wreck-flames")
+    private boolean intersticeWreckFlames = true;
+
+    @ConfigComment("Loot tables by wreck grade. COMMON wrecks (most) carry fortress-style chest")
+    @ConfigComment("loot; RARE ones carry bastion finds (Pigstep, armor trims, the netherite")
+    @ConfigComment("upgrade template chance); TREASURE wrecks carry the bastion treasure room -")
+    @ConfigComment("and their second chest, the captain's locker, rolls LOCKER: piglin-bartering")
+    @ConfigComment("goods (ender pearls, crying obsidian, soul speed). Every chest in a wreck is")
+    @ConfigComment("re-pointed at these tables, which also removes vanilla's buried-treasure maps")
+    @ConfigComment("(there is nothing in this ocean for them to point at).")
+    @ConfigEntry(path = "interstice.wreck-loot")
+    private Map<String, String> intersticeWreckLoot = defaultWreckLoot();
+
+    private static List<String> defaultWreckTemplates() {
+        List<String> templates = new java.util.ArrayList<>();
+        for (String hull : new String[] { "with_mast", "upsidedown_full", "upsidedown_fronthalf",
+                "upsidedown_backhalf", "sideways_full", "sideways_fronthalf", "sideways_backhalf",
+                "rightsideup_full", "rightsideup_fronthalf", "rightsideup_backhalf" }) {
+            templates.add("minecraft:shipwreck/" + hull);
+            templates.add("minecraft:shipwreck/" + hull + "_degraded");
+        }
+        return templates;
+    }
+
+    private static Map<String, String> defaultWreckLoot() {
+        Map<String, String> loot = new java.util.LinkedHashMap<>();
+        loot.put("COMMON", "minecraft:chests/nether_bridge");
+        loot.put("RARE", "minecraft:chests/bastion_other");
+        loot.put("TREASURE", "minecraft:chests/bastion_treasure");
+        loot.put("LOCKER", "minecraft:gameplay/piglin_bartering");
+        return loot;
+    }
+
     @ConfigComment("Ghasts spawned around a stranded sailor in the interstice.")
     @ConfigEntry(path = "interstice.ghasts-min")
     private int intersticeGhastsMin = 1;
@@ -983,7 +1048,10 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "interstice.ghasts-max")
     private int intersticeGhastsMax = 3;
 
-    @ConfigComment("Seconds between offers of the free re-engage while adrift in the interstice.")
+    @ConfigComment("Seconds between quiet action-bar reminders that the free way out exists,")
+    @ConfigComment("while adrift in the interstice. The re-engage DIALOG shows once per")
+    @ConfigComment("stranding; /tw go (or /tw warp) raises it again on demand. 0 silences")
+    @ConfigComment("the reminders entirely.")
     @ConfigEntry(path = "interstice.prompt-seconds")
     private int intersticePromptSeconds = 20;
 
@@ -3385,6 +3453,20 @@ public class Settings implements WorldSettings {
     public void setIntersticeWatchtowerChance(double v) { this.intersticeWatchtowerChance = v; }
     public String getIntersticeWatchtowerLootTable() { return intersticeWatchtowerLootTable; }
     public void setIntersticeWatchtowerLootTable(String v) { this.intersticeWatchtowerLootTable = v; }
+    public int getIntersticeWreckGrid() { return intersticeWreckGrid; }
+    public void setIntersticeWreckGrid(int intersticeWreckGrid) { this.intersticeWreckGrid = intersticeWreckGrid; }
+    public double getIntersticeWreckChance() { return intersticeWreckChance; }
+    public void setIntersticeWreckChance(double intersticeWreckChance) { this.intersticeWreckChance = intersticeWreckChance; }
+    public double getIntersticeWreckLootChance() { return intersticeWreckLootChance; }
+    public void setIntersticeWreckLootChance(double v) { this.intersticeWreckLootChance = v; }
+    public List<String> getIntersticeWreckTemplates() { return intersticeWreckTemplates; }
+    public void setIntersticeWreckTemplates(List<String> v) { this.intersticeWreckTemplates = v; }
+    public boolean isIntersticeWreckFlames() { return intersticeWreckFlames; }
+    public void setIntersticeWreckFlames(boolean intersticeWreckFlames) { this.intersticeWreckFlames = intersticeWreckFlames; }
+    public double getIntersticeSeafloorClutter() { return intersticeSeafloorClutter; }
+    public void setIntersticeSeafloorClutter(double v) { this.intersticeSeafloorClutter = v; }
+    public Map<String, String> getIntersticeWreckLoot() { return intersticeWreckLoot; }
+    public void setIntersticeWreckLoot(Map<String, String> v) { this.intersticeWreckLoot = v; }
     public int getIntersticeGraceSeconds() { return intersticeGraceSeconds; }
     public void setIntersticeGraceSeconds(int v) { this.intersticeGraceSeconds = v; }
     public int getIntersticeGhastsMin() { return intersticeGhastsMin; }

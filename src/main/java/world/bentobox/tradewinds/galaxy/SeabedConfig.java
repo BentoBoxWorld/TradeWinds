@@ -20,14 +20,28 @@ package world.bentobox.tradewinds.galaxy;
  * @param seamountHeight how far a seamount rises above the surrounding floor at
  *        its peak, in blocks; 0 disables them. Seamounts never break the
  *        surface - the generator keeps open water above them
+ * @param duneHeight amplitude in blocks of short dunes riding on everything
+ *        else - the wavelength you can SEE roll while looking down from a
+ *        boat, where the relief field's 220-block swells read as flat; 0
+ *        disables them (and keeps pre-dune worlds' terrain unchanged)
  *
  * @author tastybento
  */
 public record SeabedConfig(int shelfDepth, int abyssDepth, int islandShelfDepth, int relief, int riftDepth,
-        double riftThreshold, int seamountHeight) {
+        double riftThreshold, int seamountHeight, int duneHeight) {
 
     /** The default sea floor: shelves at 14 down to basins at 46. */
     public static final SeabedConfig DEFAULT = new SeabedConfig(14, 46, 18, 9, 26, 0.80, 20);
+
+    /**
+     * The pre-dune shape: everything but dunes, dunes off. Every caller
+     * predating 2026-08-07 uses this form, and their worlds' floors must not
+     * shift under already-generated chunks.
+     */
+    public SeabedConfig(int shelfDepth, int abyssDepth, int islandShelfDepth, int relief, int riftDepth,
+            double riftThreshold, int seamountHeight) {
+        this(shelfDepth, abyssDepth, islandShelfDepth, relief, riftDepth, riftThreshold, seamountHeight, 0);
+    }
 
     /**
      * A flat floor at a fixed depth - the pre-Stage-6 ocean, and what
@@ -51,6 +65,7 @@ public record SeabedConfig(int shelfDepth, int abyssDepth, int islandShelfDepth,
         riftDepth = Math.max(0, riftDepth);
         riftThreshold = Math.clamp(riftThreshold, 0.0, 1.0);
         seamountHeight = Math.max(0, seamountHeight);
+        duneHeight = Math.max(0, duneHeight);
     }
 
     /**

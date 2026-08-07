@@ -33,6 +33,12 @@ public class TWWarpCommand extends CompositeCommand {
     @Override
     public boolean execute(User user, String label, List<String> args) {
         TradeWinds addon = getAddon();
+        // A castaway asking to warp wants the way out: raise the free
+        // re-engage. Before the boat check - castaways may be swimming.
+        if (user.getWorld().equals(addon.getNetherWorld())) {
+            addon.getIntersticeService().openReEngageDialog(user.getPlayer());
+            return true;
+        }
         if (!(user.getPlayer().getVehicle() instanceof Boat)) {
             user.sendMessage("tradewinds.warp.not-in-boat");
             return false;
