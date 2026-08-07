@@ -3,6 +3,7 @@ package world.bentobox.tradewinds.tasks;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -11,7 +12,6 @@ import java.util.List;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.IronGolem;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Villager;
 import org.bukkit.persistence.PersistentDataContainer;
@@ -44,7 +44,6 @@ class ResidentAuditTaskTest extends CommonTestSetup {
     private ResidentAuditTask task;
     private TestHolds holds;
     private GalaxyEngine engine;
-    private World world2;
 
     @Override
     @BeforeEach
@@ -66,7 +65,6 @@ class ResidentAuditTaskTest extends CommonTestSetup {
     @Test
     void testTethersStraysHome() {
         Entity stray = mock(Villager.class);
-        Location home = new Location(world, 100, 70, 100);
         String homeStr = "100,70,100";
         PersistentDataContainer pdc = mock(PersistentDataContainer.class);
         when(pdc.get(IslandDecorator.HOME_KEY, PersistentDataType.STRING)).thenReturn(homeStr);
@@ -111,7 +109,7 @@ class ResidentAuditTaskTest extends CommonTestSetup {
         task.run();
 
         // Already home, so no teleport needed
-        verify(resident, org.mockito.Mockito.never()).teleport(any(Location.class));
+        verify(resident, never()).teleport(any(Location.class));
     }
 
     @Test
@@ -125,7 +123,7 @@ class ResidentAuditTaskTest extends CommonTestSetup {
         task.run();
 
         // Untagged entities are ignored
-        verify(plain, org.mockito.Mockito.never()).teleport(any(Location.class));
+        verify(plain, never()).teleport(any(Location.class));
     }
 
     @Test
@@ -134,7 +132,6 @@ class ResidentAuditTaskTest extends CommonTestSetup {
         Player player = mock(Player.class);
         Location playerLoc = new Location(world, 0, 70, 0);
         when(player.getLocation()).thenReturn(playerLoc);
-        IslandSpec nearIsland = engine.islandInCell(0, 0).orElseThrow();
         when(world.getPlayers()).thenReturn(List.of(player));
 
         // Use the real engine we already set up (it was created in setUp)

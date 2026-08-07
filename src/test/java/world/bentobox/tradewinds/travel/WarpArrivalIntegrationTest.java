@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.bukkit.Location;
 
-import world.bentobox.tradewinds.galaxy.ColumnPlan;
 import world.bentobox.tradewinds.galaxy.GalaxyConfig;
 import world.bentobox.tradewinds.galaxy.GalaxyEngine;
 import world.bentobox.tradewinds.galaxy.IslandSpec;
@@ -147,7 +146,8 @@ class WarpArrivalIntegrationTest {
         // Arrivals are placed at sea level + 1 (sea level 70 -> Y 71)
         Location loc = SeaArrival.openSeaNear((GalaxyEngine) null, null, 0, 0, SEA);
         // If engine is null, the implementation returns the intended point
-        // Full test requires mocking or world setup
+        // Full test requires mocking or world setup - verify behavior when null
+        assertTrue(loc == null || loc.getBlockY() == SEA + 1, "Location should be at sea level or null");
     }
 
     @Test
@@ -156,7 +156,8 @@ class WarpArrivalIntegrationTest {
         // (e.g., block 100 becomes location 100.5)
         Location loc = SeaArrival.openSeaNear((GalaxyEngine) null, null, 100, 200, SEA);
         // If engine is null, returns new Location(world, 100.5, 71.0, 200.5)
-        // Full test requires world setup
+        // Full test requires world setup - verify behavior when null
+        assertTrue(loc == null || (loc.getBlockX() == 100 && loc.getBlockZ() == 200), "Location coordinates or null when engine is null");
     }
 
     @Test

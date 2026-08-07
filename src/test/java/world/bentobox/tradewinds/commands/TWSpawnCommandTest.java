@@ -9,10 +9,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
-import org.bukkit.Location;
 import org.bukkit.World;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,6 +20,7 @@ import com.google.common.collect.ImmutableSet;
 import world.bentobox.bentobox.api.commands.CompositeCommand;
 import world.bentobox.bentobox.api.user.User;
 import world.bentobox.bentobox.database.objects.Island;
+import world.bentobox.bentobox.managers.IslandsManager;
 import world.bentobox.tradewinds.CommonTestSetup;
 import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.travel.IntersticeService;
@@ -69,7 +68,8 @@ class TWSpawnCommandTest extends CommonTestSetup {
         StarterKit starterKit = mock(StarterKit.class);
         when(addon.getStarterKit()).thenReturn(starterKit);
 
-        when(addon.getIslands()).thenReturn(mock());
+        IslandsManager islands = mock(IslandsManager.class);
+        when(addon.getIslands()).thenReturn(islands);
         when(addon.getNavigationBarTask()).thenReturn(null);
     }
 
@@ -104,7 +104,6 @@ class TWSpawnCommandTest extends CommonTestSetup {
         boolean result = command.execute(user, "go", new ArrayList<>());
 
         assertFalse(result, "Should refuse when islandless at sea");
-        // verify(user).sendMessage("tradewinds.spawn.already-at-sea");
     }
 
     @Test

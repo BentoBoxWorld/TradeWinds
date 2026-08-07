@@ -1,9 +1,10 @@
 package world.bentobox.tradewinds.tasks;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -27,7 +28,6 @@ import world.bentobox.tradewinds.galaxy.GalaxyConfig;
 import world.bentobox.tradewinds.galaxy.GalaxyEngine;
 import world.bentobox.tradewinds.galaxy.IslandSpec;
 import world.bentobox.tradewinds.travel.FuelService;
-import world.bentobox.tradewinds.travel.FuelWarning;
 import world.bentobox.tradewinds.travel.HoldService;
 import world.bentobox.tradewinds.travel.WarpService;
 
@@ -80,7 +80,7 @@ class FuelWarningTaskTest extends CommonTestSetup {
     @Test
     @Disabled("test-authoring error: Mockito matcher misuse inside the task tick stubbing - fix the matchers, the task is not implicated")
     void testWarnsWhenFuelLow() {
-        BoatHold hold = holds.giveBoat(playerId, Material.OAK_BOAT);
+        holds.giveBoat(playerId, Material.OAK_BOAT);
         IslandSpec island = engine.islandInCell(0, 0).orElseThrow();
         Location portLoc = mock(Location.class);
         when(portLoc.getWorld()).thenReturn(world);
@@ -109,7 +109,7 @@ class FuelWarningTaskTest extends CommonTestSetup {
     @Test
     @Disabled("test-authoring error: Mockito matcher misuse inside the task tick stubbing - fix the matchers, the task is not implicated")
     void testDoesNotWarnWhenFuelEnough() {
-        BoatHold hold = holds.giveBoat(playerId, Material.OAK_BOAT);
+        holds.giveBoat(playerId, Material.OAK_BOAT);
         IslandSpec island = engine.islandInCell(0, 0).orElseThrow();
         Location portLoc = mock(Location.class);
         when(portLoc.getWorld()).thenReturn(world);
@@ -143,12 +143,12 @@ class FuelWarningTaskTest extends CommonTestSetup {
         task.run();
 
         // Should not attempt to warn boatless player
-        // Test passes if no exception
+        verify(player, atLeastOnce()).getLocation();
     }
 
     @Test
     void testDoesNotWarnOutsidePort() {
-        BoatHold hold = holds.giveBoat(playerId, Material.OAK_BOAT);
+        holds.giveBoat(playerId, Material.OAK_BOAT);
         IslandSpec island = engine.islandInCell(0, 0).orElseThrow();
         Location far = mock(Location.class);
         when(far.getWorld()).thenReturn(world);
@@ -160,6 +160,6 @@ class FuelWarningTaskTest extends CommonTestSetup {
         task.run();
 
         // No port at that location, so no warning
-        // Test passes if no exception
+        verify(player, atLeastOnce()).getLocation();
     }
 }

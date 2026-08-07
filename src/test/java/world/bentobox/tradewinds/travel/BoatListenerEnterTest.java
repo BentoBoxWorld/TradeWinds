@@ -2,7 +2,6 @@ package world.bentobox.tradewinds.travel;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -30,7 +29,6 @@ import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.dataobjects.BoatHold;
 import world.bentobox.tradewinds.encounters.EncounterService;
 import world.bentobox.tradewinds.galaxy.GalaxyConfig;
-import world.bentobox.tradewinds.travel.BoatService;
 import world.bentobox.tradewinds.galaxy.GalaxyEngine;
 import world.bentobox.tradewinds.galaxy.IslandSpec;
 import world.bentobox.tradewinds.galaxy.SecurityBand;
@@ -134,9 +132,9 @@ class BoatListenerEnterTest extends CommonTestSetup {
         // Another player's boat
         BoatHold hold = holds.giveBoat(otherId, Material.OAK_BOAT);
         IslandSpec island = engine.islandInCell(0, 0).orElseThrow();
-        Location protected_loc = atIsland(island, 100);
+        Location protectedLoc = atIsland(island, 100);
         Boat boat = mockBoat(hold, false);
-        when(boat.getLocation()).thenReturn(protected_loc);
+        when(boat.getLocation()).thenReturn(protectedLoc);
         VehicleEnterEvent event = mock(VehicleEnterEvent.class);
         when(event.getVehicle()).thenReturn(boat);
         when(event.getEntered()).thenReturn(mockPlayer);

@@ -12,7 +12,6 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 import java.util.Optional;
 
-import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Boat;
 import org.bukkit.inventory.ItemStack;
@@ -324,8 +323,8 @@ class MarketServiceTest extends CommonTestSetup {
         when(boatRanks.slots(Material.OAK_BOAT)).thenReturn(4);
         when(boatRanks.price(replacement)).thenReturn(1500.0);
 
-        boolean replacement_purchase = market.wouldReplaceCurrent(mockPlayer, island, replacement);
-        assertTrue(replacement_purchase, "Boat not here should be a replacement");
+        boolean replacementPurchase = market.wouldReplaceCurrent(mockPlayer, island, replacement);
+        assertTrue(replacementPurchase, "Boat not here should be a replacement");
     }
 
     // ========== EXPANDERS ==========
@@ -510,7 +509,7 @@ class MarketServiceTest extends CommonTestSetup {
     @Disabled("market.sell() needs more mocking for depth calculation")
     void testSellPastDepth() {
         // Selling more than the port can absorb should refuse overflow
-        IslandSpec island = new IslandSpec(0, 0, 2500, 2500, IslandType.AGRICULTURAL,
+        IslandSpec testIsland = new IslandSpec(0, 0, 2500, 2500, IslandType.AGRICULTURAL,
                 SecurityBand.FRONTIER, "minecraft:plains", "Port", 3);
         BoatHold hold = holds.giveBoat(uuid, Material.OAK_BOAT);
         when(holdService.active(uuid)).thenReturn(Optional.of(hold));
@@ -519,12 +518,12 @@ class MarketServiceTest extends CommonTestSetup {
         Boat boat = mock(Boat.class);
         when(boat.getLocation()).thenReturn(location);
         when(boatService.findPlaced(hold)).thenReturn(Optional.of(boat));
-        when(addon.getIslandDataManager().absorbableValue(island, TradeCategory.CROPS))
+        when(addon.getIslandDataManager().absorbableValue(testIsland, TradeCategory.CROPS))
             .thenReturn(100); // Only 100 coins of headroom
 
         // Try to sell at ~1 coin/unit - should sell maybe 100 units, not all 100
         ItemStack wheat = new ItemStack(Material.WHEAT, 100);
-        int sold = market.sell(mockPlayer, island, wheat, 100);
+        int sold = market.sell(mockPlayer, testIsland, wheat, 100);
         assertTrue(sold >= 0 && sold <= 100, "Sell should respect port depth");
     }
 

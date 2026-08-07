@@ -2,22 +2,19 @@ package world.bentobox.tradewinds.commands;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.bukkit.World;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import world.bentobox.bentobox.api.commands.CompositeCommand;
 import world.bentobox.bentobox.api.user.User;
 import world.bentobox.tradewinds.CommonTestSetup;
+import world.bentobox.tradewinds.Settings;
 import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.travel.IsletClaimService;
 import world.bentobox.tradewinds.travel.RankService;
@@ -62,8 +59,9 @@ class TWClaimCommandTest extends CommonTestSetup {
         when(rank.localeKey()).thenReturn("rank.ten");
         when(rankService.rankFor(10)).thenReturn(rank);
 
-        when(addon.getSettings()).thenReturn(mock());
-        when(addon.getSettings().getClaimPrice()).thenReturn(100.0);
+        Settings settings = mock(Settings.class);
+        when(addon.getSettings()).thenReturn(settings);
+        when(settings.getClaimPrice()).thenReturn(100.0);
     }
 
     @Test
@@ -74,7 +72,6 @@ class TWClaimCommandTest extends CommonTestSetup {
         boolean result = command.execute(user, "claim", new ArrayList<>());
 
         assertFalse(result, "Gate 1: should refuse when not on islet world");
-        // verify(user).sendMessage("tradewinds.claim.not-on-islet");
     }
 
     @Test
@@ -102,7 +99,6 @@ class TWClaimCommandTest extends CommonTestSetup {
         boolean result = command.execute(user, "claim", new ArrayList<>());
 
         assertFalse(result, "Should refuse already-claimed islet");
-        // verify(user).sendMessage("tradewinds.claim.already-claimed");
     }
 
     @Test
@@ -117,7 +113,6 @@ class TWClaimCommandTest extends CommonTestSetup {
         boolean result = command.execute(user, "claim", new ArrayList<>());
 
         assertFalse(result, "Gate: should refuse if player already has island");
-        // verify(user).sendMessage("tradewinds.claim.has-island");
     }
 
     @Test
@@ -132,8 +127,6 @@ class TWClaimCommandTest extends CommonTestSetup {
         boolean result = command.execute(user, "claim", new ArrayList<>());
 
         assertFalse(result, "Gate: should refuse if rank too low");
-        // verify(user).sendMessage("tradewinds.claim.rank-too-low",
-        //         "[rank]", "rank.ten", "[number]", "10", "[charted]", "5");
     }
 
     @Test
@@ -148,7 +141,6 @@ class TWClaimCommandTest extends CommonTestSetup {
         boolean result = command.execute(user, "claim", new ArrayList<>());
 
         assertFalse(result, "Gate: should refuse if economy unavailable");
-        // verify(user).sendMessage("tradewinds.claim.no-economy");
     }
 
     @Test
@@ -163,7 +155,6 @@ class TWClaimCommandTest extends CommonTestSetup {
         boolean result = command.execute(user, "claim", new ArrayList<>());
 
         assertFalse(result, "Gate: should refuse if cannot afford price");
-        // verify(user).sendMessage("tradewinds.claim.cannot-afford", "[price]");
     }
 
     @Test
@@ -178,6 +169,5 @@ class TWClaimCommandTest extends CommonTestSetup {
         boolean result = command.execute(user, "claim", new ArrayList<>());
 
         assertFalse(result, "Gate: should refuse if waters already claimed nearby");
-        // verify(user).sendMessage("tradewinds.claim.waters-taken");
     }
 }

@@ -19,7 +19,9 @@ import world.bentobox.bentobox.api.user.User;
 import world.bentobox.bentobox.managers.PlayersManager;
 import world.bentobox.tradewinds.CommonTestSetup;
 import world.bentobox.tradewinds.TradeWinds;
+import world.bentobox.tradewinds.dataobjects.PlayerDataManager;
 import world.bentobox.tradewinds.dataobjects.TWPlayerData;
+import world.bentobox.tradewinds.travel.ChartLeaderboard;
 import world.bentobox.tradewinds.travel.RankService;
 
 /**
@@ -58,8 +60,10 @@ class AdminRankCommandTest extends CommonTestSetup {
         when(rankService.rankFor(any(Integer.class))).thenReturn(rank1);
         when(rankService.ladder()).thenReturn(List.of(rank1));
 
-        when(addon.getPlayerDataManager()).thenReturn(mock());
-        when(addon.getChartLeaderboard()).thenReturn(mock());
+        PlayerDataManager playerDataManager = mock(PlayerDataManager.class);
+        when(addon.getPlayerDataManager()).thenReturn(playerDataManager);
+        ChartLeaderboard chartLeaderboard = mock(ChartLeaderboard.class);
+        when(addon.getChartLeaderboard()).thenReturn(chartLeaderboard);
     }
 
     @Test
@@ -81,7 +85,6 @@ class AdminRankCommandTest extends CommonTestSetup {
         boolean result = command.execute(user, "rank", List.of("Unknown"));
 
         assertFalse(result, "Should fail for unknown player");
-        // verify(user).sendMessage("general.errors.unknown-player", new String[] {"[name]", "Unknown"});
     }
 
     @Test
@@ -127,7 +130,6 @@ class AdminRankCommandTest extends CommonTestSetup {
         boolean result = command.execute(user, "rank", List.of("Player", "unknown"));
 
         assertFalse(result, "Should reject unknown rank slug");
-        // verify(user).sendMessage("tradewinds.commands.admin.rank.unknown-rank", "[name]", "unknown");
     }
 
     @Test

@@ -3,9 +3,8 @@ package world.bentobox.tradewinds.travel;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -14,9 +13,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.Sound;
 import org.bukkit.entity.Boat;
 import org.bukkit.event.Event;
 import org.bukkit.event.block.Action;
@@ -168,7 +165,7 @@ class HoldGuiTest extends CommonTestSetup {
 
 		gui.onSneakClickBoat(event);
 
-		verify(event, org.mockito.Mockito.never()).setCancelled(true);
+		verify(event, never()).setCancelled(true);
 	}
 
 	@Test
@@ -186,7 +183,7 @@ class HoldGuiTest extends CommonTestSetup {
 
 		gui.onRightClickRiding(event);
 
-		verify(event, org.mockito.Mockito.never()).setCancelled(true);
+		verify(event, never()).setCancelled(true);
 	}
 
 	// ========================================== Event cancellation
@@ -216,15 +213,13 @@ class HoldGuiTest extends CommonTestSetup {
 
 	@Test
 	void testNonPlayerClickEventIsIgnored() {
-		Inventory window = mockWindow();
-
 		InventoryClickEvent event = mock(InventoryClickEvent.class);
 		org.bukkit.entity.HumanEntity notPlayer = mock(org.bukkit.entity.HumanEntity.class);
 		when(event.getWhoClicked()).thenReturn(notPlayer);
 
 		gui.onClick(event);
 
-		verify(event, org.mockito.Mockito.never()).setCancelled(true);
+		verify(event, never()).setCancelled(true);
 	}
 
 	// ========================================== Drag prevention
@@ -265,7 +260,7 @@ class HoldGuiTest extends CommonTestSetup {
 
 		gui.onDrag(event);
 
-		verify(event, org.mockito.Mockito.never()).setCancelled(true);
+		verify(event, never()).setCancelled(true);
 	}
 
 	// ========================================== Window close
@@ -286,6 +281,8 @@ class HoldGuiTest extends CommonTestSetup {
 
 	@Test
 	void testClosingWindowRefreshesLoreOnActiveBoat() {
+		// Player has an active boat - lore should be refreshed on close
+		BoatHold activeHold = holds.manager().activeBoat(uuid).orElseThrow();
 		Inventory window = mockWindow();
 
 		InventoryCloseEvent event = mock(InventoryCloseEvent.class);
@@ -296,6 +293,8 @@ class HoldGuiTest extends CommonTestSetup {
 
 		// Lore refresh happens if player has an active boat
 		verify(event).getPlayer();
+		// Player should still have the boat after closing
+		assertTrue(holds.manager().activeBoat(uuid).isPresent(), "Active boat should persist after window close");
 	}
 
 	@Test

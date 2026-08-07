@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -29,7 +28,6 @@ import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.dataobjects.BoatHold;
 import world.bentobox.tradewinds.encounters.EncounterService;
 import world.bentobox.tradewinds.galaxy.GalaxyConfig;
-import world.bentobox.tradewinds.travel.BoatService;
 import world.bentobox.tradewinds.galaxy.GalaxyEngine;
 import world.bentobox.tradewinds.galaxy.IslandSpec;
 import world.bentobox.tradewinds.galaxy.SecurityBand;
@@ -108,12 +106,12 @@ class BoatListenerDestroyTest extends CommonTestSetup {
     void testNonOwnerCannotBreakProtectedBoat() {
         BoatHold hold = holds.giveBoat(otherId, Material.OAK_BOAT);
         IslandSpec island = engine.islandInCell(0, 0).orElseThrow();
-        Location protected_loc = mock(Location.class);
-        when(protected_loc.getWorld()).thenReturn(world);
-        when(protected_loc.getBlockX()).thenReturn(island.centerX() + 100);
-        when(protected_loc.getBlockZ()).thenReturn(island.centerZ());
+        Location protectedLoc = mock(Location.class);
+        when(protectedLoc.getWorld()).thenReturn(world);
+        when(protectedLoc.getBlockX()).thenReturn(island.centerX() + 100);
+        when(protectedLoc.getBlockZ()).thenReturn(island.centerZ());
         Boat boat = mockBoat(hold, false, false);
-        when(boat.getLocation()).thenReturn(protected_loc);
+        when(boat.getLocation()).thenReturn(protectedLoc);
         Player breaker = mock(Player.class);
         when(breaker.getUniqueId()).thenReturn(playerId);
         VehicleDestroyEvent event = mock(VehicleDestroyEvent.class);

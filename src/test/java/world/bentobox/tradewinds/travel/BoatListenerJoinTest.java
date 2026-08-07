@@ -1,10 +1,10 @@
 package world.bentobox.tradewinds.travel;
 
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.UUID;
@@ -14,7 +14,6 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.inventory.PlayerInventory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -77,7 +76,7 @@ class BoatListenerJoinTest extends CommonTestSetup {
     @Disabled("harness limitation: onJoin runs via runTaskLater and reads location.getBlock(); both need the SpawnRespawnListenerTest stub idioms")
     void testStolenBoatIsReportedAndCleared() {
         // Player had a boat, someone took it while they were offline
-        BoatHold original = holds.giveBoat(playerId, Material.OAK_BOAT);
+        holds.giveBoat(playerId, Material.OAK_BOAT);
         BoatHold stolen = holds.unownedBoat(Material.SPRUCE_BOAT);
 
         // Thief takes it
@@ -86,7 +85,7 @@ class BoatListenerJoinTest extends CommonTestSetup {
         // Victim now has the stolen boat as active (confused state)
         holds.manager().setActiveBoat(playerId, stolen);
         assertTrue(holds.manager().activeBoat(playerId).isPresent());
-        assertTrue(!playerId.toString().equals(stolen.getOwner()));
+        assertNotEquals(playerId.toString(), stolen.getOwner());
 
         Location onLand = mock(Location.class);
         when(onLand.getWorld()).thenReturn(world);
@@ -99,6 +98,7 @@ class BoatListenerJoinTest extends CommonTestSetup {
         when(onLand.getBlock().getRelative(org.bukkit.block.BlockFace.DOWN)).thenReturn(below);
         when(player.getLocation()).thenReturn(onLand);
 
+        // deprecated-upstream: PlayerJoinEvent(Player, String) constructor
         PlayerJoinEvent event = new PlayerJoinEvent(player, "");
 
         listener.onJoin(event);
@@ -119,6 +119,7 @@ class BoatListenerJoinTest extends CommonTestSetup {
         when(inWater.getBlockY()).thenReturn(64);
         when(player.getLocation()).thenReturn(inWater);
 
+        // deprecated-upstream: PlayerJoinEvent(Player, String) constructor
         PlayerJoinEvent event = new PlayerJoinEvent(player, "");
 
         listener.onJoin(event);
@@ -137,6 +138,7 @@ class BoatListenerJoinTest extends CommonTestSetup {
         when(onLand.getBlockY()).thenReturn(64);
         when(player.getLocation()).thenReturn(onLand);
 
+        // deprecated-upstream: PlayerJoinEvent(Player, String) constructor
         PlayerJoinEvent event = new PlayerJoinEvent(player, "");
 
         listener.onJoin(event);
@@ -147,7 +149,7 @@ class BoatListenerJoinTest extends CommonTestSetup {
 
     @Test
     void testPlayerWithBoatInWaterIsNotDuplicatedRaft() {
-        BoatHold hold = holds.giveBoat(playerId, Material.OAK_BOAT);
+        holds.giveBoat(playerId, Material.OAK_BOAT);
         Location inWater = mock(Location.class);
         when(inWater.getWorld()).thenReturn(world);
         Block waterBlock = mock(Block.class);
@@ -157,6 +159,7 @@ class BoatListenerJoinTest extends CommonTestSetup {
         when(player.getLocation()).thenReturn(inWater);
 
         int before = addon.getHoldManager().allBoats().size();
+        // deprecated-upstream: PlayerJoinEvent(Player, String) constructor
         PlayerJoinEvent event = new PlayerJoinEvent(player, "");
 
         listener.onJoin(event);

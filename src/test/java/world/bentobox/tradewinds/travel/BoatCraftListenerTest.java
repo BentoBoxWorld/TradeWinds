@@ -1,6 +1,5 @@
 package world.bentobox.tradewinds.travel;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -10,12 +9,9 @@ import static org.mockito.Mockito.when;
 import java.util.UUID;
 
 import org.bukkit.Material;
-import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.CraftItemEvent;
-import org.bukkit.inventory.CraftingInventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.PlayerInventory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -69,7 +65,7 @@ class BoatCraftListenerTest extends CommonTestSetup {
     @Test
     void testCraftingLargerBoatReplacesCurrent() {
         // Player has OAK_BOAT (2 slots), crafts CHERRY_BOAT (6 slots)
-        BoatHold current = holds.giveBoat(playerId, Material.OAK_BOAT);
+        holds.giveBoat(playerId, Material.OAK_BOAT);
 
         // Mock HoldService first with its behavior
         HoldService holdService = mock(HoldService.class);
@@ -79,8 +75,9 @@ class BoatCraftListenerTest extends CommonTestSetup {
         ItemStack result = new ItemStack(Material.CHERRY_BOAT);
         CraftItemEvent event = mock(CraftItemEvent.class);
         when(event.getWhoClicked()).thenReturn(player);
-        when(event.getRecipe()).thenReturn(mock(org.bukkit.inventory.Recipe.class));
-        when(event.getRecipe().getResult()).thenReturn(result);
+        org.bukkit.inventory.Recipe recipe = mock(org.bukkit.inventory.Recipe.class);
+        when(event.getRecipe()).thenReturn(recipe);
+        when(recipe.getResult()).thenReturn(result);
 
         listener.onCraft(event);
 
@@ -100,8 +97,9 @@ class BoatCraftListenerTest extends CommonTestSetup {
         ItemStack result = new ItemStack(Material.OAK_BOAT);
         CraftItemEvent event = mock(CraftItemEvent.class);
         when(event.getWhoClicked()).thenReturn(player);
-        when(event.getRecipe()).thenReturn(mock(org.bukkit.inventory.Recipe.class));
-        when(event.getRecipe().getResult()).thenReturn(result);
+        org.bukkit.inventory.Recipe recipe1 = mock(org.bukkit.inventory.Recipe.class);
+        when(event.getRecipe()).thenReturn(recipe1);
+        when(recipe1.getResult()).thenReturn(result);
 
         listener.onCraft(event);
 
@@ -121,8 +119,9 @@ class BoatCraftListenerTest extends CommonTestSetup {
         ItemStack result = new ItemStack(Material.OAK_BOAT);
         CraftItemEvent event = mock(CraftItemEvent.class);
         when(event.getWhoClicked()).thenReturn(player);
-        when(event.getRecipe()).thenReturn(mock(org.bukkit.inventory.Recipe.class));
-        when(event.getRecipe().getResult()).thenReturn(result);
+        org.bukkit.inventory.Recipe recipe2 = mock(org.bukkit.inventory.Recipe.class);
+        when(event.getRecipe()).thenReturn(recipe2);
+        when(recipe2.getResult()).thenReturn(result);
 
         listener.onCraft(event);
 
@@ -141,8 +140,9 @@ class BoatCraftListenerTest extends CommonTestSetup {
         ItemStack result = new ItemStack(Material.OAK_BOAT);
         CraftItemEvent event = mock(CraftItemEvent.class);
         when(event.getWhoClicked()).thenReturn(player);
-        when(event.getRecipe()).thenReturn(mock(org.bukkit.inventory.Recipe.class));
-        when(event.getRecipe().getResult()).thenReturn(result);
+        org.bukkit.inventory.Recipe recipe3 = mock(org.bukkit.inventory.Recipe.class);
+        when(event.getRecipe()).thenReturn(recipe3);
+        when(recipe3.getResult()).thenReturn(result);
 
         listener.onCraft(event);
 
@@ -154,8 +154,9 @@ class BoatCraftListenerTest extends CommonTestSetup {
         ItemStack result = new ItemStack(Material.DIAMOND_PICKAXE);
         CraftItemEvent event = mock(CraftItemEvent.class);
         when(event.getWhoClicked()).thenReturn(player);
-        when(event.getRecipe()).thenReturn(mock(org.bukkit.inventory.Recipe.class));
-        when(event.getRecipe().getResult()).thenReturn(result);
+        org.bukkit.inventory.Recipe recipe4 = mock(org.bukkit.inventory.Recipe.class);
+        when(event.getRecipe()).thenReturn(recipe4);
+        when(recipe4.getResult()).thenReturn(result);
 
         listener.onCraft(event);
 
@@ -175,8 +176,9 @@ class BoatCraftListenerTest extends CommonTestSetup {
         ItemStack result = new ItemStack(Material.OAK_CHEST_BOAT);
         CraftItemEvent event = mock(CraftItemEvent.class);
         when(event.getWhoClicked()).thenReturn(player);
-        when(event.getRecipe()).thenReturn(mock(org.bukkit.inventory.Recipe.class));
-        when(event.getRecipe().getResult()).thenReturn(result);
+        org.bukkit.inventory.Recipe recipe5 = mock(org.bukkit.inventory.Recipe.class);
+        when(event.getRecipe()).thenReturn(recipe5);
+        when(recipe5.getResult()).thenReturn(result);
 
         listener.onCraft(event);
 

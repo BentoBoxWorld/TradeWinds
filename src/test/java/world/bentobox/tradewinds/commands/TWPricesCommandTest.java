@@ -1,12 +1,9 @@
 package world.bentobox.tradewinds.commands;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.HashMap;
@@ -21,6 +18,7 @@ import world.bentobox.bentobox.api.commands.CompositeCommand;
 import world.bentobox.bentobox.api.user.User;
 import world.bentobox.tradewinds.CommonTestSetup;
 import world.bentobox.tradewinds.TradeWinds;
+import world.bentobox.tradewinds.dataobjects.PlayerDataManager;
 import world.bentobox.tradewinds.dataobjects.TWPlayerData;
 import world.bentobox.tradewinds.economy.TradeCategory;
 import world.bentobox.tradewinds.galaxy.GalaxyEngine;
@@ -61,8 +59,9 @@ class TWPricesCommandTest extends CommonTestSetup {
     @Test
     void testExecuteEmptyLogbook() {
         TWPlayerData data = new TWPlayerData(mockPlayer.getUniqueId().toString());
-        when(addon.getPlayerDataManager()).thenReturn(mock());
-        when(addon.getPlayerDataManager().get(mockPlayer.getUniqueId())).thenReturn(data);
+        PlayerDataManager playerDataManager = mock(PlayerDataManager.class);
+        when(addon.getPlayerDataManager()).thenReturn(playerDataManager);
+        when(playerDataManager.get(mockPlayer.getUniqueId())).thenReturn(data);
 
         boolean result = command.execute(user, "prices", List.of());
 
@@ -72,13 +71,13 @@ class TWPricesCommandTest extends CommonTestSetup {
     @Test
     void testExecuteUnknownCategory() {
         TWPlayerData data = new TWPlayerData(mockPlayer.getUniqueId().toString());
-        when(addon.getPlayerDataManager()).thenReturn(mock());
-        when(addon.getPlayerDataManager().get(mockPlayer.getUniqueId())).thenReturn(data);
+        PlayerDataManager playerDataManager = mock(PlayerDataManager.class);
+        when(addon.getPlayerDataManager()).thenReturn(playerDataManager);
+        when(playerDataManager.get(mockPlayer.getUniqueId())).thenReturn(data);
 
         boolean result = command.execute(user, "prices", List.of("unknown"));
 
         assertFalse(result, "Command should return false for unknown category");
-        // verify(user).sendMessage("tradewinds.commands.prices.unknown-category", new String[] {"[value]", "unknown"});
     }
 
     @Test
@@ -88,8 +87,9 @@ class TWPricesCommandTest extends CommonTestSetup {
         prices.put(TradeCategory.METALS.name(), 100);
         data.getPriceLog().put("1,2", prices);
 
-        when(addon.getPlayerDataManager()).thenReturn(mock());
-        when(addon.getPlayerDataManager().get(mockPlayer.getUniqueId())).thenReturn(data);
+        PlayerDataManager playerDataManager = mock(PlayerDataManager.class);
+        when(addon.getPlayerDataManager()).thenReturn(playerDataManager);
+        when(playerDataManager.get(mockPlayer.getUniqueId())).thenReturn(data);
 
         IslandSpec island = mock(IslandSpec.class);
         when(island.name()).thenReturn("TestIsland");

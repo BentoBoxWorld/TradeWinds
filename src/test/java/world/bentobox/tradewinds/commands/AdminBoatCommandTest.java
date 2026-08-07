@@ -23,8 +23,10 @@ import world.bentobox.bentobox.managers.PlayersManager;
 import world.bentobox.tradewinds.CommonTestSetup;
 import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.dataobjects.BoatHold;
+import world.bentobox.tradewinds.dataobjects.HoldManager;
+import world.bentobox.tradewinds.travel.BoatRanks;
 import world.bentobox.tradewinds.travel.BoatService;
-import world.bentobox.tradewinds.travel.HoldService;
+import world.bentobox.tradewinds.travel.FuelService;
 
 /**
  * Tests for AdminBoatCommand: admin command to inspect and restore player boats.
@@ -51,12 +53,16 @@ class AdminBoatCommandTest extends CommonTestSetup {
 
         playersManager = plugin.getPlayers();
 
-        when(addon.getHoldManager()).thenReturn(mock());
-        when(addon.getBoatService()).thenReturn(mock());
-        when(addon.getBoatRanks()).thenReturn(mock());
-        when(addon.getBoatRanks().slots(any())).thenReturn(10);
-        when(addon.getFuelService()).thenReturn(mock());
-        when(addon.getFuelService().unitsOf(any())).thenReturn(50.0);
+        HoldManager holdManager = mock(HoldManager.class);
+        when(addon.getHoldManager()).thenReturn(holdManager);
+        BoatService boatService = mock(BoatService.class);
+        when(addon.getBoatService()).thenReturn(boatService);
+        BoatRanks boatRanks = mock(BoatRanks.class);
+        when(addon.getBoatRanks()).thenReturn(boatRanks);
+        when(boatRanks.slots(any())).thenReturn(10);
+        FuelService fuelService = mock(FuelService.class);
+        when(addon.getFuelService()).thenReturn(fuelService);
+        when(fuelService.unitsOf(any())).thenReturn(50.0);
     }
 
     @Test
@@ -78,7 +84,6 @@ class AdminBoatCommandTest extends CommonTestSetup {
         boolean result = command.execute(user, "boat", List.of("Unknown"));
 
         assertFalse(result, "Should fail for unknown player");
-        // verify(user).sendMessage("general.errors.unknown-player", "[name]", "Unknown");
     }
 
     @Test
@@ -144,7 +149,6 @@ class AdminBoatCommandTest extends CommonTestSetup {
         boolean result = command.execute(user, "boat", List.of("Player", "restore"));
 
         assertFalse(result, "Should refuse to restore when hull already exists");
-        // verify(user).sendMessage("tradewinds.commands.admin.boat.hull-exists", "[x]", "0", "[y]", "0", "[z]", "0");
     }
 
     @Test
@@ -168,7 +172,6 @@ class AdminBoatCommandTest extends CommonTestSetup {
         boolean result = command.execute(user, "boat", List.of("Player", "restore"));
 
         assertFalse(result, "Should refuse when player is carrying the hull");
-        // verify(user).sendMessage("tradewinds.commands.admin.boat.hull-carried");
     }
 
     @Test

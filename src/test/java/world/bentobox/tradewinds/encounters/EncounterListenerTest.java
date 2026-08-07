@@ -2,14 +2,12 @@ package world.bentobox.tradewinds.encounters;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.bukkit.Material;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.entity.EntityDeathEvent;
@@ -37,7 +35,6 @@ class EncounterListenerTest extends CommonTestSetup {
 
     private TradeWinds addon;
     private EncounterListener listener;
-    private TestHolds holds;
     private Player killer;
 
     @Override
@@ -48,7 +45,7 @@ class EncounterListenerTest extends CommonTestSetup {
         Settings settings = new Settings();
         when(addon.getSettings()).thenReturn(settings);
         when(addon.getBoatRanks()).thenReturn(new BoatRanks(addon));
-        holds = TestHolds.install(addon);
+        TestHolds.install(addon);
         listener = new EncounterListener(addon);
         killer = mockPlayer;
     }
@@ -157,7 +154,7 @@ class EncounterListenerTest extends CommonTestSetup {
         listener.onEncounterDeath(event);
 
         // Chance 0 means no drops
-        assertTrue(drops.size() == 0);
+        assertEquals(0, drops.size());
     }
 
     @Test

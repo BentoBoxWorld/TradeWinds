@@ -1,21 +1,16 @@
 package world.bentobox.tradewinds.crime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import org.bukkit.entity.IronGolem;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Villager;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
@@ -118,8 +113,6 @@ class CrimeListenerTest extends CommonTestSetup {
         PlayerDeathEvent event = mock(PlayerDeathEvent.class);
         when(event.getEntity()).thenReturn(victim);
 
-        Standing before = reputationService.standing(uuid);
-
         listener.onPlayerDeath(event);
 
         Standing after = reputationService.standing(uuid);
@@ -199,8 +192,11 @@ class CrimeListenerTest extends CommonTestSetup {
         PlayerDeathEvent event = mock(PlayerDeathEvent.class);
         when(event.getEntity()).thenReturn(victim);
 
-        // Should not throw
+        Standing before = reputationService.standing(uuid);
         listener.onPlayerDeath(event);
+        Standing after = reputationService.standing(uuid);
+
+        assertEquals(before, after, "Null killer should not record crime");
     }
 
     @Test

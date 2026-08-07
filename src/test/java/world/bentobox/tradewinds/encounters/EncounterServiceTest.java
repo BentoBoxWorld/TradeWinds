@@ -2,14 +2,10 @@ package world.bentobox.tradewinds.encounters;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.util.List;
-
-import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.persistence.PersistentDataContainer;
@@ -38,7 +34,6 @@ class EncounterServiceTest extends CommonTestSetup {
 
     private TradeWinds addon;
     private EncounterService service;
-    private TestHolds holds;
     private Player player;
 
     @Override
@@ -49,8 +44,9 @@ class EncounterServiceTest extends CommonTestSetup {
         when(addon.getSettings()).thenReturn(new Settings());
         when(addon.getBoatRanks()).thenReturn(new BoatRanks(addon));
         when(addon.getOverWorld()).thenReturn(world);
-        when(addon.getGalaxyEngine(anyLong())).thenReturn(mock(world.bentobox.tradewinds.galaxy.GalaxyEngine.class));
-        holds = TestHolds.install(addon);
+        world.bentobox.tradewinds.galaxy.GalaxyEngine engine = mock(world.bentobox.tradewinds.galaxy.GalaxyEngine.class);
+        when(addon.getGalaxyEngine(anyLong())).thenReturn(engine);
+        TestHolds.install(addon);
         when(addon.getFuelService()).thenReturn(new FuelService(addon));
         when(addon.getHoldService()).thenReturn(new HoldService(addon));
         service = new EncounterService(addon);

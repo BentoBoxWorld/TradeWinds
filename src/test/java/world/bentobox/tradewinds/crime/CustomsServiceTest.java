@@ -2,10 +2,8 @@ package world.bentobox.tradewinds.crime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -179,6 +177,9 @@ class CustomsServiceTest extends CommonTestSetup {
 
         // Should not throw and should complete without error
         service.onEntry(mockPlayer, island);
+
+        // Verify contraband was detected
+        assertTrue(service.contrabandAboard(mockPlayer) > 0, "Contraband should be detected aboard player");
     }
 
     @Test
