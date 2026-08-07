@@ -65,8 +65,9 @@ class BoatPickupListenerTest extends CommonTestSetup {
         when(boat.getType()).thenReturn(org.bukkit.entity.EntityType.OAK_BOAT);
         // A real entity ALWAYS has a container (the API says never-null, and
         // production code is entitled to lean on that) - so the mock must too
-        when(boat.getPersistentDataContainer())
-                .thenReturn(mock(org.bukkit.persistence.PersistentDataContainer.class));
+        org.bukkit.persistence.PersistentDataContainer pdc =
+                mock(org.bukkit.persistence.PersistentDataContainer.class);
+        when(boat.getPersistentDataContainer()).thenReturn(pdc);
         when(mockPlayer.getVehicle()).thenReturn(boat);
         return boat;
     }

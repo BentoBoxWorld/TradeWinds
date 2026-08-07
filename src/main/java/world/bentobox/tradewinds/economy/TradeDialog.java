@@ -241,7 +241,7 @@ public class TradeDialog {
                 ui(player, KEY_SELL_QTY_TOOLTIP, NO_VARS),
                 () -> sellThenReopen(player, spec, offer.item(), Integer.MAX_VALUE)));
 
-        showBodies(player, ui(player, "market.selling-title", "[name]", spec.name()), body, buttons,
+        showBodies(player, ui(player, "market.selling-title", VAR_NAME, spec.name()), body, buttons,
                 button(ui(player, "market.back", NO_VARS), ui(player, "market.back-tooltip", NO_VARS),
                         () -> openSell(player, spec)),
                 3);

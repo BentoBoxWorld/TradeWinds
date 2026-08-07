@@ -402,10 +402,9 @@ public class BoatService {
      * The material a boat entity corresponds to.
      */
     public static Material materialOf(Boat boat) {
-        try {
-            return Material.valueOf(boat.getType().name());
-        } catch (IllegalArgumentException e) {
-            return Material.OAK_BOAT;
-        }
+        // Boat item materials and boat entity types share names; anything
+        // exotic (a future hull type, a modded boat) falls back to oak
+        Material material = Material.matchMaterial(boat.getType().name());
+        return material == null ? Material.OAK_BOAT : material;
     }
 }
