@@ -258,12 +258,40 @@ behind it.
 ## Death and recovery
 
 - [ ] Die: the boat stays floating where it was and is still yours.
+- [ ] **Die CARRYING the boat item** (regression, 2026-08-06): the chart's
+      marker moves to the death site, not wherever the boat was last placed.
+      The console logs "went down with <name>" with coordinates. The dropped
+      hull never despawns on vanilla's clock; walk back days later and the
+      kit is still there (unloaded chunks freeze item timers).
 - [ ] Respawn with the ship far away: you are lent a Bamboo Raft. Board it →
       confirmation → your real boat becomes OLD BOAT.
 - [ ] Row back and board it: yours again, and the marker clears.
 - [ ] Lava is the only thing that destroys a boat and its cargo.
 - [ ] Log out in open water: another player can take the boat. Log out inside
       protected space: safe.
+
+## Duplicates and the logbook (2026-08-06)
+
+- [ ] **Creative placement** (regression): in creative, place your stamped
+      boat — the item leaves your pack (vanilla would keep it). No route to
+      two items with one boat-id.
+- [ ] Walk over a duplicate of a hull you already carry (spawn one with an
+      old dupe if any survive): it dissolves — cancelled pickup, item gone,
+      "duplicate hull dissolved" in the console.
+- [ ] **Outright purchase while carrying your old boat**: buy any hull with
+      the old one in your pack — the old hull drops at your feet UNOWNED
+      (never rides along in the pack), and no swap-back dialog fires as you
+      stand on it.
+- [ ] Break the pirates' boat after winning an encounter: it splinters —
+      no item, no plate, and `/twadmin boat` shows no new records for anyone.
+      Boarding it never offers capture.
+- [ ] The console carries a `Boat ...` INFO line for: place, break, pickup,
+      claim, demote, refit, purchase, death. `boats.logbook: false` silences
+      them all.
+- [ ] `/twadmin boat <player>`: both records with cargo, fuel, last-seen and
+      avatar state ("afloat right there" / "in X's pack" / "not in any loaded
+      chunk"). `restore` refuses while the hull is loaded or carried; with the
+      boat genuinely lost it hands a stamped item, hold contents intact.
 
 ---
 

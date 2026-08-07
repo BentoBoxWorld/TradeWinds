@@ -112,6 +112,12 @@ permissions:
   tradewinds.admin.reflag:
     description: Allow re-applying security-band flags to all islands
     default: op
+  tradewinds.admin.boat:
+    description: >
+      Inspect a player's boat records - cargo, fuel, last-seen position,
+      whether a hull is actually loaded there - and restore a lost active
+      boat from the database as an item in their pack.
+    default: op
   tradewinds.admin.*:
     description: All TradeWinds admin permissions
     default: op

@@ -99,6 +99,19 @@ tradewinds:
       reflag:
         description: "re-apply security-band flags to all trading islands"
         done: "<green>Re-applied band flags to [number] trading islands.</green>"
+      boat:
+        description: "inspect a player's boat records, or restore a lost active boat from the database"
+        parameters: "<player> [restore]"
+        header: "<aqua>[name]'s boats, as the database remembers them:</aqua>"
+        none: "<gray>No boat records at all.</gray>"
+        active: "<gold>ACTIVE</gold><white> [material] </white><gray>([id]) - cargo [used]/[slots], fuel [fuel], last seen [world] [x],[y],[z] - [avatar]</gray>"
+        old: "<red>OLD BOAT</red><white> [material] </white><gray>([id]) - cargo [used]/[slots], fuel [fuel], last seen [world] [x],[y],[z] - [avatar]</gray>"
+        avatar-loaded: "<green>afloat right there ([type] at [x],[y],[z])</green>"
+        avatar-with: "<yellow>in [name]'s pack or under their feet</yellow>"
+        avatar-unloaded: "<yellow>not in any loaded chunk - the last-seen position is the lead (death drops freeze in unloaded chunks and keep)</yellow>"
+        hull-exists: "<red>Not restored: the hull is afloat at [x],[y],[z] - restoring would mint a duplicate.</red>"
+        hull-carried: "<red>Not restored: they are already carrying it.</red>"
+        restored: "<green>[name]'s [material] restored to their pack from the database, cargo record intact.</green>"
   spawn:
     teleported: "<aqua>You come ashore at the spawn port. Your boat is your hold and your livelihood - keep it close.</aqua>"
     resumed: "<aqua>You take up your voyage where you left it.</aqua>"

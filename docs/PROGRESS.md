@@ -3,6 +3,55 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## The lost-boat archaeology - four bugs and a logbook (2026-08-06)
+
+Playtest: Ben died (phantom, 28s after login, 4,400 blocks from home)
+carrying his spruce boat; two real days later the chart still pointed the
+OLD BOAT marker at his own dock, where nothing was. Region-file forensics
+(the server logs said nothing but the vanilla death line) found the whole
+death drop intact in an unloaded chunk - item despawn clocks only tick
+while chunks are loaded, so the kit was frozen at Age 218/6000 - including
+TWO spruce boat items stamped with the same boat-id. Four causes, four
+fixes, all guarded by `BoatArchaeologyTest`:
+
+- **Death drops now move the record to the wreck site.** Manual drops
+  always did (`onDrop`); death drops bypass `PlayerDropItemEvent`, so the
+  chart lied forever. New `onDeath` handler re-remembers every stamped hull
+  in the drops at the death location. Deliberately NO TTL: a wall-clock
+  expiry would delete the cargo record while the item sat recoverable in an
+  unloaded chunk. (The chart marker vanishing when Ben got close was
+  `MARKER_MIN_DISTANCE` working as designed - it points at the record's
+  position and suppresses within 32 blocks; the position was simply stale.)
+- **Creative placement duplicated the hull item** - vanilla does not
+  consume the placed item in creative, so place-then-break minted a second
+  stamped copy (the 2026-08-02 two-hulls exploit, reborn). `onPlace` now
+  strips carried copies of the id after a creative place, and `onPickup`
+  dissolves a ground item whose id you already carry.
+- **The always-sells purchase left a carried old hull in the pack.**
+  `takeBoat` sheds it; the 2026-08-05 outright-replacement branch did not.
+  Both now use `BoatService.shedCarriedHull` (removes EVERY copy - dedupe -
+  drops one stamped hull at the feet, re-remembers position), with the
+  purchase path using the same swap-quiet as capture so the shed hull is
+  not offered straight back.
+- **Encounter boats minted database records.** The pirates' oak boat,
+  boarded or broken after the fight, self-registered as an unowned hull
+  (`recordFor(entity)` registers anything) - one litter record per pirate
+  attack, forever. Encounter-tagged boats are now scenery: boarding never
+  captures, breaking splinters them to nothing (a free hull per encounter
+  win would be farmable). The one orphan record on the test server was
+  moved to `database/.trash`.
+
+**The boat logbook** (`boats.logbook`, default ON): one console INFO line
+per lifecycle transition - placed, broken up, picked up, claimed, demoted,
+refit, shed, handed over, burned, went down with its sailor, restored -
+with material, id, owner and coordinates. **`/twadmin boat <player>
+[restore]`** reads the records straight from the database (cargo, fuel,
+last-seen, whether an avatar is loaded there or in someone's pack) and
+regenerates a lost active boat as a stamped item in the player's pack,
+refusing while a loaded avatar exists (restoring next to a live hull mints
+a duplicate). Together they make the next "where did my boat go?"
+answerable without region-file forensics.
+
 ## The puffer shoal - SAFE waters get their spice (2026-08-06)
 
 The SAFE band's 2% encounter chance was decorative: every encounter needed

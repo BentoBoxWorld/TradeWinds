@@ -27,6 +27,7 @@ import world.bentobox.bentobox.api.user.User;
 import world.bentobox.bentobox.lists.Flags;
 import world.bentobox.tradewinds.commands.AdminCustomsCommand;
 import world.bentobox.tradewinds.commands.AdminPriceAuditCommand;
+import world.bentobox.tradewinds.commands.AdminBoatCommand;
 import world.bentobox.tradewinds.commands.AdminRankCommand;
 import world.bentobox.tradewinds.commands.AdminIslandsCommand;
 import world.bentobox.tradewinds.commands.AdminReflagCommand;
@@ -231,6 +232,7 @@ public class TradeWinds extends GameModeAddon {
                 new AdminWarpFailCommand(this);
                 new AdminPriceAuditCommand(this);
                 new AdminRankCommand(this);
+                new AdminBoatCommand(this);
             }
         };
     }
@@ -616,6 +618,14 @@ public class TradeWinds extends GameModeAddon {
      */
     public BoatService getBoatService() {
         return boatService;
+    }
+
+    /**
+     * @return the boat lifecycle listener (purchases use its swap-quiet so a
+     *         hull shed at the quay is not offered straight back)
+     */
+    public world.bentobox.tradewinds.travel.BoatListener getBoatListener() {
+        return boatListener;
     }
 
     /**

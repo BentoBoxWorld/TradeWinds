@@ -225,6 +225,18 @@ public class EncounterService {
     }
 
     /**
+     * Whether this entity is part of an encounter - a mob, or the boat a crew
+     * arrived in. Encounter BOATS are scenery, never boats a sailor can own:
+     * left registerable, every pirate attack minted an unowned hull with a
+     * database record of its own (found moored off a player's island on
+     * 2026-08-06), and a farmable free boat per encounter besides.
+     */
+    public static boolean isEncounterCraft(Entity entity) {
+        return entity != null
+                && entity.getPersistentDataContainer().has(ENCOUNTER_KEY, PersistentDataType.STRING);
+    }
+
+    /**
      * How close a player must be before THIS mob's crew abandons ship, from
      * the config by encounter type. Ranged crews fight from the deck and only
      * jump at boarding distance; the witch bails wide because her potions

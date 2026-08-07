@@ -555,6 +555,11 @@ boats:
   # before the sea claims it. Persisted in the database - restarts do not
   # reset the clock.
   dropped-boat-ttl-minutes: 30
+  # Write a console INFO line for every boat lifecycle transition: placed,
+  # broken to item, picked up, claimed, demoted, refit, shed, went down with
+  # its sailor. These are rare events, and they are the ONLY trail an admin
+  # has when a player asks where their boat went - leave this on.
+  logbook: true
 
 player:
   # Career restarts a destitute player may use (/tw restart). -1 unlimited, 0 none.

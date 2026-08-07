@@ -680,6 +680,8 @@ public class MarketService {
         if (owned.isEmpty()) {
             // No ship at all: they are buying one outright, hull in hand
             var fresh = addon.getBoatService().createFor(player, rank.material());
+            addon.getBoatService().logbook("bought by " + player.getName() + " at " + spec.name(), fresh,
+                    player.getLocation());
             addon.getBoatService().giveBoatItem(player, fresh);
             user.sendMessage("tradewinds.trade.boat-bought-first", "[material]", pretty(rank.material()),
                     "[slots]", String.valueOf(rank.slots()), "[price]", Money.format(addon, price));
@@ -699,7 +701,15 @@ public class MarketService {
             String oldName = Material.matchMaterial(old.getMaterial()) == null ? old.getMaterial()
                     : pretty(Material.matchMaterial(old.getMaterial()));
             var fresh = addon.getBoatService().createFor(player, rank.material());
+            addon.getBoatService().logbook("bought by " + player.getName() + " at " + spec.name()
+                    + ", replacing their " + old.getMaterial(), fresh, player.getLocation());
+            addon.getBoatService().logbook("demoted to OLD BOAT (owner bought another)", old, null);
             addon.getBoatService().giveBoatItem(player, fresh);
+            // "Wherever it lies" may be the buyer's own pack: a carried hull
+            // is shed at the quay, or the sailor walks out with two boats -
+            // the 2026-08-02 two-hulls exploit through the shop door
+            addon.getBoatListener().quietSwaps(player.getUniqueId());
+            addon.getBoatService().shedCarriedHull(player, old);
             // The plate on the abandoned hull flips to UNOWNED, if it is loaded
             addon.getBoatService().relabel(old);
             user.sendMessage("tradewinds.trade.boat-replaced", "[material]", pretty(rank.material()),

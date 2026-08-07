@@ -146,6 +146,19 @@ public class BoatListener implements Listener {
         record.setExpiresAt(0); // Afloat again: only ITEM hulls run a clock
         addon.getBoatService().stamp(boat, record);
         addon.getHoldManager().rememberPosition(record, boat.getLocation());
+        addon.getBoatService().logbook("placed by " + event.getPlayer().getName(), record, boat.getLocation());
+        // Creative placement does not consume the item, so the pack still
+        // holds a stamped copy of the hull now floating in the water - the
+        // duplication that put TWO spruce boats in one death drop
+        // (archaeology, 2026-08-06). The entity is the boat now; every
+        // carried copy of its id must go.
+        if (event.getPlayer().getGameMode() == org.bukkit.GameMode.CREATIVE) {
+            for (ItemStack stack : event.getPlayer().getInventory().getContents()) {
+                if (stack != null && record.getUniqueId().equals(BoatService.boatId(stack))) {
+                    stack.setAmount(0);
+                }
+            }
+        }
     }
 
     // -------------------------------------------------------------- boarding
@@ -158,6 +171,11 @@ public class BoatListener implements Listener {
         }
         // A passenger climbing aboard an occupied boat takes nothing over
         if (!boat.getPassengers().isEmpty()) {
+            return;
+        }
+        // An encounter crew's boat is scenery: sit in it if you like, but it
+        // can never be captured or registered as a hull of your own
+        if (world.bentobox.tradewinds.encounters.EncounterService.isEncounterCraft(boat)) {
             return;
         }
         BoatHold hold = addon.getBoatService().recordFor(boat);
@@ -241,6 +259,14 @@ public class BoatListener implements Listener {
         if (!(event.getVehicle() instanceof Boat boat) || !inOurWorlds(boat.getWorld())) {
             return;
         }
+        // An encounter crew's boat splinters to nothing: no drop, no record.
+        // A hull per pirate attack would be farmable, and registering them
+        // littered the database with unowned phantoms (2026-08-06).
+        if (world.bentobox.tradewinds.encounters.EncounterService.isEncounterCraft(boat)) {
+            event.setCancelled(true);
+            boat.remove();
+            return;
+        }
         BoatHold hold = addon.getBoatService().recordFor(boat);
         boolean byOwner = event.getAttacker() instanceof Player breaker
                 && breaker.getUniqueId().toString().equals(hold.getOwner());
@@ -254,6 +280,7 @@ public class BoatListener implements Listener {
         Location where = boat.getLocation();
         if (boat.isInLava()) {
             // The one true destroyer: the hull and everything in it burn
+            addon.getBoatService().logbook("burned in lava - hull, cargo and record are gone", hold, where);
             forgetBoat(hold);
             return;
         }
@@ -266,7 +293,35 @@ public class BoatListener implements Listener {
         // Only an ITEM ever expires - boat entities stay until someone takes them
         hold.setExpiresAt(System.currentTimeMillis() + addon.getSettings().getDroppedBoatTtlMinutes() * 60_000L);
         addon.getHoldManager().rememberPosition(hold, where);
+        addon.getBoatService().logbook("broken up into an item"
+                + (event.getAttacker() == null ? "" : " by " + event.getAttacker().getName()), hold, where);
         where.getWorld().dropItemNaturally(where, item);
+    }
+
+    /**
+     * A sailor going down with a boat item in their pack: the hull scatters
+     * with the rest of the kit, so the record's position must follow it to
+     * the wreck site - or the chart points forever at wherever the boat was
+     * last PLACED. That stale bearing sent its owner searching an empty dock
+     * while the real hull lay 4,400 blocks away (archaeology, 2026-08-06).
+     * No TTL is started: death drops freeze in unloaded chunks, and a
+     * wall-clock expiry would delete the cargo record while the item was
+     * still recoverable. Vanilla's despawn clock is already held off by
+     * {@link #onDespawn}.
+     */
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onDeath(org.bukkit.event.entity.PlayerDeathEvent event) {
+        Player player = event.getEntity();
+        if (!inOurWorlds(player.getWorld())) {
+            return;
+        }
+        for (ItemStack stack : event.getDrops()) {
+            addon.getBoatService().recordFor(stack).ifPresent(hold -> {
+                addon.getHoldManager().rememberPosition(hold, player.getLocation());
+                addon.getBoatService().logbook("went down with " + player.getName(), hold,
+                        player.getLocation());
+            });
+        }
     }
 
     /**
@@ -323,10 +378,22 @@ public class BoatListener implements Listener {
             event.getItem().setItemStack(stack);
             return fresh;
         });
+        // Already carrying this very boat? Then the ground copy is a ghost -
+        // two items, one hold, each opening the same cargo (the 2026-08-02
+        // exploit, reborn as creative-placement duplication). The sea keeps
+        // the spare.
+        if (addon.getBoatService().isCarrying(player, hold)) {
+            event.setCancelled(true);
+            event.getItem().remove();
+            addon.getBoatService().logbook("duplicate hull dissolved (already in " + player.getName()
+                    + "'s pack)", hold, event.getItem().getLocation());
+            return;
+        }
         if (playerId.toString().equals(hold.getOwner())) {
             hold.setExpiresAt(0);
             addon.getHoldManager().save(hold);
             addon.getHoldManager().setActiveBoat(playerId, hold);
+            addon.getBoatService().logbook("picked up by its owner", hold, event.getItem().getLocation());
             return; // their own boat, back in the pack
         }
         if (System.currentTimeMillis() < swapQuietUntil.getOrDefault(playerId, 0L)) {
@@ -376,11 +443,20 @@ public class BoatListener implements Listener {
      * @param player the player
      * @param hold the hull they are taking
      */
+    /**
+     * Ignore boat items around this player for a moment: a swap or an
+     * outright purchase has just shed a hull at their feet, and the pickup
+     * listener would otherwise offer it straight back.
+     */
+    public void quietSwaps(UUID playerId) {
+        swapQuietUntil.put(playerId, System.currentTimeMillis() + SWAP_QUIET_MS);
+    }
+
     void takeBoat(Player player, BoatHold hold) {
-        swapQuietUntil.put(player.getUniqueId(), System.currentTimeMillis() + SWAP_QUIET_MS);
+        quietSwaps(player.getUniqueId());
         Optional<BoatHold> previous = addon.getHoldService().active(player.getUniqueId())
                 .filter(old -> !old.getUniqueId().equals(hold.getUniqueId()));
-        boolean carried = previous.isPresent() && carriedItemFor(player, previous.get()) != null;
+        boolean carried = previous.isPresent() && addon.getBoatService().isCarrying(player, previous.get());
         boolean alongside = carried || ownBoatWithinReach(player);
         addon.getBoatService().claim(player, hold);
         if (previous.isEmpty() || !alongside) {
@@ -389,15 +465,8 @@ public class BoatListener implements Listener {
         // One hull, all the cargo: pour the old boat into the new one
         BoatHold old = previous.get();
         salvage(player, old);
-        ItemStack spare = carriedItemFor(player, old);
-        if (spare != null) {
-            // The hull cannot ride in your pack alongside your ship - leave it
-            spare.setAmount(spare.getAmount() - 1);
-            ItemStack hull = addon.getBoatService()
-                    .stamp(new ItemStack(Material.matchMaterial(old.getMaterial())), old);
-            player.getWorld().dropItemNaturally(player.getLocation(), hull);
-            addon.getHoldManager().rememberPosition(old, player.getLocation());
-        }
+        // The hull cannot ride in your pack alongside your ship - leave it
+        addon.getBoatService().shedCarriedHull(player, old);
         // Shedding a hull on purpose, emptied, at your own feet is not
         // "losing" a boat - do not chart it as one to go back for
         if (old.isEmpty()) {
@@ -405,18 +474,6 @@ public class BoatListener implements Listener {
         }
         User.getInstance(player).sendMessage(old.isEmpty() ? "tradewinds.boat.merged-empty"
                 : "tradewinds.boat.merged-partial", "[material]", pretty(Material.matchMaterial(old.getMaterial())));
-    }
-
-    /**
-     * The item in a player's pack that is the avatar of this boat, or null.
-     */
-    private ItemStack carriedItemFor(Player player, BoatHold hold) {
-        for (ItemStack stack : player.getInventory().getContents()) {
-            if (stack != null && hold.getUniqueId().equals(BoatService.boatId(stack))) {
-                return stack;
-            }
-        }
-        return null;
     }
 
     /**

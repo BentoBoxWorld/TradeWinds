@@ -149,7 +149,7 @@ public class HoldService {
         return active(playerId).map(HoldService::slotsUsedIn).orElse(0);
     }
 
-    static int slotsUsedIn(BoatHold hold) {
+    public static int slotsUsedIn(BoatHold hold) {
         CargoStore.compact(hold.getCargo());
         return hold.getExpanders().size() + hold.getCargo().size();
     }

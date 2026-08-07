@@ -648,6 +648,13 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "boats.dropped-boat-ttl-minutes")
     private int droppedBoatTtlMinutes = 30;
 
+    @ConfigComment("Write a console INFO line for every boat lifecycle transition: placed,")
+    @ConfigComment("broken to item, picked up, claimed, demoted, refit, shed, went down with")
+    @ConfigComment("its sailor. These are rare events, and they are the ONLY trail an admin")
+    @ConfigComment("has when a player asks where their boat went - leave this on.")
+    @ConfigEntry(path = "boats.logbook")
+    private boolean boatLogbook = true;
+
     private static Map<String, Integer> defaultBoatRanks() {
         Map<String, Integer> ranks = new java.util.LinkedHashMap<>();
         ranks.put("BAMBOO_RAFT", 2);
@@ -3300,6 +3307,8 @@ public class Settings implements WorldSettings {
     public void setRespawnBoat(String respawnBoat) { this.respawnBoat = respawnBoat; }
     public int getDroppedBoatTtlMinutes() { return droppedBoatTtlMinutes; }
     public void setDroppedBoatTtlMinutes(int droppedBoatTtlMinutes) { this.droppedBoatTtlMinutes = droppedBoatTtlMinutes; }
+    public boolean isBoatLogbook() { return boatLogbook; }
+    public void setBoatLogbook(boolean boatLogbook) { this.boatLogbook = boatLogbook; }
     public int getDriftValueScale() { return driftValueScale; }
     public void setDriftValueScale(int driftValueScale) { this.driftValueScale = driftValueScale; }
     public double getDriftMin() { return driftMin; }

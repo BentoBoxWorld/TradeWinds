@@ -130,6 +130,59 @@ public class BoatService {
     }
 
     /**
+     * Shed a boat the player is carrying: EVERY item bearing its id leaves
+     * the pack (a hull can be duplicated - creative placement does not
+     * consume the item - and the dupes must die together or each one opens
+     * the same hold), and a single stamped hull is dropped at their feet,
+     * cargo record intact. This is the only way a hull item may leave a
+     * pack for the ground on the plugin's initiative: swaps and outright
+     * purchases both shed, so no sailor ever pockets two boats.
+     *
+     * @param player the player
+     * @param hold the boat to shed
+     * @return true if anything was actually carried and shed
+     */
+    public boolean shedCarriedHull(Player player, BoatHold hold) {
+        boolean carried = false;
+        for (ItemStack stack : player.getInventory().getContents()) {
+            if (stack != null && hold.getUniqueId().equals(boatId(stack))) {
+                stack.setAmount(0);
+                carried = true;
+            }
+        }
+        if (!carried) {
+            return false;
+        }
+        Material material = Material.matchMaterial(hold.getMaterial());
+        ItemStack hull = stamp(new ItemStack(material == null ? Material.OAK_BOAT : material), hold);
+        player.getWorld().dropItemNaturally(player.getLocation(), hull);
+        addon.getHoldManager().rememberPosition(hold, player.getLocation());
+        logbook("shed at " + player.getName() + "'s feet", hold, player.getLocation());
+        return true;
+    }
+
+    // --------------------------------------------------------------- logbook
+
+    /**
+     * One console line per boat lifecycle transition - the trail that lets an
+     * admin answer "where did my boat go?" without region-file archaeology
+     * (which is what it took on 2026-08-06, when a hull went down with its
+     * sailor 4,400 blocks from where the chart last saw it).
+     */
+    public void logbook(String event, BoatHold hold, Location where) {
+        if (!addon.getSettings().isBoatLogbook()) {
+            return;
+        }
+        String owner = hold.isUnowned() ? "UNOWNED"
+                : String.valueOf(Bukkit.getOfflinePlayer(UUID.fromString(hold.getOwner())).getName());
+        addon.log("Boat " + hold.getMaterial() + " " + hold.getUniqueId() + " (owner " + owner + "): "
+                + event
+                + (where == null || where.getWorld() == null ? ""
+                        : " at " + where.getWorld().getName() + " " + where.getBlockX() + ","
+                                + where.getBlockY() + "," + where.getBlockZ()));
+    }
+
+    /**
      * Re-write the lore of a carried avatar of this record, so the manifest
      * stays true after the hold GUI closes.
      */
@@ -223,6 +276,10 @@ public class BoatService {
     public void claim(Player player, BoatHold hold) {
         Optional<BoatHold> abandoned = addon.getHoldManager().activeBoat(player.getUniqueId())
                 .filter(old -> !old.getUniqueId().equals(hold.getUniqueId()));
+        if (!player.getUniqueId().toString().equals(hold.getOwner())) {
+            logbook("claimed by " + player.getName(), hold, player.getLocation());
+            abandoned.ifPresent(old -> logbook("demoted to OLD BOAT (owner claimed another)", old, null));
+        }
         addon.getHoldManager().setActiveBoat(player.getUniqueId(), hold);
         // Relabel AFTER the switch: setActiveBoat is what strips the old
         // boat's owner, and relabelling before it kept the owner's name on
@@ -243,6 +300,7 @@ public class BoatService {
      * @param material the hull they bought
      */
     public void refit(Player player, BoatHold hold, Material material) {
+        logbook("refit from " + hold.getMaterial() + " to " + material.name(), hold, player.getLocation());
         hold.setMaterial(material.name());
         addon.getHoldManager().save(hold);
         // Riding it: swap the vessel under them without a swim
@@ -309,6 +367,7 @@ public class BoatService {
         }
         ItemStack item = stamp(new ItemStack(material), hold);
         addon.getHoldManager().rememberPosition(hold, player.getLocation());
+        logbook("handed to " + player.getName() + " as an item", hold, player.getLocation());
         player.getInventory().addItem(item).values()
                 .forEach(left -> player.getWorld().dropItem(player.getLocation(), left));
     }
