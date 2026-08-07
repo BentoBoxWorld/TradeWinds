@@ -174,6 +174,42 @@ bands:
   port-denied-flags: []
   # Flag IDs forced back to visitor rank, overriding the deny list, e.g. [HARVEST].
   port-allowed-flags: []
+ranks:
+  # Seafarer rank ladder: rank slug -> charted islands required. A player's rank
+  # is the highest threshold at or below their charted count. Display names live
+  # in the locale under tradewinds.rank.<slug> - add a locale name for any new
+  # slug, keep exactly one rank at 0 so every sailor has a rank, and avoid dots
+  # in slugs (YAML nests on them).
+  thresholds:
+    deck-hand: 0
+    cabin-scout: 6
+    coast-finder: 8
+    bay-explorer: 10
+    island-hopper: 12
+    reef-runner: 15
+    wave-master: 17
+    chart-maker: 20
+    storm-navigator: 25
+    archipelago-ace: 30
+    tide-captain: 36
+    horizon-hunter: 42
+    sea-sentinel: 49
+    salty-commodore: 56
+    ocean-overlord: 64
+    pirate-pathfinder: 72
+    grand-admiral: 81
+    globe-voyager: 90
+    mythic-mariner: 100
+claims:
+  # Price of claiming a wild islet, in whole coins. Deliberately above the top
+  # boat (Pale Oak Chest Boat, 110,250 at defaults): the boat ladder comes first.
+  price: 150000
+  # Minimum Seafarer rank (a slug from ranks.thresholds) required to claim a
+  # wild islet. Team members need no rank - only the claimer.
+  minimum-rank: tide-captain
+  # Blocks of protected water beyond the islet's terrain radius. The protection
+  # range is islet radius + this margin.
+  protection-margin: 32
 crime:
   # Master switch for the whole law layer: reputation, customs scans, police and
   # bounties. False makes the world lawless in the sense of 'nothing is tracked'.
@@ -251,6 +287,10 @@ chart:
 hud:
   # Navigation boss bar in island waters: island name, standing, distance to dock.
   navigation-bossbar: true
+  # Distance in blocks at which the course-home bar (toggled by /tw go at sea)
+  # reads empty at night; it fills as home approaches. By day the bar shows
+  # direction only - the stars are the precise instrument.
+  course-bar-scale: 5000
 economy:
   # Money given to brand-new players with their starter kit.
   starting-balance: 2500.0
@@ -473,8 +513,11 @@ border:
 boats:
   # The boat ladder: cargo slots per boat material. A player has exactly ONE
   # boat (or none) and this is the ONLY thing that sizes their hold. Order is
-  # by slots; shops list only boats bigger than yours, up to the island's tech
-  # (rank <= tech level x ranks-per-tech-level). Crafting ignores tech gates.
+  # by slots; shops list every hull the island's tech can build (rank <= tech
+  # level x ranks-per-tech-level) except the size you sail. A bigger hull
+  # with your ship at the quay is a trade-in (cargo stays); anything else is
+  # bought outright and your old boat is left unowned where it lies.
+  # Crafting ignores tech gates.
   ranks:
     BAMBOO_RAFT: 2
     OAK_BOAT: 3
@@ -533,6 +576,31 @@ interstice:
   # Chance per chunk of a burning netherrack brazier rising out of the interstice
   # sea. They are the only light out there - without them it is a flat black nothing.
   brazier-chance: 0.18
+  # --- Interstice resources (tradewinds-interstice-plan.md). Changing the
+  # needsReset ones moves every feature: regenerate tradewinds_world_nether. ---
+  # Wart shoals: grid size in blocks for the soul-sand banks that break the
+  # surface, chance (0-1) a cell hosts one, and their mean radius. 0 disables.
+  shoal-grid: 256
+  shoal-chance: 0.5
+  shoal-radius: 9
+  # Chance (0-1) a shoal is a GRAND shoal carrying a crimson or warped grove.
+  grand-shoal-chance: 0.2
+  # Fraction of a shoal's soul-sand surface planted with nether wart.
+  wart-density: 0.35
+  # Chance (0-1) that a brazier grows a nether-brick turret with a blaze
+  # spawner - the blaze pickets.
+  blaze-picket-chance: 0.25
+  # Chance per ceiling chunk of a glowstone cluster hanging from the lid.
+  # Needs ceiling-height > 0.
+  glowstone-cluster-chance: 0.2
+  # Chance per submerged shoal-core or brazier-root block of quartz ore.
+  quartz-chance: 0.12
+  # Wither watchtowers: grid size in blocks and chance (0-1) a cell hosts one -
+  # the interstice's only structure. Wither skeletons spawn inside; the loot
+  # chest uses the vanilla loot table named below.
+  watchtower-grid: 1536
+  watchtower-chance: 0.6
+  watchtower-loot-table: "minecraft:chests/bastion_treasure"
   # Seconds after a failed warp during which nothing in the interstice may target or
   # hurt the player - long enough to read the dialog and take the free way out.
   grace-seconds: 20
@@ -559,6 +627,14 @@ encounters:
     ANARCHIC: 0.28
   # Chance a spawned drowned carries a trident.
   drowned-trident-chance: 0.35
+  # How close a player must be (blocks) before a boated crew abandons ship,
+  # per encounter type. Pirates fight from the deck and only jump at boarding
+  # distance; the witch bails wide - potions overshoot from a drifting
+  # platform. Must be BELOW encounters.distance or the crew ejects on its
+  # first tick and nobody ever sees a manned boat.
+  abandon-ship:
+    PIRATE_CREW: 10
+    SEA_WITCH: 30
   # Chance that a slain encounter mob yields booty, and what it may drop.
   # Booty is customs-stamped, so it can be sold: fighting is the third way to earn.
   booty-chance: 0.5
@@ -572,6 +648,10 @@ encounters:
     - COAL
     - COOKED_COD
     - TRIDENT
+    # Nether goods trickle in through piracy too, for sailors who never fail
+    # a warp (tradewinds-interstice-plan.md, N3)
+    - NETHER_WART
+    - GHAST_TEAR
 illegal-trade:
   # The contraband list: what customs care about, and what black markets pay
   # the premium for. Only honored while illegal-trade.enabled is true.

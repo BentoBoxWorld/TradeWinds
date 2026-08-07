@@ -62,7 +62,13 @@ public final class TypeEconomy {
             IslandType.INDUSTRIAL, List.of(Material.IRON_SWORD, Material.SHIELD, Material.IRON_HELMET,
                     Material.IRON_CHESTPLATE, Material.IRON_LEGGINGS, Material.IRON_BOOTS),
             IslandType.AGRICULTURAL, List.of(Material.WHITE_BED),
-            IslandType.FISHING, List.of(Material.FISHING_ROD),
+            // Rod and compass: the fisheries are the navigator's shop. A
+            // compass bought by an island member leaves the counter bound to
+            // their island (the ship's compass - see MarketService); for
+            // everyone else it points at world spawn, the spawn port. The
+            // default spawn island is FISHING, so new sailors find one at
+            // their first counter.
+            IslandType.FISHING, List.of(Material.FISHING_ROD, Material.COMPASS),
             IslandType.FOREST, List.of(Material.WHITE_BED),
             IslandType.MINING, List.of(Material.IRON_PICKAXE),
             IslandType.LUXURY, List.of(Material.GOLDEN_APPLE),

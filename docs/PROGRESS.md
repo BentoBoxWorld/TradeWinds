@@ -3,6 +3,294 @@
 What is done, and pitfalls hit on the way. Newest stage first. Read
 `TRADEWINDS_SPEC.md` for requirements; this file records reality.
 
+## The puffer shoal - SAFE waters get their spice (2026-08-06)
+
+The SAFE band's 2% encounter chance was decorative: every encounter needed
+POLICED+, so the roll fired into an empty table. Ruled by Ben: SAFE needs a
+nuisance - interesting, not farmable. Now: **PUFFER_SHOAL**, 2-3 pufferfish
+across your course, any time of day, SAFE and POLICED bands only.
+
+Two new properties on `EncounterType` carry the design:
+- **`nuisance`** - a hazard, not a hunter: exempt from the
+  every-mob-must-be-an-Enemy test (the pufferfish stings on contact without
+  ever being an Enemy), and worth NO booty
+  (`EncounterListener` checks the tag's type), so there is nothing to farm -
+  the only "loot" is the vanilla pufferfish, which fishing gets you faster.
+- **`maxBand`** - encounters can now cap out: the shoal stays out of
+  FRONTIER+ where it would only dilute real danger (a uniform pick means
+  every filler entry steals share from pirates).
+
+The encounter PDC tag recording the TYPE (from the abandon-ship fix) is what
+made the booty exemption a one-liner.
+
+## Island members respawned at spawn — our own listener stomped BentoBox (2026-08-05)
+
+Playtest: died owning a claimed islet, ISLAND_RESPAWN active, respawned at
+the spawn port. Cause: `SpawnRespawnListener` (respawn SAFETY, written
+before player islands existed, to keep bedless respawns out of the seabed)
+runs at HIGH and unconditionally set the spawn plaza - AFTER BentoBox's
+ISLAND_RESPAWN listener had set the island home at NORMAL. Fix: island
+members now pass through untouched; the listener's job is only the
+islandless. The loaner boat still applies on any respawn - the real boat is
+wherever they died. Regression test pins the pass-through.
+
+Same-session playtest note, NOT a bug: "cannot buy a boat at Spawn" while
+owning a Spruce Boat is the tech gate working - spawn is TL1 and sells
+ranks 1-3 only, and the shipwright is upgrades-only by design. The recovery
+path after a far-away death is the respawn loaner raft, then any TL2+ port.
+Boarding the loaner (abandoning the distant boat, standard confirmation)
+resets "what you sail" to the raft - and THEN the TL1 yard will happily
+sell up to the oak. The rules the playtest wanted already existed; the
+loaner just never arrived:
+
+**The loaner raft never arrived - items granted during PlayerRespawnEvent
+are wiped** when the respawn restores the inventory. The grant now runs one
+tick AFTER the respawn, on the player's real post-respawn position (which
+also makes boat-within-reach honest for island respawners). And the
+shipwright's "nothing on the slipway beats your boat" notice moved from a
+truncating fake BUTTON into the dialog body, with the one offered button
+pointing somewhere useful: the outfitter.
+
+**Rule change - the yard ALWAYS sells (ruled by Ben, 2026-08-05).** The
+stranding above exposed the corner: dead at spawn, spruce boat an ocean
+away, TL1 sells nothing "bigger than you sail" - a rich sailor with no way
+off the island. New rule: shops list every hull the tech can build except
+the size you sail. A bigger hull with your ship AT THE QUAY is still the
+trade-in (same record, cargo stays, old hull broken up); anything else -
+ship elsewhere, or a smaller hull - is bought OUTRIGHT: new boat in hand,
+old boat left unowned where it lies with its cargo, first come first
+served. The purchase gets the same confirmation dialog a boat capture does,
+because it is the same decision. `refit-needs-ship` is gone; the abandoned
+hull's plate flips to UNOWNED via the identity relabel.
+
+## Interstice resources — the nether plan built (2026-08-05)
+
+`tradewinds-interstice-plan.md` N1+N2+N3 are IN, one session after drafting.
+The interstice is now a place worth lingering in when fate drops you there -
+entry stays by-accident, the free re-engage stays free, and everything
+gathered already had a price.
+
+- **`galaxy/IntersticeMap`** - pure seeded geometry (no Bukkit, headless
+  tests): wart shoal cells, grand-shoal rolls, watchtower cells, the shoal
+  dome function, and `isOpenWater` for stranding safety. Salted off the same
+  seed as the interstice sea floor.
+- **Generator**: shoals rise through `floorTopAt` (max of natural floor and
+  the dome - crown 2 proud of the sea, rim submerged), and interstice LAND
+  columns are soul sand through the crown, because wart plants only on soul
+  sand.
+- **Decorator** (`IntersticeDecorator`, grown from the brazier populator):
+  wart crops (age-randomised) on shoal tops; crimson/warped groves on grand
+  shoals (hand-rolled stem+cap+shroomlight trees); glowstone blobs hanging
+  from the ceiling lid; quartz ore in shoal cores and brazier roots; blaze
+  pickets (nether-brick crow's nest + BLAZE spawner) on a config fraction of
+  braziers; and wither watchtowers - 5x5 nether-brick towers, WITHER_SKELETON
+  spawner room at the waterline with a doorway and a soul-sand pile, sealed
+  loot floor above it with a chest on the vanilla
+  `minecraft:chests/bastion_treasure` table (config key), crenellated open
+  top. Netherite stays loot-only, exactly per plan.
+- **Stranding safety**: the interstice has LAND now, so
+  `SeaArrival.openSeaNear` gained a column-test variant and `strand()` feeds
+  it `IntersticeMap::isOpenWater` - a failed warp can never materialise a
+  sailor inside a shoal or a tower wall (the suffocation bug's third
+  cousin, pre-empted this time).
+- **Booty**: NETHER_WART and GHAST_TEAR joined the encounter booty table -
+  the trickle for sailors who never fail a warp.
+- All knobs in `config.yml` under `interstice.*`; the placement ones are
+  `needsReset` - **regenerate `tradewinds_world_nether`** to see features.
+- Deferred from the plan: magma cubes (texture only; fire resistance is
+  craftable), secondhand-shelf seeding, price spot-checks (N3 notes).
+
+Implementation facts worth keeping: `LimitedRegion` HAS
+`getBlockState(int,int,int)` - spawner/chest tile config in a populator is
+setType, getBlockState, mutate, update(). Loot tables resolve through
+`Bukkit.getLootTable(NamespacedKey)` and a bad config key logs and leaves a
+plain chest.
+
+**Same session, the orphan batch button.** Playtest screenshot: the
+outfitter showed a bare "x16 - $7,184" no one could attribute. It was the
+COMPASS batch (449 x 16) - unstackable gear (the fishing rod) gets no batch
+button, which shifts the dialog's two-column pairing, and `outfit-batch`
+labels carried no item name, so the orphan sold a mystery. Fix: the batch
+label now names its good ("Compass x16 - $7,184"). Fourth member of the
+artifact-drift family in spirit: a layout assumption (pairs) and a label
+assumption (context from the neighbour) that individually were fine and
+together broke the moment the shelf gained one unstackable item.
+
+## Pirates abandon ship on their first tick, and the interstice plan (2026-08-05)
+
+**The pirate crew never rode its boat.** Playtest: pillagers "appear outside
+the boat and paddle toward me". They WERE seated - then ejected within a
+second, because `hunt()`'s abandon-ship radius (flat 30) was WIDER than the
+encounter spawn distance (28): every crew spawned already inside it and went
+over the side on the first tick, and the boat drifted away empty. The wide
+abandon exists for the SEA_WITCH (potions overshoot from a drifting
+platform); pirates got swept up in it. Fix: abandon-ship is per encounter
+type in config (`encounters.abandon-ship`: PIRATE_CREW 10, SEA_WITCH 30) and
+the encounter PDC tag now records the TYPE, not just "encounter". Playtest
+check: whether pillagers actually fire crossbows from the deck on 26.2 - if
+not, raise their number back toward 30 in config and the boat is arrival
+theatre only.
+
+**Interstice resources are planned, not built** - see
+`tradewinds-interstice-plan.md` (normative when work starts): wart shoals,
+blaze pickets, glowstone ceiling, quartz spires, wither watchtowers;
+netherite loot-only; End goods trade-only; entry stays by-accident
+(consolation-prize model). **Shipped now:** lighting a portal frame in either
+TradeWinds world prints the lore refusal instead of failing silently
+(`tradewinds.interstice.no-portal`) - ruined portals are common enough that
+players were reading the silence as a bug.
+
+## Stage 7b — living with a base (2026-08-05)
+
+Closes Stage 7. Four features, all riding on 7a's claims:
+
+- **Member-only warp node.** A claimed islet travels as a SYNTHETIC
+  `IslandSpec` (`travel/HomePort`): its wild-grid cell, its real centre, and
+  tech level -1 as the home sentinel (`HomePort.isHome`). Members get it
+  pinned first in every warp dialog with its own labels (no port sheet - a
+  home has no type or tech); nobody else ever sees it. Warping OUT triggers
+  at the claim's protection border exactly like a port's ring
+  (`BorderPromptListener.homeBorder`). Arrival aims the boat at the islet
+  centre - there is no pier to steer for. Normal fuel rules throughout.
+  **Interstice trap dodged:** the owed-destination map stores galaxy CELLS,
+  and a home's wild-grid cell would re-resolve to a wrong (or no) trading
+  island - so a failed home warp stores the `"home"` marker instead and
+  re-resolves through the player's island at re-engage; if they unclaimed
+  while stranded, the nearest-charted fallback still applies. Nobody is
+  ever stranded.
+- **Course-home mode.** `/tw go` at sea (with an island) now TOGGLES a
+  persistent course bar (`NavigationBarTask.showCourse`): by day the sun
+  gives only the eight-point direction; by night the stars add the exact
+  distance and the bar fills as home approaches (`hud.course-bar-scale`).
+  Island waters still take precedence over the course bar; making landfall
+  in your own waters clears the course by itself. The chart holograms
+  gained a gold HOME marker, and the Star Chart draws the claim as a gold
+  dot named Home (or the island's admin-given name) for every member.
+- **`/tw unclaim`.** Owner only, confirmation required, refuses while the
+  team has members (kicking the crew is part of the decision), no refund.
+  Uses BentoBox `hardDeleteIsland` - record gone, grid freed, every block
+  stays - so the islet is claimable again the moment it returns. Only
+  islands carrying the `tradewinds-claim` metadata may be dropped: the
+  spawn island is not yours to unclaim.
+- **Ship's compass.** Sold at FISHING outfitters (rod and compass - the
+  fisheries are the navigator's shop, and the default spawn island is one):
+  a compass bought by an island member leaves the counter lodestone-bound
+  to their island with tracking OFF, so it points home from anywhere with
+  no lodestone block needed. For everyone else it is a plain compass -
+  which points at world spawn, the spawn port. Not on every shelf because
+  INDUSTRIAL's armour row already fills the 8-slot dialog exactly
+  (`SaleCatalogTest.testOutfitterFitsTheDialog` is the guard that caught it).
+
+## The moored-refit bug: find boats by identity, never by position box (2026-08-04)
+
+Playtest: exit your oak boat at the dock, buy a spruce hull at the trader,
+walk back - still an oak boat. The record said spruce (the exact
+record-over-wrong-hull mismatch `refit`'s own javadoc warns about). Cause:
+the moored branch searched a **6-block box around the last-remembered
+position** - but dismounted boats glide and drift, and the remembered spot
+goes stale. Same fragile pattern sat in `relabel` (a 4-block box) and in
+`boatIsHere`'s fallback (trusted the remembered position outright, so the
+yard could take money for a hull it could not reach).
+
+Fix: new `BoatService.findPlaced(hold)` - finds the record's placed avatar
+(Boat entity, or dropped item carrying the stamp) by **identity** across the
+world's loaded entities, and re-remembers the true position on every hit, so
+the chart heals whenever anyone looks. All three callers now go through it:
+
+- `refit` swaps the hull wherever it actually floats (or fixes the dropped
+  item in place); position box gone.
+- `boatIsHere` judges the boat's TRUE position against the island range - a
+  refit is only sold when the hull is genuinely at the island (carried in
+  the pack counts, judged on the player's position). Stricter than before,
+  and what the design always claimed.
+- `relabel` labels whatever it finds, at any distance.
+
+This is the "match boats by identity, never by material" rule's sibling:
+never by position, either.
+
+## Stage 7a — Seafarer ranks & islet claiming (2026-08-04)
+
+Stage 7 is wild-islet claiming, not blueprints (decided 2026-08-04, dev plan
+updated). This session built the 7a half: the rank ladder, the leaderboard,
+and `/tw claim`.
+
+- **Seafarer ranks** (`travel/RankService`): rank = charted-island count
+  against `ranks.thresholds` (19 rungs, Deck Hand 0 → Mythic Mariner 100);
+  names in the locale under `tradewinds.rank.<slug>`. Early rungs sit above
+  the pre-charted starter cluster (5), so the first promotion is earned.
+  `claims.minimum-rank` names a slug; a typo **fails closed** to the top
+  threshold, never to zero.
+- **Leaderboard + placeholders** (`travel/ChartLeaderboard`): counts seeded
+  from the DB async at startup, kept fresh by `IslandChartedEvent` (both the
+  sighting and port-scan paths fire it). `/tw rank` shows rank, next rung and
+  the top ten; PlaceholderAPI gets `%tradewinds_rank%`, `%tradewinds_charted%`,
+  `%tradewinds_top_name_1..10%`, `%tradewinds_top_charted_1..10%`.
+- **`/tw claim`** (`travel/IsletClaimService`): stand on a wild islet, pass
+  rank gate + price (`claims.price`, default 150,000 — above the top boat),
+  and the islet becomes a real BentoBox island: owner set, protection sized
+  `islet radius + claims.protection-margin`, default flags, metadata
+  `tradewinds-claim` = "cellX,cellZ,radius" for the 7b warp node. No paste -
+  the land is already there, and whatever was built on it comes along.
+  Money is withdrawn only AFTER the grid accepts the island: the insert is
+  the one step that can still refuse, and a refund path is a bug farm.
+
+**The pitfall that shaped it: BentoBox's grid refuses overlapping RANGE
+boxes, and `createIsland` hands every island the full island-distance box**
+(1000 → a 2000-block square). Trading islands therefore reserved ~1.1 km
+around every port — no islet claim could ever fit there (~40% of all islets).
+Fix in two halves: trading islands now get their range box sized to the
+protection range at registration AND adoption (`GalaxyIslandRegistrar
+.sizeRangeBox`, which must re-add to the island cache or the grid keeps the
+old box until restart), and claims size their box BEFORE the grid insert by
+mimicking `createIsland` (`new Island(...)` + `setRange` + cache add) instead
+of calling it. Both are legal because TradeWinds overrides
+`isEnforceEqualRanges()` to false - the hook was left in place for exactly
+this stage. Side effect worth knowing: band SETTING flags (PvP, monster
+spawns) now reach exactly the protection range, which is what the config
+comments always claimed they did.
+
+Respawn needed nothing: `ISLAND_RESPAWN` is a BentoBox world flag that
+defaults ON, so owners/members respawn at their claim; the islandless still
+hit `SpawnRespawnListener`'s spawn-port path.
+
+**`/tw sethome` and `/tw home`** (same day): both work ONLY while standing
+inside your own island's protection range - owner or team member. Ruled by
+Ben: homes are a convenience around the base, never a way home across the
+sea, so the no-teleport rule stands. Both lean on stock BentoBox home
+machinery (`setHomeLocation`, `homeTeleportAsync`); the only TradeWinds code
+is the gate, shared as `TWSetHomeCommand.islandUnderfoot`.
+
+**`/tw go` is now the one "go" verb** (ruled 2026-08-05): from another world
+it is still the door into the ocean; standing on your own island it steps
+you home (same move as `/tw home`); anywhere else at sea, if you have an
+island, it POINTS the way - eight-point bearing plus distance
+(`TWSpawnCommand.compassKey`, unit-tested) - and leaves the sailing to you.
+The islandless still get the original at-sea refusal. This also settles the
+bare-`/tw` question: `default-action: go` now does the right thing
+everywhere, and no config change is needed. Direction names live in the
+locale under `tradewinds.direction.*` (spelled north/south/..., never bare
+`n`/`no` - YAML 1.1 booleans). The 7b course mode (persistent bar, stars at
+night) will grow out of the same command.
+
+**`/twadmin rank <player> [rank|islands|reset]`** (same day): rank is DERIVED
+from the charted count, so the admin command stores the *difference* from the
+player's real chart as a persistent `chartedBonus` on `TWPlayerData` -
+promotion and demotion both work, `reset` clears it, and real charting keeps
+counting on top. Every consumer (rank, claim gate, leaderboard, placeholders)
+reads one number, `TWPlayerData.effectiveCharted()`, so an admin change is
+consistent everywhere at once. Built for testing the claim gate without
+sailing 36 islands; kept for event rewards.
+
+Also this session, pre-7a: **deepslate below Y 0** (vanilla look, deepslate
+ore variants free from the decoration pass); and confirmed in play that
+vanilla ores DO generate under our generator - `make-decorations: true` is
+all it takes.
+
+Still 7b (planned, not built): `/tw home`-style course-home toggle (NOT
+`/tw go`, which is the door into the ocean and already taken), member-only
+warp to/from the claim, unclaim (owner command, unregister semantics, team
+must be emptied first), ship's compass on the outfitter shelf.
+
 ## Known 26.2 quirk: clocks spin in every plugin world (2026-08-03)
 
 Not ours. Clocks spin (Nether-style) in the TradeWinds world AND in BSkyBlock's

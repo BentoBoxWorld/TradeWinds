@@ -15,24 +15,38 @@ import world.bentobox.tradewinds.galaxy.SecurityBand;
  */
 public enum EncounterType {
 
+    /**
+     * A shoal of pufferfish across your course: the SAFE bands' pinch of
+     * spice (ruled 2026-08-06). Not hostile - a HAZARD: swim through it, or
+     * lean too far over the gunwale, and you are stung and poisoned. A
+     * nuisance encounter: no booty, so there is nothing to farm, and it
+     * stays out of the rough bands where it would only dilute real danger.
+     */
+    PUFFER_SHOAL(List.of(EntityType.PUFFERFISH), Time.ANY, SecurityBand.SAFE, SecurityBand.POLICED, 2, 3,
+            false, Habitat.WATER, true),
     /** Slow swimmers that block the way ahead rather than chase - daytime nuisance. */
-    GUARDIAN_PICKET(List.of(EntityType.GUARDIAN), Time.DAY, SecurityBand.POLICED, 1, 2, false, Habitat.WATER),
+    GUARDIAN_PICKET(List.of(EntityType.GUARDIAN), Time.DAY, SecurityBand.POLICED, SecurityBand.ANARCHIC, 1, 2,
+            false, Habitat.WATER, false),
     /** Trident throwers: the real danger to a boat, after dark. */
-    DROWNED_RAIDERS(List.of(EntityType.DROWNED), Time.NIGHT, SecurityBand.POLICED, 2, 3, false, Habitat.WATER),
+    DROWNED_RAIDERS(List.of(EntityType.DROWNED), Time.NIGHT, SecurityBand.POLICED, SecurityBand.ANARCHIC, 2, 3,
+            false, Habitat.WATER, false),
     /**
      * The deep stirs: an elder guardian, far too much for a lone sailor to
      * fight lightly - the encounter where fleeing is the sensible answer.
      * (26.2's nautilus, zombie or not, is a tameable MOUNT, not a monster: it
      * simply swims away.)
      */
-    DEEP_TERROR(List.of(EntityType.ELDER_GUARDIAN), Time.ANY, SecurityBand.FRONTIER, 1, 1, false, Habitat.WATER),
+    DEEP_TERROR(List.of(EntityType.ELDER_GUARDIAN), Time.ANY, SecurityBand.FRONTIER, SecurityBand.ANARCHIC, 1,
+            1, false, Habitat.WATER, false),
     /** The sky is not safe either. */
-    PHANTOM_FLIGHT(List.of(EntityType.PHANTOM), Time.NIGHT, SecurityBand.FRONTIER, 2, 3, false, Habitat.AIR),
+    PHANTOM_FLIGHT(List.of(EntityType.PHANTOM), Time.NIGHT, SecurityBand.FRONTIER, SecurityBand.ANARCHIC, 2, 3,
+            false, Habitat.AIR, false),
     /** A crewed boat of raiders: NPC piracy, and a warning of the player kind. */
-    PIRATE_CREW(List.of(EntityType.PILLAGER, EntityType.PILLAGER), Time.ANY, SecurityBand.LAWLESS, 1, 1, true,
-            Habitat.SURFACE),
+    PIRATE_CREW(List.of(EntityType.PILLAGER, EntityType.PILLAGER), Time.ANY, SecurityBand.LAWLESS,
+            SecurityBand.ANARCHIC, 1, 1, true, Habitat.SURFACE, false),
     /** A potion-throwing witch adrift in her own boat. */
-    SEA_WITCH(List.of(EntityType.WITCH), Time.ANY, SecurityBand.LAWLESS, 1, 1, true, Habitat.SURFACE);
+    SEA_WITCH(List.of(EntityType.WITCH), Time.ANY, SecurityBand.LAWLESS, SecurityBand.ANARCHIC, 1, 1, true,
+            Habitat.SURFACE, false);
 
     /**
      * Where an encounter belongs relative to the waterline. Spawning a water
@@ -75,20 +89,24 @@ public enum EncounterType {
     private final List<EntityType> mobs;
     private final Time time;
     private final SecurityBand minBand;
+    private final SecurityBand maxBand;
     private final int min;
     private final int max;
     private final boolean boated;
     private final Habitat habitat;
+    private final boolean nuisance;
 
-    EncounterType(List<EntityType> mobs, Time time, SecurityBand minBand, int min, int max, boolean boated,
-            Habitat habitat) {
+    EncounterType(List<EntityType> mobs, Time time, SecurityBand minBand, SecurityBand maxBand, int min,
+            int max, boolean boated, Habitat habitat, boolean nuisance) {
         this.mobs = mobs;
         this.time = time;
         this.minBand = minBand;
+        this.maxBand = maxBand;
         this.min = min;
         this.max = max;
         this.boated = boated;
         this.habitat = habitat;
+        this.nuisance = nuisance;
     }
 
     public Habitat getHabitat() {
@@ -108,6 +126,22 @@ public enum EncounterType {
      */
     public SecurityBand getMinBand() {
         return minBand;
+    }
+
+    /**
+     * @return the roughest band this encounter still bothers with - a
+     *         nuisance has no place diluting real danger
+     */
+    public SecurityBand getMaxBand() {
+        return maxBand;
+    }
+
+    /**
+     * @return true for hazards rather than hunters: allowed to be
+     *         non-hostile, and worth no booty - nothing to farm
+     */
+    public boolean isNuisance() {
+        return nuisance;
     }
 
     public int getMin() {

@@ -35,6 +35,8 @@ public class NavigationBarTask implements Runnable {
 
     private final TradeWinds addon;
     private final Map<UUID, BossBar> bars = new ConcurrentHashMap<>();
+    /** Players with the course-home bar on (/tw go at sea toggles it). */
+    private final java.util.Set<UUID> course = ConcurrentHashMap.newKeySet();
     private BukkitTask task;
 
     public NavigationBarTask(TradeWinds addon) {
@@ -71,12 +73,78 @@ public class NavigationBarTask implements Runnable {
             GalaxyEngine engine = addon.getGalaxyEngine(addon.getOverWorld().getSeed());
             Optional<Reading> reading = reading(engine, player.getLocation().getBlockX(),
                     player.getLocation().getBlockZ(), addon.getSettings().getIslandDistance());
-            if (reading.isEmpty()) {
-                hide(player);
+            if (reading.isPresent()) {
+                show(player, reading.get());
                 continue;
             }
-            show(player, reading.get());
+            if (course.contains(player.getUniqueId()) && showCourse(player)) {
+                continue;
+            }
+            hide(player);
         }
+    }
+
+    /**
+     * Toggle the course-home bar for a player.
+     *
+     * @param player the player
+     * @return true if the course is now ON
+     */
+    public boolean toggleCourse(Player player) {
+        if (!course.remove(player.getUniqueId())) {
+            course.add(player.getUniqueId());
+            return true;
+        }
+        hide(player);
+        return false;
+    }
+
+    /**
+     * The course-home bar: read the sky, follow the number (Stage 7b). By
+     * day the sun gives only the QUARTER the wind should sit on - an
+     * eight-point direction; by night the stars give the exact distance too,
+     * so waiting for dark is rewarded, never required. Arriving in your own
+     * island's waters clears the course by itself.
+     *
+     * @return true if a course bar was shown
+     */
+    private boolean showCourse(Player player) {
+        var island = world.bentobox.tradewinds.travel.HomePort.islandOf(addon, player.getUniqueId())
+                .orElse(null);
+        if (island == null) {
+            course.remove(player.getUniqueId());
+            return false;
+        }
+        int px = player.getLocation().getBlockX();
+        int pz = player.getLocation().getBlockZ();
+        int dx = island.getCenter().getBlockX() - px;
+        int dz = island.getCenter().getBlockZ() - pz;
+        double dist = Math.hypot(dx, dz);
+        if (dist <= island.getProtectionRange()) {
+            // Landfall: the course has done its job
+            course.remove(player.getUniqueId());
+            User.getInstance(player).sendMessage("tradewinds.home.course-arrived");
+            return false;
+        }
+        User user = User.getInstance(player);
+        long time = player.getWorld().getTime();
+        boolean night = time >= 12542 && time <= 23460;
+        String direction = user.getTranslation(
+                world.bentobox.tradewinds.commands.TWSpawnCommand.compassKey(dx, dz));
+        Component name = night
+                ? user.getTranslationAsComponent("tradewinds.hud.course-night", "[direction]", direction,
+                        "[distance]", String.valueOf(Math.round(dist)))
+                : user.getTranslationAsComponent("tradewinds.hud.course-day", "[direction]", direction);
+        float progress = night
+                ? (float) Math.clamp(1.0 - dist / addon.getSettings().getCourseBarScale(), 0.0, 1.0)
+                : 1.0f;
+        BossBar bar = bars.computeIfAbsent(player.getUniqueId(),
+                id -> BossBar.bossBar(name, progress, BossBar.Color.WHITE, BossBar.Overlay.PROGRESS));
+        bar.name(name);
+        bar.progress(progress);
+        bar.color(night ? BossBar.Color.BLUE : BossBar.Color.WHITE);
+        player.showBossBar(bar);
+        return true;
     }
 
     /**

@@ -76,12 +76,55 @@ Each stage produces a testable, playable increment. Stages are sized so a stage 
 
 **Accept:** each rep transition triggers the right consequences; smuggler chase (scan → flee/fight/jettison) plays out correctly; police never drop loot and never leak entities; bounty pays exactly once.
 
-## Stage 7 — Player islands
-**Goal:** ownership. Largely existing BentoBox machinery.
+## Stage 7 — Player islands: wild-islet claiming
+**Goal:** ownership and faction bases. Decided 2026-08-04: players claim
+**existing wild islets** — no blueprints, no pasting, no random placement. The
+land is already there; claiming registers it. Islets never overlap trading
+islands (generator clearance), and any band is claimable. First claimed, first
+owned: pillaged, wrecked or built-on makes no difference. Two sessions.
 
-- Purchase command: sufficient balance → choose island blueprint → placement at a valid random position respecting minimum separation from all islands; standard island/team management, protection, and home warps thereafter.
+**7a — Seafarer ranks & the claim:**
+- **Rank service**: rank = charted-island count against a config threshold
+  table; names in the locale (`tradewinds.rank.<slug>`). Default table
+  (bottom lifted above the pre-charted starter cluster of 5): Deck Hand 0,
+  Cabin Scout 6, Coast Finder 8, Bay Explorer 10, Island Hopper 12, Reef
+  Runner 15, Wave Master 17, Chart Maker 20, Storm Navigator 25, Archipelago
+  Ace 30, Tide Captain 36, Horizon Hunter 42, Sea Sentinel 49, Salty
+  Commodore 56, Ocean Overlord 64, Pirate Pathfinder 72, Grand Admiral 81,
+  Globe Voyager 90, Mythic Mariner 100. (Calibration: ~36 ≈ explored past
+  Frontier, ~100 ≈ deep Anarchic.)
+- **Leaderboard + placeholders**: cached top-10 by charted count, updated on
+  chart events; PlaceholderAPI placeholders for own rank and the top list.
+  (Money cannot rank — Vault has no top-N and Bank hides value.)
+- **Claim command**: standing on an unclaimed wild islet, rank ≥ config gate
+  (default Tide Captain) and balance ≥ config price (default 150,000 — above
+  the Pale Oak Chest Boat's 110,250, so boats come first). Registers a real
+  BentoBox island centred on the islet, protection range from islet radius +
+  margin, default flags (players and admins customise after). Bank and team
+  machinery attach on their own; max team size is BentoBox perms — admin turf.
+- **Respawn**: BentoBox respawn-on-island default; islandless players respawn
+  at the spawn port.
 
-**Accept:** purchased islands appear in open ocean, never overlapping any range; AcidIsland-equivalent island life works.
+**7b — Living with a base:** (BUILT 2026-08-05 — see PROGRESS)
+- **`/tw go` shows the way home, never takes you.** Toggle: while on, a
+  persistent homing indicator (chart-hologram home marker + nav bar course) —
+  coarse 8-point direction by day, exact bearing and distance by night (read
+  the stars). Home renders on the Star Chart for all members.
+- **Member-only warp node**: the claimed islet joins its members' warp
+  dialogs (pinned entry, normal fuel cost); warping OUT triggers at the
+  claimed island's protection border like a port's ring. Non-members never
+  see it. No teleporting anywhere — the warp is the only fast route, exactly
+  as between ports.
+- **Unclaim**: owner-only command, admin-unregister semantics — blocks stay
+  exactly as left, islet becomes claimable again, no refund. Refuses while
+  the team has members: kicking everyone out first is the intended pain.
+- **Ship's compass** on the outfitter shelf: vanilla lodestone-bound compass
+  to the base. Physical, lossable, giftable.
+
+**Accept:** claim gate enforces rank and price; claimed islet protects and
+manages like an AcidIsland island; members (and only members) can warp to and
+from it on normal fuel; `/tw go` guides without teleporting; unclaim leaves
+every block and reopens the claim; rank names all come from the locale.
 
 ## Stage 7.5 — Salvage economy & free trading
 Scavengers, farmers and pirates need a market; the hold needs to carry NBT and

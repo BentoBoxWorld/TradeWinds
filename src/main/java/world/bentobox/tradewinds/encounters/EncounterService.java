@@ -39,13 +39,6 @@ public class EncounterService {
     /** PDC key marking encounter mobs (booty, cleanup). */
     public static final NamespacedKey ENCOUNTER_KEY = NamespacedKey.fromString("tradewinds:encounter");
 
-    /**
-     * How close before a boated crew abandons ship. Wider than the spawn
-     * distance, so crews disembark as soon as they sight their quarry: a mob
-     * riding a boat cannot reposition, and a witch lobbing potions from a
-     * fixed drifting platform simply throws them over the target's head.
-     */
-    private static final double BOARDING_RANGE = 30.0;
     /** How far encounter mobs keep hunting. */
     private static final double HUNT_RANGE = 48.0;
 
@@ -76,9 +69,10 @@ public class EncounterService {
     /**
      * Keep encounters dangerous: re-assert targets (mobs lose interest, and a
      * freshly spawned target is forgotten within moments) and put crews over
-     * the side when their quarry is close - a witch or pillager riding a boat
-     * cannot run its attack goals at all, which made the sea witch a harmless
-     * ornament.
+     * the side when their quarry is within their type's abandon-ship range -
+     * the witch immediately (she cannot throw from a drifting platform,
+     * which made the sea witch a harmless ornament), pirates only at
+     * boarding distance, so their crewed boat is actually seen at sea.
      */
     private void hunt() {
         if (addon.getOverWorld() == null) {
@@ -96,9 +90,18 @@ public class EncounterService {
                 if (mob.getTarget() == null || mob.getTarget().isDead()) {
                     mob.setTarget(player);
                 }
-                if (mob.getVehicle() instanceof Boat
-                        && mob.getLocation().distanceSquared(player.getLocation()) < BOARDING_RANGE * BOARDING_RANGE) {
-                    mob.leaveVehicle();
+                if (mob.getVehicle() instanceof Boat) {
+                    // Abandon ship per type (config): pirates fight from the
+                    // deck and only jump at boarding distance; the witch
+                    // bails wide - her potions overshoot from a drifting
+                    // platform. The old flat 30 was INSIDE the spawn
+                    // distance (28), so every crew ejected on its first tick
+                    // and no sailor ever saw a manned boat (playtest
+                    // 2026-08-05).
+                    double abandon = abandonRange(mob);
+                    if (mob.getLocation().distanceSquared(player.getLocation()) < abandon * abandon) {
+                        mob.leaveVehicle();
+                    }
                 }
             }
         }
@@ -178,13 +181,13 @@ public class EncounterService {
             Boat crewBoat = null;
             if (type.isBoated()) {
                 crewBoat = (Boat) at.getWorld().spawnEntity(at, EntityType.OAK_BOAT);
-                tag(crewBoat);
+                tag(crewBoat, type);
                 spawned.add(crewBoat);
             }
             for (EntityType mobType : type.getMobs()) {
                 Entity entity = at.getWorld().spawnEntity(at, mobType);
                 equip(entity, mobType);
-                tag(entity);
+                tag(entity, type);
                 if (entity instanceof Mob mob) {
                     mob.setTarget(player);
                     mob.setRemoveWhenFarAway(true);
@@ -217,7 +220,20 @@ public class EncounterService {
         }
     }
 
-    private void tag(Entity entity) {
-        entity.getPersistentDataContainer().set(ENCOUNTER_KEY, PersistentDataType.STRING, "encounter");
+    private void tag(Entity entity, EncounterType type) {
+        entity.getPersistentDataContainer().set(ENCOUNTER_KEY, PersistentDataType.STRING, type.name());
+    }
+
+    /**
+     * How close a player must be before THIS mob's crew abandons ship, from
+     * the config by encounter type. Ranged crews fight from the deck and only
+     * jump at boarding distance; the witch bails wide because her potions
+     * overshoot from a fixed platform. Mobs tagged before the type was
+     * recorded (or with a type since renamed) fall back to the old wide
+     * abandon.
+     */
+    double abandonRange(Entity entity) {
+        String type = entity.getPersistentDataContainer().get(ENCOUNTER_KEY, PersistentDataType.STRING);
+        return addon.getSettings().getEncounterAbandonShip().getOrDefault(type, 30);
     }
 }

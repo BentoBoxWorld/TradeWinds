@@ -47,6 +47,13 @@ class SpawnRespawnListenerTest extends CommonTestSetup {
         // The spawn island's spawn point: the market plaza
         when(im.getSpawnPoint(world)).thenReturn(new Location(world, 72.5, 73, 72.5));
         when(mockPlayer.getWorld()).thenReturn(world);
+        when(mockPlayer.isOnline()).thenReturn(true);
+        // The loaner is granted a tick after the respawn: run it inline
+        when(sch.runTask(org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(Runnable.class))).thenAnswer(inv -> {
+                    inv.getArgument(1, Runnable.class).run();
+                    return null;
+                });
         listener = new SpawnRespawnListener(addon);
         deathBed = new Location(world, 500, 42, 500);
     }
@@ -59,6 +66,21 @@ class SpawnRespawnListenerTest extends CommonTestSetup {
     void testBoatlessRespawnerGetsTheLoaner() {
         PlayerRespawnEvent event = new PlayerRespawnEvent(mockPlayer, deathBed, false, false);
         listener.onRespawn(event);
+        org.mockito.Mockito.verify(boats).createFor(mockPlayer, org.bukkit.Material.BAMBOO_RAFT);
+    }
+
+    @Test
+    void testIslandMembersKeepTheirIslandRespawn() {
+        // BentoBox's ISLAND_RESPAWN listener (NORMAL) already set the island
+        // home; this listener (HIGH) used to stomp it with the spawn plaza
+        // (playtest 2026-08-05). Island members must pass through untouched.
+        when(im.getIsland(world, uuid)).thenReturn(island);
+        Location islandHome = new Location(world, 45_000.5, 75, -8_000.5);
+        PlayerRespawnEvent event = new PlayerRespawnEvent(mockPlayer, islandHome, false, false);
+        listener.onRespawn(event);
+        assertEquals(islandHome, event.getRespawnLocation(),
+                "An island member's respawn must not be redirected to spawn");
+        // The loaner still applies - their real boat is where they died
         org.mockito.Mockito.verify(boats).createFor(mockPlayer, org.bukkit.Material.BAMBOO_RAFT);
     }
 

@@ -212,10 +212,42 @@ public class ChartHolograms {
                 .filter(hold -> worthMarking(player, hold, eye))
                 .ifPresent(hold -> boats.add(boatMarker(hold.getX(), hold.getZ(), eye.getBlockX(),
                         eye.getBlockZ(), radius, true)));
-        if (markers.isEmpty() && boats.isEmpty()) {
+        // HOME: a member's claimed islet rides on every raise of the chart -
+        // above the boat markers, because home is the longest bearing
+        BoatMarker home = HomePort.islandOf(addon, player.getUniqueId())
+                .map(island -> {
+                    BoatMarker m = boatMarker(island.getCenter().getBlockX(), island.getCenter().getBlockZ(),
+                            eye.getBlockX(), eye.getBlockZ(), radius, false);
+                    return new BoatMarker(m.dx(), m.dy() + 1.2, m.dz(), m.distance(), false);
+                })
+                .filter(m -> m.distance() > MARKER_MIN_DISTANCE)
+                .orElse(null);
+        if (markers.isEmpty() && boats.isEmpty() && home == null) {
             return;
         }
         List<TextDisplay> spawned = new ArrayList<>();
+        if (home != null) {
+            TextDisplay display = eye.getWorld().spawn(eye.clone().add(0, 1.0, 0), TextDisplay.class);
+            display.text(User.getInstance(player).getTranslationAsComponent("tradewinds.hologram.home",
+                    "[distance]", String.valueOf(home.distance())));
+            display.setBillboard(Billboard.CENTER);
+            display.setSeeThrough(true);
+            display.setBackgroundColor(Color.fromARGB(140, 60, 45, 0));
+            display.setPersistent(false);
+            display.setTeleportDuration(ZOOM_TICKS);
+            for (Player other : Bukkit.getOnlinePlayers()) {
+                if (!other.equals(player)) {
+                    other.hideEntity(addon.getPlugin(), display);
+                }
+            }
+            spawned.add(display);
+            Location target = eye.clone().add(home.dx(), home.dy(), home.dz());
+            Bukkit.getScheduler().runTask(addon.getPlugin(), () -> {
+                if (display.isValid()) {
+                    display.teleport(target);
+                }
+            });
+        }
         for (BoatMarker boat : boats) {
             TextDisplay display = eye.getWorld().spawn(eye.clone().add(0, 1.0, 0), TextDisplay.class);
             display.text(User.getInstance(player).getTranslationAsComponent(

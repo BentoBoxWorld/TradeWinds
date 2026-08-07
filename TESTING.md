@@ -199,8 +199,20 @@ behind it.
       hold opens with 2 slots.
 - [ ] With a boat **at the port**, buy a bigger hull: same hold, same cargo,
       more slots — and the hull you ride or carry visibly becomes the new type.
-- [ ] With your boat **elsewhere**, the yard refuses the refit and says to
-      bring the ship in.
+      No confirmation dialog — a trade-in takes nothing from you.
+- [ ] **The yard always sells** (rule change 2026-08-05): with your boat an
+      ocean away (die far off, respawn at spawn), the TL1 shipwright still
+      lists the raft and smaller hulls. Buying one shows the capture-style
+      confirmation, then: new boat in your pack, old boat UNOWNED where it
+      lies (chart still marks it, plate reads UNOWNED, another player can
+      take it, cargo aboard). Declining costs nothing.
+- [ ] **Moored refit** (regression, 2026-08-04): exit the boat at the dock,
+      shove it a dozen blocks so it drifts, walk to the trader, buy a bigger
+      hull — the moored boat at the dock visibly becomes the new type, name
+      plate intact. Also works if the hull lies about as a dropped **item**.
+- [ ] With your boat **elsewhere** (or moored beyond the island's protection
+      range), the yard refuses the refit and says to bring the ship in — and
+      takes no money.
 - [ ] Craft a bigger boat **by clicking the result** (not shift-clicking): the
       item has lore and right-click opens the hold. Repeat with shift-click.
       Crafting a smaller one is refused.
@@ -255,19 +267,86 @@ behind it.
 
 ---
 
+# Tier 3.5 — Seafarer ranks & islet claiming (~15 min, second account for two checks)
+
+New in Stage 7a. Claiming writes real BentoBox islands, so a bug here is a
+data bug - test on a throwaway world first.
+
+- [ ] `/tw rank` on a fresh account: **Deck Hand**, 5 islands charted (the
+      starter cluster), next rung Cabin Scout at 6.
+- [ ] Chart a sixth island (sail into its waters): promoted to Cabin Scout,
+      and you appear on the `/tw rank` top-ten board.
+- [ ] `/tw claim` at sea, at a port, and ashore on a trading island: all
+      refuse with "no wild islet underfoot".
+- [ ] On a wild islet below the rank gate: refused, message names Tide
+      Captain and 36 islands, no money taken.
+- [ ] `/twadmin rank <you>` reports rank, effective and real counts;
+      `/twadmin rank <you> tide-captain` promotes (check `/tw rank` and the
+      board agree); `... 0` demotes to Deck Hand; `... reset` returns to the
+      real chart. Tab-complete offers players, then rank slugs.
+- [ ] Gate passed (`/twadmin rank <you> tide-captain`) but broke: refused
+      with the price, no money taken.
+- [ ] With rank and money: **Land ho!** - money gone exactly once, and
+      whatever was already built on the islet is untouched.
+- [ ] Protection is islet-sized: you can build ashore and just offshore; a
+      second account cannot; a few boat-lengths out the second account can
+      build again (open ocean stays free).
+- [ ] Second account standing on the claimed islet: `/tw claim` refuses with
+      "already claimed". The owner on a fresh islet: refused - one island
+      per player.
+- [ ] Die without a bed: owner respawns on the claim (regression 2026-08-05:
+      the spawn-safety listener used to override this); an islandless
+      account respawns at the spawn port. Both still get the loaner raft
+      when their own boat is out of reach.
+- [ ] `/tw sethome` on your islet sets home (respawn lands there);
+      `/tw home` steps to it from across the islet. Both refuse at sea, at a
+      port, and on someone ELSE'S island - a team member on the island can
+      use both, a visitor can use neither.
+- [ ] `/tw go` is context-sensitive: on your island it steps you home; at
+      sea (with an island) it prints the bearing AND toggles the course bar;
+      islandless at sea it still refuses; from the lobby it still returns
+      you to the water you left.
+- [ ] **Course bar** (7b): by day it names only the direction; wait for
+      night and it adds the exact distance, and the bar fills as you close.
+      `/tw go` again turns it off. Entering an island's waters swaps to the
+      island bar; making landfall on your OWN island clears the course with
+      a message.
+- [ ] **Home warp** (7b): at any port border, the dialog's FIRST entry is
+      ⌂ your island, normal fuel price. A teammate sees it too; a stranger
+      never does. Warp home: arrive offshore facing the islet, no dialog
+      reopening on arrival. Row OUT across your claim's border: the dialog
+      offers your charted ports. With `/twadmin warpfail`, a failed home
+      warp drops you in the interstice and the free re-engage still says
+      your island's name.
+- [ ] **Ship's compass** (7b): at a FISHING outfitter, a member buys a
+      compass - it arrives named Ship's Compass and points at their islet
+      from across the sea (F3 check the direction). An islandless buyer
+      gets a plain compass pointing at the spawn port.
+- [ ] **Unclaim** (7b): refuses with a team member still aboard; owner alone
+      gets a confirmation, then the island record is gone - builds stay,
+      protection gone, and a second account can claim the same islet
+      (builds intact). No refund. `/tw unclaim` at the spawn island refuses
+      ("not a claim").
+- [ ] Claim an islet within sight of a port: either it succeeds, or it
+      refuses with the "port's waters" message - and refusal costs nothing.
+- [ ] Restart the server: the claim survives, protection intact, and the log
+      shows no "distance mismatch" or duplicate-island complaints.
+
+---
+
 # Tier 4 — Economy depth (~20 min)
 
-- [ ] Every price on every chart is a **whole coin** - no cents anywhere -
+- [x] Every price on every chart is a **whole coin** - no cents anywhere -
       and the market's figures match your balance line's formatting (both come
       from the server economy's own formatter now).
 - [ ] Buying then selling the same good at the same island always LOSES money,
       including on the cheapest goods (sand, stone, kelp) where rounding is
       proportionally largest.
-- [ ] Prices differ by island **type** (a farm sells food cheap) and by **tech**
+- [x] Prices differ by island **type** (a farm sells food cheap) and by **tech**
       (high tech sells metals cheap, pays more for ore).
-- [ ] Selling a lot of one category into one island visibly depresses its price,
+- [x] Selling a lot of one category into one island visibly depresses its price,
       and it recovers over an hour.
-- [ ] Tech shows everywhere an island is named: market, chart, warp tooltip,
+- [x] Tech shows everywhere an island is named: market, chart, warp tooltip,
       nav bar.
 - [ ] Contraband (sugar) sells only at FRONTIER or rougher, at a premium.
 - [ ] `/tw restart` when destitute: fresh kit, chart kept, hold emptied.
@@ -298,29 +377,67 @@ behind it.
 
 # Tier 6 — World, atmosphere, persistence (~20 min)
 
-- [ ] Islet biomes suit their sea: snowy in frozen water, desert and mangrove in
+- [ ] **Puffer shoal** (new 2026-08-06): loiter at sea in SAFE water
+      (~5-40 min at 0.5-2% per 45s roll — or bump encounters.chance.SAFE
+      temporarily): 2-3 pufferfish appear ahead with the "water prickles"
+      message. Swimming through stings and poisons; killing them drops at
+      most vanilla pufferfish, never booty. They never appear in FRONTIER
+      or rougher water.
+- [ ] **Pirate crews ride their boat** (regression, 2026-08-05): in Lawless+
+      water, when a PIRATE_CREW encounter spawns, the pillagers are IN the
+      boat and stay there while you keep your distance; they only jump out
+      when you close to ~10 blocks. Note whether they fire crossbows from
+      the deck - if they never do, raise `encounters.abandon-ship.PIRATE_CREW`
+      and treat the manned boat as arrival theatre. The witch still bails
+      out immediately (intended).
+- [ ] Lighting a completed ruined-portal frame prints the "sea between
+      seas" refusal - no portal blocks form, in either world.
+- [ ] **Interstice resources** (new 2026-08-05 — regenerate
+      `tradewinds_world_nether` first, placement knobs are needsReset).
+      Rig a warp failure (`/twadmin warpfail`) and look around the dark sea:
+      - [ ] Within a few hundred blocks: a soul-sand **wart shoal** with
+            nether wart growing on it; harvest and replant works; the rim is
+            wadable, not a cliff. Rarely, a shoal carries a crimson/warped
+            grove with shroomlights.
+      - [ ] Some braziers are **blaze pickets**: nether-brick crow's nest,
+            blazes spawning - fight from the boat, rods drop.
+      - [ ] **Glowstone clusters** hang from the ceiling lid, visible far
+            off across the water.
+      - [ ] **Quartz ore** in shoal cores and brazier roots, under the
+            waterline.
+      - [ ] A **wither watchtower** (they are ~1.5km apart - sail or rig
+            repeatedly): wither skeletons in the waterline room, doorway on
+            the north face, loot chest on the sealed floor above (bastion
+            treasure table - check it fills on first open), open top.
+      - [ ] A rigged failure never strands you INSIDE a shoal or tower -
+            always open water.
+      - [ ] The free re-engage still offers after any amount of lingering,
+            and ghast tears float where ghasts die.
+      - [ ] Nether wart and ghast tears occasionally drop as encounter booty
+            in the overworld.
+- [x] Islet biomes suit their sea: snowy in frozen water, desert and mangrove in
       warm. Cherry grove and pale garden exist somewhere.
-- [ ] Surfaces match the biome: desert sand over sandstone, badlands red sand
+- [x] Surfaces match the biome: desert sand over sandstone, badlands red sand
       over terracotta, mangrove mud, old-growth taiga podzol, peaks bare rock.
 - [ ] Roughly one islet in four carries a biome-appropriate structure (igloo,
       fossils, ruined portal, abandoned camp). Mushroom and pale garden islets
       never do.
-- [ ] **No jigsaw or structure blocks are visible** in any of them. A ruined
+- [x] **No jigsaw or structure blocks are visible** in any of them. A ruined
       portal still stands on its netherrack footing; a camp tent has no
       glowing blocks holding it up. (Find several - the camps and portals
       1/2/4/5 are the ones that carry connectors.)
-- [ ] Plaza amenities scale with tech: the galley everywhere, then furnace and
+- [x] Plaza amenities scale with tech: the galley everywhere, then furnace and
       stonecutter, smithing and grindstone, brewing, anvil, and at Tech 7 an
       enchanting table with bookshelves. All usable as a visitor, none
       breakable.
-- [ ] Border curtains: blue at the edge of island space, red at the warp ring,
+- [x] Border curtains: blue at the edge of island space, red at the warp ring,
       both passable. Colours follow `border.*`; nonsense values fall back rather
       than vanishing.
-- [ ] A failed warp: the interstice is lit by braziers, lidded, the ghasts are
+- [x] A failed warp: the interstice is lit by braziers, lidded, the ghasts are
       visible, and the free re-engage always works.
-- [ ] Restart mid-voyage: boats, cargo, fuel, ownership, chart and island stock
+- [x] Restart mid-voyage: boats, cargo, fuel, ownership, chart and island stock
       all survive.
-- [ ] Warp arrival never lands you inside terrain or on the quay.
+- [x] Warp arrival never lands you inside terrain or on the quay.
 
 ---
 

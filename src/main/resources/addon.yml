@@ -14,9 +14,10 @@ permissions:
     default: true
   tradewinds.island.spawn:
     description: >
-      Allow /tw go - the door into the ocean. It refuses while the player is
-      already at sea and returns them to the water they left, so it is not a
-      free warp home.
+      Allow /tw go - the door into the ocean, and the way home within the
+      rules. From outside it returns the player to the water they left; on
+      their own island it steps them to their home point; anywhere else at
+      sea it tells them the direction and distance home, never a ride.
     default: true
   tradewinds.island.warp:
     description: >
@@ -38,6 +39,31 @@ permissions:
     default: op
   tradewinds.island.restart:
     description: Allow restarting the trading career (config-capped)
+    default: true
+  tradewinds.island.rank:
+    description: Allow viewing Seafarer rank and the charted-islands top ten
+    default: true
+  tradewinds.island.claim:
+    description: >
+      Allow claiming a wild islet as a player island. The real gates are in
+      config - Seafarer rank (claims.minimum-rank) and price (claims.price) -
+      so this stays on by default; turn it off to disable claiming outright.
+    default: true
+  tradewinds.island.sethome:
+    description: >
+      Allow setting a home point on your own island - only while standing
+      inside its protection range (owner or team member).
+    default: true
+  tradewinds.island.home:
+    description: >
+      Allow teleporting to your home point - only while already standing on
+      your own island, so it is a convenience around the base and never a way
+      home across the sea.
+    default: true
+  tradewinds.island.unclaim:
+    description: >
+      Allow the owner to give a claimed islet back to the wild. Requires the
+      team to be emptied first; no refund; every block stays as it was left.
     default: true
   tradewinds.island.prices:
     description: >
@@ -76,6 +102,12 @@ permissions:
     default: op
   tradewinds.admin.priceaudit:
     description: Audit price coverage and write the report to price-audit.txt
+    default: op
+  tradewinds.admin.rank:
+    description: >
+      Inspect or set a player's Seafarer rank - stores an adjustment on top of
+      their real charted count, so promotion, demotion and reset all work and
+      the claim gate and leaderboard follow.
     default: op
   tradewinds.admin.reflag:
     description: Allow re-applying security-band flags to all islands

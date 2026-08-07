@@ -33,12 +33,21 @@ public class IntersticePortalListener implements Listener {
     }
 
     /**
-     * No portal blocks ever form (lighting an obsidian frame does nothing).
+     * No portal blocks ever form - but the refusal SPEAKS. Ruined portals
+     * are common ocean structures, so players complete and light them, and
+     * a silent non-answer reads as a bug; the message makes it a world rule
+     * (interstice plan, 2026-08-05).
      */
     @EventHandler(priority = EventPriority.LOWEST)
     public void onPortalCreate(PortalCreateEvent event) {
-        if (inTradeWindsWorld(event.getWorld())) {
-            event.setCancelled(true);
+        if (!inTradeWindsWorld(event.getWorld())) {
+            return;
+        }
+        event.setCancelled(true);
+        if (event.getReason() == PortalCreateEvent.CreateReason.FIRE
+                && event.getEntity() instanceof org.bukkit.entity.Player player) {
+            world.bentobox.bentobox.api.user.User.getInstance(player)
+                    .sendMessage("tradewinds.interstice.no-portal");
         }
     }
 

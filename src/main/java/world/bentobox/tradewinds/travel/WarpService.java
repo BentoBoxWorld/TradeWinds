@@ -65,7 +65,8 @@ public class WarpService {
     public List<Destination> destinations(Player player, IslandSpec origin, double fuelAboard) {
         GalaxyEngine engine = addon.getGalaxyEngine(addon.getOverWorld().getSeed());
         RouteGraph routes = addon.getRouteGraph();
-        return addon.getPlayerDataManager().get(player.getUniqueId()).getChartedIslands().stream()
+        List<Destination> ports = addon.getPlayerDataManager().get(player.getUniqueId()).getChartedIslands()
+                .stream()
                 .map(key -> key.split(","))
                 .map(cell -> engine.islandInCell(Integer.parseInt(cell[0]), Integer.parseInt(cell[1])))
                 .flatMap(java.util.Optional::stream)
@@ -77,6 +78,18 @@ public class WarpService {
                     return new Destination(spec, cost, cost <= fuelAboard);
                 })
                 .toList();
+        // A member's claimed islet is a warp node for THEM: pinned at the
+        // top, normal fuel rules, invisible to everyone else (Stage 7b)
+        java.util.Optional<IslandSpec> home = HomePort.specFor(addon, user(player)).filter(
+                spec -> !(spec.cellX() == origin.cellX() && spec.cellZ() == origin.cellZ()));
+        if (home.isEmpty()) {
+            return ports;
+        }
+        List<Destination> all = new java.util.ArrayList<>();
+        int cost = routes.cost(origin, home.get());
+        all.add(new Destination(home.get(), cost, cost <= fuelAboard));
+        all.addAll(ports);
+        return all;
     }
 
     /**
@@ -108,13 +121,30 @@ public class WarpService {
 
     private ActionButton button(Player player, IslandSpec origin, Destination dest) {
         IslandSpec spec = dest.island();
+        String distance = String.valueOf((int) Math.sqrt(spec.distanceSquared(origin.centerX(),
+                origin.centerZ())));
+        if (HomePort.isHome(spec)) {
+            // A home has no port sheet - no type, no tech, no market
+            Component homeLabel = user(player).getTranslationAsComponent(
+                    dest.affordable() ? "tradewinds.ui.warp.home" : "tradewinds.ui.warp.home-poor",
+                    "[name]", spec.name(), "[fuel]", String.valueOf(dest.fuelCost()));
+            Component homeTooltip = user(player).getTranslationAsComponent(
+                    "tradewinds.ui.warp.home-tooltip", "[distance]", distance);
+            return ActionButton.create(homeLabel, homeTooltip, 250, DialogAction.customClick(
+                    (response, audience) -> {
+                        if (dest.affordable()) {
+                            warp(player, origin, spec, dest.fuelCost());
+                        } else {
+                            user(player).sendMessage("tradewinds.warp.not-enough-fuel");
+                        }
+                    }, ClickCallback.Options.builder().build()));
+        }
         Component label = user(player).getTranslationAsComponent(
                 dest.affordable() ? "tradewinds.ui.warp.destination" : "tradewinds.ui.warp.destination-poor",
                 "[name]", spec.name(), "[fuel]", String.valueOf(dest.fuelCost()));
         Component tooltip = user(player).getTranslationAsComponent("tradewinds.ui.warp.destination-tooltip",
                 "[type]", spec.type().name(), "[tech]", String.valueOf(spec.techLevel()),
-                "[band]", spec.band().getDisplayName(), "[distance]",
-                String.valueOf((int) Math.sqrt(spec.distanceSquared(origin.centerX(), origin.centerZ()))));
+                "[band]", spec.band().getDisplayName(), "[distance]", distance);
         DialogAction action = DialogAction.customClick(
                 (response, audience) -> {
                     if (dest.affordable()) {
@@ -238,14 +268,23 @@ public class WarpService {
         Location target = SeaArrival.openSeaOutward(addon.getGalaxyEngine(addon.getOverWorld().getSeed()),
                 addon.getOverWorld(), to.centerX(), to.centerZ(), arrive[0], arrive[1],
                 addon.getSettings().getSeaHeight());
-        // Face the boat (and the sailor) at the destination's PIER: paddling
-        // straight ahead from a warp arrival is always the way in
-        world.bentobox.tradewinds.galaxy.DockPlan plan = addon
-                .getGalaxyEngine(addon.getOverWorld().getSeed()).dockPlan(to);
-        // The dock FLAG: the banner at the pier end, which is what a sailor
-        // actually steers for (IslandDecorator plants it 2 blocks short)
-        double pierX = to.centerX() + Math.cos(plan.bearing()) * (plan.dockEnd() - 2);
-        double pierZ = to.centerZ() + Math.sin(plan.bearing()) * (plan.dockEnd() - 2);
+        // Face the boat (and the sailor) at the way in: the destination's
+        // PIER for a port - paddling straight ahead from a warp arrival is
+        // always the way in - or the islet's centre for a home, which has no
+        // dock to steer for
+        double pierX;
+        double pierZ;
+        if (HomePort.isHome(to)) {
+            pierX = to.centerX();
+            pierZ = to.centerZ();
+        } else {
+            world.bentobox.tradewinds.galaxy.DockPlan plan = addon
+                    .getGalaxyEngine(addon.getOverWorld().getSeed()).dockPlan(to);
+            // The dock FLAG: the banner at the pier end, which is what a sailor
+            // actually steers for (IslandDecorator plants it 2 blocks short)
+            pierX = to.centerX() + Math.cos(plan.bearing()) * (plan.dockEnd() - 2);
+            pierZ = to.centerZ() + Math.sin(plan.bearing()) * (plan.dockEnd() - 2);
+        }
         // The plain look-at yaw IS correct: the console proved it (computed
         // 45.8 where the sailor's own F3 read 46.3 for the right heading).
         // The quarter-turn "hull offset" of the first fix was chasing a

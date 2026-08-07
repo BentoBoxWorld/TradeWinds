@@ -42,6 +42,16 @@ tradewinds:
       description: "restart your trading career (limited uses)"
     fine:
       description: "settle your criminal record at a port (returns you to Clean)"
+    rank:
+      description: "your Seafarer rank and the top ten sailors by islands charted"
+    claim:
+      description: "claim the wild islet you are standing on as your island"
+    sethome:
+      description: "set your home point (while standing on your own island)"
+    home:
+      description: "step to your home point (while standing on your own island)"
+    unclaim:
+      description: "give your claimed islet back to the wild (owner only, team must be empty, no refund)"
     admin:
       help:
         description: "admin command for TradeWinds"
@@ -81,6 +91,11 @@ tradewinds:
         parameters: "<player>"
         rigged: "<gold>[name]'s next warp will fail. Run this again to clear it.</gold>"
         cleared: "<green>[name]'s warp is no longer rigged.</green>"
+      rank:
+        description: "inspect or set a player's Seafarer rank (by rank name, island count, or 'reset')"
+        parameters: "<player> [rank|islands|reset]"
+        current: "<aqua>[name]</aqua><gray> is a </gray><gold>[rank]</gold><gray> - [number] islands ([real] charted, [bonus] adjustment).</gray>"
+        unknown-rank: "<red>No such rank: [name]. Use a rank slug from the config, an island count, or 'reset'.</red>"
       reflag:
         description: "re-apply security-band flags to all trading islands"
         done: "<green>Re-applied band flags to [number] trading islands.</green>"
@@ -125,6 +140,67 @@ tradewinds:
     escaped: "<gold>Open water. [name] loses you - but its harbourmaster will not forget.</gold>"
     called-off: "<gray>[name]'s patrol gives up the search and turns for home. You still have the cargo.</gray>"
     caught: "<dark_red>Boarded. [number] items seized, [amount] in fines, and [name] has your name.</dark_red>"
+  rank:
+    # Seafarer rank names, one per slug in config ranks.thresholds
+    deck-hand: "Deck Hand"
+    cabin-scout: "Cabin Scout"
+    coast-finder: "Coast Finder"
+    bay-explorer: "Bay Explorer"
+    island-hopper: "Island Hopper"
+    reef-runner: "Reef Runner"
+    wave-master: "Wave Master"
+    chart-maker: "Chart Maker"
+    storm-navigator: "Storm Navigator"
+    archipelago-ace: "Archipelago Ace"
+    tide-captain: "Tide Captain"
+    horizon-hunter: "Horizon Hunter"
+    sea-sentinel: "Sea Sentinel"
+    salty-commodore: "Salty Commodore"
+    ocean-overlord: "Ocean Overlord"
+    pirate-pathfinder: "Pirate Pathfinder"
+    grand-admiral: "Grand Admiral"
+    globe-voyager: "Globe Voyager"
+    mythic-mariner: "Mythic Mariner"
+    # /tw rank output
+    own: "<aqua>You are a </aqua><gold>[rank]</gold><aqua> - [number] islands charted.</aqua>"
+    next: "<gray>Next: </gray><yellow>[rank]</yellow><gray> - [number] more islands.</gray>"
+    top-of-ladder: "<gold>The ladder has no rung above you. The sea is yours.</gold>"
+    board-header: "<aqua>Most travelled sailors:</aqua>"
+    board-entry: "<yellow>[place]. </yellow><white>[name]</white><gray> - [number] islands ([rank])</gray>"
+  claim:
+    success: "[title]<gold>Land ho!</gold>[subtitle]<aqua>This islet is yours.</aqua><green>The islet is yours for [price]. Invite your crew with the team commands - and defend what is yours.</green>"
+    not-on-islet: "<red>No wild islet underfoot. Stand on the islet you mean to claim.</red>"
+    already-claimed: "<red>This islet is already claimed.</red>"
+    has-island: "<red>You already belong to an island. Unclaim or leave it first.</red>"
+    rank-too-low: "<red>No harbourmaster deals land to an unproven sailor: claiming needs the rank of </red><gold>[rank]</gold><red> ([number] islands charted - you have [charted]).</red>"
+    no-economy: "<red>No economy is running - claiming is disabled on this server.</red>"
+    cannot-afford: "<red>Land costs money: [price], paid in full at the claim.</red>"
+    waters-taken: "<red>These are a port's waters - claim an islet further from the trading lanes.</red>"
+  home:
+    no-island: "<red>You have no island. Claim a wild islet first.</red>"
+    not-on-island: "<red>Only aboard your own island. Homes are arranged from the shore, not commanded across the sea.</red>"
+    set: "<green>Home set. You will respawn here, and </green><yellow>/tw home</yellow><green> steps here while you are on the island.</green>"
+    teleported: "<aqua>You are home.</aqua>"
+    bearing: "<aqua>Home lies to the </aqua><gold>[direction]</gold><aqua>, </aqua><white>[number]</white><aqua> blocks away. Fair winds.</aqua>"
+    port-name: "Home"
+    course-on: "<gray>Course set. By day the sun gives the quarter; by night the stars give the distance too. </gray><yellow>/tw go</yellow><gray> again to put the sky away.</gray>"
+    course-off: "<gray>You stop watching the sky.</gray>"
+    course-arrived: "<green>Home waters. The course has done its job.</green>"
+  unclaim:
+    owner-only: "<red>Only the owner can give an island back to the wild.</red>"
+    not-a-claim: "<red>This island was never a claimed islet - it is not yours to drop.</red>"
+    team-first: "<red>Your crew still holds this island. Kick every member first - unclaiming is meant to hurt.</red>"
+    confirm: "<gold>Give the islet back to the wild? No refund. Everything built stays, and the first sailor to land may claim it all.</gold>"
+    done: "<green>The islet is wild again. What you built stands - until someone else claims it.</green>"
+  direction:
+    north: "north"
+    north-east: "north-east"
+    east: "east"
+    south-east: "south-east"
+    south: "south"
+    south-west: "south-west"
+    west: "west"
+    north-west: "north-west"
   band:
     safe: "<blue>Safe</blue>"
     policed: "<green>Policed</green>"
@@ -136,11 +212,14 @@ tradewinds:
     low-chat: "<gold>Low fuel at this port.</gold><gray> You have [fuel] units; the cheapest warp from here needs [needed]. Buy at least [number] more from the market before you leave, or you will be rowing.</gray>"
   hud:
     navigation: "<aqua>[name]</aqua><white> | </white><gray>Tech [tech]</gray><white> | </white>[band]<white> | [standing] | </white><yellow>Dock [distance]m</yellow>"
+    course-day: "<white>By the sun: home lies to the </white><gold>[direction]</gold><white>. The stars will tell you more.</white>"
+    course-night: "<aqua>By the stars: home lies to the </aqua><gold>[direction]</gold><aqua>, </aqua><yellow>[distance] blocks</yellow>"
   hologram:
     island: "<aqua>[name]</aqua><newline><gray>[type] T[tech], </gray>[band]<newline><yellow>[distance]m</yellow>"
     boat: "<green><bold>BOAT</bold></green><newline><yellow>[distance]m</yellow>"
     old-boat: "<red><bold>OLD BOAT</bold></red><newline><yellow>[distance]m</yellow>"
     dock: "<gold><bold>DOCK</bold></gold><newline><gray>[name]</gray><newline><yellow>[distance]m</yellow>"
+    home: "<gold><bold>HOME</bold></gold><newline><yellow>[distance]m</yellow>"
   ui:
     capture:
       title: "<dark_aqua>The [material]</dark_aqua>"
@@ -191,7 +270,7 @@ tradewinds:
       outfitter-title: "<dark_aqua>[name] - Outfitter</dark_aqua>"
       outfitter-body: "<gray>Stores for the sailing life - food, fuel and gear</gray>"
       shipwright-title: "<dark_aqua>[name] - Shipwright</dark_aqua>"
-      shipwright-body: "<gray>Upgrades only: your old boat is taken in and broken up, your cargo stays aboard. Smart sailors craft rare-wood boats instead of paying.</gray>"
+      shipwright-body: "<gray>With your ship at the quay, a bigger hull is a trade-in: old hull broken up, your cargo stays aboard. Anything else is bought outright - your old boat is left unowned wherever it lies. Smart sailors craft rare-wood boats instead of paying.</gray>"
       sell-pick: "<white>[material]</white><gray> x[amount]</gray>"
       sell-pick-tooltip: "<gray>[price] each. This port will take about [depth] more at that price.</gray>"
       sell-qty-one: "<yellow>Sell 1</yellow><gray> - [price]</gray>"
@@ -206,7 +285,7 @@ tradewinds:
       buy-batch: "<aqua>x[amount] - [price]</aqua>"
       buy-tooltip-each: "<gray>[price] each; limited by balance and hold space</gray>"
       outfit-one: "<green>[material] x1 - [price]</green>"
-      outfit-batch: "<green>x[amount] - [price]</green>"
+      outfit-batch: "<green>[material] x[amount] - [price]</green>"
       outfit-tooltip: "<gray>[price] each - carried in your pack, not the hold</gray>"
       hull: "<gold>[material] - [price]</gold>"
       hull-tooltip: "<gray>[slots] cargo slots. Replaces your current boat; contents stay put.</gray>"
@@ -224,6 +303,9 @@ tradewinds:
       destination: "<white>[name] - [fuel] fuel</white>"
       destination-poor: "<dark_gray>[name] - [fuel] fuel</dark_gray>"
       destination-tooltip: "<gray>[type] (Tech [tech]), [band], [distance] blocks</gray>"
+      home: "<gold>⌂ [name] - [fuel] fuel</gold>"
+      home-poor: "<dark_gray>⌂ [name] - [fuel] fuel</dark_gray>"
+      home-tooltip: "<gray>Your island, [distance] blocks. Members only - nobody else ever sees this entry.</gray>"
     interstice:
       title: "<dark_purple>The Interstice</dark_purple>"
       body: "<gray>Dark water, and something screaming above it. Your course is still paid for.</gray>"
@@ -241,6 +323,8 @@ tradewinds:
     expander-lore: "<gray>Expands your hold. Right-click to open.</gray>"
     stamp: "<dark_aqua>Customs Stamped</dark_aqua>"
     starchart: "<aqua>Star Chart</aqua>"
+    ships-compass: "<gold>Ship's Compass</gold>"
+    ships-compass-lore: "<gray>Points to your island, from anywhere. Guard it - or gift it to a crewmate.</gray>"
     expander-view: "<dark_aqua>Cargo Expander</dark_aqua>"
   chart:
     charted: "[actionbar]<aqua>Charted <white>[name]</white>!</aqua>"
@@ -314,8 +398,9 @@ tradewinds:
     not-at-market: "<red>There is no market here - trade within an island's protection range.</red>"
     nothing-of-that: "<red>Nothing of that in your hold.</red>"
     boat-bought: "<gold>[material] purchased for [price] - [slots] cargo slots. Your old boat was broken up; your cargo is aboard.</gold>"
+    boat-bought-first: "<gold>[material] purchased for [price] - [slots] cargo slots. She is in your pack: find water and set her down.</gold>"
+    boat-replaced: "<gold>[material] purchased for [price] - [slots] cargo slots, in your pack.</gold><yellow> Your [old] and everything aboard is left unowned where it lies - </yellow><white>/tw chart</white><yellow> remembers the spot, but so might someone else.</yellow>"
     boat-not-here: "<red>Your ship is not at this port - bring it into the island's waters to trade.</red>"
-    refit-needs-ship: "<red>The yard cannot refit a ship that is not here - bring it into the island's waters.</red>"
     boat-not-sold-here: "<red>This yard cannot sell you that boat.</red>"
     boat-crafted: "<gold>You fit out the [material] - [slots] cargo slots. Your old boat is broken up; your cargo is aboard.</gold>"
     craft-smaller-refused: "<red>That boat is no bigger than yours - you would be burning good wood to shrink your hold.</red>"
@@ -344,7 +429,9 @@ tradewinds:
     expander-cap: "<red>Your boat cannot take any more expanders.</red>"
   interstice:
     stranded: "<dark_red>The warp collapses! Dark water, and screaming above it.</dark_red>"
+    no-portal: "<dark_purple>The frame drinks the flame and goes cold. The sea between seas does not open to fire and stone.</dark_purple>"
   encounter:
+    puffer_shoal: "<yellow>The water ahead prickles - a shoal of pufferfish across your course. Mind your hands.</yellow>"
     guardian_picket: "<dark_aqua>Guardians rise in your path.</dark_aqua>"
     drowned_raiders: "<dark_aqua>Drowned surface off the bow - some carry tridents.</dark_aqua>"
     deep_terror: "<dark_purple>Something vast and ancient rises from the deep. Run.</dark_purple>"

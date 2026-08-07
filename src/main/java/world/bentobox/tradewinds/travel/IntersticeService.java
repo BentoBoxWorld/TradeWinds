@@ -58,6 +58,9 @@ public class IntersticeService {
     /** Room a ghast needs under the interstice ceiling - they are 4 blocks tall. */
     private static final int GHAST_CLEARANCE = 6;
 
+    /** Pending-destination marker for a home warp: not a galaxy cell. */
+    private static final String HOME_PENDING = "home";
+
     /** Player -> the destination cell they are still owed, free of charge. */
     private final Map<UUID, String> pendingDestination = new ConcurrentHashMap<>();
     private final Map<UUID, Long> lastPrompt = new ConcurrentHashMap<>();
@@ -148,16 +151,20 @@ public class IntersticeService {
         if (addon.getNetherWorld() == null) {
             return;
         }
-        pendingDestination.put(player.getUniqueId(), to.cellX() + "," + to.cellZ());
+        // A home destination is not a galaxy cell: mark it, and resolve it
+        // back through the player's island on re-engage (Stage 7b)
+        pendingDestination.put(player.getUniqueId(),
+                HomePort.isHome(to) ? HOME_PENDING : to.cellX() + "," + to.cellZ());
         // Partway along the route (seeded-ish: middle third)
         double fraction = 0.35 + Math.random() * 0.3;
         int x = (int) Math.round(from.centerX() + (to.centerX() - from.centerX()) * fraction);
         int z = (int) Math.round(from.centerZ() + (to.centerZ() - from.centerZ()) * fraction);
         // Open water here too: the interstice has its own sea floor, and
-        // dropping a castaway inside it would be the same suffocation bug
-        // No galaxy in the interstice: no islands, no docks, and a floor that
-        // cannot reach the surface, so the intended point always serves
-        Location target = SeaArrival.openSeaNear(null, addon.getNetherWorld(), x, z,
+        // dropping a castaway inside it would be the same suffocation bug.
+        // The interstice now HAS land (wart shoals) and masonry (watchtowers)
+        // - the feature map is the column test the galaxy cannot provide
+        var map = addon.getIntersticeMap(addon.getNetherWorld().getSeed());
+        Location target = SeaArrival.openSeaNear(map::isOpenWater, addon.getNetherWorld(), x, z,
                 addon.getSettings().getIntersticeSeaHeight());
 
         Entity vehicle = player.getVehicle();
@@ -416,6 +423,11 @@ public class IntersticeService {
         String cell = pendingDestination.get(player.getUniqueId());
         if (cell == null) {
             return Optional.empty();
+        }
+        if (HOME_PENDING.equals(cell)) {
+            // Unclaimed while stranded -> empty, and the caller falls back
+            // to the nearest charted island: nobody is ever stranded
+            return HomePort.specFor(addon, User.getInstance(player));
         }
         String[] parts = cell.split(",");
         return addon.getGalaxyEngine(addon.getOverWorld().getSeed())

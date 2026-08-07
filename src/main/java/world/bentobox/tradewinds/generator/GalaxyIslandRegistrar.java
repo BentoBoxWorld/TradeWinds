@@ -83,6 +83,7 @@ public class GalaxyIslandRegistrar implements Listener {
                 existing.setName(spec.name());
             }
             applyBandFlags(existing, spec);
+            sizeRangeBox(existing);
             return existing;
         }
         Island island = addon.getIslands().createIsland(center, null);
@@ -93,6 +94,7 @@ public class GalaxyIslandRegistrar implements Listener {
         }
         island.setName(spec.name());
         applyBandFlags(island, spec);
+        sizeRangeBox(island);
         if (island.getMetaData().isEmpty()) {
             island.setMetaData(new HashMap<>());
         }
@@ -101,6 +103,27 @@ public class GalaxyIslandRegistrar implements Listener {
         addon.log("Registered trading island '" + spec.name() + "' (" + spec.type() + ", " + spec.band() + ") at "
                 + spec.centerX() + "," + spec.centerZ());
         return island;
+    }
+
+    /**
+     * Size a trading island's BentoBox range box to its protection range.
+     * <p>
+     * {@code createIsland} hands out the full island-distance box (1000 -> a
+     * 2000-block square), which reserved the whole neighbourhood: no Stage 7
+     * islet claim could fit within ~1.1km of any port. The band flag configs
+     * always documented themselves as applying "inside the protection range",
+     * so the small box is what the settings promised all along. Adopted
+     * islands from older sessions are shrunk and re-gridded here too.
+     */
+    private void sizeRangeBox(Island island) {
+        int protection = addon.getSettings().getIslandProtectionRange();
+        if (island.getRange() != protection) {
+            island.setRange(protection);
+            // Re-add: the grid keeps the box from insertion time, so without
+            // this the sea only frees up after a restart
+            addon.getIslands().getIslandCache().addIsland(island);
+            world.bentobox.bentobox.managers.IslandsManager.saveIsland(island);
+        }
     }
 
     /**

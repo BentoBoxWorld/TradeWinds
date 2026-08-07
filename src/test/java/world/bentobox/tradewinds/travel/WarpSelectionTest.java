@@ -52,6 +52,8 @@ class WarpSelectionTest extends CommonTestSetup {
         when(addon.getOverWorld()).thenReturn(world);
         when(world.getSeed()).thenReturn(SEED);
         when(addon.getRouteGraph()).thenReturn(new RouteGraph(0.01, Map.of()));
+        // No claimed island: the home pin (Stage 7b) stays out of these tests
+        when(addon.getIslands()).thenReturn(im);
         PlayerDataManager pdm = mock(PlayerDataManager.class);
         when(addon.getPlayerDataManager()).thenReturn(pdm);
         data = new TWPlayerData(uuid.toString());

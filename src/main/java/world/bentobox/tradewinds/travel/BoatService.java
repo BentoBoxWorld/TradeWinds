@@ -169,25 +169,49 @@ public class BoatService {
     }
 
     /**
+     * The record's placed avatar in the world, if any is loaded: the Boat
+     * entity it rides as, or the dropped item that carries its stamp.
+     * <p>
+     * Found by IDENTITY across the world's loaded entities, never by a box
+     * around the last-remembered position - a dismounted boat glides and
+     * drifts, so position boxes miss and then the caller mutates a record
+     * whose hull it never touched (the moored-refit bug, 2026-08-04: the
+     * yard sold a spruce hull and the oak boat kept floating at the dock).
+     * A hit also re-remembers the position, so the chart heals as a side
+     * effect of anyone looking.
+     *
+     * @param hold the boat
+     * @return its placed avatar, or empty if none is loaded
+     */
+    public Optional<Entity> findPlaced(BoatHold hold) {
+        if (hold.getWorld() == null || hold.getWorld().isEmpty()) {
+            return Optional.empty();
+        }
+        org.bukkit.World world = Bukkit.getWorld(hold.getWorld());
+        if (world == null) {
+            return Optional.empty();
+        }
+        for (Boat boat : world.getEntitiesByClass(Boat.class)) {
+            if (hold.getUniqueId().equals(boatId(boat))) {
+                addon.getHoldManager().rememberPosition(hold, boat.getLocation());
+                return Optional.of(boat);
+            }
+        }
+        for (org.bukkit.entity.Item item : world.getEntitiesByClass(org.bukkit.entity.Item.class)) {
+            if (hold.getUniqueId().equals(boatId(item.getItemStack()))) {
+                addon.getHoldManager().rememberPosition(hold, item.getLocation());
+                return Optional.of(item);
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
      * Re-read the label of whatever avatar this record has in the world, if
      * it is loaded.
      */
     public void relabel(BoatHold hold) {
-        if (hold.getWorld() == null || hold.getWorld().isEmpty()) {
-            return;
-        }
-        org.bukkit.World world = Bukkit.getWorld(hold.getWorld());
-        if (world == null) {
-            return;
-        }
-        Location where = new Location(world, hold.getX(), hold.getY(), hold.getZ());
-        if (!world.isChunkLoaded(where.getBlockX() >> 4, where.getBlockZ() >> 4)) {
-            return;
-        }
-        world.getNearbyEntities(where, 4, 4, 4).stream()
-                .filter(Boat.class::isInstance)
-                .filter(e -> hold.getUniqueId().equals(boatId(e)))
-                .forEach(e -> label(e, hold));
+        findPlaced(hold).ifPresent(e -> label(e, hold));
     }
 
     // ------------------------------------------------------------- ownership
@@ -237,25 +261,30 @@ public class BoatService {
                 return;
             }
         }
-        // Moored alongside: replace the hull where it floats
-        org.bukkit.World world = Bukkit.getWorld(hold.getWorld());
-        if (world != null && world.isChunkLoaded(hold.getX() >> 4, hold.getZ() >> 4)) {
-            Location where = new Location(world, hold.getX(), hold.getY(), hold.getZ());
-            world.getNearbyEntities(where, 6, 6, 6).stream().filter(Boat.class::isInstance)
-                    .filter(e -> hold.getUniqueId().equals(boatId(e))).findFirst().ifPresent(old -> {
-                        Location at = old.getLocation();
-                        old.remove();
-                        Material type = Material.matchMaterial(hold.getMaterial());
-                        org.bukkit.entity.EntityType entityType;
-                        try {
-                            entityType = org.bukkit.entity.EntityType
-                                    .valueOf(type == null ? "OAK_BOAT" : type.name());
-                        } catch (IllegalArgumentException e) {
-                            entityType = org.bukkit.entity.EntityType.OAK_BOAT;
-                        }
-                        stamp(at.getWorld().spawnEntity(at, entityType), hold);
-                    });
-        }
+        // Moored alongside (or lying about as a dropped item): swap the hull
+        // where it actually is, found by identity - never by where the chart
+        // last saw it, because dismounted boats glide and drift
+        findPlaced(hold).ifPresentOrElse(placed -> {
+            if (placed instanceof Boat old) {
+                Location at = old.getLocation();
+                old.remove();
+                org.bukkit.entity.EntityType entityType;
+                try {
+                    entityType = org.bukkit.entity.EntityType.valueOf(material.name());
+                } catch (IllegalArgumentException e) {
+                    entityType = org.bukkit.entity.EntityType.OAK_BOAT;
+                }
+                stamp(at.getWorld().spawnEntity(at, entityType), hold);
+                addon.getHoldManager().rememberPosition(hold, at);
+            } else if (placed instanceof org.bukkit.entity.Item item) {
+                ItemStack stack = item.getItemStack();
+                stack.setType(material);
+                stamp(stack, hold);
+                item.setItemStack(stack);
+            }
+        }, () -> addon.logWarning("Refit paid for boat " + hold.getUniqueId()
+                + " but no hull was loaded to swap - record now says " + hold.getMaterial()
+                + " over the old hull. Should be impossible: the purchase gate saw the hull moments ago."));
     }
 
     /**

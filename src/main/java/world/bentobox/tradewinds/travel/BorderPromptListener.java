@@ -76,7 +76,11 @@ public class BorderPromptListener implements Listener {
         if (!player.getWorld().equals(addon.getOverWorld())) {
             return;
         }
-        Optional<IslandSpec> origin = originIslandNearBorder(x, z);
+        Optional<IslandSpec> origin = originIslandNearBorder(x, z)
+                // A member's claimed islet is a warp node too (Stage 7b):
+                // its protection border offers the dialog exactly like a
+                // port's - but only to its own members
+                .or(() -> homeBorder(player, x, z));
         if (origin.isEmpty()) {
             return;
         }
@@ -103,6 +107,24 @@ public class BorderPromptListener implements Listener {
      * trigger-distance either side of the line so an outbound crossing cannot
      * skip it.
      */
+    /**
+     * The player's own claimed island, as a warp origin, if this position is
+     * at its protection border. The ring test mirrors the trading islands',
+     * with the claim's own (smaller) protection range.
+     */
+    private Optional<IslandSpec> homeBorder(Player player, int x, int z) {
+        return HomePort.specFor(addon, world.bentobox.bentobox.api.user.User.getInstance(player))
+                .filter(home -> {
+                    int border = HomePort.islandOf(addon, player.getUniqueId())
+                            .map(world.bentobox.bentobox.database.objects.Island::getProtectionRange)
+                            .orElse(0);
+                    int trigger = addon.getSettings().getWarpTriggerDistance();
+                    long d2 = home.distanceSquared(x, z);
+                    return border > 0 && d2 <= (long) (border + trigger) * (border + trigger)
+                            && d2 >= (long) (border - trigger) * (border - trigger);
+                });
+    }
+
     Optional<IslandSpec> originIslandNearBorder(int x, int z) {
         GalaxyEngine engine = addon.getGalaxyEngine(addon.getOverWorld().getSeed());
         int border = addon.getSettings().getIslandProtectionRange();

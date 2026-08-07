@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.HashMap;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 import org.bukkit.Chunk;
 import org.bukkit.Location;
@@ -20,11 +21,15 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
+import world.bentobox.bentobox.database.Database;
 import world.bentobox.bentobox.database.objects.Island;
 import world.bentobox.bentobox.lists.Flags;
+import world.bentobox.bentobox.managers.IslandsManager;
+import world.bentobox.bentobox.managers.island.IslandCache;
 import world.bentobox.tradewinds.CommonTestSetup;
 import world.bentobox.tradewinds.Settings;
 import world.bentobox.tradewinds.TradeWinds;
+import world.bentobox.tradewinds.WhiteBox;
 import world.bentobox.tradewinds.galaxy.GalaxyConfig;
 import world.bentobox.tradewinds.galaxy.GalaxyEngine;
 import world.bentobox.tradewinds.galaxy.IslandSpec;
@@ -56,6 +61,14 @@ class GalaxyIslandRegistrarTest extends CommonTestSetup {
         when(addon.getOverWorld()).thenReturn(world);
         when(addon.getIslands()).thenReturn(im);
         when(world.getSeed()).thenReturn(SEED);
+        // The range-box shrink re-grids through the cache and saves statically
+        IslandCache cache = mock(IslandCache.class);
+        when(cache.addIsland(any(Island.class))).thenReturn(true);
+        when(im.getIslandCache()).thenReturn(cache);
+        @SuppressWarnings("unchecked")
+        Database<Island> db = mock(Database.class);
+        when(db.saveObjectAsync(any())).thenReturn(CompletableFuture.completedFuture(true));
+        WhiteBox.setInternalState(IslandsManager.class, "handler", db);
         registrar = new GalaxyIslandRegistrar(addon);
         spec = engine.islandInCell(0, 0).orElseThrow();
     }
@@ -82,6 +95,10 @@ class GalaxyIslandRegistrarTest extends CommonTestSetup {
         assertEquals(spec.centerX() + 0.5, loc.getValue().getX());
         assertEquals(spec.centerZ() + 0.5, loc.getValue().getZ());
         verify(island).setName(spec.name());
+        // The range box is the protection range, not the island distance -
+        // the full-distance box reserved ~1.1km around every port and no
+        // islet claim could ever fit near one
+        verify(island).setRange(new Settings().getIslandProtectionRange());
         // Band policy: PvP, hostile spawning, villager protection
         Settings settings = new Settings();
         verify(island).setSettingsFlag(Flags.PVP_OVERWORLD,

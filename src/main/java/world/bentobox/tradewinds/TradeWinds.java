@@ -27,17 +27,23 @@ import world.bentobox.bentobox.api.user.User;
 import world.bentobox.bentobox.lists.Flags;
 import world.bentobox.tradewinds.commands.AdminCustomsCommand;
 import world.bentobox.tradewinds.commands.AdminPriceAuditCommand;
+import world.bentobox.tradewinds.commands.AdminRankCommand;
 import world.bentobox.tradewinds.commands.AdminIslandsCommand;
 import world.bentobox.tradewinds.commands.AdminReflagCommand;
 import world.bentobox.tradewinds.commands.AdminTpIslandCommand;
 import world.bentobox.tradewinds.commands.AdminWarpFailCommand;
 import world.bentobox.tradewinds.commands.TWChartCommand;
+import world.bentobox.tradewinds.commands.TWClaimCommand;
 import world.bentobox.tradewinds.commands.TWPricesCommand;
+import world.bentobox.tradewinds.commands.TWRankCommand;
 import world.bentobox.tradewinds.commands.TWFineCommand;
+import world.bentobox.tradewinds.commands.TWHomeCommand;
 import world.bentobox.tradewinds.commands.TWRestartCommand;
+import world.bentobox.tradewinds.commands.TWSetHomeCommand;
 import world.bentobox.tradewinds.commands.TWSpawnCommand;
 import world.bentobox.tradewinds.commands.TWStarChartCommand;
 import world.bentobox.tradewinds.commands.TWTradeCommand;
+import world.bentobox.tradewinds.commands.TWUnclaimCommand;
 import world.bentobox.tradewinds.commands.TWWarpCommand;
 import world.bentobox.tradewinds.crime.BountyBoard;
 import world.bentobox.tradewinds.crime.CrimeListener;
@@ -119,6 +125,10 @@ public class TradeWinds extends GameModeAddon {
     private TradeDialog tradeDialog;
     private ChartHolograms chartHolograms;
     private StarChartService starChartService;
+    private world.bentobox.tradewinds.travel.RankService rankService;
+    private world.bentobox.tradewinds.travel.ChartLeaderboard chartLeaderboard;
+    private world.bentobox.tradewinds.travel.IsletClaimService isletClaimService;
+    private world.bentobox.tradewinds.galaxy.IntersticeMap intersticeMap;
     private IntersticeService intersticeService;
     private @Nullable EncounterService encounterService;
     private ReputationService reputationService;
@@ -198,6 +208,13 @@ public class TradeWinds extends GameModeAddon {
                 new TWTradeCommand(this);
                 new TWRestartCommand(this);
                 new TWFineCommand(this);
+                new TWRankCommand(this);
+                new TWClaimCommand(this);
+                // Home commands work only INSIDE your own island's protection
+                // range - a convenience around the base, never a way home
+                new TWSetHomeCommand(this);
+                new TWHomeCommand(this);
+                new TWUnclaimCommand(this);
                 new IslandInfoCommand(this);
                 new IslandSettingsCommand(this);
                 new IslandLanguageCommand(this);
@@ -213,6 +230,7 @@ public class TradeWinds extends GameModeAddon {
                 new AdminCustomsCommand(this);
                 new AdminWarpFailCommand(this);
                 new AdminPriceAuditCommand(this);
+                new AdminRankCommand(this);
             }
         };
     }
@@ -293,6 +311,13 @@ public class TradeWinds extends GameModeAddon {
         starChartService = new StarChartService(this);
         registerListener(starChartService);
         registerListener(new ChartingListener(this));
+        // Seafarer ranks and the charted-islands leaderboard (Stage 7)
+        rankService = new world.bentobox.tradewinds.travel.RankService(this);
+        chartLeaderboard = new world.bentobox.tradewinds.travel.ChartLeaderboard(this);
+        chartLeaderboard.seed();
+        chartLeaderboard.registerPlaceholders(rankService);
+        registerListener(chartLeaderboard);
+        isletClaimService = new world.bentobox.tradewinds.travel.IsletClaimService(this, rankService);
         registerListener(new BorderPromptListener(this));
         // Teleporting while boated brings the boat (and cargo) along
         registerListener(new BoatPickupListener(this));
@@ -517,7 +542,7 @@ public class TradeWinds extends GameModeAddon {
             // Adopting an island from an older build: give it the full trading
             // island geometry it should have had
             spawn.setProtectionRange(getSettings().getIslandProtectionRange());
-            spawn.setRange(getSettings().getIslandDistance());
+            spawn.setRange(getSettings().getIslandProtectionRange());
             spawn.setName(spec.name());
             getIslands().setSpawn(spawn);
             log("Designated " + spec.name() + " (" + spec.type() + ") as the spawn island");
@@ -534,6 +559,22 @@ public class TradeWinds extends GameModeAddon {
 
     public PlayerDataManager getPlayerDataManager() {
         return playerDataManager;
+    }
+
+    public world.bentobox.tradewinds.travel.RankService getRankService() {
+        return rankService;
+    }
+
+    public world.bentobox.tradewinds.travel.ChartLeaderboard getChartLeaderboard() {
+        return chartLeaderboard;
+    }
+
+    public world.bentobox.tradewinds.travel.IsletClaimService getIsletClaimService() {
+        return isletClaimService;
+    }
+
+    public NavigationBarTask getNavigationBarTask() {
+        return navigationBarTask;
     }
 
     public FuelService getFuelService() {
@@ -688,6 +729,25 @@ public class TradeWinds extends GameModeAddon {
             log("TradeWinds galaxy seed: " + seed);
         }
         return galaxyEngine;
+    }
+
+    /**
+     * The interstice's feature map (wart shoals, watchtowers) - pure seeded
+     * geometry, salted off the same seed the interstice sea floor uses so one
+     * number still decides the whole world.
+     *
+     * @param worldSeed the interstice world's seed
+     * @return the map
+     */
+    public world.bentobox.tradewinds.galaxy.IntersticeMap getIntersticeMap(long worldSeed) {
+        if (intersticeMap == null) {
+            Settings s = getSettings();
+            intersticeMap = new world.bentobox.tradewinds.galaxy.IntersticeMap(worldSeed ^ 0x1E7E2571CEL,
+                    s.getIntersticeShoalGrid(), s.getIntersticeShoalChance(), s.getIntersticeShoalRadius(),
+                    s.getIntersticeGrandShoalChance(), s.getIntersticeWatchtowerGrid(),
+                    s.getIntersticeWatchtowerChance());
+        }
+        return intersticeMap;
     }
 
     /**

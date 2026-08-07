@@ -94,8 +94,13 @@ public class BoatRanks {
     public List<Rank> shopListing(Material current, int techLevel) {
         int currentSlots = slots(current);
         int maxRank = techLevel * addon.getSettings().getBoatRanksPerTechLevel();
+        // Every rung the tech can build EXCEPT the one you already sail
+        // (ruled 2026-08-05): a yard always sells - a bigger hull with your
+        // ship at the quay is a trade-in, anything else is bought outright
+        // and your old boat is left unowned where it lies. Upgrade-only
+        // listings stranded sailors whose ship outranked the local tech.
         return ladder().stream()
-                .filter(r -> r.slots() > currentSlots)
+                .filter(r -> r.slots() != currentSlots)
                 .filter(r -> r.rank() <= maxRank)
                 .toList();
     }

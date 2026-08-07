@@ -67,6 +67,10 @@ class ChunkGeneratorWorldTest extends CommonTestSetup {
         when(addon.getGalaxyEngine(org.mockito.ArgumentMatchers.anyLong()))
                 .thenReturn(new GalaxyEngine(new GalaxyConfig(SEED, 2500, 160, 45, 0.0, 0, 5000, 70,
                         GalaxyConfig.defaultTypeWeights(), null)));
+        // Default: a featureless interstice (no shoals, no towers) - pure dark sea
+        when(addon.getIntersticeMap(org.mockito.ArgumentMatchers.anyLong()))
+                .thenReturn(new world.bentobox.tradewinds.galaxy.IntersticeMap(SEED, 256, 0.0, 9, 0.2, 1536,
+                        0.0));
     }
 
     private WorldInfo worldInfo(Environment env, long seed) {
@@ -144,8 +148,9 @@ class ChunkGeneratorWorldTest extends CommonTestSetup {
             for (int z = 0; z < 16; z++) {
                 // Bedrock at the bottom
                 assertEquals(Material.BEDROCK, r.get(x, -64, z));
-                // Solid stone base under the whole floor
+                // Solid stone base under the whole floor, deepslate below Y 0
                 assertEquals(Material.STONE, r.get(x, 0, z));
+                assertEquals(Material.DEEPSLATE, r.get(x, -32, z));
                 // Water at sea level
                 assertEquals(Material.WATER, r.get(x, settings.getSeaHeight(), z));
                 // Air above sea level
@@ -198,6 +203,30 @@ class ChunkGeneratorWorldTest extends CommonTestSetup {
                         "Unexpected material at interstice floor: " + atFloor);
             }
         }
+    }
+
+    @Test
+    void testWartShoalsBreakTheIntersticeSurface() {
+        // Shoals on at defaults: find one and generate its chunk
+        world.bentobox.tradewinds.galaxy.IntersticeMap map = new world.bentobox.tradewinds.galaxy.IntersticeMap(
+                SEED, 256, 0.5, 9, 0.2, 1536, 0.0);
+        when(addon.getIntersticeMap(org.mockito.ArgumentMatchers.anyLong())).thenReturn(map);
+        world.bentobox.tradewinds.galaxy.IntersticeMap.Shoal shoal = null;
+        for (int cx = 0; cx < 30 && shoal == null; cx++) {
+            shoal = map.shoalInCell(cx, 4).orElse(null);
+        }
+        assertTrue(shoal != null, "No shoal in 30 cells - wrong seed?");
+        ChunkGeneratorWorld gen = new ChunkGeneratorWorld(addon);
+        RecordingChunkData r = generate(gen, Environment.NETHER, SEED, shoal.centerX() >> 4,
+                shoal.centerZ() >> 4);
+        int x = shoal.centerX() & 15;
+        int z = shoal.centerZ() & 15;
+        int sea = settings.getIntersticeSeaHeight();
+        // The crown stands proud of the sea...
+        int top = floorTop(r, x, z, sea + 4);
+        assertTrue(top > sea, "Shoal crown should break the surface, top=" + top + " sea=" + sea);
+        // ...and it is soul sand - the one block nether wart plants on
+        assertEquals(Material.SOUL_SAND, r.get(x, top, z));
     }
 
     @Test

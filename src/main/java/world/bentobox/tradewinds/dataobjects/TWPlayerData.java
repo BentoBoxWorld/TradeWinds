@@ -45,6 +45,13 @@ public class TWPlayerData implements DataObject {
     private Set<String> chartedIslands = new HashSet<>();
 
     /**
+     * Admin adjustment to the charted count for rank purposes: set by
+     * {@code /twadmin rank}, positive to promote, negative to demote. 0 for
+     * everyone the admins have left alone.
+     */
+    private int chartedBonus;
+
+    /**
      * Whether the one-time starter kit (boat + trading bundle) has been given.
      */
     @Expose
@@ -165,6 +172,17 @@ public class TWPlayerData implements DataObject {
     }
 
     /**
+     * Charted islands as the rank ladder sees them: the real chart plus the
+     * admin adjustment, never below zero. Rank, the claim gate and the
+     * leaderboard all read this one number, so an admin promotion (or
+     * demotion) is consistent everywhere - and real charting keeps counting
+     * on top of it.
+     */
+    public int effectiveCharted() {
+        return Math.max(0, chartedIslands.size() + chartedBonus);
+    }
+
+    /**
      * @return true if the island is on this player's chart
      */
     public boolean isCharted(IslandSpec spec) {
@@ -235,6 +253,14 @@ public class TWPlayerData implements DataObject {
 
     public void setChartedIslands(Set<String> chartedIslands) {
         this.chartedIslands = chartedIslands;
+    }
+
+    public int getChartedBonus() {
+        return chartedBonus;
+    }
+
+    public void setChartedBonus(int chartedBonus) {
+        this.chartedBonus = chartedBonus;
     }
 
     public String getLastSeaPosition() {

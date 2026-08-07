@@ -379,7 +379,12 @@ public class TradeDialog {
                         Money.format(addon, unit)), each,
                         () -> outfitThenReopen(player, spec, material, 1)));
                 if (new org.bukkit.inventory.ItemStack(material).getMaxStackSize() > 1) {
-                    buttons.add(button(ui(player, "market.outfit-batch", "[amount]", String.valueOf(MID_BATCH),
+                    // The batch button names its good too: unstackable gear
+                    // gets no batch button, which shifts the two-column
+                    // pairing, and a bare "x16 - $7,184" then sells a mystery
+                    // (playtest 2026-08-05: the Compass batch went orphan)
+                    buttons.add(button(ui(player, "market.outfit-batch", "[material]", name,
+                            "[amount]", String.valueOf(MID_BATCH),
                             "[price]", Money.format(addon, unit * MID_BATCH)), each,
                             () -> outfitThenReopen(player, spec, material, MID_BATCH)));
                 }
@@ -417,6 +422,17 @@ public class TradeDialog {
                             Money.format(addon, price)),
                     ui(player, "market.hull-tooltip", "[slots]", String.valueOf(rank.slots())),
                     () -> {
+                        // Buying outright abandons the current boat where it
+                        // lies - that gets the same confirmation a capture
+                        // does, because it is the same decision
+                        if (addon.getMarketService().wouldReplaceCurrent(player, spec, rank)) {
+                            confirmBoatCapture(player, MarketService.pretty(rank.material()),
+                                    MarketService.pretty(current), () -> {
+                                        addon.getMarketService().buyBoat(player, spec, rank);
+                                        openShipwright(player, spec);
+                                    });
+                            return;
+                        }
                         addon.getMarketService().buyBoat(player, spec, rank);
                         openShipwright(player, spec);
                     }));
@@ -432,9 +448,17 @@ public class TradeDialog {
                         openShipwright(player, spec);
                     }));
         }
+        List<Component> body = new ArrayList<>(List.of(ui(player, "market.shipwright-body", NO_VARS),
+                statusLine(player)));
         if (buttons.isEmpty()) {
-            // Nothing on the slipway: the sailor has out-teched this port
-            buttons.add(button(player, "market.no-hulls", "market.no-hulls-tooltip", () -> openMain(player, spec)));
+            // Nothing on the slipway: the sailor has out-teched this port.
+            // The notice goes in the BODY - rendered as a button it
+            // truncates and reads as a broken shop (playtest 2026-08-05) -
+            // and the one button offered is somewhere actually useful
+            body.add(ui(player, "market.no-hulls", NO_VARS));
+            body.add(ui(player, "market.no-hulls-tooltip", NO_VARS));
+            buttons.add(button(player, "market.outfitter", "market.outfitter-tooltip",
+                    () -> openOutfitter(player, spec)));
         }
         if (addon.getMarketService().isDestitute(player)) {
             buttons.add(button(player, "market.charity", "market.charity-tooltip",
@@ -443,8 +467,7 @@ public class TradeDialog {
                         openShipwright(player, spec);
                     }));
         }
-        show(player, ui(player, "market.shipwright-title", "[name]", spec.name()),
-                List.of(ui(player, "market.shipwright-body", NO_VARS), statusLine(player)), buttons,
+        show(player, ui(player, "market.shipwright-title", "[name]", spec.name()), body, buttons,
                 backButton(player, spec), 1);
     }
 

@@ -35,9 +35,23 @@ class EncounterTableTest {
 
     @Test
     void testSafeWatersAreTamest() {
-        // Nothing at all hunts in SAFE space: every encounter needs POLICED+
-        assertTrue(EncounterTable.pick(SecurityBand.SAFE, true, 0.5).isEmpty());
-        assertTrue(EncounterTable.pick(SecurityBand.SAFE, false, 0.5).isEmpty());
+        // SAFE space gets the puffer shoal and NOTHING else - spice, not
+        // danger (ruled 2026-08-06; before that the 2% roll picked from an
+        // empty table and the config entry was decorative)
+        Set<EncounterType> day = rollAll(SecurityBand.SAFE, true);
+        Set<EncounterType> night = rollAll(SecurityBand.SAFE, false);
+        assertEquals(Set.of(EncounterType.PUFFER_SHOAL), day);
+        assertEquals(Set.of(EncounterType.PUFFER_SHOAL), night);
+    }
+
+    @Test
+    void testNuisanceStaysOutOfTheRoughBands() {
+        // Beyond POLICED the puffer shoal would only dilute real danger
+        assertTrue(rollAll(SecurityBand.POLICED, true).contains(EncounterType.PUFFER_SHOAL));
+        assertFalse(rollAll(SecurityBand.FRONTIER, true).contains(EncounterType.PUFFER_SHOAL));
+        assertFalse(rollAll(SecurityBand.ANARCHIC, false).contains(EncounterType.PUFFER_SHOAL));
+        // And it is booty-less by classification: nothing to farm
+        assertTrue(EncounterType.PUFFER_SHOAL.isNuisance());
     }
 
     @Test
@@ -82,8 +96,13 @@ class EncounterTableTest {
     void testEveryEncounterMobIsActuallyHostile() {
         // The zombie nautilus taught this lesson: it is a tameable MOUNT
         // (AbstractNautilus extends Tameable, Vehicle), so it just swam away.
-        // Every encounter mob must be an Enemy or the encounter is scenery.
+        // Every encounter mob must be an Enemy or the encounter is scenery -
+        // except a declared NUISANCE, which is a hazard, not a hunter (the
+        // pufferfish stings on contact without ever being an Enemy).
         for (EncounterType type : EncounterType.values()) {
+            if (type.isNuisance()) {
+                continue;
+            }
             for (org.bukkit.entity.EntityType mob : type.getMobs()) {
                 Class<?> clazz = mob.getEntityClass();
                 assertTrue(clazz != null && org.bukkit.entity.Enemy.class.isAssignableFrom(clazz),

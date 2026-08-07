@@ -39,12 +39,28 @@ public class SpawnRespawnListener implements Listener {
         if (!world.equals(addon.getOverWorld()) && !world.equals(addon.getNetherWorld())) {
             return;
         }
-        grantRespawnBoat(event);
+        // The loaner is granted a tick AFTER the respawn: items handed out
+        // during PlayerRespawnEvent are wiped when the respawn restores the
+        // inventory, which is why no raft ever arrived (playtest 2026-08-05).
+        // A tick later also means the player's REAL position judges whether
+        // their own boat is within reach - island respawners included.
+        org.bukkit.Bukkit.getScheduler().runTask(addon.getPlugin(),
+                () -> grantRespawnBoat(event.getPlayer()));
         if (event.isBedSpawn() || event.isAnchorSpawn()) {
             return; // they made a home somewhere - honor it
         }
         World overworld = addon.getOverWorld();
         if (overworld == null) {
+            return;
+        }
+        // Island members respawn at their claim: BentoBox's ISLAND_RESPAWN
+        // listener already set the location (it runs at NORMAL, this handler
+        // at HIGH) - overwriting it here sent island owners to the spawn
+        // port (playtest 2026-08-05). This listener predates player islands:
+        // its job is only the ISLANDLESS, who would otherwise respawn in the
+        // seabed.
+        var island = addon.getIslands().getIsland(overworld, event.getPlayer().getUniqueId());
+        if (island != null && island.getMemberSet().contains(event.getPlayer().getUniqueId())) {
             return;
         }
         // The spawn island's own spawn point - the market plaza, and wherever
@@ -57,39 +73,43 @@ public class SpawnRespawnListener implements Listener {
     /**
      * The port's loaner: a boatless respawner gets the configured hull (their
      * own boat is floating back where they died, and rowing out to reclaim it
-     * is the intended recovery trip).
+     * is the intended recovery trip). Runs a tick after the respawn, on the
+     * player's real post-respawn state.
      */
-    private void grantRespawnBoat(PlayerRespawnEvent event) {
+    private void grantRespawnBoat(org.bukkit.entity.Player player) {
+        if (!player.isOnline()) {
+            return;
+        }
         Material boat = respawnBoat();
-        if (boat == null || boatWithinReach(event)) {
+        if (boat == null || boatWithinReach(player)) {
             return;
         }
         // They have no boat, or theirs is far away: lend a hull. If they had
         // one, boarding this raft is what abandons it (with the standard
         // confirmation) - the loaner itself takes nothing from them.
-        var hold = addon.getHoldService().active(event.getPlayer().getUniqueId()).isEmpty()
-                ? addon.getBoatService().createFor(event.getPlayer(), boat)
+        var hold = addon.getHoldService().active(player.getUniqueId()).isEmpty()
+                ? addon.getBoatService().createFor(player, boat)
                 : addon.getHoldManager().create(boat, null);
-        addon.getBoatService().giveBoatItem(event.getPlayer(), hold);
-        User.getInstance(event.getPlayer()).sendMessage("tradewinds.boat.respawn-given", "[material]",
+        addon.getBoatService().giveBoatItem(player, hold);
+        User.getInstance(player).sendMessage("tradewinds.boat.respawn-given", "[material]",
                 world.bentobox.tradewinds.economy.PriceEngine.prettify(boat.name()));
     }
 
     /**
-     * Whether their own boat is close enough to the respawn point to walk to
-     * - otherwise a sailor is stranded ashore with a ship an ocean away.
+     * Whether their own boat is close enough to where they now stand to walk
+     * to - otherwise a sailor is stranded ashore with a ship an ocean away.
      */
-    private boolean boatWithinReach(PlayerRespawnEvent event) {
-        var hold = addon.getHoldService().active(event.getPlayer().getUniqueId());
+    private boolean boatWithinReach(org.bukkit.entity.Player player) {
+        var hold = addon.getHoldService().active(player.getUniqueId());
         if (hold.isEmpty() || hold.get().getWorld() == null || hold.get().getWorld().isEmpty()) {
             return false;
         }
-        Location respawn = event.getRespawnLocation();
-        if (respawn.getWorld() == null || !respawn.getWorld().getName().equals(hold.get().getWorld())) {
+        Location at = player.getLocation();
+        if (at.getWorld() == null || !at.getWorld().getName().equals(hold.get().getWorld())) {
             return false;
         }
         int reach = addon.getSettings().getIslandProtectionRange();
-        return respawn.distanceSquared(new Location(respawn.getWorld(), hold.get().getX(), hold.get().getY(),
+        return at.distanceSquared(new Location(at.getWorld(), hold.get().getX(), hold.get().getY(),
                 hold.get().getZ())) <= (double) reach * reach;
     }
 

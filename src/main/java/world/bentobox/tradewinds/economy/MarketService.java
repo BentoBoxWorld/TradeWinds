@@ -107,12 +107,39 @@ public class MarketService {
         double total = PriceModel.round2(affordable * unitPrice.get());
         vault.get().withdraw(user, total);
         ItemStack stores = new ItemStack(material, affordable);
+        if (material == Material.COMPASS) {
+            bindShipsCompass(player, stores);
+        }
         player.getInventory().addItem(stores).values()
                 .forEach(left -> player.getWorld().dropItem(player.getLocation(), left));
         user.sendMessage("tradewinds.trade.bought", "[amount]", String.valueOf(affordable), "[material]",
                 pretty(material), "[price]", Money.format(addon, total));
         chime(player);
         return affordable;
+    }
+
+    /**
+     * The ship's compass (Stage 7b): a compass bought at the outfitter by an
+     * island member leaves the counter bound to their island - it points
+     * home from anywhere, no lodestone block required (the binding is
+     * untracked, so nothing has to exist at the target). Physical, lossable,
+     * giftable to a crewmate. Without an island it stays a plain compass -
+     * which points at world spawn, the spawn port, so it is never useless.
+     */
+    private void bindShipsCompass(Player player, ItemStack compass) {
+        world.bentobox.tradewinds.travel.HomePort.islandOf(addon, player.getUniqueId()).ifPresent(island -> {
+            if (!(compass.getItemMeta() instanceof org.bukkit.inventory.meta.CompassMeta meta)) {
+                return;
+            }
+            org.bukkit.Location home = island.getCenter().clone();
+            meta.setLodestone(home);
+            meta.setLodestoneTracked(false);
+            User console = User.getInstance(org.bukkit.Bukkit.getConsoleSender());
+            meta.displayName(console.getTranslationAsComponent("tradewinds.item.ships-compass", new String[0]));
+            meta.lore(java.util.List.of(console.getTranslationAsComponent(
+                    "tradewinds.item.ships-compass-lore", new String[0])));
+            compass.setItemMeta(meta);
+        });
     }
 
     /**
@@ -377,11 +404,14 @@ public class MarketService {
                         player.getLocation().getBlockZ()) <= (long) range * range;
             }
         }
-        // Otherwise: wherever we last saw it
-        if (hold.get().getWorld() == null || hold.get().getWorld().isEmpty()) {
-            return false;
-        }
-        return spec.distanceSquared(hold.get().getX(), hold.get().getZ()) <= (long) range * range;
+        // Otherwise it must be PLACED here: found by identity among loaded
+        // entities and judged on its true position - the remembered position
+        // goes stale the moment a dismounted boat drifts, and trusting it let
+        // the yard sell refits to hulls it could not reach (2026-08-04)
+        return addon.getBoatService().findPlaced(hold.get())
+                .map(placed -> spec.distanceSquared(placed.getLocation().getBlockX(),
+                        placed.getLocation().getBlockZ()) <= (long) range * range)
+                .orElse(false);
     }
 
     /**
@@ -640,16 +670,7 @@ public class MarketService {
             return false;
         }
         double price = addon.getBoatRanks().price(rank);
-        // A refit is a trade-in: the yard needs the old hull in front of it.
-        // (Buying your FIRST boat has nothing to trade in, and must always be
-        // possible - it is how a sailor who lost their ship gets off the
-        // island.)
         var owned = addon.getHoldService().active(player.getUniqueId());
-        if (owned.isPresent() && !boatIsHere(player, spec)) {
-            user.sendMessage("tradewinds.trade.refit-needs-ship");
-            thud(player);
-            return false;
-        }
         if (!vault.get().has(user, price)) {
             user.sendMessage("tradewinds.trade.cannot-afford");
             thud(player);
@@ -660,13 +681,53 @@ public class MarketService {
             // No ship at all: they are buying one outright, hull in hand
             var fresh = addon.getBoatService().createFor(player, rank.material());
             addon.getBoatService().giveBoatItem(player, fresh);
-        } else {
+            user.sendMessage("tradewinds.trade.boat-bought-first", "[material]", pretty(rank.material()),
+                    "[slots]", String.valueOf(rank.slots()), "[price]", Money.format(addon, price));
+        } else if (isTradeIn(player, spec, rank)) {
+            // The ship is at the quay and the new hull is bigger: a trade-in
+            // - same record, cargo stays, old hull broken up
             addon.getBoatService().refit(player, owned.get(), rank.material());
+            user.sendMessage("tradewinds.trade.boat-bought", "[material]", pretty(rank.material()),
+                    "[slots]", String.valueOf(rank.slots()), "[price]", Money.format(addon, price));
+        } else {
+            // Bought outright (ruled 2026-08-05): the yard ALWAYS sells - a
+            // sailor whose ship is an ocean away, or who wants a smaller
+            // hull, walks out with a new boat and their old one is left
+            // unowned wherever it lies, cargo aboard, first come first
+            // served. The dialog confirmed this before the money moved.
+            var old = owned.get();
+            String oldName = Material.matchMaterial(old.getMaterial()) == null ? old.getMaterial()
+                    : pretty(Material.matchMaterial(old.getMaterial()));
+            var fresh = addon.getBoatService().createFor(player, rank.material());
+            addon.getBoatService().giveBoatItem(player, fresh);
+            // The plate on the abandoned hull flips to UNOWNED, if it is loaded
+            addon.getBoatService().relabel(old);
+            user.sendMessage("tradewinds.trade.boat-replaced", "[material]", pretty(rank.material()),
+                    "[slots]", String.valueOf(rank.slots()), "[price]", Money.format(addon, price),
+                    "[old]", oldName);
         }
-        user.sendMessage("tradewinds.trade.boat-bought", "[material]", pretty(rank.material()),
-                "[slots]", String.valueOf(rank.slots()), "[price]", Money.format(addon, price));
         chime(player);
         return true;
+    }
+
+    /**
+     * Whether buying this rank would be a trade-in refit: the current ship is
+     * at THIS island and the new hull is bigger. Everything else is an
+     * outright purchase that abandons the current boat where it lies.
+     */
+    public boolean isTradeIn(Player player, IslandSpec spec, BoatRanks.Rank rank) {
+        Material current = addon.getHoldService().boat(player);
+        return current != null && boatIsHere(player, spec)
+                && rank.slots() > addon.getBoatRanks().slots(current);
+    }
+
+    /**
+     * Whether buying this rank would abandon the player's current boat - the
+     * case the shipwright dialog puts a confirmation in front of.
+     */
+    public boolean wouldReplaceCurrent(Player player, IslandSpec spec, BoatRanks.Rank rank) {
+        return addon.getHoldService().active(player.getUniqueId()).isPresent()
+                && !isTradeIn(player, spec, rank);
     }
 
     /**

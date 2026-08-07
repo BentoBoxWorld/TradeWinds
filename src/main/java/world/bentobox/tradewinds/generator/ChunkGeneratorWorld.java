@@ -67,6 +67,8 @@ public class ChunkGeneratorWorld extends ChunkGenerator {
     private static final int CRUST_THICKNESS = 5;
     /** Soil depth under a land surface before it turns to stone. */
     private static final int SOIL_THICKNESS = 4;
+    /** Y below which the bulk rock is deepslate, as in vanilla. */
+    private static final int DEEPSLATE_TOP = 0;
     /** Layers of rock under the interstice's bedrock lid. */
     private static final int ROOF_THICKNESS = 4;
 
@@ -147,12 +149,17 @@ public class ChunkGeneratorWorld extends ChunkGenerator {
                 lowest = Math.min(lowest, top);
             }
         }
-        Material deepBase = overworld ? Material.STONE : Material.NETHERRACK;
         // Stop the bulk fill short of the shallowest column so every column
         // still lays its own surface layers - a flat chunk (a market plaza, or
         // dead level sea floor) would otherwise come out as bare base rock
         int baseTop = Math.max(minHeight + 1, lowest - ROCK_BAND);
-        chunkData.setRegion(0, minHeight + 1, 0, 16, baseTop, 16, deepBase);
+        if (overworld) {
+            int slateTop = Math.clamp(DEEPSLATE_TOP, minHeight + 1, baseTop);
+            chunkData.setRegion(0, minHeight + 1, 0, 16, slateTop, 16, Material.DEEPSLATE);
+            chunkData.setRegion(0, slateTop, 0, 16, baseTop, 16, Material.STONE);
+        } else {
+            chunkData.setRegion(0, minHeight + 1, 0, 16, baseTop, 16, Material.NETHERRACK);
+        }
 
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
@@ -250,6 +257,15 @@ public class ChunkGeneratorWorld extends ChunkGenerator {
             int wanted = plan.surfaceY() + 1;
             floorTop = plan.blend() >= 1.0 ? wanted : (int) Math.round(floorTop + (wanted - floorTop) * plan.blend());
         }
+        if (worldInfo.getEnvironment() == Environment.NETHER) {
+            // Wart shoals: the interstice's only land, a low soul-sand dome
+            // the natural floor rises to meet (interstice plan, source 1)
+            var wanted = addon.getIntersticeMap(worldInfo.getSeed()).shoalSurfaceAt(worldX, worldZ,
+                    wc.seaHeight());
+            if (wanted.isPresent()) {
+                floorTop = Math.max(floorTop, wanted.getAsInt());
+            }
+        }
         return Math.clamp(floorTop, worldInfo.getMinHeight() + 2, worldInfo.getMaxHeight() - 1);
     }
 
@@ -294,7 +310,7 @@ public class ChunkGeneratorWorld extends ChunkGenerator {
             return IslandPalette.plazaSurface(plan.island().type());
         }
         if (worldInfo.getEnvironment() != Environment.NORMAL) {
-            return intersticeMaterial(y, floorTop, sediment);
+            return intersticeMaterial(y, floorTop, land, sediment);
         }
         if (land) {
             if (y == floorTop - 1) {
@@ -303,7 +319,7 @@ public class ChunkGeneratorWorld extends ChunkGenerator {
             if (y >= floorTop - SOIL_THICKNESS) {
                 return IslandPalette.subsoil(surface);
             }
-            return Material.STONE;
+            return baseRock(y);
         }
         // Sediment lies in a thin layer over rock; the deep basins and rift
         // floors are scoured down to the rock itself
@@ -311,7 +327,16 @@ public class ChunkGeneratorWorld extends ChunkGenerator {
         if (fromTop < SEDIMENT_THICKNESS && depth < ROCK_DEPTH) {
             return sedimentMaterial(sediment, depth);
         }
-        return fromTop < ROCK_BAND ? deepRock(sediment, depth) : Material.STONE;
+        return fromTop < ROCK_BAND ? deepRock(sediment, depth, y) : baseRock(y);
+    }
+
+    /**
+     * The bulk rock at a height: deepslate below Y 0, stone above, as in
+     * vanilla - the ore veins that decoration adds take their deepslate
+     * variants from the block they replace.
+     */
+    private static Material baseRock(int y) {
+        return y < DEEPSLATE_TOP ? Material.DEEPSLATE : Material.STONE;
     }
 
     /**
@@ -334,20 +359,25 @@ public class ChunkGeneratorWorld extends ChunkGenerator {
     /**
      * The rock under the sediment, and the floor of the deep basins and rifts.
      */
-    private static Material deepRock(double sediment, int depth) {
+    private static Material deepRock(double sediment, int depth, int y) {
         if (depth >= ROCK_DEPTH && sediment > 0.80) {
             return Material.TUFF;
         }
         if (depth >= ROCK_DEPTH && sediment < 0.22) {
             return Material.GRAVEL;
         }
-        return Material.STONE;
+        return baseRock(y);
     }
 
     /**
-     * The interstice's floor: basalt and soul sand, nothing worth mining.
+     * The interstice's floor: basalt and soul sand, nothing worth mining -
+     * except where a wart shoal breaks the surface, whose land is soul sand
+     * all the way through its crown (wart plants only on soul sand).
      */
-    private static Material intersticeMaterial(int y, int floorTop, double sediment) {
+    private static Material intersticeMaterial(int y, int floorTop, boolean land, double sediment) {
+        if (land && y >= floorTop - SOIL_THICKNESS) {
+            return Material.SOUL_SAND;
+        }
         if (y >= floorTop - SEDIMENT_THICKNESS) {
             return sediment < 0.5 ? Material.SOUL_SAND : Material.BASALT;
         }

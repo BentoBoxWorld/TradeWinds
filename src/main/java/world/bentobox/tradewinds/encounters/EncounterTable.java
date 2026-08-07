@@ -45,6 +45,7 @@ public final class EncounterTable {
     public static Optional<EncounterType> pick(SecurityBand band, boolean isDay, double roll) {
         List<EncounterType> candidates = java.util.Arrays.stream(EncounterType.values())
                 .filter(type -> band.ordinal() >= type.getMinBand().ordinal())
+                .filter(type -> band.ordinal() <= type.getMaxBand().ordinal())
                 .filter(type -> type.getTime().matches(isDay))
                 .toList();
         if (candidates.isEmpty()) {

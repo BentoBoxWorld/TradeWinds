@@ -38,6 +38,18 @@ public class EncounterListener implements Listener {
         if (killer == null) {
             return;
         }
+        // Nuisance encounters (the puffer shoal) carry no booty: spice must
+        // not be farmable. The tag records the encounter type; mobs tagged
+        // before types were recorded fall through as bootied.
+        String tag = event.getEntity().getPersistentDataContainer().get(EncounterService.ENCOUNTER_KEY,
+                PersistentDataType.STRING);
+        try {
+            if (tag != null && EncounterType.valueOf(tag).isNuisance()) {
+                return;
+            }
+        } catch (IllegalArgumentException e) {
+            // Legacy "encounter" tag: not a type name, never a nuisance
+        }
         List<String> table = addon.getSettings().getBootyTable();
         if (table.isEmpty() || Math.random() >= addon.getSettings().getBootyChance()) {
             return;

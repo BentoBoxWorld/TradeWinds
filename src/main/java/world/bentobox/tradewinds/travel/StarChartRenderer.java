@@ -36,6 +36,8 @@ public class StarChartRenderer extends MapRenderer {
     private static final Color RANGE_RING = new Color(120, 220, 235);
     /** Names are drawn white: anything darker vanishes against the ocean. */
     private static final Color NAME = new Color(255, 255, 255);
+    /** Home is gold: the one dot on the chart that is YOURS. */
+    private static final Color HOME = new Color(235, 190, 50);
 
     private final TradeWinds addon;
     private final Map<UUID, Long> lastDraw = new HashMap<>();
@@ -128,6 +130,23 @@ public class StarChartRenderer extends MapRenderer {
                 }
             });
         }
+        // HOME: a member's claimed islet, in gold - drawn after the islands
+        // so nothing sits on top of it (Stage 7b)
+        HomePort.islandOf(addon, player.getUniqueId()).ifPresent(island -> {
+            int[] pixel = toPixel(island.getCenter().getBlockX() - (long) px,
+                    island.getCenter().getBlockZ() - (long) pz, bpp);
+            String name = island.getName() != null && !island.getName().isBlank() ? island.getName()
+                    : world.bentobox.bentobox.api.user.User.getInstance(player)
+                            .getTranslation("tradewinds.home.port-name");
+            if (pixel[2] == 1) {
+                canvas.setPixelColor(pixel[0], pixel[1], HOME);
+                drawName(canvas, pixel[0], pixel[1], name);
+            } else {
+                fillDot(canvas, pixel[0], pixel[1],
+                        Math.max(1, island.getProtectionRange() / bpp), HOME);
+                drawName(canvas, pixel[0], pixel[1], name);
+            }
+        });
         // The holder: a cursor arrow at center, rotating with their facing
         MapCursorCollection cursors = new MapCursorCollection();
         byte direction = (byte) (Math.round(player.getLocation().getYaw() * 16.0 / 360.0) & 15);

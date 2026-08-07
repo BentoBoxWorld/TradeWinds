@@ -163,4 +163,34 @@ public final class SeaArrival {
         // it. Better a strange arrival than a suffocation.
         return new Location(world, x + 0.5, engine.surfaceHeightAt(x, z) + 1.0, z + 0.5);
     }
+
+    /** A column test for worlds the galaxy does not describe. */
+    public interface ColumnTest {
+        boolean isOpen(int x, int z);
+    }
+
+    /**
+     * The nearest open water by an arbitrary column test - the interstice's
+     * variant. Its floor could never reach the surface, so a stranding used
+     * to take the intended point unexamined; wart shoals and watchtowers
+     * (interstice plan) ended that innocence.
+     *
+     * @param open the column test
+     * @param world the world to arrive in
+     * @param x intended block x
+     * @param z intended block z
+     * @param seaLevel the sea surface Y
+     * @return a location on open water (the intended point if the search
+     *         finds nothing, which shoal densities keep effectively impossible)
+     */
+    public static Location openSeaNear(ColumnTest open, World world, int x, int z, int seaLevel) {
+        for (int[] offset : searchOffsets(SEARCH_RADIUS, STEP)) {
+            int cx = x + offset[0];
+            int cz = z + offset[1];
+            if (open.isOpen(cx, cz)) {
+                return new Location(world, cx + 0.5, seaLevel + 1.0, cz + 0.5);
+            }
+        }
+        return new Location(world, x + 0.5, seaLevel + 1.0, z + 0.5);
+    }
 }

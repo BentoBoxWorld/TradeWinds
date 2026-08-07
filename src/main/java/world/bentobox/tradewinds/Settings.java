@@ -207,6 +207,54 @@ public class Settings implements WorldSettings {
         return map;
     }
 
+    /*      SEAFARER RANKS & ISLET CLAIMS      */
+    @ConfigComment("Seafarer rank ladder: rank slug -> charted islands required. A player's rank")
+    @ConfigComment("is the highest threshold at or below their charted count. Display names live")
+    @ConfigComment("in the locale under tradewinds.rank.<slug> - add a locale name for any new")
+    @ConfigComment("slug, keep exactly one rank at 0 so every sailor has a rank, and avoid dots")
+    @ConfigComment("in slugs (YAML nests on them).")
+    @ConfigEntry(path = "ranks.thresholds")
+    private Map<String, Integer> rankThresholds = defaultRankThresholds();
+
+    private static Map<String, Integer> defaultRankThresholds() {
+        Map<String, Integer> map = new HashMap<>();
+        map.put("deck-hand", 0);
+        map.put("cabin-scout", 6);
+        map.put("coast-finder", 8);
+        map.put("bay-explorer", 10);
+        map.put("island-hopper", 12);
+        map.put("reef-runner", 15);
+        map.put("wave-master", 17);
+        map.put("chart-maker", 20);
+        map.put("storm-navigator", 25);
+        map.put("archipelago-ace", 30);
+        map.put("tide-captain", 36);
+        map.put("horizon-hunter", 42);
+        map.put("sea-sentinel", 49);
+        map.put("salty-commodore", 56);
+        map.put("ocean-overlord", 64);
+        map.put("pirate-pathfinder", 72);
+        map.put("grand-admiral", 81);
+        map.put("globe-voyager", 90);
+        map.put("mythic-mariner", 100);
+        return map;
+    }
+
+    @ConfigComment("Price of claiming a wild islet, in whole coins. Deliberately above the top")
+    @ConfigComment("boat (Pale Oak Chest Boat, 110,250 at defaults): the boat ladder comes first.")
+    @ConfigEntry(path = "claims.price")
+    private double claimPrice = 150000;
+
+    @ConfigComment("Minimum Seafarer rank (a slug from ranks.thresholds) required to claim a")
+    @ConfigComment("wild islet. Team members need no rank - only the claimer.")
+    @ConfigEntry(path = "claims.minimum-rank")
+    private String claimMinimumRank = "tide-captain";
+
+    @ConfigComment("Blocks of protected water beyond the islet's terrain radius. The protection")
+    @ConfigComment("range is islet radius + this margin.")
+    @ConfigEntry(path = "claims.protection-margin")
+    private int claimProtectionMargin = 32;
+
     @ConfigComment("Trading islands are public markets: EVERY protection flag is allowed at visitor")
     @ConfigComment("rank except a built-in deny list (anti-grief, the island's own crops, stores and")
     @ConfigComment("livestock, and direct villager trading - which would bypass the hold).")
@@ -379,6 +427,27 @@ public class Settings implements WorldSettings {
     @ConfigComment("and the distance to the dock - so you can steer for it after a warp.")
     @ConfigEntry(path = "hud.navigation-bossbar")
     private boolean navigationBossbar = true;
+
+    @ConfigComment("Distance in blocks at which the course-home bar (toggled by /tw go at sea)")
+    @ConfigComment("reads empty at night; it fills as home approaches. By day the bar shows")
+    @ConfigComment("direction only - the stars are the precise instrument.")
+    @ConfigEntry(path = "hud.course-bar-scale")
+    private int courseBarScale = 5000;
+
+    @ConfigComment("How close a player must be (blocks) before a boated encounter crew abandons")
+    @ConfigComment("ship, per encounter type. Pirates fight from the deck and only jump at")
+    @ConfigComment("boarding distance; the witch bails wide - potions overshoot from a drifting")
+    @ConfigComment("platform. Must be BELOW encounters.distance or the crew ejects on its first")
+    @ConfigComment("tick and nobody ever sees a manned boat.")
+    @ConfigEntry(path = "encounters.abandon-ship")
+    private Map<String, Integer> encounterAbandonShip = defaultEncounterAbandonShip();
+
+    private static Map<String, Integer> defaultEncounterAbandonShip() {
+        Map<String, Integer> map = new HashMap<>();
+        map.put("PIRATE_CREW", 10);
+        map.put("SEA_WITCH", 30);
+        return map;
+    }
 
     /*      TRAVEL      */
     @ConfigComment("Base warp fuel cost multiplier: fuel units per block of Euclidean route distance.")
@@ -853,6 +922,53 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "interstice.brazier-chance", needsReset = true)
     private double intersticeBrazierChance = 0.18;
 
+    /*      INTERSTICE RESOURCES (see tradewinds-interstice-plan.md)      */
+    @ConfigComment("Wart shoals: grid size in blocks for the soul-sand banks that break the")
+    @ConfigComment("interstice surface, chance (0-1) a cell hosts one, and their mean radius.")
+    @ConfigComment("0 chance or radius disables them.")
+    @ConfigEntry(path = "interstice.shoal-grid", needsReset = true)
+    private int intersticeShoalGrid = 256;
+
+    @ConfigEntry(path = "interstice.shoal-chance", needsReset = true)
+    private double intersticeShoalChance = 0.5;
+
+    @ConfigEntry(path = "interstice.shoal-radius", needsReset = true)
+    private int intersticeShoalRadius = 9;
+
+    @ConfigComment("Chance (0-1) a shoal is a GRAND shoal carrying a crimson or warped grove.")
+    @ConfigEntry(path = "interstice.grand-shoal-chance", needsReset = true)
+    private double intersticeGrandShoalChance = 0.2;
+
+    @ConfigComment("Fraction of a shoal's soul-sand surface planted with nether wart.")
+    @ConfigEntry(path = "interstice.wart-density")
+    private double intersticeWartDensity = 0.35;
+
+    @ConfigComment("Chance (0-1) that a brazier grows a nether-brick turret with a blaze")
+    @ConfigComment("spawner - the interstice's blaze pickets.")
+    @ConfigEntry(path = "interstice.blaze-picket-chance")
+    private double intersticeBlazePicketChance = 0.25;
+
+    @ConfigComment("Chance per ceiling chunk of a glowstone cluster hanging from the lid -")
+    @ConfigComment("light as navigation and destination at once. Needs ceiling-height > 0.")
+    @ConfigEntry(path = "interstice.glowstone-cluster-chance")
+    private double intersticeGlowstoneClusterChance = 0.2;
+
+    @ConfigComment("Chance per submerged shoal-core or brazier-root block of quartz ore.")
+    @ConfigEntry(path = "interstice.quartz-chance")
+    private double intersticeQuartzChance = 0.12;
+
+    @ConfigComment("Wither watchtowers: grid size in blocks and chance (0-1) a cell hosts one -")
+    @ConfigComment("the interstice's only structure. Wither skeletons spawn inside; the loot")
+    @ConfigComment("chest uses the vanilla loot table named below.")
+    @ConfigEntry(path = "interstice.watchtower-grid", needsReset = true)
+    private int intersticeWatchtowerGrid = 1536;
+
+    @ConfigEntry(path = "interstice.watchtower-chance", needsReset = true)
+    private double intersticeWatchtowerChance = 0.6;
+
+    @ConfigEntry(path = "interstice.watchtower-loot-table")
+    private String intersticeWatchtowerLootTable = "minecraft:chests/bastion_treasure";
+
     @ConfigComment("Ghasts spawned around a stranded sailor in the interstice.")
     @ConfigEntry(path = "interstice.ghasts-min")
     private int intersticeGhastsMin = 1;
@@ -907,7 +1023,8 @@ public class Settings implements WorldSettings {
     @ConfigComment("fighting is the third way to earn, beside trading and smuggling.")
     @ConfigEntry(path = "encounters.booty-table")
     private List<String> bootyTable = new ArrayList<>(List.of("NAUTILUS_SHELL", "PRISMARINE_SHARD",
-            "PRISMARINE_CRYSTALS", "GOLD_INGOT", "IRON_INGOT", "EMERALD", "COAL", "COOKED_COD", "TRIDENT"));
+            "PRISMARINE_CRYSTALS", "GOLD_INGOT", "IRON_INGOT", "EMERALD", "COAL", "COOKED_COD", "TRIDENT",
+            "NETHER_WART", "GHAST_TEAR"));
 
     /*      ILLEGAL TRADE      */
     @ConfigComment("Master gate for all illegal-goods mechanics: contraband, customs scans, smuggling.")
@@ -3113,6 +3230,14 @@ public class Settings implements WorldSettings {
     public void setPortAllowedFlags(List<String> portAllowedFlags) { this.portAllowedFlags = portAllowedFlags; }
     public Map<String, Integer> getBandHurtVillagersRank() { return bandHurtVillagersRank; }
     public void setBandHurtVillagersRank(Map<String, Integer> bandHurtVillagersRank) { this.bandHurtVillagersRank = bandHurtVillagersRank; }
+    public Map<String, Integer> getRankThresholds() { return rankThresholds; }
+    public void setRankThresholds(Map<String, Integer> rankThresholds) { this.rankThresholds = rankThresholds; }
+    public double getClaimPrice() { return claimPrice; }
+    public void setClaimPrice(double claimPrice) { this.claimPrice = claimPrice; }
+    public String getClaimMinimumRank() { return claimMinimumRank; }
+    public void setClaimMinimumRank(String claimMinimumRank) { this.claimMinimumRank = claimMinimumRank; }
+    public int getClaimProtectionMargin() { return claimProtectionMargin; }
+    public void setClaimProtectionMargin(int claimProtectionMargin) { this.claimProtectionMargin = claimProtectionMargin; }
     public int getResidentTetherRadius() { return residentTetherRadius; }
     public void setResidentTetherRadius(int residentTetherRadius) { this.residentTetherRadius = residentTetherRadius; }
     public int getResidentRespawnDelayMinutes() { return residentRespawnDelayMinutes; }
@@ -3134,6 +3259,10 @@ public class Settings implements WorldSettings {
     public int getStarChartBlocksPerPixel() { return starChartBlocksPerPixel; }
     public void setStarChartBlocksPerPixel(int starChartBlocksPerPixel) { this.starChartBlocksPerPixel = starChartBlocksPerPixel; }
     public boolean isNavigationBossbar() { return navigationBossbar; }
+    public int getCourseBarScale() { return courseBarScale; }
+    public void setCourseBarScale(int courseBarScale) { this.courseBarScale = courseBarScale; }
+    public Map<String, Integer> getEncounterAbandonShip() { return encounterAbandonShip; }
+    public void setEncounterAbandonShip(Map<String, Integer> encounterAbandonShip) { this.encounterAbandonShip = encounterAbandonShip; }
     public void setNavigationBossbar(boolean navigationBossbar) { this.navigationBossbar = navigationBossbar; }
     public double getStartingBalance() { return startingBalance; }
     public void setStartingBalance(double startingBalance) { this.startingBalance = startingBalance; }
@@ -3225,6 +3354,28 @@ public class Settings implements WorldSettings {
     public void setIntersticeCeilingHeight(int v) { this.intersticeCeilingHeight = v; }
     public double getIntersticeBrazierChance() { return intersticeBrazierChance; }
     public void setIntersticeBrazierChance(double v) { this.intersticeBrazierChance = v; }
+    public int getIntersticeShoalGrid() { return intersticeShoalGrid; }
+    public void setIntersticeShoalGrid(int v) { this.intersticeShoalGrid = v; }
+    public double getIntersticeShoalChance() { return intersticeShoalChance; }
+    public void setIntersticeShoalChance(double v) { this.intersticeShoalChance = v; }
+    public int getIntersticeShoalRadius() { return intersticeShoalRadius; }
+    public void setIntersticeShoalRadius(int v) { this.intersticeShoalRadius = v; }
+    public double getIntersticeGrandShoalChance() { return intersticeGrandShoalChance; }
+    public void setIntersticeGrandShoalChance(double v) { this.intersticeGrandShoalChance = v; }
+    public double getIntersticeWartDensity() { return intersticeWartDensity; }
+    public void setIntersticeWartDensity(double v) { this.intersticeWartDensity = v; }
+    public double getIntersticeBlazePicketChance() { return intersticeBlazePicketChance; }
+    public void setIntersticeBlazePicketChance(double v) { this.intersticeBlazePicketChance = v; }
+    public double getIntersticeGlowstoneClusterChance() { return intersticeGlowstoneClusterChance; }
+    public void setIntersticeGlowstoneClusterChance(double v) { this.intersticeGlowstoneClusterChance = v; }
+    public double getIntersticeQuartzChance() { return intersticeQuartzChance; }
+    public void setIntersticeQuartzChance(double v) { this.intersticeQuartzChance = v; }
+    public int getIntersticeWatchtowerGrid() { return intersticeWatchtowerGrid; }
+    public void setIntersticeWatchtowerGrid(int v) { this.intersticeWatchtowerGrid = v; }
+    public double getIntersticeWatchtowerChance() { return intersticeWatchtowerChance; }
+    public void setIntersticeWatchtowerChance(double v) { this.intersticeWatchtowerChance = v; }
+    public String getIntersticeWatchtowerLootTable() { return intersticeWatchtowerLootTable; }
+    public void setIntersticeWatchtowerLootTable(String v) { this.intersticeWatchtowerLootTable = v; }
     public int getIntersticeGraceSeconds() { return intersticeGraceSeconds; }
     public void setIntersticeGraceSeconds(int v) { this.intersticeGraceSeconds = v; }
     public int getIntersticeGhastsMin() { return intersticeGhastsMin; }

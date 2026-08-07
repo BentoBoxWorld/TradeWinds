@@ -89,14 +89,18 @@ class SaleCatalogTest extends CommonTestSetup {
         // Quadratic prices, in whole coins: raft 1000, top boat 110250
         assertTrue(ranks.price(ladder.get(0)) == 1000.0);
         assertTrue(ranks.price(ladder.get(19)) == 110250.0);
-        // Shops list bigger-only, tech-gated: TL1 sells ranks 1-3 only
+        // Shops are tech-gated: TL1 sells ranks 1-3 only
         var tl1 = ranks.shopListing(null, 1);
         assertTrue(tl1.size() == 3 && tl1.get(2).material() == Material.SPRUCE_BOAT);
-        // With a spruce boat at TL1 there is nothing left to buy
-        assertTrue(ranks.shopListing(Material.SPRUCE_BOAT, 1).isEmpty());
-        // TL7 sells everything bigger than yours
-        assertTrue(ranks.shopListing(Material.CHERRY_CHEST_BOAT, 7).size() == 1);
-        assertTrue(ranks.shopListing(Material.PALE_OAK_CHEST_BOAT, 7).isEmpty(), "Top of the tree");
+        // The yard ALWAYS sells (ruled 2026-08-05): with a spruce boat at TL1
+        // the smaller hulls are still on offer - bought outright, the spruce
+        // left unowned wherever it lies. Only the size you sail is excluded.
+        var downgrade = ranks.shopListing(Material.SPRUCE_BOAT, 1);
+        assertTrue(downgrade.size() == 2, "TL1 with a spruce should offer the two smaller hulls");
+        assertTrue(downgrade.stream().noneMatch(r -> r.material() == Material.SPRUCE_BOAT));
+        // TL7 sells the whole ladder except the size you sail
+        assertTrue(ranks.shopListing(Material.PALE_OAK_CHEST_BOAT, 7).size() == 19,
+                "Top of the tree still gets everything smaller");
     }
 
     @Test
