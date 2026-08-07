@@ -19,7 +19,6 @@ import world.bentobox.tradewinds.CommonTestSetup;
 import world.bentobox.tradewinds.Settings;
 import world.bentobox.tradewinds.TestHolds;
 import world.bentobox.tradewinds.TradeWinds;
-import world.bentobox.tradewinds.dataobjects.BoatHold;
 import world.bentobox.tradewinds.galaxy.GalaxyConfig;
 import world.bentobox.tradewinds.galaxy.GalaxyEngine;
 

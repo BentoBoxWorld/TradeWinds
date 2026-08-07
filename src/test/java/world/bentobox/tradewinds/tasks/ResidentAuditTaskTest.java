@@ -10,7 +10,6 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 
 import org.bukkit.Location;
-import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Villager;
@@ -26,7 +25,6 @@ import world.bentobox.tradewinds.TestHolds;
 import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.galaxy.GalaxyConfig;
 import world.bentobox.tradewinds.galaxy.GalaxyEngine;
-import world.bentobox.tradewinds.galaxy.IslandSpec;
 import world.bentobox.tradewinds.generator.IslandDecorator;
 
 /**
@@ -42,7 +40,6 @@ class ResidentAuditTaskTest extends CommonTestSetup {
 
     private TradeWinds addon;
     private ResidentAuditTask task;
-    private TestHolds holds;
     private GalaxyEngine engine;
 
     @Override
@@ -56,7 +53,7 @@ class ResidentAuditTaskTest extends CommonTestSetup {
         when(world.getSeed()).thenReturn(SEED);
         engine = new GalaxyEngine(new GalaxyConfig(SEED, 2500, 160, 45, 1.0, 0, 5000, 70));
         when(addon.getGalaxyEngine(anyLong())).thenReturn(engine);
-        holds = TestHolds.install(addon);
+        TestHolds.install(addon);
         task = new ResidentAuditTask(addon);
         when(world.getEntities()).thenReturn(List.of());
         when(world.getPlayers()).thenReturn(List.of());

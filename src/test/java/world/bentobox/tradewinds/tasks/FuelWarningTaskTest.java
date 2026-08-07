@@ -1,6 +1,5 @@
 package world.bentobox.tradewinds.tasks;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.atLeastOnce;
@@ -23,7 +22,6 @@ import world.bentobox.tradewinds.CommonTestSetup;
 import world.bentobox.tradewinds.Settings;
 import world.bentobox.tradewinds.TestHolds;
 import world.bentobox.tradewinds.TradeWinds;
-import world.bentobox.tradewinds.dataobjects.BoatHold;
 import world.bentobox.tradewinds.galaxy.GalaxyConfig;
 import world.bentobox.tradewinds.galaxy.GalaxyEngine;
 import world.bentobox.tradewinds.galaxy.IslandSpec;
@@ -106,28 +104,9 @@ class FuelWarningTaskTest extends CommonTestSetup {
         verify(player, times(1)).getLocation();
     }
 
-    @Test
-    @Disabled("test-authoring error: Mockito matcher misuse inside the task tick stubbing - fix the matchers, the task is not implicated")
-    void testDoesNotWarnWhenFuelEnough() {
-        holds.giveBoat(playerId, Material.OAK_BOAT);
-        IslandSpec island = engine.islandInCell(0, 0).orElseThrow();
-        Location portLoc = mock(Location.class);
-        when(portLoc.getWorld()).thenReturn(world);
-        when(portLoc.getBlockX()).thenReturn(island.centerX());
-        when(portLoc.getBlockZ()).thenReturn(island.centerZ());
-        when(player.getLocation()).thenReturn(portLoc);
-        when(addon.getOverWorld().getPlayers()).thenReturn(List.of(player));
-
-        // Mock FuelService properly before stubbing its methods - use any() for matcher
-        FuelService fuelService = mock(FuelService.class);
-        when(fuelService.holdFuel(any(Player.class))).thenReturn(100.0);
-        when(addon.getFuelService()).thenReturn(fuelService);
-
-        task.run();
-
-        // Should not warn (fuel is sufficient)
-        // We can't easily verify no warning, but the test passes if no exception
-    }
+    // testDoesNotWarnWhenFuelEnough removed: @Disabled with broken matchers
+    // and no assertion - noise, not a guard. The warn-when-short path is
+    // covered by the passing tests above.
 
     @Test
     void testDoesNotWarnIfNoBoat() {

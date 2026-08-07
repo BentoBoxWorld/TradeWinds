@@ -282,7 +282,6 @@ class HoldGuiTest extends CommonTestSetup {
 	@Test
 	void testClosingWindowRefreshesLoreOnActiveBoat() {
 		// Player has an active boat - lore should be refreshed on close
-		BoatHold activeHold = holds.manager().activeBoat(uuid).orElseThrow();
 		Inventory window = mockWindow();
 
 		InventoryCloseEvent event = mock(InventoryCloseEvent.class);

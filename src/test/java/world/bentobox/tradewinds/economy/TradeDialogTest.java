@@ -270,18 +270,9 @@ class TradeDialogTest extends CommonTestSetup {
 
     // ========== FUEL WARNINGS ==========
 
-    @Test
-    @Disabled("WarpService not mocked - incomplete test setup")
-    void testLowFuelDetected() {
-        // A player low on fuel gets a warning
-        settings.setFuelWarningEnabled(true);
-        when(addon.getFuelService().holdFuel(mockPlayer)).thenReturn(10.0); // Very low
-        when(addon.getWarpService().destinations(mockPlayer, island, 10.0))
-            .thenReturn(Collections.emptyList()); // Nowhere to go
-
-        // Test the principle: low fuel + no destinations = warning
-        // (full implementation needs warp service & fuel warning logic)
-    }
+    // testLowFuelDetected removed: it was @Disabled with no assertions - a
+    // placeholder, not a guard. Low-fuel warning coverage belongs in a
+    // FuelWarning test with a mocked WarpService.
 
     @Test
     void testFuelWarningDisabled() {
