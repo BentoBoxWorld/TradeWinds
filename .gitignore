@@ -7,3 +7,6 @@ target/
 .DS_Store
 database/
 database_backup/
+docs/
+files/
+files.zip

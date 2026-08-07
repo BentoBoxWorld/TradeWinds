@@ -31,18 +31,21 @@ model are indistinguishable from bugs. Say so when handing a build over.
 
 **TradeWinds** is a BentoBox GameModeAddon for Paper **26.2**: an endless
 procedurally generated ocean of NPC trading islands — buy low, sell high,
-smuggle, hunt bounties, turn pirate. Requirements live in `TRADEWINDS_SPEC.md`
+smuggle, hunt bounties, turn pirate. Requirements live in `docs/TRADEWINDS_SPEC.md`
 (the authoritative spec; read it first). Design rationale is in
-`tradewinds-design-decisions.md`, the stage plan in `tradewinds-dev-plan.md`.
-`docs/PROGRESS.md` records what is done and pitfalls hit; `TESTING.md` is the
+`docs/tradewinds-design-decisions.md`, the stage plan in `docs/tradewinds-dev-plan.md`.
+`docs/PROGRESS.md` records what is done and pitfalls hit; `docs/TESTING.md` is the
 manual test plan, ordered by risk (Tier 1 smoke first) - add new checks to the
 right tier, not to the end; `docs/TESTING-archive.md` is the old per-stage list,
 history only. Update PROGRESS and TESTING as features land.
+**`docs/` is git-ignored** (ruled 2026-08-07: internal design docs stay out of
+the public repo) — the files live only in this working copy, so never delete
+the folder, and don't expect it in a fresh clone.
 
 Load-bearing design rules (from the spec — breaking one is a bug):
 trading transacts only against the **virtual hold**; **trader-bought** cargo
 leaves the hold only by sale or destruction (player-loaded salvage may be
-withdrawn — narrowed 2026-08-03, see `tradewinds-salvage-plan.md`, and the
+withdrawn — narrowed 2026-08-03, see `docs/tradewinds-salvage-plan.md`, and the
 distinction is a PDC mark, `travel/CargoMark`); everything downstream of the galaxy seed is a pure
 function of (seed, position) with **no Bukkit imports** (package
 `world.bentobox.tradewinds.galaxy`), unit-tested headlessly; no End world ever;
@@ -50,8 +53,8 @@ interstice re-engage is always free; police mobs never drop loot.
 
 ## The boat/hold model (read before touching cargo or boats)
 
-`tradewinds-hold-plan.md` is **normative** here — it wins over the spec on
-hold and boat mechanics. `tradewinds-salvage-plan.md` is normative for the
+`docs/tradewinds-hold-plan.md` is **normative** here — it wins over the spec on
+hold and boat mechanics. `docs/tradewinds-salvage-plan.md` is normative for the
 salvage economy, the NBT-aware hold and price discovery — read it before
 touching pricing, drift or hold contents, because it deliberately narrows the
 one-way-cargo rule below to trader-bought cargo only.
