@@ -35,6 +35,14 @@ import world.bentobox.bentobox.database.objects.adapters.FlagBooleanSerializer;
 @ConfigComment("TradeWinds Configuration [version]")
 public class Settings implements WorldSettings {
 
+    // NO static constants in this class, ever: BentoBox's YAML loader builds a
+    // PropertyDescriptor for EVERY declared field, and a field without a
+    // getter/setter (any static final) makes loadConfigObject() throw - the
+    // addon then boots with null settings and disables itself (found
+    // 2026-08-07 when a Sonar cleanup added band-name constants). Duplicated
+    // string keys here are the price of the loader; Sonar S1192 is wrong
+    // about this file.
+
     /* Commands */
     @ConfigComment("Player command. What command users will run to access their island.")
     @ConfigComment("To define alias, just separate commands with white space.")

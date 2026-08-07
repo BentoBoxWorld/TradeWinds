@@ -43,6 +43,13 @@ public class TradeDialog {
     /** Rows that fit a dialog without scrolling. */
     private static final int MAX_ROWS = 8;
 
+    // S1192: Duplicate string constants
+    private static final String VAR_PRICE = "[price]";
+    private static final String VAR_NAME = "[name]";
+    private static final String VAR_MATERIAL = "[material]";
+    private static final String VAR_AMOUNT = "[amount]";
+    private static final String KEY_SELL_QTY_TOOLTIP = "market.sell-qty-tooltip";
+
     private final TradeWinds addon;
 
     public TradeDialog(TradeWinds addon) {
@@ -58,22 +65,23 @@ public class TradeDialog {
             User.getInstance(player).sendMessage("tradewinds.trade.barred");
             return;
         }
-        // The cargo is IN the boat, so buying and selling need the ship at
-        // the quay - but the OUTFITTER and the SHIPWRIGHT must always be
-        // open, or a sailor who has lost their boat can never get another
-        // and is stranded on the island for good (playtest 2026-08-02).
         boolean boatHere = addon.getMarketService().boatIsHere(player, spec);
-        // Standing at the counter is how a trader learns a port's prices - and
-        // the only way, because the market is learned, not published
         if (addon.getSettings().isPriceLogbookEnabled()) {
             recordPrices(player, spec);
         }
-        // Too poor in fuel to warp anywhere from here? Then the most useful
-        // thing this screen can do is point at where the fuel is sold. An
-        // action bar fades; a button that says "buy fuel here" does not.
         boolean lowFuel = isLowOnFuel(player, spec);
         boolean fuelInTradeCatalog = lowFuel && sellsFuel(addon.getMarketService().saleCatalog(spec));
 
+        List<ActionButton> buttons = buildMainButtons(player, spec, boatHere, lowFuel, fuelInTradeCatalog);
+        List<Component> body = buildMainBody(player, spec, boatHere, lowFuel);
+        show(player, ui(player, "market.title", VAR_NAME, spec.name()), body, buttons, closeButton(player), 1);
+    }
+
+    /**
+     * Build the buttons for the main menu dialog.
+     */
+    private List<ActionButton> buildMainButtons(Player player, IslandSpec spec, boolean boatHere, boolean lowFuel,
+            boolean fuelInTradeCatalog) {
         List<ActionButton> buttons = new ArrayList<>();
         // No sell button when the hold has nothing this island pays for
         if (boatHere && !sellOffers(player, spec).isEmpty()) {
@@ -104,13 +112,20 @@ public class TradeDialog {
         if (reportable > 0 && addon.getSettings().getMarketReportPricePerIsland() > 0) {
             buttons.add(button(ui(player, "market.report", NO_VARS),
                     ui(player, "market.report-tooltip", "[number]", String.valueOf(reportable),
-                            "[price]", Money.format(addon,
+                            VAR_PRICE, Money.format(addon,
                                     reportable * addon.getSettings().getMarketReportPricePerIsland())),
                     () -> {
                         addon.getMarketService().buyMarketReport(player, spec);
                         openMain(player, spec);
                     }));
         }
+        return buttons;
+    }
+
+    /**
+     * Build the body text for the main menu dialog.
+     */
+    private List<Component> buildMainBody(Player player, IslandSpec spec, boolean boatHere, boolean lowFuel) {
         List<Component> body = new ArrayList<>(List.of(
                 ui(player, "market.subtitle", "[type]", spec.type().name(), "[tech]",
                         String.valueOf(spec.techLevel()), "[band]",
@@ -122,7 +137,7 @@ public class TradeDialog {
         if (lowFuel && boatHere) {
             body.add(ui(player, "market.low-fuel", NO_VARS));
         }
-        show(player, ui(player, "market.title", "[name]", spec.name()), body, buttons, closeButton(player), 1);
+        return body;
     }
 
     /**
@@ -162,9 +177,9 @@ public class TradeDialog {
         List<ActionButton> buttons = new ArrayList<>();
         for (SellOffer offer : offers.subList(0, Math.min(MAX_ROWS, offers.size()))) {
             buttons.add(button(
-                    ui(player, "market.sell-pick", "[material]", itemLabel(player, offer.item()), "[amount]",
-                            String.valueOf(offer.amount()), "[price]", Money.format(addon, offer.unitPrice())),
-                    ui(player, "market.sell-pick-tooltip", "[price]", Money.format(addon, offer.unitPrice()),
+                    ui(player, "market.sell-pick", VAR_MATERIAL, itemLabel(player, offer.item()), VAR_AMOUNT,
+                            String.valueOf(offer.amount()), VAR_PRICE, Money.format(addon, offer.unitPrice())),
+                    ui(player, "market.sell-pick-tooltip", VAR_PRICE, Money.format(addon, offer.unitPrice()),
                             "[depth]", depthOf(spec, offer)),
                     () -> openSellItem(player, spec, offer.item())));
         }
@@ -197,9 +212,9 @@ public class TradeDialog {
         String each = Money.format(addon, offer.unitPrice());
         List<DialogBody> body = new ArrayList<>();
         body.add(DialogBody.item(offer.item())
-                .description(DialogBody.plainMessage(ui(player, "market.sell-item-line", "[material]",
-                        itemLabel(player, offer.item()), "[amount]", String.valueOf(offer.amount()),
-                        "[price]", each)))
+                .description(DialogBody.plainMessage(ui(player, "market.sell-item-line", VAR_MATERIAL,
+                        itemLabel(player, offer.item()), VAR_AMOUNT, String.valueOf(offer.amount()),
+                        VAR_PRICE, each)))
                 .showTooltip(true).showDecorations(true).width(32).height(32).build());
         body.add(DialogBody.plainMessage(ui(player, "market.sell-item-depth", "[depth]",
                 depthOf(spec, offer))));
@@ -207,20 +222,20 @@ public class TradeDialog {
 
         int batch = Math.min(MID_BATCH, offer.amount());
         List<ActionButton> buttons = new ArrayList<>();
-        buttons.add(button(ui(player, "market.sell-qty-one", "[price]", each),
-                ui(player, "market.sell-qty-tooltip", NO_VARS),
+        buttons.add(button(ui(player, "market.sell-qty-one", VAR_PRICE, each),
+                ui(player, KEY_SELL_QTY_TOOLTIP, NO_VARS),
                 () -> sellThenReopen(player, spec, offer.item(), 1)));
         if (batch > 1) {
             buttons.add(button(
-                    ui(player, "market.sell-qty-batch", "[amount]", String.valueOf(batch), "[price]",
+                    ui(player, "market.sell-qty-batch", VAR_AMOUNT, String.valueOf(batch), VAR_PRICE,
                             Money.format(addon, batch * offer.unitPrice())),
-                    ui(player, "market.sell-qty-tooltip", NO_VARS),
+                    ui(player, KEY_SELL_QTY_TOOLTIP, NO_VARS),
                     () -> sellThenReopen(player, spec, offer.item(), batch)));
         }
         buttons.add(button(
-                ui(player, "market.sell-qty-all", "[amount]", String.valueOf(offer.amount()), "[price]",
+                ui(player, "market.sell-qty-all", VAR_AMOUNT, String.valueOf(offer.amount()), VAR_PRICE,
                         Money.format(addon, offer.total())),
-                ui(player, "market.sell-qty-tooltip", NO_VARS),
+                ui(player, KEY_SELL_QTY_TOOLTIP, NO_VARS),
                 () -> sellThenReopen(player, spec, offer.item(), Integer.MAX_VALUE)));
 
         showBodies(player, ui(player, "market.selling-title", "[name]", spec.name()), body, buttons,
@@ -275,11 +290,11 @@ public class TradeDialog {
             // Secondhand goods are notable by definition, so the icon and its real
             // tooltip are the whole point of the page
             body.add(DialogBody.item(item)
-                    .description(DialogBody.plainMessage(ui(player, "market.shelf-item-line", "[material]",
-                            itemLabel(player, item), "[price]", price)))
+                    .description(DialogBody.plainMessage(ui(player, "market.shelf-item-line", VAR_MATERIAL,
+                            itemLabel(player, item), VAR_PRICE, price)))
                     .showTooltip(true).showDecorations(true).build());
-            buttons.add(button(ui(player, "market.shelf-buy", "[material]", itemLabel(player, item),
-                    "[price]", price), ui(player, "market.shelf-buy-tooltip", "[details]", details(item)),
+            buttons.add(button(ui(player, "market.shelf-buy", VAR_MATERIAL, itemLabel(player, item),
+                    VAR_PRICE, price), ui(player, "market.shelf-buy-tooltip", "[details]", details(item)),
                     () -> {
                         addon.getMarketService().buyFromShelf(player, spec, index);
                         openShelf(player, spec);
@@ -336,15 +351,15 @@ public class TradeDialog {
             Optional<Double> price = addon.getMarketService().playerBuysAt(spec, material);
             price.ifPresent(unit -> {
                 String name = MarketService.pretty(material);
-                Component each = ui(player, "market.buy-tooltip-each", "[price]", Money.format(addon, unit));
-                buttons.add(button(ui(player, "market.buy-one", "[material]", name, "[price]",
+                Component each = ui(player, "market.buy-tooltip-each", VAR_PRICE, Money.format(addon, unit));
+                buttons.add(button(ui(player, "market.buy-one", VAR_MATERIAL, name, VAR_PRICE,
                         Money.format(addon, unit)), each,
                         () -> buyThenReopen(player, spec, material, 1, catalog, page)));
-                buttons.add(button(ui(player, "market.buy-batch", "[amount]", String.valueOf(MID_BATCH),
-                        "[price]", Money.format(addon, unit * MID_BATCH)), each,
+                buttons.add(button(ui(player, "market.buy-batch", VAR_AMOUNT, String.valueOf(MID_BATCH),
+                        VAR_PRICE, Money.format(addon, unit * MID_BATCH)), each,
                         () -> buyThenReopen(player, spec, material, MID_BATCH, catalog, page)));
-                buttons.add(button(ui(player, "market.buy-batch", "[amount]", String.valueOf(BIG_BATCH),
-                        "[price]", Money.format(addon, unit * BIG_BATCH)), each,
+                buttons.add(button(ui(player, "market.buy-batch", VAR_AMOUNT, String.valueOf(BIG_BATCH),
+                        VAR_PRICE, Money.format(addon, unit * BIG_BATCH)), each,
                         () -> buyThenReopen(player, spec, material, BIG_BATCH, catalog, page)));
             });
         }
@@ -374,8 +389,8 @@ public class TradeDialog {
         for (Material material : addon.getMarketService().outfitterCatalog(spec)) {
             addon.getMarketService().playerBuysAt(spec, material).ifPresent(unit -> {
                 String name = MarketService.pretty(material);
-                Component each = ui(player, "market.outfit-tooltip", "[price]", Money.format(addon, unit));
-                buttons.add(button(ui(player, "market.outfit-one", "[material]", name, "[price]",
+                Component each = ui(player, "market.outfit-tooltip", VAR_PRICE, Money.format(addon, unit));
+                buttons.add(button(ui(player, "market.outfit-one", VAR_MATERIAL, name, VAR_PRICE,
                         Money.format(addon, unit)), each,
                         () -> outfitThenReopen(player, spec, material, 1)));
                 if (new org.bukkit.inventory.ItemStack(material).getMaxStackSize() > 1) {
@@ -383,9 +398,9 @@ public class TradeDialog {
                     // gets no batch button, which shifts the two-column
                     // pairing, and a bare "x16 - $7,184" then sells a mystery
                     // (playtest 2026-08-05: the Compass batch went orphan)
-                    buttons.add(button(ui(player, "market.outfit-batch", "[material]", name,
-                            "[amount]", String.valueOf(MID_BATCH),
-                            "[price]", Money.format(addon, unit * MID_BATCH)), each,
+                    buttons.add(button(ui(player, "market.outfit-batch", VAR_MATERIAL, name,
+                            VAR_AMOUNT, String.valueOf(MID_BATCH),
+                            VAR_PRICE, Money.format(addon, unit * MID_BATCH)), each,
                             () -> outfitThenReopen(player, spec, material, MID_BATCH)));
                 }
             });
@@ -418,7 +433,7 @@ public class TradeDialog {
                 .shopListing(current, spec.techLevel())) {
             double price = addon.getBoatRanks().price(rank);
             buttons.add(button(
-                    ui(player, "market.hull", "[material]", MarketService.pretty(rank.material()), "[price]",
+                    ui(player, "market.hull", VAR_MATERIAL, MarketService.pretty(rank.material()), VAR_PRICE,
                             Money.format(addon, price)),
                     ui(player, "market.hull-tooltip", "[slots]", String.valueOf(rank.slots())),
                     () -> {
@@ -544,12 +559,7 @@ public class TradeDialog {
             // Do not quote a price for something this port will refuse at the
             // counter: the sell page used to offer a dollar for contraband that
             // a safe island would then decline, which reads as a broken market
-            if (addon.getCustomsService() != null && addon.getCustomsService().isContraband(item.getType())
-                    && !addon.getCustomsService().buysContraband(spec.band())) {
-                continue;
-            }
-            // Nor for goods too rich for this port's tech to handle
-            if (!addon.getMarketService().handlesValue(spec, item)) {
+            if (isContrabandsRefused(item.getType(), spec) || !addon.getMarketService().handlesValue(spec, item)) {
                 continue;
             }
             addon.getMarketService().playerSellsAt(spec, item)
@@ -557,6 +567,14 @@ public class TradeDialog {
                             PriceModel.round2(unit * entry.getValue()))));
         }
         return offers;
+    }
+
+    /**
+     * Whether this port refuses to buy this contraband item.
+     */
+    private boolean isContrabandsRefused(Material material, IslandSpec spec) {
+        return addon.getCustomsService() != null && addon.getCustomsService().isContraband(material)
+                && !addon.getCustomsService().buysContraband(spec.band());
     }
 
     /**
@@ -580,10 +598,6 @@ public class TradeDialog {
         return goods;
     }
 
-    /**
-     * Balance and hold space - shown on every market screen so traders always
-     * know what they can afford and what they can carry.
-     */
     /**
      * A translated UI component. All dialog text goes through the locale so it
      * can be translated - never build player-facing strings in code.

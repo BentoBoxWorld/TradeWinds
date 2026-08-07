@@ -17,6 +17,8 @@ import world.bentobox.tradewinds.galaxy.IslandSpec;
  */
 public class TWChartCommand extends CompositeCommand {
 
+    private static final String MATERIAL_PLACEHOLDER = "[material]";
+
     public TWChartCommand(CompositeCommand parent) {
         super(parent, "chart");
     }
@@ -96,28 +98,28 @@ public class TWChartCommand extends CompositeCommand {
      * @param old true for the abandoned OLD BOAT, false for their own
      */
     private void reportBoat(TradeWinds addon, User user, int x, int z, boolean old) {
-        var record = old ? addon.getHoldManager().oldBoat(user.getUniqueId())
+        var boatRecord = old ? addon.getHoldManager().oldBoat(user.getUniqueId())
                 : addon.getHoldManager().activeBoat(user.getUniqueId());
         String key = old ? "tradewinds.chart.old-boat" : "tradewinds.chart.your-boat";
-        if (record.isEmpty()) {
+        if (boatRecord.isEmpty()) {
             if (!old) {
                 user.sendMessage("tradewinds.chart.no-boat");
             }
             return;
         }
-        var hold = record.get();
+        var hold = boatRecord.get();
         String material = world.bentobox.tradewinds.economy.PriceEngine.prettify(hold.getMaterial());
         if (hold.getWorld() == null || hold.getWorld().isEmpty()) {
-            user.sendMessage(key + "-lost", "[material]", material);
+            user.sendMessage(key + "-lost", MATERIAL_PLACEHOLDER, material);
             return;
         }
         if (!hold.getWorld().equals(user.getWorld().getName())) {
-            user.sendMessage(key + "-elsewhere", "[material]", material, "[world]", hold.getWorld());
+            user.sendMessage(key + "-elsewhere", MATERIAL_PLACEHOLDER, material, "[world]", hold.getWorld());
             return;
         }
         long dx = (long) hold.getX() - x;
         long dz = (long) hold.getZ() - z;
-        user.sendMessage(key, "[material]", material, "[x]", String.valueOf(hold.getX()),
+        user.sendMessage(key, MATERIAL_PLACEHOLDER, material, "[x]", String.valueOf(hold.getX()),
                 "[z]", String.valueOf(hold.getZ()),
                 "[distance]", String.valueOf((int) Math.sqrt((double) dx * dx + (double) dz * dz)));
     }

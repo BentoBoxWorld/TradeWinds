@@ -58,6 +58,11 @@ public class HoldGui implements Listener {
     private static final int SIZE = 54;
     private static final int NESTED_SIZE = 45;
     private static final int TNT_SLOT = 1;
+    private static final String PLACEHOLDER_NUMBER = "[number]";
+    private static final String MESSAGE_FUEL_FULL = "tradewinds.hold.fuel-full";
+    private static final String SUFFIX_STAINED_GLASS_PANE = "STAINED_GLASS_PANE";
+    private static final String PLACEHOLDER_AMOUNT = "[amount]";
+    private static final String PLACEHOLDER_MATERIAL = "[material]";
     /** Cargo slots: rows 1-3, columns 1-7 (both windows). */
     private static final int[] CARGO = new int[HoldService.MAX_CARGO_SLOTS];
     /** Fuel slots: row 5, columns 1-7 (main window only). */
@@ -123,7 +128,7 @@ public class HoldGui implements Listener {
     private void openNested(Player player, int index) {
         Inventory inv = Bukkit.createInventory(null, NESTED_SIZE,
                 User.getInstance(player).getTranslationAsComponent("tradewinds.hold.expander-title",
-                        "[number]", String.valueOf(index + 1)));
+                        PLACEHOLDER_NUMBER, String.valueOf(index + 1)));
         renderNested(player, inv, index);
         player.openInventory(inv);
         nested.put(player.getUniqueId(), new Nested(inv, index));
@@ -192,7 +197,7 @@ public class HoldGui implements Listener {
         ItemStack item = new ItemStack(Material.WHITE_SHULKER_BOX);
         ItemMeta meta = item.getItemMeta();
         meta.displayName(user.getTranslationAsComponent("tradewinds.hold.expander",
-                "[number]", String.valueOf(index + 1)));
+                PLACEHOLDER_NUMBER, String.valueOf(index + 1)));
         String loreKey = addon.getHoldService().expandersOpenable(id) ? "tradewinds.hold.expander-lore"
                 : "tradewinds.hold.expander-inert-lore";
         meta.lore(List.of(user.getTranslationAsComponent(loreKey, new String[0])));
@@ -385,7 +390,7 @@ public class HoldGui implements Listener {
         if (addon.getFuelService().fuelValue(material) > 0) {
             int added = hold.addFuel(player, material, stack.getAmount());
             if (added <= 0) {
-                user.sendMessage("tradewinds.hold.fuel-full");
+                user.sendMessage(MESSAGE_FUEL_FULL);
                 thud(player);
             } else {
                 stack.setAmount(stack.getAmount() - added);
@@ -424,7 +429,7 @@ public class HoldGui implements Listener {
         if (addon.getFuelService().fuelValue(material) > 0) {
             int added = hold.addFuel(player, material, stack.getAmount());
             if (added <= 0) {
-                user.sendMessage("tradewinds.hold.fuel-full");
+                user.sendMessage(MESSAGE_FUEL_FULL);
                 thud(player);
             } else {
                 stack.setAmount(stack.getAmount() - added);
@@ -456,49 +461,65 @@ public class HoldGui implements Listener {
             destroySelection(player, selected.remove(id));
             return;
         }
-        for (int i = 0; i < FUEL.length; i++) {
-            if (FUEL[i] == slot) {
-                withdrawFuel(player, shown);
-                return;
-            }
+        if (isFuelSlot(slot)) {
+            withdrawFuel(player, shown);
+            return;
         }
         int index = cargoIndex(slot);
         if (index < 0 || shown == null || shown.getType().isAir()
-                || shown.getType().name().endsWith("STAINED_GLASS_PANE")) {
+                || shown.getType().name().endsWith(SUFFIX_STAINED_GLASS_PANE)) {
             selected.remove(id);
             return;
         }
+        if (handleExpanderClick(player, hold, id, index, shown, click)) {
+            return;
+        }
+        handleCargoClick(player, id, shown, click);
+    }
+
+    private boolean handleExpanderClick(Player player, HoldService hold, UUID id, int index,
+            ItemStack shown, ClickType click) {
         int stackCount = hold.cargo(id).size();
         if (index >= stackCount && index < stackCount + hold.expanderCount(id)) {
             int expander = index - stackCount;
             if (click == ClickType.RIGHT) {
-                // Select an EMPTY expander for the TNT
-                if (hold.expanderCargo(id, expander).isEmpty()) {
-                    selected.put(id, new Selection(null, 0, expander));
-                    user.sendMessage("tradewinds.hold.expander-selected", "[number]",
-                            String.valueOf(expander + 1));
-                } else {
-                    user.sendMessage("tradewinds.hold.expander-not-empty");
-                    thud(player);
-                }
-                return;
+                selectExpanderForTnt(player, hold, id, expander);
+            } else {
+                openExpanderPanel(player, hold, id, expander);
             }
-            if (!hold.expandersOpenable(id)) {
-                user.sendMessage("tradewinds.hold.expander-inert");
-                thud(player);
-                return;
-            }
-            Bukkit.getScheduler().runTask(addon.getPlugin(), () -> openNested(player, expander));
+            return true;
+        }
+        return false;
+    }
+
+    private void selectExpanderForTnt(Player player, HoldService hold, UUID id, int expander) {
+        User user = User.getInstance(player);
+        if (hold.expanderCargo(id, expander).isEmpty()) {
+            selected.put(id, new Selection(null, 0, expander));
+            user.sendMessage("tradewinds.hold.expander-selected", PLACEHOLDER_NUMBER,
+                    String.valueOf(expander + 1));
+        } else {
+            user.sendMessage("tradewinds.hold.expander-not-empty");
+            thud(player);
+        }
+    }
+
+    private void openExpanderPanel(Player player, HoldService hold, UUID id, int expander) {
+        User user = User.getInstance(player);
+        if (!hold.expandersOpenable(id)) {
+            user.sendMessage("tradewinds.hold.expander-inert");
+            thud(player);
             return;
         }
-        // Right-click selects for the TNT; shift-click is the quick path (fuel
-        // to the tank, anything else ashore); a plain left-click picks the
-        // stack UP, to be dropped where it should go - the fuel row, back into
-        // the hold, or your inventory - with ordinary mouse movement.
+        Bukkit.getScheduler().runTask(addon.getPlugin(), () -> openNested(player, expander));
+    }
+
+    private void handleCargoClick(Player player, UUID id, ItemStack shown, ClickType click) {
         if (click == ClickType.RIGHT) {
             selected.put(id, new Selection(shown, shown.getAmount(), -1));
-            user.sendMessage("tradewinds.hold.selected", "[amount]", String.valueOf(shown.getAmount()),
-                    "[material]", world.bentobox.tradewinds.economy.PriceEngine.prettify(shown.getType().name()));
+            User user = User.getInstance(player);
+            user.sendMessage("tradewinds.hold.selected", PLACEHOLDER_AMOUNT, String.valueOf(shown.getAmount()),
+                    PLACEHOLDER_MATERIAL, world.bentobox.tradewinds.economy.PriceEngine.prettify(shown.getType().name()));
             return;
         }
         if (click.isShiftClick()) {
@@ -521,7 +542,6 @@ public class HoldGui implements Listener {
      */
     private void heldClick(Player player, Inventory clicked, Inventory top, int slot, ClickType click,
             Held holding) {
-        UUID id = player.getUniqueId();
         User user = User.getInstance(player);
         if (clicked == top) {
             if (isFuelSlot(slot)) {
@@ -550,7 +570,7 @@ public class HoldGui implements Listener {
             putBack(player);
             return;
         }
-        user.sendMessage("tradewinds.hold.withdrawn", "[amount]", String.valueOf(taken), "[material]",
+        user.sendMessage("tradewinds.hold.withdrawn", PLACEHOLDER_AMOUNT, String.valueOf(taken), PLACEHOLDER_MATERIAL,
                 world.bentobox.tradewinds.economy.PriceEngine.prettify(holding.item().getType().name()));
         chime(player);
         clearHeld(player);
@@ -571,7 +591,7 @@ public class HoldGui implements Listener {
         int moved = addon.getHoldService().moveCargoToFuel(player, holding.item(),
                 Math.min(amount, holding.amount()));
         if (moved <= 0) {
-            user.sendMessage("tradewinds.hold.fuel-full");
+            user.sendMessage(MESSAGE_FUEL_FULL);
             thud(player);
             return;
         }
@@ -626,7 +646,7 @@ public class HoldGui implements Listener {
             user.sendMessage("tradewinds.hold.withdraw-failed");
             thud(player);
         } else {
-            user.sendMessage("tradewinds.hold.withdrawn", "[amount]", String.valueOf(taken), "[material]",
+            user.sendMessage("tradewinds.hold.withdrawn", PLACEHOLDER_AMOUNT, String.valueOf(taken), PLACEHOLDER_MATERIAL,
                     world.bentobox.tradewinds.economy.PriceEngine.prettify(shown.getType().name()));
             chime(player);
         }
@@ -636,11 +656,11 @@ public class HoldGui implements Listener {
         int moved = addon.getHoldService().moveCargoToFuel(player, shown.getType(), shown.getAmount());
         User user = User.getInstance(player);
         if (moved > 0) {
-            user.sendMessage("tradewinds.hold.moved-to-fuel", "[amount]", String.valueOf(moved),
-                    "[material]", world.bentobox.tradewinds.economy.PriceEngine.prettify(shown.getType().name()));
+            user.sendMessage("tradewinds.hold.moved-to-fuel", PLACEHOLDER_AMOUNT, String.valueOf(moved),
+                    PLACEHOLDER_MATERIAL, world.bentobox.tradewinds.economy.PriceEngine.prettify(shown.getType().name()));
             chime(player);
         } else {
-            user.sendMessage("tradewinds.hold.fuel-full");
+            user.sendMessage(MESSAGE_FUEL_FULL);
             thud(player);
         }
     }
@@ -656,13 +676,13 @@ public class HoldGui implements Listener {
             }
             int destroyed = addon.getHoldService().removeFromExpander(id, index, selection.item(),
                     selection.amount());
-            user.sendMessage("tradewinds.hold.destroyed", "[amount]", String.valueOf(destroyed), "[material]",
+            user.sendMessage("tradewinds.hold.destroyed", PLACEHOLDER_AMOUNT, String.valueOf(destroyed), PLACEHOLDER_MATERIAL,
                     world.bentobox.tradewinds.economy.PriceEngine.prettify(selection.item().getType().name()));
             player.playSound(player.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, 0.4f, 1.4f);
             return;
         }
         if (cargoIndex(slot) < 0 || shown == null || shown.getType().isAir()
-                || shown.getType().name().endsWith("STAINED_GLASS_PANE")) {
+                || shown.getType().name().endsWith(SUFFIX_STAINED_GLASS_PANE)) {
             nestedSelected.remove(id);
             return;
         }
@@ -671,8 +691,8 @@ public class HoldGui implements Listener {
             return;
         }
         nestedSelected.put(id, new Selection(shown, shown.getAmount(), -1));
-        user.sendMessage("tradewinds.hold.selected", "[amount]", String.valueOf(shown.getAmount()),
-                "[material]", world.bentobox.tradewinds.economy.PriceEngine.prettify(shown.getType().name()));
+        user.sendMessage("tradewinds.hold.selected", PLACEHOLDER_AMOUNT, String.valueOf(shown.getAmount()),
+                PLACEHOLDER_MATERIAL, world.bentobox.tradewinds.economy.PriceEngine.prettify(shown.getType().name()));
     }
 
     private void destroySelection(Player player, Selection selection) {
@@ -692,7 +712,7 @@ public class HoldGui implements Listener {
             return;
         }
         int destroyed = addon.getHoldService().remove(player, selection.item(), selection.amount());
-        user.sendMessage("tradewinds.hold.destroyed", "[amount]", String.valueOf(destroyed), "[material]",
+        user.sendMessage("tradewinds.hold.destroyed", PLACEHOLDER_AMOUNT, String.valueOf(destroyed), PLACEHOLDER_MATERIAL,
                 world.bentobox.tradewinds.economy.PriceEngine.prettify(selection.item().getType().name()));
         player.playSound(player.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, 0.4f, 1.4f);
     }
@@ -707,7 +727,7 @@ public class HoldGui implements Listener {
     }
 
     private void withdrawFuel(Player player, ItemStack shown) {
-        if (shown == null || shown.getType().isAir() || shown.getType().name().endsWith("STAINED_GLASS_PANE")) {
+        if (shown == null || shown.getType().isAir() || shown.getType().name().endsWith(SUFFIX_STAINED_GLASS_PANE)) {
             return;
         }
         int taken = addon.getHoldService().removeFuel(player.getUniqueId(), shown.getType(), shown.getAmount());

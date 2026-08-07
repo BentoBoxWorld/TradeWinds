@@ -160,49 +160,58 @@ public class PriceEngine {
         }
         Recipe recipe = recipes.get(0);
         int output = Math.max(1, recipe.getResult().getAmount());
-        double cost = 0;
-
-        if (recipe instanceof ShapedRecipe shaped) {
-            for (ItemStack ingredient : shaped.getIngredientMap().values()) {
-                if (ingredient == null || ingredient.getType().isAir()) {
-                    continue;
-                }
-                double ingredientCost = deriveFromRecipes(ingredient, new HashSet<>(visited), depth + 1);
-                if (ingredientCost < 0) {
-                    return -1;
-                }
-                cost += ingredientCost * ingredient.getAmount();
-            }
-        } else if (recipe instanceof ShapelessRecipe shapeless) {
-            for (ItemStack ingredient : shapeless.getIngredientList()) {
-                if (ingredient == null || ingredient.getType().isAir()) {
-                    continue;
-                }
-                double ingredientCost = deriveFromRecipes(ingredient, new HashSet<>(visited), depth + 1);
-                if (ingredientCost < 0) {
-                    return -1;
-                }
-                cost += ingredientCost * ingredient.getAmount();
-            }
-        } else if (recipe instanceof CookingRecipe<?> cooking) {
-            double inputCost = deriveFromRecipes(cooking.getInput(), new HashSet<>(visited), depth + 1);
-            if (inputCost < 0) {
-                return -1;
-            }
-            // A coal smelts 8 items: each output carries its share of fuel
-            double fuelCost = addon.getSettings().getBasePrices().getOrDefault("COAL", 1.0) / 8.0;
-            cost = inputCost + fuelCost;
-        } else if (recipe instanceof StonecuttingRecipe stonecutting) {
-            double inputCost = deriveFromRecipes(stonecutting.getInput(), new HashSet<>(visited), depth + 1);
-            if (inputCost < 0) {
-                return -1;
-            }
-            cost = inputCost;
-        } else {
+        double cost = calculateRecipeCost(recipe, visited, depth);
+        if (cost < 0) {
             return -1;
         }
-
         return cost / output;
+    }
+
+    /**
+     * Calculate the cost for a specific recipe type.
+     */
+    private double calculateRecipeCost(Recipe recipe, Set<String> visited, int depth) {
+        if (recipe instanceof ShapedRecipe shaped) {
+            return sumIngredientCosts(shaped.getIngredientMap().values(), visited, depth);
+        } else if (recipe instanceof ShapelessRecipe shapeless) {
+            return sumIngredientCosts(shapeless.getIngredientList(), visited, depth);
+        } else if (recipe instanceof CookingRecipe<?> cooking) {
+            return calculateCookingCost(cooking, visited, depth);
+        } else if (recipe instanceof StonecuttingRecipe stonecutting) {
+            return deriveFromRecipes(stonecutting.getInput(), new HashSet<>(visited), depth + 1);
+        }
+        return -1;
+    }
+
+    /**
+     * Sum the costs of multiple ingredients.
+     */
+    private double sumIngredientCosts(java.util.Collection<ItemStack> ingredients, Set<String> visited, int depth) {
+        double cost = 0;
+        for (ItemStack ingredient : ingredients) {
+            if (ingredient == null || ingredient.getType().isAir()) {
+                continue;
+            }
+            double ingredientCost = deriveFromRecipes(ingredient, new HashSet<>(visited), depth + 1);
+            if (ingredientCost < 0) {
+                return -1;
+            }
+            cost += ingredientCost * ingredient.getAmount();
+        }
+        return cost;
+    }
+
+    /**
+     * Calculate the cost for a cooking recipe (includes fuel).
+     */
+    private double calculateCookingCost(CookingRecipe<?> cooking, Set<String> visited, int depth) {
+        double inputCost = deriveFromRecipes(cooking.getInput(), new HashSet<>(visited), depth + 1);
+        if (inputCost < 0) {
+            return -1;
+        }
+        // A coal smelts 8 items: each output carries its share of fuel
+        double fuelCost = addon.getSettings().getBasePrices().getOrDefault("COAL", 1.0) / 8.0;
+        return inputCost + fuelCost;
     }
 
     private double applyDurability(ItemStack item, double base) {

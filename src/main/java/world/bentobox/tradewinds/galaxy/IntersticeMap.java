@@ -86,6 +86,16 @@ public class IntersticeMap {
     }
 
     /**
+     * Tuning parameters for wreck generation and placement.
+     *
+     * @param grid cell grid size in blocks
+     * @param chance per-cell occupancy chance (0-1)
+     * @param lootChance fraction of wrecks that carry stocked chests (0-1)
+     */
+    public record WreckTuning(int grid, double chance, double lootChance) {
+    }
+
+    /**
      * A shipwreck perched on its own reef mound, half in and half out of the
      * water: a ship that misjumped and never re-engaged. Most are scenery -
      * only {@code loot} wrecks carry stocked chests.
@@ -121,8 +131,7 @@ public class IntersticeMap {
     private final double wreckLootChance;
 
     public IntersticeMap(long seed, int shoalGrid, double shoalChance, int shoalRadius,
-            double grandShoalChance, int towerGrid, double towerChance, int wreckGrid,
-            double wreckChance, double wreckLootChance) {
+            double grandShoalChance, int towerGrid, double towerChance, WreckTuning wreck) {
         this.seed = seed;
         this.shoalGrid = Math.max(64, shoalGrid);
         this.shoalChance = shoalChance;
@@ -130,9 +139,9 @@ public class IntersticeMap {
         this.grandShoalChance = grandShoalChance;
         this.towerGrid = Math.max(256, towerGrid);
         this.towerChance = towerChance;
-        this.wreckGrid = Math.max(64, wreckGrid);
-        this.wreckChance = wreckChance;
-        this.wreckLootChance = wreckLootChance;
+        this.wreckGrid = Math.max(64, wreck.grid());
+        this.wreckChance = wreck.chance();
+        this.wreckLootChance = wreck.lootChance();
     }
 
     /**
@@ -253,11 +262,17 @@ public class IntersticeMap {
         int x = (int) Math.round((cellX + 0.5) * wreckGrid + jx * jitter);
         int z = (int) Math.round((cellZ + 0.5) * wreckGrid + jz * jitter);
         int variant = (int) (Math.abs(Hashing.cellHash(seed, cellX, cellZ, SALT_WRECK_KIND)) % 1024);
-        int rotation = (int) Math.floorMod(Hashing.cellHash(seed, cellX, cellZ, SALT_WRECK_ROT), 4);
+        int rotation = Math.floorMod(Hashing.cellHash(seed, cellX, cellZ, SALT_WRECK_ROT), 4);
         double roll = Hashing.toUnit(Hashing.cellHash(seed, cellX, cellZ, SALT_WRECK_GRADE));
-        WreckGrade grade = roll < GRADE_COMMON ? WreckGrade.COMMON
-                : roll < GRADE_COMMON + GRADE_RARE ? WreckGrade.RARE : WreckGrade.TREASURE;
-        int sink = (int) Math.floorMod(Hashing.cellHash(seed, cellX, cellZ, SALT_WRECK_SINK), 3);
+        WreckGrade grade;
+        if (roll < GRADE_COMMON) {
+            grade = WreckGrade.COMMON;
+        } else if (roll < GRADE_COMMON + GRADE_RARE) {
+            grade = WreckGrade.RARE;
+        } else {
+            grade = WreckGrade.TREASURE;
+        }
+        int sink = Math.floorMod(Hashing.cellHash(seed, cellX, cellZ, SALT_WRECK_SINK), 3);
         boolean loot = Hashing.toUnit(Hashing.cellHash(seed, cellX, cellZ, SALT_WRECK_LOOT)) < wreckLootChance;
         return Optional.of(new Wreck(x, z, variant, rotation, grade, sink, loot));
     }

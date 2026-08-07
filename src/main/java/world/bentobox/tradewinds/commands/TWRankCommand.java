@@ -20,6 +20,7 @@ public class TWRankCommand extends CompositeCommand {
 
     /** Rows shown from the leaderboard. */
     static final int TOP = 10;
+    private static final String RANK_PLACEHOLDER = "[rank]";
 
     public TWRankCommand(CompositeCommand parent) {
         super(parent, "rank", "ranks");
@@ -38,11 +39,11 @@ public class TWRankCommand extends CompositeCommand {
         RankService ranks = addon.getRankService();
         int charted = ranks.chartedCount(user.getUniqueId());
         user.sendMessage("tradewinds.rank.own",
-                "[rank]", user.getTranslation(ranks.rankFor(charted).localeKey()),
+                RANK_PLACEHOLDER, user.getTranslation(ranks.rankFor(charted).localeKey()),
                 TextVariables.NUMBER, String.valueOf(charted));
         ranks.next(charted).ifPresentOrElse(
                 next -> user.sendMessage("tradewinds.rank.next",
-                        "[rank]", user.getTranslation(next.localeKey()),
+                        RANK_PLACEHOLDER, user.getTranslation(next.localeKey()),
                         TextVariables.NUMBER, String.valueOf(next.threshold() - charted)),
                 () -> user.sendMessage("tradewinds.rank.top-of-ladder"));
         List<ChartLeaderboard.Entry> board = addon.getChartLeaderboard().top(TOP);
@@ -57,7 +58,7 @@ public class TWRankCommand extends CompositeCommand {
                     "[place]", String.valueOf(place),
                     TextVariables.NAME, name == null || name.isEmpty() ? "?" : name,
                     TextVariables.NUMBER, String.valueOf(entry.charted()),
-                    "[rank]", user.getTranslation(ranks.rankFor(entry.charted()).localeKey()));
+                    RANK_PLACEHOLDER, user.getTranslation(ranks.rankFor(entry.charted()).localeKey()));
         }
         return true;
     }

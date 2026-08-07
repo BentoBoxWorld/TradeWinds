@@ -36,6 +36,7 @@ public class ChartHolograms {
     /** Bearing sector width for stacking, degrees. */
     private static final double SECTOR_DEGREES = 20.0;
     private static final double BASE_HEIGHT = 2.5;
+    private static final String PLACEHOLDER_DISTANCE = "[distance]";
     /**
      * The dock marker hangs below the island names, clear of their stack, but
      * never below the horizon: heights are relative to a sailor sitting at sea
@@ -227,74 +228,22 @@ public class ChartHolograms {
         }
         List<TextDisplay> spawned = new ArrayList<>();
         if (home != null) {
-            TextDisplay display = eye.getWorld().spawn(eye.clone().add(0, 1.0, 0), TextDisplay.class);
-            display.text(User.getInstance(player).getTranslationAsComponent("tradewinds.hologram.home",
-                    "[distance]", String.valueOf(home.distance())));
-            display.setBillboard(Billboard.CENTER);
-            display.setSeeThrough(true);
-            display.setBackgroundColor(Color.fromARGB(140, 60, 45, 0));
-            display.setPersistent(false);
-            display.setTeleportDuration(ZOOM_TICKS);
-            for (Player other : Bukkit.getOnlinePlayers()) {
-                if (!other.equals(player)) {
-                    other.hideEntity(addon.getPlugin(), display);
-                }
-            }
-            spawned.add(display);
-            Location target = eye.clone().add(home.dx(), home.dy(), home.dz());
-            Bukkit.getScheduler().runTask(addon.getPlugin(), () -> {
-                if (display.isValid()) {
-                    display.teleport(target);
-                }
-            });
+            Component text = User.getInstance(player).getTranslationAsComponent("tradewinds.hologram.home",
+                    PLACEHOLDER_DISTANCE, String.valueOf(home.distance()));
+            Color bgColor = Color.fromARGB(140, 60, 45, 0);
+            spawnAndZoomHologram(player, eye, spawned, text, home.dx(), home.dy(), home.dz(), bgColor);
         }
         for (BoatMarker boat : boats) {
-            TextDisplay display = eye.getWorld().spawn(eye.clone().add(0, 1.0, 0), TextDisplay.class);
-            display.text(User.getInstance(player).getTranslationAsComponent(
+            Component text = User.getInstance(player).getTranslationAsComponent(
                     boat.old() ? "tradewinds.hologram.old-boat" : "tradewinds.hologram.boat",
-                    "[distance]", String.valueOf(boat.distance())));
-            display.setBillboard(Billboard.CENTER);
-            display.setSeeThrough(true);
-            display.setBackgroundColor(boat.old() ? Color.fromARGB(140, 60, 0, 0)
-                    : Color.fromARGB(140, 0, 60, 30));
-            display.setPersistent(false);
-            display.setTeleportDuration(ZOOM_TICKS);
-            for (Player other : Bukkit.getOnlinePlayers()) {
-                if (!other.equals(player)) {
-                    other.hideEntity(addon.getPlugin(), display);
-                }
-            }
-            spawned.add(display);
-            Location target = eye.clone().add(boat.dx(), boat.dy(), boat.dz());
-            Bukkit.getScheduler().runTask(addon.getPlugin(), () -> {
-                if (display.isValid()) {
-                    display.teleport(target);
-                }
-            });
+                    PLACEHOLDER_DISTANCE, String.valueOf(boat.distance()));
+            Color bgColor = boat.old() ? Color.fromARGB(140, 60, 0, 0) : Color.fromARGB(140, 0, 60, 30);
+            spawnAndZoomHologram(player, eye, spawned, text, boat.dx(), boat.dy(), boat.dz(), bgColor);
         }
         for (Marker marker : markers) {
-            TextDisplay display = eye.getWorld().spawn(eye.clone().add(0, 1.0, 0), TextDisplay.class);
-            display.text(label(player, marker));
-            display.setBillboard(Billboard.CENTER);
-            display.setSeeThrough(true);
-            display.setBackgroundColor(marker.dock() ? Color.fromARGB(140, 60, 40, 0)
-                    : Color.fromARGB(120, 0, 20, 40));
-            display.setPersistent(false);
-            display.setTeleportDuration(ZOOM_TICKS);
-            // Only the caller sees their own compass
-            for (Player other : Bukkit.getOnlinePlayers()) {
-                if (!other.equals(player)) {
-                    other.hideEntity(addon.getPlugin(), display);
-                }
-            }
-            spawned.add(display);
-            // Next tick: glide out to the ring position
-            Location target = eye.clone().add(marker.dx(), marker.dy(), marker.dz());
-            Bukkit.getScheduler().runTask(addon.getPlugin(), () -> {
-                if (display.isValid()) {
-                    display.teleport(target);
-                }
-            });
+            Component text = label(player, marker);
+            Color bgColor = marker.dock() ? Color.fromARGB(140, 60, 40, 0) : Color.fromARGB(120, 0, 20, 40);
+            spawnAndZoomHologram(player, eye, spawned, text, marker.dx(), marker.dy(), marker.dz(), bgColor);
         }
         active.put(player.getUniqueId(), spawned);
         int mine = generation.merge(player.getUniqueId(), 1, Integer::sum);
@@ -321,18 +270,44 @@ public class ChartHolograms {
                 .filter(spec -> spec.distanceSquared(x, z) <= (long) range * range).findFirst();
     }
 
+    /**
+     * Spawn a hologram at the player's location and schedule it to zoom out to a target location.
+     */
+    private void spawnAndZoomHologram(Player player, Location eye, List<TextDisplay> spawned,
+            Component text, double dx, double dy, double dz, Color bgColor) {
+        TextDisplay display = eye.getWorld().spawn(eye.clone().add(0, 1.0, 0), TextDisplay.class);
+        display.text(text);
+        display.setBillboard(Billboard.CENTER);
+        display.setSeeThrough(true);
+        display.setBackgroundColor(bgColor);
+        display.setPersistent(false);
+        display.setTeleportDuration(ZOOM_TICKS);
+        for (Player other : Bukkit.getOnlinePlayers()) {
+            if (!other.equals(player)) {
+                other.hideEntity(addon.getPlugin(), display);
+            }
+        }
+        spawned.add(display);
+        Location target = eye.clone().add(dx, dy, dz);
+        Bukkit.getScheduler().runTask(addon.getPlugin(), () -> {
+            if (display.isValid()) {
+                display.teleport(target);
+            }
+        });
+    }
+
     private Component label(Player player, Marker marker) {
         IslandSpec spec = marker.island();
         if (marker.dock()) {
             return User.getInstance(player).getTranslationAsComponent("tradewinds.hologram.dock",
-                    "[name]", spec.name(), "[distance]", String.valueOf(marker.distance()));
+                    "[name]", spec.name(), PLACEHOLDER_DISTANCE, String.valueOf(marker.distance()));
         }
         return User.getInstance(player).getTranslationAsComponent("tradewinds.hologram.island",
                 "[name]", spec.name(),
                 "[type]", spec.type().name(),
                 "[tech]", String.valueOf(spec.techLevel()),
                 "[band]", User.getInstance(player).getTranslation(spec.band().getLocaleKey()),
-                "[distance]", String.valueOf(marker.distance()));
+                PLACEHOLDER_DISTANCE, String.valueOf(marker.distance()));
     }
 
     private List<IslandSpec> chartedIslands(Player player) {

@@ -761,8 +761,9 @@ public class TradeWinds extends GameModeAddon {
             intersticeMap = new world.bentobox.tradewinds.galaxy.IntersticeMap(seed ^ 0x1E7E2571CEL,
                     s.getIntersticeShoalGrid(), s.getIntersticeShoalChance(), s.getIntersticeShoalRadius(),
                     s.getIntersticeGrandShoalChance(), s.getIntersticeWatchtowerGrid(),
-                    s.getIntersticeWatchtowerChance(), s.getIntersticeWreckGrid(),
-                    s.getIntersticeWreckChance(), s.getIntersticeWreckLootChance());
+                    s.getIntersticeWatchtowerChance(),
+                    new world.bentobox.tradewinds.galaxy.IntersticeMap.WreckTuning(
+                        s.getIntersticeWreckGrid(), s.getIntersticeWreckChance(), s.getIntersticeWreckLootChance()));
         }
         return intersticeMap;
     }

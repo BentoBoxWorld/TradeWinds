@@ -43,19 +43,6 @@ public class PoliceDispatch {
     }
 
     /**
-     * How far ahead of the smuggler the patrol surfaces, in blocks.
-     * <p>
-     * This has to clear a guardian's 15-block laser by a margin, or a
-     * "chase" is just an ambush: at 22 they were firing before the warning
-     * message had finished printing. The point of the decision window is that
-     * there is a decision.
-     */
-    private double interceptDistance() {
-        return Math.max(minimumStandoff(), addon.getSettings().getPatrolDistance());
-    }
-
-
-    /**
      * Send a patrol after a player. Units surface between the smuggler and the
      * island they were trying to enter, so running for open sea is a real
      * option and running for the port is not.
@@ -175,7 +162,7 @@ public class PoliceDispatch {
     public List<Entity> dispatchWanted(Player player, IslandSpec island, boolean ashore, boolean fugitive) {
         List<Entity> units = new ArrayList<>();
         Location from = player.getLocation();
-        for (PoliceUnit kind : PoliceRoster.forWanted(island.band(), patrolSize(island.band()), ashore,
+        for (PoliceUnit kind : PoliceRoster.forWanted(patrolSize(island.band()), ashore,
                 fugitive)) {
             Location at = spawnPoint(kind, from);
             Entity unit = at == null ? null : spawn(at, entityType(kind), player);

@@ -22,6 +22,8 @@ import world.bentobox.tradewinds.galaxy.IslandSpec;
  */
 public class AdminCustomsCommand extends CompositeCommand {
 
+    private static final String VALUE_PLACEHOLDER = "[value]";
+
     public AdminCustomsCommand(CompositeCommand parent) {
         super(parent, "customs");
     }
@@ -43,14 +45,14 @@ public class AdminCustomsCommand extends CompositeCommand {
                 .filter(s -> s.distanceSquared(x, z) <= (long) range * range).findFirst();
 
         user.sendMessage("tradewinds.commands.admin.customs.header");
-        user.sendMessage("tradewinds.commands.admin.customs.gate", "[value]",
+        user.sendMessage("tradewinds.commands.admin.customs.gate", VALUE_PLACEHOLDER,
                 String.valueOf(addon.getSettings().isCrimeEnabled()
                         && addon.getSettings().isIllegalTradeEnabled()));
-        user.sendMessage("tradewinds.commands.admin.customs.contraband", "[value]",
+        user.sendMessage("tradewinds.commands.admin.customs.contraband", VALUE_PLACEHOLDER,
                 String.join(", ", addon.getCustomsService().contrabandNames()));
         user.sendMessage("tradewinds.commands.admin.customs.aboard", TextVariables.NUMBER,
                 String.valueOf(addon.getCustomsService().contrabandAboard(user.getPlayer())));
-        user.sendMessage("tradewinds.commands.admin.customs.standing", "[value]",
+        user.sendMessage("tradewinds.commands.admin.customs.standing", VALUE_PLACEHOLDER,
                 addon.getPlayerStanding(user, user.getUniqueId()));
         if (here.isEmpty()) {
             user.sendMessage("tradewinds.commands.admin.customs.open-sea");
@@ -63,13 +65,13 @@ public class AdminCustomsCommand extends CompositeCommand {
                 addon.getSettings().getScanUpstandingFactor(), addon.getSettings().getScanOffenderFactor());
         user.sendMessage("tradewinds.commands.admin.customs.island", "[name]", island.name(), "[band]",
                 island.band().getDisplayName());
-        user.sendMessage("tradewinds.commands.admin.customs.scan-chance", "[value]",
+        user.sendMessage("tradewinds.commands.admin.customs.scan-chance", VALUE_PLACEHOLDER,
                 String.format("%.0f%%", effective * 100));
-        user.sendMessage("tradewinds.commands.admin.customs.buys", "[value]",
+        user.sendMessage("tradewinds.commands.admin.customs.buys", VALUE_PLACEHOLDER,
                 String.valueOf(addon.getCustomsService().buysContraband(island.band())));
         user.sendMessage("tradewinds.commands.admin.customs.patrol", TextVariables.NUMBER,
                 String.valueOf(addon.getSettings().getPatrolSize().getOrDefault(island.band().name(), 0)));
-        user.sendMessage("tradewinds.commands.admin.customs.chased", "[value]",
+        user.sendMessage("tradewinds.commands.admin.customs.chased", VALUE_PLACEHOLDER,
                 String.valueOf(addon.getCustomsService().isChased(user.getUniqueId())));
         return true;
     }

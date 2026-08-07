@@ -29,7 +29,7 @@ public final class EncounterTable {
      */
     public static double chance(double distanceFromIsland, int islandRange, double baseChance) {
         // Inside island space the sea is tamer, scaling to full risk in the deep
-        double exposure = Math.clamp(distanceFromIsland / (double) islandRange, 0.25, 1.0);
+        double exposure = Math.clamp(distanceFromIsland / islandRange, 0.25, 1.0);
         return Math.clamp(baseChance * exposure, 0.0, 1.0);
     }
 

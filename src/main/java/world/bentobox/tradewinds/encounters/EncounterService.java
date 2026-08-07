@@ -3,6 +3,7 @@ package world.bentobox.tradewinds.encounters;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -41,6 +42,9 @@ public class EncounterService {
 
     /** How far encounter mobs keep hunting. */
     private static final double HUNT_RANGE = 48.0;
+
+    /** Random number generator for encounter spawning. */
+    private static final Random RANDOM = new Random();
 
     private final TradeWinds addon;
     private BukkitTask task;
@@ -82,26 +86,35 @@ public class EncounterService {
             if (player.getGameMode() != org.bukkit.GameMode.SURVIVAL || player.isDead()) {
                 continue;
             }
-            for (Entity entity : player.getNearbyEntities(HUNT_RANGE, 32, HUNT_RANGE)) {
-                if (!entity.getPersistentDataContainer().has(ENCOUNTER_KEY, PersistentDataType.STRING)
-                        || !(entity instanceof Mob mob)) {
-                    continue;
-                }
-                if (mob.getTarget() == null || mob.getTarget().isDead()) {
-                    mob.setTarget(player);
-                }
-                if (mob.getVehicle() instanceof Boat) {
-                    // Abandon ship per type (config): pirates fight from the
-                    // deck and only jump at boarding distance; the witch
-                    // bails wide - her potions overshoot from a drifting
-                    // platform. The old flat 30 was INSIDE the spawn
-                    // distance (28), so every crew ejected on its first tick
-                    // and no sailor ever saw a manned boat (playtest
-                    // 2026-08-05).
-                    double abandon = abandonRange(mob);
-                    if (mob.getLocation().distanceSquared(player.getLocation()) < abandon * abandon) {
-                        mob.leaveVehicle();
-                    }
+            huntNearbyEncounters(player);
+        }
+    }
+
+    /**
+     * Maintain targeting and abandon-ship decisions for encounter mobs near a player.
+     *
+     * @param player the player to hunt toward
+     */
+    private void huntNearbyEncounters(Player player) {
+        for (Entity entity : player.getNearbyEntities(HUNT_RANGE, 32, HUNT_RANGE)) {
+            if (!entity.getPersistentDataContainer().has(ENCOUNTER_KEY, PersistentDataType.STRING)
+                    || !(entity instanceof Mob mob)) {
+                continue;
+            }
+            if (mob.getTarget() == null || mob.getTarget().isDead()) {
+                mob.setTarget(player);
+            }
+            if (mob.getVehicle() instanceof Boat) {
+                // Abandon ship per type (config): pirates fight from the
+                // deck and only jump at boarding distance; the witch
+                // bails wide - her potions overshoot from a drifting
+                // platform. The old flat 30 was INSIDE the spawn
+                // distance (28), so every crew ejected on its first tick
+                // and no sailor ever saw a manned boat (playtest
+                // 2026-08-05).
+                double abandon = abandonRange(mob);
+                if (mob.getLocation().distanceSquared(player.getLocation()) < abandon * abandon) {
+                    mob.leaveVehicle();
                 }
             }
         }
@@ -112,14 +125,12 @@ public class EncounterService {
             return;
         }
         for (Player player : addon.getOverWorld().getPlayers()) {
-            if (player.getGameMode() != org.bukkit.GameMode.SURVIVAL || player.isDead()) {
-                continue;
-            }
             // At sea means at sea: in or on water, away from dry land
-            if (!isAtSea(player)) {
-                continue;
+            if (player.getGameMode() == org.bukkit.GameMode.SURVIVAL
+                    && !player.isDead()
+                    && isAtSea(player)) {
+                maybeSpawn(player);
             }
-            maybeSpawn(player);
         }
     }
 
@@ -174,7 +185,7 @@ public class EncounterService {
         spot.setY(type.getHabitat().spawnY(addon.getSettings().getSeaHeight()));
 
         int count = type.getMin()
-                + (int) (Math.random() * Math.max(1, type.getMax() - type.getMin() + 1));
+                + RANDOM.nextInt(Math.max(1, type.getMax() - type.getMin() + 1));
         List<Entity> spawned = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             Location at = spot.clone().add(Math.random() * 6 - 3, 0, Math.random() * 6 - 3);

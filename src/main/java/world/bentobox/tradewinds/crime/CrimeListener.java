@@ -53,7 +53,7 @@ public class CrimeListener implements Listener {
             return;
         }
         if (event.getEntity() instanceof Villager villager && villager.getHealth() > event.getFinalDamage()) {
-            addon.getReputationService().record(attacker, Crime.HURT_VILLAGER);
+            addon.getReputationService().recordCrime(attacker, Crime.HURT_VILLAGER);
         }
     }
 
@@ -67,9 +67,9 @@ public class CrimeListener implements Listener {
             return;
         }
         if (event.getEntity() instanceof Villager) {
-            addon.getReputationService().record(killer, Crime.KILL_VILLAGER);
+            addon.getReputationService().recordCrime(killer, Crime.KILL_VILLAGER);
         } else if (event.getEntity() instanceof IronGolem || isPolice(event)) {
-            addon.getReputationService().record(killer, Crime.KILL_POLICE);
+            addon.getReputationService().recordCrime(killer, Crime.KILL_POLICE);
         }
     }
 
@@ -102,7 +102,7 @@ public class CrimeListener implements Listener {
             // The victim struck first - this was a fight, not a murder
             return;
         }
-        addon.getReputationService().record(killer, Crime.KILL_INNOCENT);
+        addon.getReputationService().recordCrime(killer, Crime.KILL_INNOCENT);
     }
 
     /**

@@ -53,6 +53,8 @@ import world.bentobox.tradewinds.galaxy.IslandSpec;
  */
 public class BoatListener implements Listener {
 
+    /** Placeholder for boat material in locale messages. */
+    private static final String MATERIAL_PLACEHOLDER = "[material]";
     /** How long a refused item pickup stays quiet before prompting again. */
     private static final long PROMPT_SUPPRESSION_MS = 15_000;
     /**
@@ -142,11 +144,11 @@ public class BoatListener implements Listener {
         if (hold.isEmpty()) {
             return; // A boat with no record: recordFor(entity) registers it later
         }
-        BoatHold record = hold.get();
-        record.setExpiresAt(0); // Afloat again: only ITEM hulls run a clock
-        addon.getBoatService().stamp(boat, record);
-        addon.getHoldManager().rememberPosition(record, boat.getLocation());
-        addon.getBoatService().logbook("placed by " + event.getPlayer().getName(), record, boat.getLocation());
+        BoatHold holdRecord = hold.get();
+        holdRecord.setExpiresAt(0); // Afloat again: only ITEM hulls run a clock
+        addon.getBoatService().stamp(boat, holdRecord);
+        addon.getHoldManager().rememberPosition(holdRecord, boat.getLocation());
+        addon.getBoatService().logbook("placed by " + event.getPlayer().getName(), holdRecord, boat.getLocation());
         // Creative placement does not consume the item, so the pack still
         // holds a stamped copy of the hull now floating in the water - the
         // duplication that put TWO spruce boats in one death drop
@@ -154,7 +156,7 @@ public class BoatListener implements Listener {
         // carried copy of its id must go.
         if (event.getPlayer().getGameMode() == org.bukkit.GameMode.CREATIVE) {
             for (ItemStack stack : event.getPlayer().getInventory().getContents()) {
-                if (stack != null && record.getUniqueId().equals(BoatService.boatId(stack))) {
+                if (stack != null && holdRecord.getUniqueId().equals(BoatService.boatId(stack))) {
                     stack.setAmount(0);
                 }
             }
@@ -408,7 +410,7 @@ public class BoatListener implements Listener {
             hold.setExpiresAt(0);
             addon.getBoatService().claim(player, hold);
             addon.getBoatService().giveBoatItem(player, hold);
-            User.getInstance(player).sendMessage("tradewinds.boat.claimed", "[material]",
+            User.getInstance(player).sendMessage("tradewinds.boat.claimed", MATERIAL_PLACEHOLDER,
                     pretty(Material.matchMaterial(hold.getMaterial())));
             return;
         }
@@ -428,6 +430,15 @@ public class BoatListener implements Listener {
     }
 
     /**
+     * Ignore boat items around this player for a moment: a swap or an
+     * outright purchase has just shed a hull at their feet, and the pickup
+     * listener would otherwise offer it straight back.
+     */
+    public void quietSwaps(UUID playerId) {
+        swapQuietUntil.put(playerId, System.currentTimeMillis() + SWAP_QUIET_MS);
+    }
+
+    /**
      * Take a hull as your own, dealing with the boat you already had.
      * <p>
      * If your old boat is <b>with you</b> - carried in your pack, or moored
@@ -443,15 +454,6 @@ public class BoatListener implements Listener {
      * @param player the player
      * @param hold the hull they are taking
      */
-    /**
-     * Ignore boat items around this player for a moment: a swap or an
-     * outright purchase has just shed a hull at their feet, and the pickup
-     * listener would otherwise offer it straight back.
-     */
-    public void quietSwaps(UUID playerId) {
-        swapQuietUntil.put(playerId, System.currentTimeMillis() + SWAP_QUIET_MS);
-    }
-
     void takeBoat(Player player, BoatHold hold) {
         quietSwaps(player.getUniqueId());
         Optional<BoatHold> previous = addon.getHoldService().active(player.getUniqueId())
@@ -473,7 +475,7 @@ public class BoatListener implements Listener {
             addon.getHoldManager().clearOldBoat(player.getUniqueId());
         }
         User.getInstance(player).sendMessage(old.isEmpty() ? "tradewinds.boat.merged-empty"
-                : "tradewinds.boat.merged-partial", "[material]", pretty(Material.matchMaterial(old.getMaterial())));
+                : "tradewinds.boat.merged-partial", MATERIAL_PLACEHOLDER, pretty(Material.matchMaterial(old.getMaterial())));
     }
 
     /**
@@ -499,8 +501,9 @@ public class BoatListener implements Listener {
         String cargo = carried > 0 ? String.valueOf(carried) : null;
         Runnable onTransfer = carried > 0 && ownBoatWithinReach(player) ? () -> {
             int moved = salvage(player, hold);
-            User.getInstance(player).sendMessage(moved > 0 ? "tradewinds.boat.salvage-emptied"
-                    : "tradewinds.hold.cargo-full", "[amount]", String.valueOf(moved));
+            String message = moved > 0 ? "tradewinds.boat.salvage-emptied"
+                    : "tradewinds.hold.cargo-full";
+            User.getInstance(player).sendMessage(message, "[amount]", String.valueOf(moved));
         } : null;
         addon.getTradeDialog().confirmBoatFound(player, pretty(taking), pretty(leaving), cargo, onTake,
                 onTransfer);
@@ -621,7 +624,7 @@ public class BoatListener implements Listener {
                 if (player.getLocation().getBlock().isLiquid()) {
                     BoatHold raft = addon.getBoatService().createFor(player, respawnBoat());
                     addon.getBoatService().giveBoatItem(player, raft);
-                    User.getInstance(player).sendMessage("tradewinds.boat.adrift-raft", "[material]",
+                    User.getInstance(player).sendMessage("tradewinds.boat.adrift-raft", MATERIAL_PLACEHOLDER,
                             pretty(respawnBoat()));
                 }
             }

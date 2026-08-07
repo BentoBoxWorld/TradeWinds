@@ -62,13 +62,16 @@ public final class IsletStructures {
             new Placement("fossil/skull_1", 3), new Placement("fossil/skull_2", 3),
             new Placement("fossil/skull_3", 3), new Placement("fossil/skull_4", 3));
 
+    /** Jigsaw block replacement for nether portals. */
+    private static final String PORTAL_FILL = "NETHERRACK";
+
     /** A ruined nether portal, settled a couple of blocks into the ground. */
     private static final List<Placement> PORTALS = List.of(
-            new Placement("ruined_portal/portal_1", 2, "NETHERRACK"),
-            new Placement("ruined_portal/portal_2", 2, "NETHERRACK"),
+            new Placement("ruined_portal/portal_1", 2, PORTAL_FILL),
+            new Placement("ruined_portal/portal_2", 2, PORTAL_FILL),
             new Placement("ruined_portal/portal_3", 2),
-            new Placement("ruined_portal/portal_4", 2, "NETHERRACK"),
-            new Placement("ruined_portal/portal_5", 2, "NETHERRACK"),
+            new Placement("ruined_portal/portal_4", 2, PORTAL_FILL),
+            new Placement("ruined_portal/portal_5", 2, PORTAL_FILL),
             new Placement("ruined_portal/portal_6", 2), new Placement("ruined_portal/portal_7", 2),
             new Placement("ruined_portal/portal_8", 2), new Placement("ruined_portal/portal_9", 2),
             new Placement("ruined_portal/portal_10", 2));
@@ -162,9 +165,9 @@ public final class IsletStructures {
         if (Hashing.toUnit(Hashing.cellHash(seed, islet.centerX(), islet.centerZ(), SALT_ROLL)) >= chance) {
             return Optional.empty();
         }
-        List<Placement> variants = categories.get((int) Math.floorMod(
+        List<Placement> variants = categories.get(Math.floorMod(
                 Hashing.cellHash(seed, islet.centerX(), islet.centerZ(), SALT_CATEGORY), categories.size()));
-        return Optional.of(variants.get((int) Math.floorMod(
+        return Optional.of(variants.get(Math.floorMod(
                 Hashing.cellHash(seed, islet.centerX(), islet.centerZ(), SALT_VARIANT), variants.size())));
     }
 

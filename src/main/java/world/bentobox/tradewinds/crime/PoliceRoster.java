@@ -27,13 +27,12 @@ public final class PoliceRoster {
     /**
      * The response to a wanted player.
      *
-     * @param band the island's security band
      * @param size the band's configured patrol size
      * @param ashore whether the target is standing on land
      * @param fugitive whether the target is a fugitive rather than merely wanted
      * @return the units to field, in spawn order
      */
-    public static List<PoliceUnit> forWanted(SecurityBand band, int size, boolean ashore, boolean fugitive) {
+    public static List<PoliceUnit> forWanted(int size, boolean ashore, boolean fugitive) {
         List<PoliceUnit> units = new ArrayList<>();
         if (size <= 0) {
             return units; // This band has nobody to send

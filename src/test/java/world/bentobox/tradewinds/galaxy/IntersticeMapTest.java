@@ -21,7 +21,7 @@ class IntersticeMapTest {
     private static final int SEA = 70;
 
     private IntersticeMap map() {
-        return new IntersticeMap(SEED, 256, 0.5, 9, 0.2, 1536, 0.6, 320, 0.4, 0.3);
+        return new IntersticeMap(SEED, 256, 0.5, 9, 0.2, 1536, 0.6, new IntersticeMap.WreckTuning(320, 0.4, 0.3));
     }
 
     private IntersticeMap.Shoal firstShoal(IntersticeMap map) {
@@ -43,7 +43,7 @@ class IntersticeMapTest {
             assertEquals(a.towerInCell(cx, cx), b.towerInCell(cx, cx));
         }
         // A different seed disagrees somewhere
-        IntersticeMap other = new IntersticeMap(SEED + 1, 256, 0.5, 9, 0.2, 1536, 0.6, 320, 0.4, 0.3);
+        IntersticeMap other = new IntersticeMap(SEED + 1, 256, 0.5, 9, 0.2, 1536, 0.6, new IntersticeMap.WreckTuning(320, 0.4, 0.3));
         boolean differs = false;
         for (int cx = -50; cx < 50 && !differs; cx++) {
             differs = !a.shoalInCell(cx, 0).equals(other.shoalInCell(cx, 0));
@@ -90,7 +90,7 @@ class IntersticeMapTest {
 
     @Test
     void testZeroChanceDisables() {
-        IntersticeMap off = new IntersticeMap(SEED, 256, 0.0, 9, 0.2, 1536, 0.0, 320, 0.0, 0.3);
+        IntersticeMap off = new IntersticeMap(SEED, 256, 0.0, 9, 0.2, 1536, 0.0, new IntersticeMap.WreckTuning(320, 0.0, 0.3));
         for (int cx = 0; cx < 50; cx++) {
             assertTrue(off.shoalInCell(cx, 0).isEmpty());
             assertTrue(off.towerInCell(cx, 0).isEmpty());
@@ -167,8 +167,8 @@ class IntersticeMapTest {
     @Test
     void testWreckLootIsRationed() {
         // Most wrecks are scenery: only the loot-chance fraction carry gold
-        IntersticeMap none = new IntersticeMap(SEED, 256, 0.5, 9, 0.2, 1536, 0.6, 320, 0.5, 0.0);
-        IntersticeMap all = new IntersticeMap(SEED, 256, 0.5, 9, 0.2, 1536, 0.6, 320, 0.5, 1.0);
+        IntersticeMap none = new IntersticeMap(SEED, 256, 0.5, 9, 0.2, 1536, 0.6, new IntersticeMap.WreckTuning(320, 0.5, 0.0));
+        IntersticeMap all = new IntersticeMap(SEED, 256, 0.5, 9, 0.2, 1536, 0.6, new IntersticeMap.WreckTuning(320, 0.5, 1.0));
         int seen = 0;
         for (int cx = -50; cx < 50; cx++) {
             var bare = none.wreckInCell(cx, 1);
@@ -185,7 +185,7 @@ class IntersticeMapTest {
 
     @Test
     void testWreckZeroChanceDisablesTheGraveyard() {
-        IntersticeMap off = new IntersticeMap(SEED, 256, 0.5, 9, 0.2, 1536, 0.6, 320, 0.0, 0.3);
+        IntersticeMap off = new IntersticeMap(SEED, 256, 0.5, 9, 0.2, 1536, 0.6, new IntersticeMap.WreckTuning(320, 0.0, 0.3));
         for (int cx = -50; cx < 50; cx++) {
             assertTrue(off.wreckInCell(cx, 0).isEmpty());
         }

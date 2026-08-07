@@ -90,14 +90,10 @@ public final class PortFlags {
         }
         Map<Flag, Integer> ranks = new HashMap<>();
         for (Flag flag : Flags.values()) {
-            if (flag.getType() != Flag.Type.PROTECTION || BAND_CONTROLLED.contains(flag)) {
-                continue;
+            if (flag.getType() == Flag.Type.PROTECTION && !BAND_CONTROLLED.contains(flag)
+                    && !Flags.CHANGE_SETTINGS.equals(flag) && !Flags.LOCK.equals(flag)) {
+                ranks.put(flag, denied.contains(flag.getID()) ? RanksManager.MEMBER_RANK : RanksManager.VISITOR_RANK);
             }
-            // CHANGE_SETTINGS stays with whoever owns the island - never a visitor
-            if (Flags.CHANGE_SETTINGS.equals(flag) || Flags.LOCK.equals(flag)) {
-                continue;
-            }
-            ranks.put(flag, denied.contains(flag.getID()) ? RanksManager.MEMBER_RANK : RanksManager.VISITOR_RANK);
         }
         ranks.put(Flags.HURT_VILLAGERS, hurtVillagersRank);
         return ranks;

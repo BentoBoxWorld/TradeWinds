@@ -41,7 +41,7 @@ public class SeaPositionTracker implements Listener {
      *
      * @param player the player
      */
-    public void record(Player player) {
+    public void recordPosition(Player player) {
         if (addon.inWorld(player.getWorld())) {
             store(player, player.getLocation());
         }
@@ -76,7 +76,7 @@ public class SeaPositionTracker implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onQuit(PlayerQuitEvent event) {
-        record(event.getPlayer());
+        recordPosition(event.getPlayer());
     }
 
     /**

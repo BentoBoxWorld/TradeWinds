@@ -31,6 +31,7 @@ import world.bentobox.tradewinds.galaxy.IslandSpec;
 public class TWPricesCommand extends CompositeCommand {
 
     private static final int MAX_ROWS = 12;
+    private static final String VALUE_PLACEHOLDER = "[value]";
 
     public TWPricesCommand(CompositeCommand parent) {
         super(parent, "prices");
@@ -51,13 +52,31 @@ public class TWPricesCommand extends CompositeCommand {
         if (!args.isEmpty()) {
             filter = category(args.get(0));
             if (filter == null) {
-                user.sendMessage("tradewinds.commands.prices.unknown-category", "[value]", args.get(0));
+                user.sendMessage("tradewinds.commands.prices.unknown-category", VALUE_PLACEHOLDER, args.get(0));
                 return false;
             }
         }
         var data = addon.getPlayerDataManager().get(user.getUniqueId());
         long now = System.currentTimeMillis();
 
+        List<IslandSpec> known = loadKnownIslands(addon, data);
+        if (known.isEmpty()) {
+            user.sendMessage("tradewinds.commands.prices.nothing-logged");
+            return true;
+        }
+
+        final TradeCategory sought = filter;
+        sortAndDisplayHeader(user, data, known, sought);
+        displayRows(user, addon, data, now, known, sought);
+
+        if (known.size() > MAX_ROWS) {
+            user.sendMessage("tradewinds.commands.prices.truncated", TextVariables.NUMBER,
+                    String.valueOf(MAX_ROWS));
+        }
+        return true;
+    }
+
+    private List<IslandSpec> loadKnownIslands(TradeWinds addon, world.bentobox.tradewinds.dataobjects.TWPlayerData data) {
         // Only ports actually CALLED AT have prices - the chart knowing an island
         // exists is not the same as having stood at its counter
         List<IslandSpec> known = new ArrayList<>();
@@ -77,23 +96,23 @@ public class TWPricesCommand extends CompositeCommand {
             }
         }
         known.removeIf(spec -> data.lastSeenPrices(spec) <= 0 || data.loggedPrices(spec).isEmpty());
-        if (known.isEmpty()) {
-            user.sendMessage("tradewinds.commands.prices.nothing-logged");
-            return true;
-        }
+        return known;
+    }
 
-        final TradeCategory sought = filter;
+    private void sortAndDisplayHeader(User user, world.bentobox.tradewinds.dataobjects.TWPlayerData data, List<IslandSpec> known, TradeCategory sought) {
         if (sought != null) {
             // Best price first: this is the whole point of keeping a logbook
             known.sort(Comparator.comparingInt(
                     (IslandSpec spec) -> data.loggedPrices(spec).getOrDefault(sought.name(), 0)).reversed());
-            user.sendMessage("tradewinds.commands.prices.header-category", "[value]",
+            user.sendMessage("tradewinds.commands.prices.header-category", VALUE_PLACEHOLDER,
                     prettyCategory(sought));
         } else {
             known.sort(Comparator.comparingLong(data::lastSeenPrices).reversed());
             user.sendMessage("tradewinds.commands.prices.header");
         }
+    }
 
+    private void displayRows(User user, TradeWinds addon, world.bentobox.tradewinds.dataobjects.TWPlayerData data, long now, List<IslandSpec> known, TradeCategory sought) {
         for (IslandSpec spec : known.subList(0, Math.min(MAX_ROWS, known.size()))) {
             Map<String, Integer> prices = data.loggedPrices(spec);
             String age = age(user, now - data.lastSeenPrices(spec));
@@ -105,15 +124,10 @@ public class TWPricesCommand extends CompositeCommand {
                 user.sendMessage("tradewinds.commands.prices.row-category", "[name]", spec.name(), "[price]",
                         Money.format(addon, price), "[age]", age);
             } else {
-                user.sendMessage("tradewinds.commands.prices.row", "[name]", spec.name(), "[value]",
+                user.sendMessage("tradewinds.commands.prices.row", "[name]", spec.name(), VALUE_PLACEHOLDER,
                         best(addon, prices), "[age]", age);
             }
         }
-        if (known.size() > MAX_ROWS) {
-            user.sendMessage("tradewinds.commands.prices.truncated", TextVariables.NUMBER,
-                    String.valueOf(MAX_ROWS));
-        }
-        return true;
     }
 
     /**

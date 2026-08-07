@@ -25,7 +25,7 @@ class PoliceRosterTest {
     @Test
     void testLawlessSpaceSendsNobody() {
         // The bands only mean something if the far ones are genuinely unpoliced
-        assertTrue(PoliceRoster.forWanted(SecurityBand.ANARCHIC, 0, false, false).isEmpty());
+        assertTrue(PoliceRoster.forWanted(0, false, false).isEmpty());
         assertTrue(PoliceRoster.forCustoms(0).isEmpty());
     }
 
@@ -33,19 +33,19 @@ class PoliceRosterTest {
     void testResponseShrinksAsTheLawThinsOut() {
         int previous = Integer.MAX_VALUE;
         for (SecurityBand band : SecurityBand.values()) {
-            int size = PoliceRoster.forWanted(band, SIZES.get(band), false, false).size();
+            int size = PoliceRoster.forWanted(SIZES.get(band), false, false).size();
             assertTrue(size <= previous, "Response grew at " + band);
             previous = size;
         }
-        assertTrue(PoliceRoster.forWanted(SecurityBand.SAFE, 4, false, false).size() > PoliceRoster
-                .forWanted(SecurityBand.LAWLESS, 1, false, false).size());
+        assertTrue(PoliceRoster.forWanted(4, false, false).size() > PoliceRoster
+                .forWanted(1, false, false).size());
     }
 
     @Test
     void testOnlyPhantomsCanFollowABoat() {
         // Each unit denies a different escape. A sea response with no phantom
         // would be a response a player simply rows away from.
-        List<PoliceUnit> atSea = PoliceRoster.forWanted(SecurityBand.SAFE, 4, false, false);
+        List<PoliceUnit> atSea = PoliceRoster.forWanted(4, false, false);
         assertTrue(atSea.contains(PoliceUnit.PHANTOM), "A sea response must be able to pursue: " + atSea);
         assertTrue(atSea.contains(PoliceUnit.GUARDIAN), "Guardians hold the water: " + atSea);
         assertFalse(atSea.contains(PoliceUnit.GOLEM), "A golem cannot swim after a boat: " + atSea);
@@ -53,7 +53,7 @@ class PoliceRosterTest {
 
     @Test
     void testAshoreTheGolemsTakeOver() {
-        List<PoliceUnit> ashore = PoliceRoster.forWanted(SecurityBand.SAFE, 4, true, false);
+        List<PoliceUnit> ashore = PoliceRoster.forWanted(4, true, false);
         assertTrue(ashore.contains(PoliceUnit.GOLEM), "Golems take anyone who lands: " + ashore);
         // ... with air support, so bolting for the boat is not free
         assertTrue(ashore.contains(PoliceUnit.PHANTOM), "Ashore still needs pursuit: " + ashore);
@@ -62,8 +62,8 @@ class PoliceRosterTest {
 
     @Test
     void testAFugitiveDrawsMore() {
-        int wanted = PoliceRoster.forWanted(SecurityBand.POLICED, 3, false, false).size();
-        int fugitive = PoliceRoster.forWanted(SecurityBand.POLICED, 3, false, true).size();
+        int wanted = PoliceRoster.forWanted(3, false, false).size();
+        int fugitive = PoliceRoster.forWanted(3, false, true).size();
         assertTrue(fugitive > wanted, "Shoot on sight should mean more of them");
     }
 

@@ -180,7 +180,7 @@ public class IslandDecorator extends BlockPopulator {
         int landmarkDist = plan.plazaRadius() - 5;
         int lx = plan.plazaX() - (int) Math.round(Math.cos(plan.bearing()) * landmarkDist);
         int lz = plan.plazaZ() - (int) Math.round(Math.sin(plan.bearing()) * landmarkDist);
-        buildLandmark(region, spec, rand, lx, y, lz);
+        buildLandmark(region, spec, lx, y, lz);
 
         World world = Bukkit.getWorld(worldInfo.getUID());
         spawnResidents(spec, plan, region, rand, world, y);
@@ -190,98 +190,112 @@ public class IslandDecorator extends BlockPopulator {
      * One signature structure per island type. Code-built and deterministic,
      * like the stalls; replaceable by blueprint sets later.
      */
-    private void buildLandmark(LimitedRegion region, IslandSpec spec, Random rand, int x, int y, int z) {
+    private void buildLandmark(LimitedRegion region, IslandSpec spec, int x, int y, int z) {
         switch (spec.type()) {
-        case INDUSTRIAL -> {
-            // Brick chimney with a signal fire on top: a smoke column visible
-            // from open water. Smelter yard at its foot.
-            for (int dy = 0; dy < 2; dy++) {
-                for (int dx = -1; dx <= 1; dx++) {
-                    for (int dz = -1; dz <= 1; dz++) {
-                        setIfPossible(region, x + dx, y + dy, z + dz, Material.BRICKS);
-                    }
-                }
-            }
-            for (int dy = 2; dy < 9; dy++) {
-                setIfPossible(region, x, y + dy, z, Material.BRICKS);
-            }
-            setIfPossible(region, x, y + 9, z, Material.HAY_BLOCK);
-            setIfPossible(region, x, y + 10, z, Material.CAMPFIRE);
-            setIfPossible(region, x + 2, y, z, Material.BLAST_FURNACE);
-            setIfPossible(region, x + 2, y, z + 1, Material.BLAST_FURNACE);
-            setIfPossible(region, x + 2, y, z - 1, Material.ANVIL);
-            setIfPossible(region, x - 2, y, z, Material.COAL_BLOCK);
-            setIfPossible(region, x - 2, y, z + 1, Material.IRON_BLOCK);
+        case INDUSTRIAL -> industrialLandmark(region, x, y, z);
+        case MINING -> miningLandmark(region, x, y, z);
+        case AGRICULTURAL -> agriculturalLandmark(region, x, y, z);
+        case FISHING -> fishingLandmark(region, x, y, z);
+        case FOREST -> forestLandmark(region, x, y, z);
+        case LUXURY -> luxuryLandmark(region, x, y, z);
+        case FROZEN -> frozenLandmark(region, x, y, z);
         }
-        case MINING -> {
-            // Timbered shaft head with rails and a spoil heap
-            for (int dy = 0; dy < 3; dy++) {
-                setIfPossible(region, x - 1, y + dy, z, Material.STRIPPED_SPRUCE_LOG);
-                setIfPossible(region, x + 1, y + dy, z, Material.STRIPPED_SPRUCE_LOG);
-            }
-            setIfPossible(region, x, y + 3, z, Material.SPRUCE_PLANKS);
-            setIfPossible(region, x, y, z + 1, Material.RAIL);
-            setIfPossible(region, x, y, z + 2, Material.RAIL);
-            setIfPossible(region, x + 2, y, z + 1, Material.COBBLESTONE);
-            setIfPossible(region, x + 2, y, z + 2, Material.GRAVEL);
-            setIfPossible(region, x + 3, y, z + 1, Material.IRON_ORE);
-            setIfPossible(region, x - 2, y, z + 1, Material.COAL_ORE);
-        }
-        case AGRICULTURAL -> {
-            // Fenced wheat plot with an irrigation channel and hay stack
-            for (int dx = -2; dx <= 2; dx++) {
-                for (int dz = -2; dz <= 2; dz++) {
-                    if (dx == 0) {
-                        setIfPossible(region, x + dx, y - 1, z + dz, Material.WATER);
-                    } else {
-                        setIfPossible(region, x + dx, y - 1, z + dz, Material.FARMLAND);
-                        setIfPossible(region, x + dx, y, z + dz, Material.WHEAT);
-                    }
-                }
-            }
-            setIfPossible(region, x + 4, y, z, Material.HAY_BLOCK);
-            setIfPossible(region, x + 4, y + 1, z, Material.HAY_BLOCK);
-            setIfPossible(region, x + 4, y, z + 1, Material.HAY_BLOCK);
-        }
-        case FISHING -> {
-            // Smokehouse corner: campfire, barrel stack
-            setIfPossible(region, x, y, z, Material.CAMPFIRE);
-            setIfPossible(region, x + 1, y, z, Material.BARREL);
-            setIfPossible(region, x + 1, y + 1, z, Material.BARREL);
-            setIfPossible(region, x + 1, y, z + 1, Material.BARREL);
-        }
-        case FOREST -> {
-            // Log pile at the sawyer's yard
-            Material log = Material.DARK_OAK_LOG;
-            for (int dx = 0; dx < 3; dx++) {
-                for (int dz = 0; dz < 2; dz++) {
-                    setIfPossible(region, x + dx, y, z + dz, log);
-                }
-            }
-            setIfPossible(region, x, y + 1, z, Material.STRIPPED_DARK_OAK_LOG);
-            setIfPossible(region, x + 1, y + 1, z, Material.STRIPPED_DARK_OAK_LOG);
-        }
-        case LUXURY -> {
-            // Quartz fountain
+    }
+
+    private void industrialLandmark(LimitedRegion region, int x, int y, int z) {
+        // Brick chimney with a signal fire on top: a smoke column visible
+        // from open water. Smelter yard at its foot.
+        for (int dy = 0; dy < 2; dy++) {
             for (int dx = -1; dx <= 1; dx++) {
                 for (int dz = -1; dz <= 1; dz++) {
-                    setIfPossible(region, x + dx, y, z + dz,
-                            dx == 0 && dz == 0 ? Material.WATER : Material.CHISELED_QUARTZ_BLOCK);
+                    setIfPossible(region, x + dx, y + dy, z + dz, Material.BRICKS);
                 }
             }
-            setIfPossible(region, x + 1, y + 1, z + 1, Material.POTTED_PINK_TULIP);
-            setIfPossible(region, x - 1, y + 1, z - 1, Material.POTTED_BLUE_ORCHID);
         }
-        case FROZEN -> {
-            // Ice beacon: packed-ice cairn with a lantern
-            for (int dy = 0; dy < 4; dy++) {
-                setIfPossible(region, x, y + dy, z, Material.PACKED_ICE);
+        for (int dy = 2; dy < 9; dy++) {
+            setIfPossible(region, x, y + dy, z, Material.BRICKS);
+        }
+        setIfPossible(region, x, y + 9, z, Material.HAY_BLOCK);
+        setIfPossible(region, x, y + 10, z, Material.CAMPFIRE);
+        setIfPossible(region, x + 2, y, z, Material.BLAST_FURNACE);
+        setIfPossible(region, x + 2, y, z + 1, Material.BLAST_FURNACE);
+        setIfPossible(region, x + 2, y, z - 1, Material.ANVIL);
+        setIfPossible(region, x - 2, y, z, Material.COAL_BLOCK);
+        setIfPossible(region, x - 2, y, z + 1, Material.IRON_BLOCK);
+    }
+
+    private void miningLandmark(LimitedRegion region, int x, int y, int z) {
+        // Timbered shaft head with rails and a spoil heap
+        for (int dy = 0; dy < 3; dy++) {
+            setIfPossible(region, x - 1, y + dy, z, Material.STRIPPED_SPRUCE_LOG);
+            setIfPossible(region, x + 1, y + dy, z, Material.STRIPPED_SPRUCE_LOG);
+        }
+        setIfPossible(region, x, y + 3, z, Material.SPRUCE_PLANKS);
+        setIfPossible(region, x, y, z + 1, Material.RAIL);
+        setIfPossible(region, x, y, z + 2, Material.RAIL);
+        setIfPossible(region, x + 2, y, z + 1, Material.COBBLESTONE);
+        setIfPossible(region, x + 2, y, z + 2, Material.GRAVEL);
+        setIfPossible(region, x + 3, y, z + 1, Material.IRON_ORE);
+        setIfPossible(region, x - 2, y, z + 1, Material.COAL_ORE);
+    }
+
+    private void agriculturalLandmark(LimitedRegion region, int x, int y, int z) {
+        // Fenced wheat plot with an irrigation channel and hay stack
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dz = -2; dz <= 2; dz++) {
+                if (dx == 0) {
+                    setIfPossible(region, x + dx, y - 1, z + dz, Material.WATER);
+                } else {
+                    setIfPossible(region, x + dx, y - 1, z + dz, Material.FARMLAND);
+                    setIfPossible(region, x + dx, y, z + dz, Material.WHEAT);
+                }
             }
-            setIfPossible(region, x, y + 4, z, Material.LANTERN);
-            setIfPossible(region, x + 1, y, z, Material.SNOW_BLOCK);
-            setIfPossible(region, x - 1, y, z + 1, Material.SNOW_BLOCK);
         }
+        setIfPossible(region, x + 4, y, z, Material.HAY_BLOCK);
+        setIfPossible(region, x + 4, y + 1, z, Material.HAY_BLOCK);
+        setIfPossible(region, x + 4, y, z + 1, Material.HAY_BLOCK);
+    }
+
+    private void fishingLandmark(LimitedRegion region, int x, int y, int z) {
+        // Smokehouse corner: campfire, barrel stack
+        setIfPossible(region, x, y, z, Material.CAMPFIRE);
+        setIfPossible(region, x + 1, y, z, Material.BARREL);
+        setIfPossible(region, x + 1, y + 1, z, Material.BARREL);
+        setIfPossible(region, x + 1, y, z + 1, Material.BARREL);
+    }
+
+    private void forestLandmark(LimitedRegion region, int x, int y, int z) {
+        // Log pile at the sawyer's yard
+        Material log = Material.DARK_OAK_LOG;
+        for (int dx = 0; dx < 3; dx++) {
+            for (int dz = 0; dz < 2; dz++) {
+                setIfPossible(region, x + dx, y, z + dz, log);
+            }
         }
+        setIfPossible(region, x, y + 1, z, Material.STRIPPED_DARK_OAK_LOG);
+        setIfPossible(region, x + 1, y + 1, z, Material.STRIPPED_DARK_OAK_LOG);
+    }
+
+    private void luxuryLandmark(LimitedRegion region, int x, int y, int z) {
+        // Quartz fountain
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                setIfPossible(region, x + dx, y, z + dz,
+                        dx == 0 && dz == 0 ? Material.WATER : Material.CHISELED_QUARTZ_BLOCK);
+            }
+        }
+        setIfPossible(region, x + 1, y + 1, z + 1, Material.POTTED_PINK_TULIP);
+        setIfPossible(region, x - 1, y + 1, z - 1, Material.POTTED_BLUE_ORCHID);
+    }
+
+    private void frozenLandmark(LimitedRegion region, int x, int y, int z) {
+        // Ice beacon: packed-ice cairn with a lantern
+        for (int dy = 0; dy < 4; dy++) {
+            setIfPossible(region, x, y + dy, z, Material.PACKED_ICE);
+        }
+        setIfPossible(region, x, y + 4, z, Material.LANTERN);
+        setIfPossible(region, x + 1, y, z, Material.SNOW_BLOCK);
+        setIfPossible(region, x - 1, y, z + 1, Material.SNOW_BLOCK);
     }
 
     private long engineSeed(WorldInfo worldInfo) {
@@ -312,7 +326,6 @@ public class IslandDecorator extends BlockPopulator {
             int y) {
         // Villagers: professions match the island's economy. Count is engine-
         // deterministic so the respawn audit knows what fully-staffed means.
-        List<Villager.Profession> professions = IslandPalette.professions(spec.type());
         int villagers = addon.getGalaxyEngine(addon.getOverWorld() == null ? 0 : addon.getOverWorld().getSeed())
                 .villagerCount(spec);
         for (int i = 0; i < villagers; i++) {

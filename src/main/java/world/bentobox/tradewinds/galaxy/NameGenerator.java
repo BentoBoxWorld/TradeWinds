@@ -35,7 +35,7 @@ public final class NameGenerator {
         int tokens = 3 + (int) (Hashing.mix(h) & 1);
         for (int i = 0; i < tokens; i++) {
             h = Hashing.mix(h + i + 1);
-            String pair = PAIRS[(int) Math.floorMod(h, PAIRS.length)];
+            String pair = PAIRS[Math.floorMod(h, PAIRS.length)];
             for (char c : pair.toCharArray()) {
                 if (c != '.') {
                     sb.append(c);
@@ -45,7 +45,7 @@ public final class NameGenerator {
         while (sb.length() < 3) {
             // Degenerate skip-heavy roll: keep appending until pronounceable
             h = Hashing.mix(h);
-            for (char c : PAIRS[1 + (int) Math.floorMod(h, PAIRS.length - 1)].toCharArray()) {
+            for (char c : PAIRS[1 + Math.floorMod(h, PAIRS.length - 1)].toCharArray()) {
                 if (c != '.') {
                     sb.append(c);
                 }

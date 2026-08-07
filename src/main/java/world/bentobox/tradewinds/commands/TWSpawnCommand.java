@@ -119,7 +119,7 @@ public class TWSpawnCommand extends DelayedTeleportCommand {
         String[] points = { "north", "north-east", "east", "south-east", "south", "south-west", "west",
                 "north-west" };
         double angle = Math.toDegrees(Math.atan2(dx, -dz));
-        int index = (int) Math.floorMod(Math.round(angle / 45.0), 8);
+        int index = Math.floorMod(Math.round(angle / 45.0), 8);
         return "tradewinds.direction." + points[index];
     }
 }

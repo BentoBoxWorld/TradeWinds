@@ -81,7 +81,7 @@ public class ReputationService {
      * @param crime what they did
      * @return the new standing
      */
-    public Standing record(Player player, Crime crime) {
+    public Standing recordCrime(Player player, Crime crime) {
         if (!addon.getSettings().isCrimeEnabled()) {
             return Standing.CLEAN;
         }

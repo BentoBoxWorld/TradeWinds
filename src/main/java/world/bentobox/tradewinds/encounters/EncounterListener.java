@@ -1,6 +1,7 @@
 package world.bentobox.tradewinds.encounters;
 
 import java.util.List;
+import java.util.Random;
 
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -21,6 +22,8 @@ import world.bentobox.tradewinds.TradeWinds;
  * @author tastybento
  */
 public class EncounterListener implements Listener {
+
+    private static final Random RANDOM = new Random();
 
     private final TradeWinds addon;
 
@@ -54,7 +57,7 @@ public class EncounterListener implements Listener {
         if (table.isEmpty() || Math.random() >= addon.getSettings().getBootyChance()) {
             return;
         }
-        String entry = table.get((int) (Math.random() * table.size()));
+        String entry = table.get(RANDOM.nextInt(table.size()));
         Material material = Material.matchMaterial(entry);
         if (material == null) {
             addon.logError("Unknown material in encounters.booty-table: " + entry);

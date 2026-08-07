@@ -3,6 +3,7 @@ package world.bentobox.tradewinds.travel;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -55,6 +56,12 @@ public class IntersticeService {
      * ambiguous between the String... and TagResolver... overloads.
      */
     private static final String[] NO_VARS = new String[0];
+
+    /** Log prefix for interstice events. */
+    private static final String LOG_PREFIX = "Interstice: ";
+
+    /** Random for gameplay randomness. */
+    private static final Random RANDOM = new Random();
 
     /** Ghasts spawned by the current stranding, for the follow-up head count. */
     private final List<Ghast> spawnedGhasts = new java.util.ArrayList<>();
@@ -230,12 +237,12 @@ public class IntersticeService {
      */
     private void spawnGhasts(Player player, Location around) {
         if (Math.random() >= addon.getSettings().getIntersticeGhastChance()) {
-            addon.log("Interstice: " + player.getName() + " stranded at " + describe(around)
+            addon.log(LOG_PREFIX + player.getName() + " stranded at " + describe(around)
                     + " - nothing came (ghast-chance roll)");
             return; // Dark water and nothing in it. The interstice is unsettling enough.
         }
         int min = addon.getSettings().getIntersticeGhastsMin();
-        int count = min + (int) (Math.random() * Math.max(1,
+        int count = min + RANDOM.nextInt(Math.max(1,
                 addon.getSettings().getIntersticeGhastsMax() - min + 1));
         double near = addon.getSettings().getIntersticeGhastDistance();
         int spawned = 0;
@@ -267,10 +274,10 @@ public class IntersticeService {
                 spawned++;
                 spawnedGhasts.add(g);
             }
-            addon.log("Interstice: ghast spawned at " + describe(spot) + " ("
+            addon.log(LOG_PREFIX + "ghast spawned at " + describe(spot) + " ("
                     + (int) spot.distance(around) + " blocks from the player)");
         }
-        addon.log("Interstice: " + player.getName() + " stranded at " + describe(around) + " in "
+        addon.log(LOG_PREFIX + player.getName() + " stranded at " + describe(around) + " in "
                 + around.getWorld().getName() + " - " + spawned + " of " + count + " ghasts spawned");
         // Check again shortly: "spawned" only means the call returned. Anything
         // that removes them does so afterwards, and silently.
@@ -360,11 +367,10 @@ public class IntersticeService {
             }
             int period = addon.getSettings().getIntersticePromptSeconds();
             long last = lastPrompt.getOrDefault(player.getUniqueId(), 0L);
-            if (period <= 0 || now - last < period) {
-                continue;
+            if (period > 0 && now - last >= period) {
+                lastPrompt.put(player.getUniqueId(), now);
+                User.getInstance(player).sendMessage("tradewinds.interstice.way-out");
             }
-            lastPrompt.put(player.getUniqueId(), now);
-            User.getInstance(player).sendMessage("tradewinds.interstice.way-out");
         }
         // Leaving the interstice (or logging out) re-arms the one-time dialog
         prompted.retainAll(present);

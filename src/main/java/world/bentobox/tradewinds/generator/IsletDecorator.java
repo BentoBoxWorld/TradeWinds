@@ -118,17 +118,21 @@ public class IsletDecorator extends BlockPopulator {
         for (int x = baseX; x < baseX + size.getBlockX(); x++) {
             for (int y = baseY; y < baseY + size.getBlockY(); y++) {
                 for (int z = baseZ; z < baseZ + size.getBlockZ(); z++) {
-                    if (!region.isInRegion(x, y, z)) {
-                        continue;
-                    }
-                    Material here = region.getType(x, y, z);
-                    if (here == Material.JIGSAW) {
-                        region.setType(x, y, z, fill);
-                    } else if (here == Material.STRUCTURE_BLOCK || here == Material.STRUCTURE_VOID) {
-                        region.setType(x, y, z, Material.AIR);
-                    }
+                    scrubBlock(region, fill, x, y, z);
                 }
             }
+        }
+    }
+
+    private void scrubBlock(LimitedRegion region, Material fill, int x, int y, int z) {
+        if (!region.isInRegion(x, y, z)) {
+            return;
+        }
+        Material here = region.getType(x, y, z);
+        if (here == Material.JIGSAW) {
+            region.setType(x, y, z, fill);
+        } else if (here == Material.STRUCTURE_BLOCK || here == Material.STRUCTURE_VOID) {
+            region.setType(x, y, z, Material.AIR);
         }
     }
 }

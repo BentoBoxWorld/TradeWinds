@@ -114,6 +114,10 @@ public class GalaxyEngine {
     /** The rare islet biome - no hostile spawns, mycelium, mooshrooms. */
     public static final String MUSHROOM_BIOME = "minecraft:mushroom_fields";
 
+    /** Sandy fringes: where beached shipwrecks and buried treasure belong. */
+    private static final String BEACH_BIOME = "minecraft:beach";
+    private static final String SNOWY_BEACH_BIOME = "minecraft:snowy_beach";
+
     /**
      * Ground truth, literally: what the top of a land column is made of, by the
      * biome that governs the column. Anything unlisted stands on grass. Applies
@@ -122,8 +126,8 @@ public class GalaxyEngine {
      */
     private static final Map<String, SurfaceKind> BIOME_SURFACES = Map.ofEntries(
             Map.entry("minecraft:desert", SurfaceKind.SAND),
-            Map.entry("minecraft:beach", SurfaceKind.SAND),
-            Map.entry("minecraft:snowy_beach", SurfaceKind.SAND),
+            Map.entry(BEACH_BIOME, SurfaceKind.SAND),
+            Map.entry(SNOWY_BEACH_BIOME, SurfaceKind.SAND),
             Map.entry("minecraft:badlands", SurfaceKind.RED_SAND),
             Map.entry("minecraft:eroded_badlands", SurfaceKind.RED_SAND),
             Map.entry("minecraft:wooded_badlands", SurfaceKind.RED_SAND),
@@ -139,9 +143,6 @@ public class GalaxyEngine {
             Map.entry("minecraft:frozen_peaks", SurfaceKind.SNOW),
             Map.entry("minecraft:ice_spikes", SurfaceKind.SNOW),
             Map.entry(MUSHROOM_BIOME, SurfaceKind.MYCELIUM));
-    /** Sandy fringes: where beached shipwrecks and buried treasure belong. */
-    private static final String BEACH_BIOME = "minecraft:beach";
-    private static final String SNOWY_BEACH_BIOME = "minecraft:snowy_beach";
     /**
      * How far above sea level land still counts as shore. Measured from the
      * finished terrain rather than from a radius, so a beach follows the real
@@ -336,7 +337,7 @@ public class GalaxyEngine {
      */
     private int rollTech(int cellX, int cellZ, IslandType type) {
         int base = TECH_BASE.getOrDefault(type, 3);
-        int wobble = (int) Math.floorMod(Hashing.cellHash(config.seed(), cellX, cellZ, SALT_TECH), 5) - 2;
+        int wobble = Math.floorMod(Hashing.cellHash(config.seed(), cellX, cellZ, SALT_TECH), 5) - 2;
         return Math.clamp(base + wobble, 1, MAX_TECH_LEVEL);
     }
 
@@ -373,14 +374,14 @@ public class GalaxyEngine {
         double dist = Math.hypot(centerX, centerZ);
         int step = (int) (dist / config.bandRadius());
         // Wobble -1, 0 or +1
-        int wobble = (int) Math.floorMod(Hashing.cellHash(config.seed(), cellX, cellZ, SALT_BAND), 3) - 1;
-        int index = Math.clamp(step + wobble, 0, SecurityBand.values().length - 1);
+        int wobble = Math.floorMod(Hashing.cellHash(config.seed(), cellX, cellZ, SALT_BAND), 3) - 1;
+        int index = (int) Math.clamp((long) step + wobble, 0L, (long) SecurityBand.values().length - 1);
         return SecurityBand.values()[index];
     }
 
     private String rollBiome(int cellX, int cellZ, IslandType type) {
         List<String> keys = type.getBiomeKeys();
-        int i = (int) Math.floorMod(Hashing.cellHash(config.seed(), cellX, cellZ, SALT_BIOME), keys.size());
+        int i = Math.floorMod(Hashing.cellHash(config.seed(), cellX, cellZ, SALT_BIOME), keys.size());
         return keys.get(i);
     }
 
@@ -580,7 +581,7 @@ public class GalaxyEngine {
         }
         List<String> band = WILD_BIOMES.get(oceanTemperatureIndex(centerX, centerZ));
         long hash = Hashing.cellHash(config.seed(), cellX, cellZ, SALT_WILD_BIOME);
-        return band.get((int) Math.floorMod(hash, band.size()));
+        return band.get(Math.floorMod(hash, band.size()));
     }
 
     /**
@@ -657,7 +658,7 @@ public class GalaxyEngine {
      * Deterministic so the respawn audit knows what "fully staffed" means.
      */
     public int villagerCount(IslandSpec spec) {
-        return 3 + (int) Math.floorMod(Hashing.cellHash(config.seed(), spec.cellX(), spec.cellZ(), 0x4E51DE47L), 3);
+        return 3 + Math.floorMod(Hashing.cellHash(config.seed(), spec.cellX(), spec.cellZ(), 0x4E51DE47L), 3);
     }
 
     /**

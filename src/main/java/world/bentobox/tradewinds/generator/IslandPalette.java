@@ -137,6 +137,14 @@ public final class IslandPalette {
         return list;
     }
 
+    /**
+     * The top block of a land column. Vanilla decoration reads this to decide
+     * what will grow: grass gets trees and flowers, mycelium gets huge
+     * mushrooms, sand gets nothing much - which is what a beach should be.
+     *
+     * @param kind the surface kind
+     * @return the surface material
+     */
     public static Material surface(SurfaceKind kind) {
         return switch (kind) {
         case SAND -> Material.SAND;

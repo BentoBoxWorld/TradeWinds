@@ -88,40 +88,43 @@ public class IntersticeDecorator extends BlockPopulator {
         }
         for (int dx = 0; dx < 16; dx++) {
             for (int dz = 0; dz < 16; dz++) {
-                if (random.nextDouble() >= chance) {
-                    continue;
-                }
-                int x = (chunkX << 4) + dx;
-                int z = (chunkZ << 4) + dz;
-                int floor = seabedAt(region, x, z, sea - 2, worldInfo.getMinHeight());
-                if (floor <= worldInfo.getMinHeight()) {
-                    continue; // dry land, a shoal crown, or nothing at all
-                }
-                double roll = random.nextDouble();
-                if (roll < 0.40) {
-                    lichenBed(random, region, x, floor, z);
-                } else if (roll < 0.65) {
-                    // A basalt spike, 2-5 tall, always fully submerged
-                    int height = Math.min(2 + random.nextInt(4), sea - 1 - floor);
-                    for (int y = 1; y <= height; y++) {
-                        if (region.isInRegion(x, floor + y, z)) {
-                            region.setType(x, floor + y, z, Material.BASALT);
-                        }
-                    }
-                } else if (roll < 0.80) {
-                    // A magma vent glowing up through the water
-                    patch(random, region, x, floor, z, Material.MAGMA_BLOCK);
-                } else if (roll < 0.90) {
-                    // A soul-sand seep
-                    patch(random, region, x, floor, z, Material.SOUL_SAND);
-                } else {
-                    // A blackstone boulder
-                    if (region.isInRegion(x, floor + 1, z)) {
-                        region.setType(x, floor + 1, z, Material.BLACKSTONE);
-                    }
-                    patch(random, region, x, floor, z, Material.BLACKSTONE);
+                if (random.nextDouble() < chance) {
+                    int x = (chunkX << 4) + dx;
+                    int z = (chunkZ << 4) + dz;
+                    decorateSeabedSpot(random, region, x, z, sea, worldInfo.getMinHeight());
                 }
             }
+        }
+    }
+
+    private void decorateSeabedSpot(Random random, LimitedRegion region, int x, int z, int sea, int minHeight) {
+        int floor = seabedAt(region, x, z, sea - 2, minHeight);
+        if (floor <= minHeight) {
+            return; // dry land, a shoal crown, or nothing at all
+        }
+        double roll = random.nextDouble();
+        if (roll < 0.40) {
+            lichenBed(random, region, x, floor, z);
+        } else if (roll < 0.65) {
+            // A basalt spike, 2-5 tall, always fully submerged
+            int height = Math.min(2 + random.nextInt(4), sea - 1 - floor);
+            for (int y = 1; y <= height; y++) {
+                if (region.isInRegion(x, floor + y, z)) {
+                    region.setType(x, floor + y, z, Material.BASALT);
+                }
+            }
+        } else if (roll < 0.80) {
+            // A magma vent glowing up through the water
+            patch(random, region, x, floor, z, Material.MAGMA_BLOCK);
+        } else if (roll < 0.90) {
+            // A soul-sand seep
+            patch(random, region, x, floor, z, Material.SOUL_SAND);
+        } else {
+            // A blackstone boulder
+            if (region.isInRegion(x, floor + 1, z)) {
+                region.setType(x, floor + 1, z, Material.BLACKSTONE);
+            }
+            patch(random, region, x, floor, z, Material.BLACKSTONE);
         }
     }
 
@@ -169,6 +172,15 @@ public class IntersticeDecorator extends BlockPopulator {
         }
         int rise = 1 + random.nextInt(MAX_RISE);
         int top = sea + rise;
+        buildBrazierOutcrop(random, region, x, z, sea, top);
+        if (random.nextDouble() < addon.getSettings().getIntersticeBlazePicketChance()) {
+            picket(region, x, top, z);
+            return;
+        }
+        decorateBrazierTop(random, region, x, top, z, sea);
+    }
+
+    private void buildBrazierOutcrop(Random random, LimitedRegion region, int x, int z, int sea, int top) {
         // A squat outcrop: widest at the waterline, tapering as it rises, so it
         // reads as a rock rather than a pillar
         double quartz = addon.getSettings().getIntersticeQuartzChance();
@@ -185,10 +197,9 @@ public class IntersticeDecorator extends BlockPopulator {
                 }
             }
         }
-        if (random.nextDouble() < addon.getSettings().getIntersticeBlazePicketChance()) {
-            picket(region, x, top, z);
-            return;
-        }
+    }
+
+    private void decorateBrazierTop(Random random, LimitedRegion region, int x, int top, int z, int sea) {
         // The flame, and a little glow under the waterline so the rock is
         // visible from below as well as across the water
         if (region.isInRegion(x, top + 1, z)) {
@@ -213,28 +224,32 @@ public class IntersticeDecorator extends BlockPopulator {
     private void picket(LimitedRegion region, int x, int top, int z) {
         for (int dx = -DECK_HALF; dx <= DECK_HALF; dx++) {
             for (int dz = -DECK_HALF; dz <= DECK_HALF; dz++) {
-                if (region.isInRegion(x + dx, top + 1, z + dz)) {
-                    region.setType(x + dx, top + 1, z + dz, Material.NETHER_BRICKS);
-                }
-                boolean edge = Math.abs(dx) == DECK_HALF || Math.abs(dz) == DECK_HALF;
-                boolean corner = Math.abs(dx) == DECK_HALF && Math.abs(dz) == DECK_HALF;
-                if (edge && region.isInRegion(x + dx, top + 2, z + dz)) {
-                    region.setType(x + dx, top + 2, z + dz,
-                            corner ? Material.NETHER_BRICKS : Material.NETHER_BRICK_WALL);
-                }
-                // Corner legs down into the water: a stilt fort, not a UFO
-                if (corner) {
-                    for (int y = top; y > top - 6 && region.isInRegion(x + dx, y, z + dz); y--) {
-                        Material below = region.getType(x + dx, y, z + dz);
-                        if (below != Material.WATER && below != Material.AIR) {
-                            break; // found footing
-                        }
-                        region.setType(x + dx, y, z + dz, Material.NETHER_BRICK_WALL);
-                    }
-                }
+                picketBlock(region, x, top, z, dx, dz);
             }
         }
         spawner(region, x, top + 2, z, EntityType.BLAZE);
+    }
+
+    private void picketBlock(LimitedRegion region, int x, int top, int z, int dx, int dz) {
+        if (region.isInRegion(x + dx, top + 1, z + dz)) {
+            region.setType(x + dx, top + 1, z + dz, Material.NETHER_BRICKS);
+        }
+        boolean edge = Math.abs(dx) == DECK_HALF || Math.abs(dz) == DECK_HALF;
+        boolean corner = Math.abs(dx) == DECK_HALF && Math.abs(dz) == DECK_HALF;
+        if (edge && region.isInRegion(x + dx, top + 2, z + dz)) {
+            region.setType(x + dx, top + 2, z + dz,
+                    corner ? Material.NETHER_BRICKS : Material.NETHER_BRICK_WALL);
+        }
+        // Corner legs down into the water: a stilt fort, not a UFO
+        if (corner) {
+            for (int y = top; y > top - 6 && region.isInRegion(x + dx, y, z + dz); y--) {
+                Material below = region.getType(x + dx, y, z + dz);
+                if (below != Material.WATER && below != Material.AIR) {
+                    break; // found footing
+                }
+                region.setType(x + dx, y, z + dz, Material.NETHER_BRICK_WALL);
+            }
+        }
     }
 
     // --------------------------------------------------------------- shoals
@@ -247,31 +262,41 @@ public class IntersticeDecorator extends BlockPopulator {
         int minZ = chunkZ << 4;
         for (int dx = 0; dx < 16; dx++) {
             for (int dz = 0; dz < 16; dz++) {
-                int x = minX + dx;
-                int z = minZ + dz;
-                var surface = map.shoalSurfaceAt(x, z, sea);
-                if (surface.isEmpty()) {
-                    continue;
-                }
-                int floorTop = surface.getAsInt();
-                // Wart on the dry soul sand (plan source 1)
-                if (floorTop > sea + 1 && wart > 0 && random.nextDouble() < wart
-                        && region.isInRegion(x, floorTop, z)
-                        && region.getType(x, floorTop - 1, z) == Material.SOUL_SAND
-                        && region.getType(x, floorTop, z) == Material.AIR) {
-                    Ageable crop = (Ageable) Material.NETHER_WART.createBlockData();
-                    crop.setAge(random.nextInt(crop.getMaximumAge() + 1));
-                    region.setBlockData(x, floorTop, z, crop);
-                }
-                // Quartz in the submerged core (plan source 4)
-                for (int y = sea - 5; y < Math.min(floorTop - 2, sea); y++) {
-                    if (quartz > 0 && random.nextDouble() < quartz && region.isInRegion(x, y, z)
-                            && region.getType(x, y, z) == Material.NETHERRACK) {
-                        region.setType(x, y, z, Material.NETHER_QUARTZ_ORE);
-                    }
-                }
+                decorateShoalColumn(map, random, region, minX, minZ, dx, dz, wart, quartz, sea);
             }
         }
+        decorateGrandShoals(map, random, region, minX, minZ, sea);
+    }
+
+    private void decorateShoalColumn(IntersticeMap map, Random random, LimitedRegion region, int minX, int minZ,
+            int dx, int dz, double wart, double quartz, int sea) {
+        int x = minX + dx;
+        int z = minZ + dz;
+        var surface = map.shoalSurfaceAt(x, z, sea);
+        if (surface.isEmpty()) {
+            return;
+        }
+        int floorTop = surface.getAsInt();
+        // Wart on the dry soul sand (plan source 1)
+        if (floorTop > sea + 1 && wart > 0 && random.nextDouble() < wart
+                && region.isInRegion(x, floorTop, z)
+                && region.getType(x, floorTop - 1, z) == Material.SOUL_SAND
+                && region.getType(x, floorTop, z) == Material.AIR) {
+            Ageable crop = (Ageable) Material.NETHER_WART.createBlockData();
+            crop.setAge(random.nextInt(crop.getMaximumAge() + 1));
+            region.setBlockData(x, floorTop, z, crop);
+        }
+        // Quartz in the submerged core (plan source 4)
+        for (int y = sea - 5; y < Math.min(floorTop - 2, sea); y++) {
+            if (quartz > 0 && random.nextDouble() < quartz && region.isInRegion(x, y, z)
+                    && region.getType(x, y, z) == Material.NETHERRACK) {
+                region.setType(x, y, z, Material.NETHER_QUARTZ_ORE);
+            }
+        }
+    }
+
+    private void decorateGrandShoals(IntersticeMap map, Random random, LimitedRegion region, int minX, int minZ,
+            int sea) {
         // The grand shoal's grove, drawn once, from the chunk holding its centre
         map.shoalsNear(minX + 8, minZ + 8, 8).stream()
                 .filter(IntersticeMap.Shoal::grand)
@@ -291,31 +316,36 @@ public class IntersticeDecorator extends BlockPopulator {
         Material cap = shoal.crimson() ? Material.NETHER_WART_BLOCK : Material.WARPED_WART_BLOCK;
         int trees = 2 + random.nextInt(3);
         for (int i = 0; i < trees; i++) {
-            int fx = shoal.centerX() + random.nextInt(shoal.radius()) - shoal.radius() / 2;
-            int fz = shoal.centerZ() + random.nextInt(shoal.radius()) - shoal.radius() / 2;
-            var ground = map.shoalSurfaceAt(fx, fz, sea);
-            if (ground.isEmpty() || ground.getAsInt() <= sea + 1) {
-                continue; // roots want dry land
+            grovePlant(map, random, region, shoal, sea, stem, cap);
+        }
+    }
+
+    private void grovePlant(IntersticeMap map, Random random, LimitedRegion region, IntersticeMap.Shoal shoal,
+            int sea, Material stem, Material cap) {
+        int fx = shoal.centerX() + random.nextInt(shoal.radius()) - shoal.radius() / 2;
+        int fz = shoal.centerZ() + random.nextInt(shoal.radius()) - shoal.radius() / 2;
+        var ground = map.shoalSurfaceAt(fx, fz, sea);
+        if (ground.isEmpty() || ground.getAsInt() <= sea + 1) {
+            return; // roots want dry land
+        }
+        int base = ground.getAsInt();
+        int height = 4 + random.nextInt(3);
+        for (int y = 0; y < height; y++) {
+            if (region.isInRegion(fx, base + y, fz)) {
+                region.setType(fx, base + y, fz, stem);
             }
-            int base = ground.getAsInt();
-            int height = 4 + random.nextInt(3);
-            for (int y = 0; y < height; y++) {
-                if (region.isInRegion(fx, base + y, fz)) {
-                    region.setType(fx, base + y, fz, stem);
+        }
+        int capY = base + height;
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                if (region.isInRegion(fx + dx, capY, fz + dz)) {
+                    boolean light = dx != 0 && dz != 0 && random.nextInt(3) == 0;
+                    region.setType(fx + dx, capY, fz + dz, light ? Material.SHROOMLIGHT : cap);
                 }
             }
-            int capY = base + height;
-            for (int dx = -1; dx <= 1; dx++) {
-                for (int dz = -1; dz <= 1; dz++) {
-                    if (region.isInRegion(fx + dx, capY, fz + dz)) {
-                        boolean light = dx != 0 && dz != 0 && random.nextInt(3) == 0;
-                        region.setType(fx + dx, capY, fz + dz, light ? Material.SHROOMLIGHT : cap);
-                    }
-                }
-            }
-            if (region.isInRegion(fx, capY + 1, fz)) {
-                region.setType(fx, capY + 1, fz, cap);
-            }
+        }
+        if (region.isInRegion(fx, capY + 1, fz)) {
+            region.setType(fx, capY + 1, fz, cap);
         }
     }
 
@@ -374,6 +404,21 @@ public class IntersticeDecorator extends BlockPopulator {
         fill(region, cx, cz, sea + 3, sea + 7, Material.NETHER_BRICKS, true);
         fill(region, cx, cz, sea + 8, sea + 8, Material.NETHER_BRICKS, false);
         fill(region, cx, cz, sea + 9, sea + 11, Material.NETHER_BRICKS, true);
+        buildTowerOpenings(region, cx, cz, sea);
+        buildTowerCrenellations(region, cx, cz, sea);
+        spawner(region, cx, sea + 4, cz, EntityType.WITHER_SKELETON);
+        chest(region, cx, sea + 9, cz);
+        // A soul-sand pile in the spawner room: the summoning is meant to be
+        // POSSIBLE here, not convenient - skulls still have to be earned
+        if (region.isInRegion(cx + 1, sea + 3, cz + 1)) {
+            region.setType(cx + 1, sea + 3, cz + 1, Material.SOUL_SAND);
+        }
+        if (region.isInRegion(cx - 1, sea + 3, cz + 1)) {
+            region.setType(cx - 1, sea + 3, cz + 1, Material.SOUL_SAND);
+        }
+    }
+
+    private void buildTowerOpenings(LimitedRegion region, int cx, int cz, int sea) {
         // Doorway to the spawner room, at boat height, facing north
         for (int y = sea + 3; y <= sea + 4; y++) {
             if (region.isInRegion(cx, y, cz - TOWER_HALF)) {
@@ -389,6 +434,9 @@ public class IntersticeDecorator extends BlockPopulator {
                 region.setType(cx - TOWER_HALF, y, cz, Material.AIR);
             }
         }
+    }
+
+    private void buildTowerCrenellations(LimitedRegion region, int cx, int cz, int sea) {
         // Crenellated open top
         for (int dx = -TOWER_HALF; dx <= TOWER_HALF; dx++) {
             for (int dz = -TOWER_HALF; dz <= TOWER_HALF; dz++) {
@@ -400,31 +448,24 @@ public class IntersticeDecorator extends BlockPopulator {
                 }
             }
         }
-        // The tenant and the prize
-        spawner(region, cx, sea + 4, cz, EntityType.WITHER_SKELETON);
-        chest(region, cx, sea + 9, cz);
-        // A soul-sand pile in the spawner room: the summoning is meant to be
-        // POSSIBLE here, not convenient - skulls still have to be earned
-        if (region.isInRegion(cx + 1, sea + 3, cz + 1)) {
-            region.setType(cx + 1, sea + 3, cz + 1, Material.SOUL_SAND);
-        }
-        if (region.isInRegion(cx - 1, sea + 3, cz + 1)) {
-            region.setType(cx - 1, sea + 3, cz + 1, Material.SOUL_SAND);
-        }
     }
 
     /** A 5x5 slab or shell between two heights, inclusive. */
     private void fill(LimitedRegion region, int cx, int cz, int fromY, int toY, Material material,
             boolean hollow) {
         for (int y = fromY; y <= toY; y++) {
-            for (int dx = -TOWER_HALF; dx <= TOWER_HALF; dx++) {
-                for (int dz = -TOWER_HALF; dz <= TOWER_HALF; dz++) {
-                    boolean wall = Math.abs(dx) == TOWER_HALF || Math.abs(dz) == TOWER_HALF;
-                    if (!region.isInRegion(cx + dx, y, cz + dz)) {
-                        continue;
-                    }
-                    region.setType(cx + dx, y, cz + dz, !hollow || wall ? material : Material.AIR);
+            fillLayer(region, cx, cz, y, material, hollow);
+        }
+    }
+
+    private void fillLayer(LimitedRegion region, int cx, int cz, int y, Material material, boolean hollow) {
+        for (int dx = -TOWER_HALF; dx <= TOWER_HALF; dx++) {
+            for (int dz = -TOWER_HALF; dz <= TOWER_HALF; dz++) {
+                if (!region.isInRegion(cx + dx, y, cz + dz)) {
+                    continue;
                 }
+                boolean wall = Math.abs(dx) == TOWER_HALF || Math.abs(dz) == TOWER_HALF;
+                region.setType(cx + dx, y, cz + dz, !hollow || wall ? material : Material.AIR);
             }
         }
     }
@@ -519,17 +560,7 @@ public class IntersticeDecorator extends BlockPopulator {
         int x = wreck.centerX();
         int z = wreck.centerZ();
         // The hull's highest timber at the centre column
-        int top = Integer.MIN_VALUE;
-        for (int y = sea + 24; y >= sea - 24; y--) {
-            if (!region.isInRegion(x, y, z)) {
-                return;
-            }
-            Material here = region.getType(x, y, z);
-            if (here != Material.WATER && here != Material.AIR) {
-                top = y;
-                break;
-            }
-        }
+        int top = findWreckTop(region, x, z, sea);
         if (top == Integer.MIN_VALUE) {
             return; // nothing under the centre at all
         }
@@ -542,6 +573,23 @@ public class IntersticeDecorator extends BlockPopulator {
             }
             top = sea;
         }
+        graveCandleFlame(region, x, top, z);
+    }
+
+    private int findWreckTop(LimitedRegion region, int x, int z, int sea) {
+        for (int y = sea + 24; y >= sea - 24; y--) {
+            if (!region.isInRegion(x, y, z)) {
+                return Integer.MIN_VALUE;
+            }
+            Material here = region.getType(x, y, z);
+            if (here != Material.WATER && here != Material.AIR) {
+                return y;
+            }
+        }
+        return Integer.MIN_VALUE;
+    }
+
+    private void graveCandleFlame(LimitedRegion region, int x, int top, int z) {
         if (region.isInRegion(x, top + 1, z)) {
             region.setType(x, top + 1, z, Material.SOUL_SAND);
         }
@@ -576,42 +624,53 @@ public class IntersticeDecorator extends BlockPopulator {
             org.bukkit.util.BlockVector size, int keelY) {
         // The rotated hull lies somewhere inside this box around the centre
         int reach = Math.max(size.getBlockX(), size.getBlockZ()) / 2 + 1;
-        int found = 0;
+        ChestCounter counter = new ChestCounter();
         for (int y = keelY; y <= keelY + size.getBlockY(); y++) {
             for (int x = wreck.centerX() - reach; x <= wreck.centerX() + reach; x++) {
                 for (int z = wreck.centerZ() - reach; z <= wreck.centerZ() + reach; z++) {
-                    if (!region.isInRegion(x, y, z)) {
-                        continue;
-                    }
-                    Material type = region.getType(x, y, z);
-                    if (type != Material.CHEST && type != Material.TRAPPED_CHEST) {
-                        continue;
-                    }
-                    LootTable loot = null;
-                    if (wreck.loot()) {
-                        String gradeKey = found > 0 && wreck.grade() == IntersticeMap.WreckGrade.TREASURE
-                                ? "LOCKER"
-                                : wreck.grade().name();
-                        String tableName = addon.getSettings().getIntersticeWreckLoot().get(gradeKey);
-                        NamespacedKey tableKey = tableName == null ? null
-                                : NamespacedKey.fromString(tableName);
-                        loot = tableKey == null ? null : Bukkit.getLootTable(tableKey);
-                        if (loot == null) {
-                            addon.logError("interstice.wreck-loot." + gradeKey + " '" + tableName
-                                    + "' is not a loot table");
-                        }
-                    }
-                    found++;
-                    BlockState state = region.getBlockState(x, y, z);
-                    if (state instanceof Chest chestState) {
-                        // null clears the template's vanilla table: an empty
-                        // sea chest, not a broken treasure map
-                        chestState.setLootTable(loot);
-                        chestState.update();
-                    }
+                    settleWreckChest(region, wreck, x, y, z, counter);
                 }
             }
         }
+    }
+
+    private static class ChestCounter {
+        int count;
+    }
+
+    private void settleWreckChest(LimitedRegion region, IntersticeMap.Wreck wreck, int x, int y, int z,
+            ChestCounter counter) {
+        if (!region.isInRegion(x, y, z)) {
+            return;
+        }
+        Material type = region.getType(x, y, z);
+        if (type != Material.CHEST && type != Material.TRAPPED_CHEST) {
+            return;
+        }
+        LootTable loot = getLootTableForWreck(wreck, counter.count);
+        counter.count++;
+        BlockState state = region.getBlockState(x, y, z);
+        if (state instanceof Chest chestState) {
+            // null clears the template's vanilla table: an empty
+            // sea chest, not a broken treasure map
+            chestState.setLootTable(loot);
+            chestState.update();
+        }
+    }
+
+    private LootTable getLootTableForWreck(IntersticeMap.Wreck wreck, int chestIndex) {
+        if (!wreck.loot()) {
+            return null;
+        }
+        String gradeKey = chestIndex > 0 && wreck.grade() == IntersticeMap.WreckGrade.TREASURE ? "LOCKER"
+                : wreck.grade().name();
+        String tableName = addon.getSettings().getIntersticeWreckLoot().get(gradeKey);
+        NamespacedKey tableKey = tableName == null ? null : NamespacedKey.fromString(tableName);
+        LootTable loot = tableKey == null ? null : Bukkit.getLootTable(tableKey);
+        if (loot == null) {
+            addon.logError("interstice.wreck-loot." + gradeKey + " '" + tableName + "' is not a loot table");
+        }
+        return loot;
     }
 
     // ---------------------------------------------------------------- tiles

@@ -45,6 +45,11 @@ import world.bentobox.tradewinds.galaxy.RouteGraph;
  */
 public class WarpService {
 
+    /** Placeholder for island name in locale messages. */
+    private static final String NAME_PLACEHOLDER = "[name]";
+    /** Locale key for insufficient fuel message. */
+    private static final String NOT_ENOUGH_FUEL_MSG = "tradewinds.warp.not-enough-fuel";
+
     private final TradeWinds addon;
 
     public WarpService(TradeWinds addon) {
@@ -110,7 +115,7 @@ public class WarpService {
         List<ActionButton> buttons = destinations.stream().map(dest -> button(player, origin, dest)).toList();
         Dialog dialog = Dialog.create(factory -> factory.empty()
                 .base(DialogBase.builder(user(player).getTranslationAsComponent("tradewinds.ui.warp.title",
-                        "[name]", origin.name()))
+                        NAME_PLACEHOLDER, origin.name()))
                         .body(List.of(DialogBody.plainMessage(
                                 user(player).getTranslationAsComponent("tradewinds.ui.warp.fuel", "[amount]",
                                         String.valueOf((int) fuelAboard)))))
@@ -127,7 +132,7 @@ public class WarpService {
             // A home has no port sheet - no type, no tech, no market
             Component homeLabel = user(player).getTranslationAsComponent(
                     dest.affordable() ? "tradewinds.ui.warp.home" : "tradewinds.ui.warp.home-poor",
-                    "[name]", spec.name(), "[fuel]", String.valueOf(dest.fuelCost()));
+                    NAME_PLACEHOLDER, spec.name(), "[fuel]", String.valueOf(dest.fuelCost()));
             Component homeTooltip = user(player).getTranslationAsComponent(
                     "tradewinds.ui.warp.home-tooltip", "[distance]", distance);
             return ActionButton.create(homeLabel, homeTooltip, 250, DialogAction.customClick(
@@ -135,13 +140,13 @@ public class WarpService {
                         if (dest.affordable()) {
                             warp(player, origin, spec, dest.fuelCost());
                         } else {
-                            user(player).sendMessage("tradewinds.warp.not-enough-fuel");
+                            user(player).sendMessage(NOT_ENOUGH_FUEL_MSG);
                         }
                     }, ClickCallback.Options.builder().build()));
         }
         Component label = user(player).getTranslationAsComponent(
                 dest.affordable() ? "tradewinds.ui.warp.destination" : "tradewinds.ui.warp.destination-poor",
-                "[name]", spec.name(), "[fuel]", String.valueOf(dest.fuelCost()));
+                NAME_PLACEHOLDER, spec.name(), "[fuel]", String.valueOf(dest.fuelCost()));
         Component tooltip = user(player).getTranslationAsComponent("tradewinds.ui.warp.destination-tooltip",
                 "[type]", spec.type().name(), "[tech]", String.valueOf(spec.techLevel()),
                 "[band]", spec.band().getDisplayName(), "[distance]", distance);
@@ -150,7 +155,7 @@ public class WarpService {
                     if (dest.affordable()) {
                         warp(player, origin, spec, dest.fuelCost());
                     } else {
-                        user(player).sendMessage("tradewinds.warp.not-enough-fuel");
+                        user(player).sendMessage(NOT_ENOUGH_FUEL_MSG);
                     }
                 }, ClickCallback.Options.builder().build());
         return ActionButton.create(label, tooltip, 250, action);
@@ -174,7 +179,7 @@ public class WarpService {
             return;
         }
         if (!addon.getFuelService().consume(player, fuelCost)) {
-            user(player).sendMessage("tradewinds.warp.not-enough-fuel");
+            user(player).sendMessage(NOT_ENOUGH_FUEL_MSG);
             return;
         }
         standStillThen(player, () -> jump(player, from, to, fuelCost), fuelCost);

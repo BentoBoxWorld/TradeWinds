@@ -136,6 +136,11 @@ More traps, each of which cost a playtest:
 - Bare `yes`/`no`/`on`/`off` are YAML 1.1 **booleans** — never use them as
   locale keys. `ResourceYamlTest` fails the build on duplicate keys, because
   Bukkit only warns and then silently drops one.
+- **`Settings.java` can never hold static constants.** BentoBox's YAML loader
+  builds a PropertyDescriptor for EVERY declared field; any field without a
+  getter/setter (a `static final`, say) makes `loadConfigObject()` throw and
+  the addon boots disabled with null settings (found 2026-08-07 via a Sonar
+  cleanup). Duplicated string keys in Settings are the price of the loader.
 - **BentoBox REPLACES `Map` settings from `config.yml`, it does not merge them**
   (`YamlDatabaseHandler.deserializeMap`). A partial map in the shipped config
   silently overrides the whole code default — `economy.base-prices` shipped 27

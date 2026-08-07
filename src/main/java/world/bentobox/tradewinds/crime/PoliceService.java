@@ -87,16 +87,16 @@ public class PoliceService implements Listener {
         for (Player player : addon.getOverWorld().getPlayers()) {
             if (player.getGameMode() != org.bukkit.GameMode.SURVIVAL || player.isDead()) {
                 recall(player.getUniqueId());
-                continue;
+            } else {
+                Standing standing = addon.getReputationService().standing(player.getUniqueId());
+                if (!standing.isHunted()) {
+                    // Paid your fine, or decayed back to merely disreputable: the
+                    // patrol stands down the moment you are no longer wanted
+                    recall(player.getUniqueId());
+                } else {
+                    update(player, standing);
+                }
             }
-            Standing standing = addon.getReputationService().standing(player.getUniqueId());
-            if (!standing.isHunted()) {
-                // Paid your fine, or decayed back to merely disreputable: the
-                // patrol stands down the moment you are no longer wanted
-                recall(player.getUniqueId());
-                continue;
-            }
-            update(player, standing);
         }
     }
 

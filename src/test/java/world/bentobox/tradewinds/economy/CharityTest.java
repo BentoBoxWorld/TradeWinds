@@ -110,14 +110,14 @@ class CharityTest extends CommonTestSetup {
         when(hold.active(any())).thenReturn(java.util.Optional.empty());
         when(vault.has(any(), org.mockito.ArgumentMatchers.anyDouble())).thenReturn(true);
         var raft = new BoatRanks(addon).ladder().get(0);
-        BoatHold record = new BoatHold("test");
-        record.setMaterial(Material.BAMBOO_RAFT.name());
-        when(boats.createFor(mockPlayer, Material.BAMBOO_RAFT)).thenReturn(record);
+        BoatHold boatRecord = new BoatHold("test");
+        boatRecord.setMaterial(Material.BAMBOO_RAFT.name());
+        when(boats.createFor(mockPlayer, Material.BAMBOO_RAFT)).thenReturn(boatRecord);
 
         assertTrue(service.buyBoat(mockPlayer, spec(), raft));
 
         verify(boats).createFor(mockPlayer, Material.BAMBOO_RAFT);
-        verify(boats).giveBoatItem(mockPlayer, record);
+        verify(boats).giveBoatItem(mockPlayer, boatRecord);
         verify(vault).withdraw(any(), org.mockito.ArgumentMatchers.eq(1000.0));
     }
 

@@ -35,6 +35,14 @@ public class MarketService {
     private final TradeWinds addon;
     private final PriceEngine priceEngine;
 
+    // S1192: Duplicate string constants
+    private static final String KEY_CANNOT_AFFORD = "tradewinds.trade.cannot-afford";
+    private static final String VAR_MATERIAL = "[material]";
+    private static final String VAR_AMOUNT = "[amount]";
+    private static final String VAR_PRICE = "[price]";
+    private static final String KEY_BOAT_NOT_HERE = "tradewinds.trade.boat-not-here";
+    private static final String VAR_SLOTS = "[slots]";
+
     public MarketService(TradeWinds addon) {
         this.addon = addon;
         this.priceEngine = new PriceEngine(addon);
@@ -94,7 +102,7 @@ public class MarketService {
         double balance = vault.get().getBalance(user);
         int affordable = (int) Math.min(amount, Math.floor(balance / unitPrice.get()));
         if (affordable <= 0) {
-            user.sendMessage("tradewinds.trade.cannot-afford");
+            user.sendMessage(KEY_CANNOT_AFFORD);
             thud(player);
             return 0;
         }
@@ -112,8 +120,8 @@ public class MarketService {
         }
         player.getInventory().addItem(stores).values()
                 .forEach(left -> player.getWorld().dropItem(player.getLocation(), left));
-        user.sendMessage("tradewinds.trade.bought", "[amount]", String.valueOf(affordable), "[material]",
-                pretty(material), "[price]", Money.format(addon, total));
+        user.sendMessage("tradewinds.trade.bought", VAR_AMOUNT, String.valueOf(affordable), VAR_MATERIAL,
+                pretty(material), VAR_PRICE, Money.format(addon, total));
         chime(player);
         return affordable;
     }
@@ -275,7 +283,7 @@ public class MarketService {
             return false;
         }
         if (!boatIsHere(player, spec)) {
-            user.sendMessage("tradewinds.trade.boat-not-here");
+            user.sendMessage(KEY_BOAT_NOT_HERE);
             thud(player);
             return false;
         }
@@ -285,7 +293,7 @@ public class MarketService {
             return false;
         }
         if (vault.get().getBalance(user) < price.get()) {
-            user.sendMessage("tradewinds.trade.cannot-afford");
+            user.sendMessage(KEY_CANNOT_AFFORD);
             thud(player);
             return false;
         }
@@ -298,7 +306,7 @@ public class MarketService {
         // Only now take it off the shelf, so a full hold cannot destroy a listing
         addon.getIslandDataManager().takeFromShelf(spec, index);
         vault.get().withdraw(user, price.get());
-        user.sendMessage("tradewinds.trade.shelf-bought", "[material]", pretty(item.getType()), "[price]",
+        user.sendMessage("tradewinds.trade.shelf-bought", VAR_MATERIAL, pretty(item.getType()), VAR_PRICE,
                 Money.format(addon, price.get()));
         chime(player);
         return true;
@@ -346,7 +354,7 @@ public class MarketService {
         }
         double cost = Math.ceil(ports.size() * addon.getSettings().getMarketReportPricePerIsland());
         if (vault.get().getBalance(user) < cost) {
-            user.sendMessage("tradewinds.trade.cannot-afford");
+            user.sendMessage(KEY_CANNOT_AFFORD);
             thud(player);
             return 0;
         }
@@ -359,7 +367,7 @@ public class MarketService {
         }
         addon.getPlayerDataManager().save(player.getUniqueId());
         user.sendMessage("tradewinds.trade.report-bought", world.bentobox.bentobox.api.localization
-                .TextVariables.NUMBER, String.valueOf(ports.size()), "[price]", Money.format(addon, cost));
+                .TextVariables.NUMBER, String.valueOf(ports.size()), VAR_PRICE, Money.format(addon, cost));
         chime(player);
         return ports.size();
     }
@@ -545,7 +553,7 @@ public class MarketService {
     public int sell(Player player, IslandSpec spec, ItemStack item, int amount) {
         Material material = item.getType();
         if (!boatIsHere(player, spec)) {
-            User.getInstance(player).sendMessage("tradewinds.trade.boat-not-here");
+            User.getInstance(player).sendMessage(KEY_BOAT_NOT_HERE);
             thud(player);
             return 0;
         }
@@ -564,7 +572,7 @@ public class MarketService {
         }
         // Too rich for this port to handle - take it somewhere more developed
         if (!handlesValue(spec, item)) {
-            User.getInstance(player).sendMessage("tradewinds.trade.too-advanced", "[material]", pretty(material),
+            User.getInstance(player).sendMessage("tradewinds.trade.too-advanced", VAR_MATERIAL, pretty(material),
                     "[name]", spec.name());
             thud(player);
             return 0;
@@ -589,8 +597,8 @@ public class MarketService {
         addon.getIslandDataManager().adjustStockValue(spec, driftPool(material), (int) Math.round(total));
         // Notable goods go back out for sale somewhere else rather than vanishing
         consign(spec, item);
-        User.getInstance(player).sendMessage("tradewinds.trade.sold", "[amount]", String.valueOf(removed),
-                "[material]", pretty(material), "[price]", Money.format(addon, total));
+        User.getInstance(player).sendMessage("tradewinds.trade.sold", VAR_AMOUNT, String.valueOf(removed),
+                VAR_MATERIAL, pretty(material), VAR_PRICE, Money.format(addon, total));
         chime(player);
         return removed;
     }
@@ -603,7 +611,7 @@ public class MarketService {
      */
     public int buy(Player player, IslandSpec spec, Material material, int amount) {
         if (!boatIsHere(player, spec)) {
-            User.getInstance(player).sendMessage("tradewinds.trade.boat-not-here");
+            User.getInstance(player).sendMessage(KEY_BOAT_NOT_HERE);
             thud(player);
             return 0;
         }
@@ -617,7 +625,7 @@ public class MarketService {
         double balance = vault.get().getBalance(user);
         int affordable = (int) Math.min(amount, Math.floor(balance / unitPrice.get()));
         if (affordable <= 0) {
-            user.sendMessage("tradewinds.trade.cannot-afford");
+            user.sendMessage(KEY_CANNOT_AFFORD);
             thud(player);
             return 0;
         }
@@ -640,8 +648,8 @@ public class MarketService {
         double total = PriceModel.round2(added * unitPrice.get());
         vault.get().withdraw(user, total);
         addon.getIslandDataManager().adjustStockValue(spec, driftPool(material), -(int) Math.round(total));
-        user.sendMessage("tradewinds.trade.bought", "[amount]", String.valueOf(added), "[material]",
-                pretty(material), "[price]", Money.format(addon, total));
+        user.sendMessage("tradewinds.trade.bought", VAR_AMOUNT, String.valueOf(added), VAR_MATERIAL,
+                pretty(material), VAR_PRICE, Money.format(addon, total));
         chime(player);
         return added;
     }
@@ -672,7 +680,7 @@ public class MarketService {
         double price = addon.getBoatRanks().price(rank);
         var owned = addon.getHoldService().active(player.getUniqueId());
         if (!vault.get().has(user, price)) {
-            user.sendMessage("tradewinds.trade.cannot-afford");
+            user.sendMessage(KEY_CANNOT_AFFORD);
             thud(player);
             return false;
         }
@@ -683,14 +691,14 @@ public class MarketService {
             addon.getBoatService().logbook("bought by " + player.getName() + " at " + spec.name(), fresh,
                     player.getLocation());
             addon.getBoatService().giveBoatItem(player, fresh);
-            user.sendMessage("tradewinds.trade.boat-bought-first", "[material]", pretty(rank.material()),
-                    "[slots]", String.valueOf(rank.slots()), "[price]", Money.format(addon, price));
+            user.sendMessage("tradewinds.trade.boat-bought-first", VAR_MATERIAL, pretty(rank.material()),
+                    VAR_SLOTS, String.valueOf(rank.slots()), VAR_PRICE, Money.format(addon, price));
         } else if (isTradeIn(player, spec, rank)) {
             // The ship is at the quay and the new hull is bigger: a trade-in
             // - same record, cargo stays, old hull broken up
             addon.getBoatService().refit(player, owned.get(), rank.material());
-            user.sendMessage("tradewinds.trade.boat-bought", "[material]", pretty(rank.material()),
-                    "[slots]", String.valueOf(rank.slots()), "[price]", Money.format(addon, price));
+            user.sendMessage("tradewinds.trade.boat-bought", VAR_MATERIAL, pretty(rank.material()),
+                    VAR_SLOTS, String.valueOf(rank.slots()), VAR_PRICE, Money.format(addon, price));
         } else {
             // Bought outright (ruled 2026-08-05): the yard ALWAYS sells - a
             // sailor whose ship is an ocean away, or who wants a smaller
@@ -712,8 +720,8 @@ public class MarketService {
             addon.getBoatService().shedCarriedHull(player, old);
             // The plate on the abandoned hull flips to UNOWNED, if it is loaded
             addon.getBoatService().relabel(old);
-            user.sendMessage("tradewinds.trade.boat-replaced", "[material]", pretty(rank.material()),
-                    "[slots]", String.valueOf(rank.slots()), "[price]", Money.format(addon, price),
+            user.sendMessage("tradewinds.trade.boat-replaced", VAR_MATERIAL, pretty(rank.material()),
+                    VAR_SLOTS, String.valueOf(rank.slots()), VAR_PRICE, Money.format(addon, price),
                     "[old]", oldName);
         }
         chime(player);
@@ -768,13 +776,13 @@ public class MarketService {
         double price = PriceModel.expanderPrice(addon.getSettings().getExpanderBasePrice(),
                 addon.getHoldService().expanderCount(id));
         if (!vault.get().has(user, price)) {
-            user.sendMessage("tradewinds.trade.cannot-afford");
+            user.sendMessage(KEY_CANNOT_AFFORD);
             thud(player);
             return false;
         }
         vault.get().withdraw(user, price);
         addon.getHoldService().installExpander(id);
-        user.sendMessage("tradewinds.trade.expander-bought", "[price]", Money.format(addon, price));
+        user.sendMessage("tradewinds.trade.expander-bought", VAR_PRICE, Money.format(addon, price));
         chime(player);
         return true;
     }

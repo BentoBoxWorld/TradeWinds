@@ -115,12 +115,21 @@ public class StarChartRenderer extends MapRenderer {
         // Charted islands
         GalaxyEngine engine = addon.getGalaxyEngine(addon.getOverWorld().getSeed());
         int islandPixelRadius = Math.max(1, engine.getConfig().terrainRadius() / bpp);
+        drawChartedIslands(canvas, player, engine, islandPixelRadius, px, pz, bpp);
+        // HOME: a member's claimed islet, in gold - drawn after the islands
+        // so nothing sits on top of it (Stage 7b)
+        drawHomeIsland(canvas, player, px, pz, bpp);
+        // The holder: a cursor arrow at center, rotating with their facing
+        drawPlayerCursor(canvas, player);
+    }
+
+    private void drawChartedIslands(MapCanvas canvas, Player player, GalaxyEngine engine, int islandPixelRadius,
+            int px, int pz, int bpp) {
         for (String key : addon.getPlayerDataManager().get(player.getUniqueId()).getChartedIslands()) {
             String[] cell = key.split(",");
             engine.islandInCell(Integer.parseInt(cell[0]), Integer.parseInt(cell[1])).ifPresent(spec -> {
                 int[] pixel = toPixel(spec.centerX() - (long) px, spec.centerZ() - (long) pz, bpp);
                 if (pixel[2] == 1) {
-                    // Beyond the chart: pin the name to the edge as a heading hint
                     canvas.setPixelColor(pixel[0], pixel[1], EDGE);
                     drawName(canvas, pixel[0], pixel[1], spec.name());
                 } else {
@@ -130,8 +139,9 @@ public class StarChartRenderer extends MapRenderer {
                 }
             });
         }
-        // HOME: a member's claimed islet, in gold - drawn after the islands
-        // so nothing sits on top of it (Stage 7b)
+    }
+
+    private void drawHomeIsland(MapCanvas canvas, Player player, int px, int pz, int bpp) {
         HomePort.islandOf(addon, player.getUniqueId()).ifPresent(island -> {
             int[] pixel = toPixel(island.getCenter().getBlockX() - (long) px,
                     island.getCenter().getBlockZ() - (long) pz, bpp);
@@ -147,7 +157,9 @@ public class StarChartRenderer extends MapRenderer {
                 drawName(canvas, pixel[0], pixel[1], name);
             }
         });
-        // The holder: a cursor arrow at center, rotating with their facing
+    }
+
+    private void drawPlayerCursor(MapCanvas canvas, Player player) {
         MapCursorCollection cursors = new MapCursorCollection();
         byte direction = (byte) (Math.round(player.getLocation().getYaw() * 16.0 / 360.0) & 15);
         cursors.addCursor(new MapCursor((byte) 0, (byte) 0, direction, MapCursor.Type.PLAYER, true));
@@ -201,7 +213,7 @@ public class StarChartRenderer extends MapRenderer {
      */
     private void drawName(MapCanvas canvas, int x, int z, String name) {
         int width = MinecraftFont.Font.getWidth(name);
-        int textX = Math.clamp(x - width / 2, 1, 127 - width);
+        int textX = (int) Math.clamp((long) x - width / 2, 1L, 127L - width);
         int textZ = Math.clamp(z + 3, 1, 119);
         canvas.drawText(textX, textZ, MinecraftFont.Font, colored(name));
     }
