@@ -42,9 +42,19 @@ public class SeaPositionTracker implements Listener {
      * @param player the player
      */
     public void recordPosition(Player player) {
-        if (addon.inWorld(player.getWorld())) {
-            store(player, player.getLocation());
+        if (!addon.inWorld(player.getWorld())) {
+            return;
         }
+        // Clamp a flying or falling exit to the surface: /tw returns the
+        // sailor to this exact spot, and a position recorded at altitude
+        // became a lethal drop on re-entry (playtest 2026-08-07 - died on
+        // arrival). Underwater stays underwater: water is soft.
+        Location where = player.getLocation().clone();
+        int surface = player.getWorld().getHighestBlockYAt(where.getBlockX(), where.getBlockZ()) + 1;
+        if (where.getY() > surface) {
+            where.setY(surface);
+        }
+        store(player, where);
     }
 
     /**

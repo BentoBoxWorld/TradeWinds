@@ -67,7 +67,37 @@ public class SpawnRespawnListener implements Listener {
         // an admin has since moved it. The island CENTRE is wooded ground and
         // must not be used: players were respawning in the treetops.
         Location point = addon.getIslands().getSpawnPoint(overworld);
-        event.setRespawnLocation(point != null ? point : overworld.getSpawnLocation());
+        event.setRespawnLocation(safeNear(point != null ? point : overworld.getSpawnLocation()));
+    }
+
+    /**
+     * The nearest SAFE column to a respawn point. The spawn pad is kept bare
+     * by the decorator, but a respawn must never gamble: an admin can move
+     * the spawn point anywhere, and one seed put the plaza campfire exactly
+     * under it - a death-loop in open flame (playtest 2026-08-07). Spirals a
+     * few columns out using BentoBox's own safety test; spawn chunks are
+     * always loaded, so the check is cheap and synchronous.
+     */
+    private Location safeNear(Location point) {
+        if (addon.getIslands().isSafeLocation(point)) {
+            return point;
+        }
+        for (int r = 1; r <= 4; r++) {
+            for (int dx = -r; dx <= r; dx++) {
+                for (int dz = -r; dz <= r; dz++) {
+                    if (Math.max(Math.abs(dx), Math.abs(dz)) != r) {
+                        continue; // ring, not disc: nearest first
+                    }
+                    for (int dy = 0; dy <= 2; dy++) {
+                        Location candidate = point.clone().add(dx, dy, dz);
+                        if (addon.getIslands().isSafeLocation(candidate)) {
+                            return candidate;
+                        }
+                    }
+                }
+            }
+        }
+        return point; // nothing better nearby - at least it is the plaza
     }
 
     /**

@@ -65,6 +65,33 @@ class SpawnRespawnListenerTest extends CommonTestSetup {
     private TestHolds holds;
 
     @Test
+    void testUnsafeSpawnPointIsSidestepped() {
+        // One seed put the plaza campfire exactly under the spawn point: a
+        // respawn death-loop in open flame (playtest 2026-08-07). The
+        // listener must spiral to the nearest safe column.
+        Location point = new Location(world, 72.5, 73, 72.5);
+        Location safe = point.clone().add(-1, 0, 0);
+        when(im.isSafeLocation(org.mockito.ArgumentMatchers.any(Location.class)))
+                .thenAnswer(inv -> {
+                    Location l = inv.getArgument(0);
+                    return l.getX() == safe.getX() && l.getY() == safe.getY() && l.getZ() == safe.getZ();
+                });
+        PlayerRespawnEvent event = new PlayerRespawnEvent(mockPlayer, deathBed, false, false);
+        listener.onRespawn(event);
+        assertEquals(safe.getX(), event.getRespawnLocation().getX());
+        assertEquals(safe.getZ(), event.getRespawnLocation().getZ());
+    }
+
+    @Test
+    void testSafeSpawnPointIsUsedAsIs() {
+        when(im.isSafeLocation(org.mockito.ArgumentMatchers.any(Location.class))).thenReturn(true);
+        PlayerRespawnEvent event = new PlayerRespawnEvent(mockPlayer, deathBed, false, false);
+        listener.onRespawn(event);
+        assertEquals(72.5, event.getRespawnLocation().getX());
+        assertEquals(72.5, event.getRespawnLocation().getZ());
+    }
+
+    @Test
     void testBoatlessRespawnerGetsTheLoaner() {
         PlayerRespawnEvent event = new PlayerRespawnEvent(mockPlayer, deathBed, false, false);
         listener.onRespawn(event);

@@ -126,13 +126,28 @@ public class IslandDecorator extends BlockPopulator {
         // visitor-rank at every port, and BREAK_BLOCKS is not - usable by all,
         // removable by none. The campfire stands on a cobblestone hearth so
         // residents do not path across open flame.
+        // ... and never on the SPAWN PAD: the world spawn point sits at
+        // plaza + (3.5, 3.5), and for one unlucky dock bearing the hearth
+        // landed exactly there - a respawn death-loop in open flame
+        // (playtest 2026-08-07). The galley ring-walks until it is clear.
         double galleyAngle = plan.bearing() + 0.7;
         int galleyR = plan.plazaRadius() - 4;
-        int gx = plan.plazaX() + (int) Math.round(Math.cos(galleyAngle) * galleyR);
-        int gz = plan.plazaZ() + (int) Math.round(Math.sin(galleyAngle) * galleyR);
+        int gx;
+        int gz;
+        int tangentX;
+        int tangentZ;
+        int tries = 0;
+        do {
+            gx = plan.plazaX() + (int) Math.round(Math.cos(galleyAngle) * galleyR);
+            gz = plan.plazaZ() + (int) Math.round(Math.sin(galleyAngle) * galleyR);
+            tangentX = (int) Math.round(-Math.sin(galleyAngle));
+            tangentZ = (int) Math.round(Math.cos(galleyAngle));
+            if (!onSpawnPad(plan, gx, gz) && !onSpawnPad(plan, gx + tangentX * 2, gz + tangentZ * 2)) {
+                break;
+            }
+            galleyAngle += 0.25;
+        } while (++tries < 8);
         setIfPossible(region, gx, y, gz, Material.CRAFTING_TABLE);
-        int tangentX = (int) Math.round(-Math.sin(galleyAngle));
-        int tangentZ = (int) Math.round(Math.cos(galleyAngle));
         setIfPossible(region, gx + tangentX * 2, y, gz + tangentZ * 2, Material.COBBLESTONE);
         setIfPossible(region, gx + tangentX * 2, y + 1, gz + tangentZ * 2, Material.CAMPFIRE);
 
@@ -146,6 +161,9 @@ public class IslandDecorator extends BlockPopulator {
             int ax = plan.plazaX() + (int) Math.round(Math.cos(angle) * galleyR);
             int az = plan.plazaZ() + (int) Math.round(Math.sin(angle) * galleyR);
             Material amenity = amenities.get(i);
+            if (onSpawnPad(plan, ax, az)) {
+                continue; // the spawn pad stays bare - see the galley note
+            }
             setIfPossible(region, ax, y, az, amenity);
             if (amenity == Material.ENCHANTING_TABLE) {
                 for (int k = -2; k <= 2; k++) {
@@ -412,6 +430,15 @@ public class IslandDecorator extends BlockPopulator {
             return Villager.Type.TAIGA;
         }
         return Villager.Type.PLAINS;
+    }
+
+    /**
+     * The 3x3 around plaza + (3, 3) is the SPAWN PAD - the world spawn and
+     * every islandless respawn land there, so nothing that burns, blocks or
+     * bites may be placed on it.
+     */
+    private static boolean onSpawnPad(DockPlan plan, int x, int z) {
+        return Math.abs(x - (plan.plazaX() + 3)) <= 1 && Math.abs(z - (plan.plazaZ() + 3)) <= 1;
     }
 
     private void setIfPossible(LimitedRegion region, int x, int y, int z, Material material) {
