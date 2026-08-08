@@ -1,0 +1,42 @@
+# TradeWinds — .github/workflows/publish.yml
+# Publishes the jar attached to a GitHub release to CurseForge via the shared
+# BentoBoxWorld/.github reusable workflow. Downloads the release asset instead
+# of rebuilding from source, so a dependency-repo outage cannot block a release
+# that already has a built jar. The reusable workflow is pinned to a commit SHA
+# (Sonar githubactions:S7637). workflow_dispatch lets you (re)publish a version.
+#
+# Modrinth is published by modrinth-publish.yml, which is a separate action and
+# rebuilds from source - both fire on the same `release: published` event.
+#
+# Needs a CURSEFORGE_TOKEN repo secret. The reusable workflow skips a platform
+# whose secret is missing, so without it this job runs and quietly does nothing.
+
+name: Publish release to CurseForge
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to publish (e.g. 0.1.1)"
+        required: true
+        type: string
+
+jobs:
+  publish:
+    uses: bentoboxworld/.github/.github/workflows/publish-platforms.yml@1f91a0edf72e8c86d671b3b8fdd3121ac6fb88e1 # master
+    with:
+      use_release_asset: "true"          # publish the jar attached to the release; do not rebuild
+      java_version: "25"                 # only a fallback if use_release_asset is turned off - Paper 26.x and BentoBox ship Java 25 bytecode
+      hangar_slug: ""                    # no Hangar project yet; blank = skip Hangar
+      curseforge_id: "1644572"
+      # The 26.x family only, matching modrinth-publish.yml - NOT the longer
+      # 1.21.x list the other addons publish. BentoBox 3.18.1, which addon.yml
+      # requires, ships Java 25 bytecode like paper-api 26.x, while every
+      # 1.21.x paper-api is Java 21: a 1.21.x server cannot load BentoBox at
+      # all without a Java 25 JVM. Only 26.2 is actually playtested.
+      game_versions: "26.2,26.1.2,26.1.1,26.1"
+      version: ${{ inputs.version }}     # empty on release events -> falls back to the release tag
+    secrets:
+      CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
