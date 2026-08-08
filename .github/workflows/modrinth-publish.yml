@@ -107,14 +107,25 @@ jobs:
             paper
             purpur
 
-          # Only 26.2 is TESTED, and 26.2+ is what the release notes promise.
-          # The compile floor is much lower - the sources build clean against
-          # paper-api 1.21.10, and the only thing that breaks below that is
-          # the dialog API (Minecraft 1.21.6) - so this list can be widened
-          # as older versions are actually played. Widening it untested just
-          # buys bug reports.
+          # The 26.x family, matching the other 26.2-era addons. TradeWinds'
+          # own sources compile clean against paper-api 26.1.2 as well as
+          # 26.2 (and, for what it is worth, against 1.21.10 - only the
+          # dialog API, Minecraft 1.21.6, breaks below that).
+          #
+          # The floor is NOT ours to set, though: BentoBox 3.18.1 - which
+          # addon.yml requires - ships Java 25 bytecode (class major 69), the
+          # same as paper-api 26.x, while every 1.21.x paper-api is Java 21
+          # (major 65). A 1.21.x server would have to be started on a Java 25
+          # JVM before BentoBox could even load, and BentoBox is built against
+          # the 26.x API besides. So 26.1 is the honest bottom, whatever our
+          # own compiler says.
+          #
+          # Only 26.2 is actually PLAYTESTED.
           game-versions: |-
             26.2
+            26.1.2
+            26.1.1
+            26.1
 
           # Maven produces TradeWinds-<version>.jar in target/ (see the pom's
           # finalName), and the release profile above makes <version> the tag
