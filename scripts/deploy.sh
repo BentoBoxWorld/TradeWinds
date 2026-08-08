@@ -14,7 +14,6 @@
 set -euo pipefail
 
 ADDONS="/Users/ben/Minecraft/26.2/plugins/BentoBox/addons"
-JAR="target/TradeWinds-0.1.0-SNAPSHOT-LOCAL.jar"
 
 # Match the server jar loosely: it is named paper-26.2-87.jar, not
 # paper-26.2.jar, so an exact pattern silently never matched and the guard was
@@ -34,5 +33,25 @@ if [ -f "$LOG" ] && [ -n "$(find "$LOG" -mmin -1 2>/dev/null)" ]; then
 fi
 
 mvn -q clean package "$@"
+
+# The jar carries the version, so never hardcode it here: a version bump used
+# to break the copy (0.1.1, 2026-08-08). Take whatever package just built.
+shopt -s nullglob
+built=(target/TradeWinds-*-LOCAL.jar)
+if [ ${#built[@]} -ne 1 ]; then
+    echo "Expected exactly one target/TradeWinds-*-LOCAL.jar, found ${#built[@]}."
+    exit 1
+fi
+JAR="${built[0]}"
+
+# An older version left behind loads ALONGSIDE the new one - two TradeWinds
+# addons over one world. Clear the deck first.
+for old in "$ADDONS"/TradeWinds-*.jar; do
+    if [ "$(basename "$old")" != "$(basename "$JAR")" ]; then
+        echo "Removing stale $(basename "$old")"
+        rm -f "$old"
+    fi
+done
+
 cp "$JAR" "$ADDONS/"
 echo "Deployed $(basename "$JAR") to $ADDONS"

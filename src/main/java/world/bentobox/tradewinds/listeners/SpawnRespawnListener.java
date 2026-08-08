@@ -20,8 +20,10 @@ import world.bentobox.tradewinds.TradeWinds;
  * Death also drops the boat where they fell, so a respawned sailor would be
  * marooned ashore with no way back to their own wreck. The port lends them a
  * boat ({@code boats.respawn-boat}, default a bamboo raft; NONE disables) -
- * but only if they have none, so keepInventory deaths and bed respawns are
- * never double-boated.
+ * but only if they have none within reach, so keepInventory deaths and bed
+ * respawns are never double-boated. The loaner becomes their ACTIVE boat on
+ * the spot, demoting the wreck's hull to an OLD BOAT: a hull nobody owns is
+ * not a hold, and its owner cannot trade.
  *
  * @author tastybento
  */
@@ -117,18 +119,32 @@ public class SpawnRespawnListener implements Listener {
             return;
         }
         Material boat = respawnBoat();
-        if (boat == null || boatWithinReach(player)) {
+        if (boat == null || stillHasTheirBoat(player) || boatWithinReach(player)) {
             return;
         }
-        // They have no boat, or theirs is far away: lend a hull. If they had
-        // one, boarding this raft is what abandons it (with the standard
-        // confirmation) - the loaner itself takes nothing from them.
-        var hold = addon.getHoldService().active(player.getUniqueId()).isEmpty()
-                ? addon.getBoatService().createFor(player, boat)
-                : addon.getHoldManager().create(boat, null);
+        // The loaner is theirs the MOMENT it is handed over. An unowned hull
+        // is not a hold: the harbourmaster's raft sat in the pack while every
+        // trader turned its owner away for having no ship at the quay, and it
+        // only became a boat once it was placed and boarded (playtest
+        // 2026-08-08). Whatever they were sailing becomes their OLD BOAT -
+        // still charted, still carrying its cargo, still theirs to row back
+        // out and reclaim.
+        boolean replacing = addon.getHoldService().active(player.getUniqueId()).isPresent();
+        var hold = addon.getBoatService().createFor(player, boat);
         addon.getBoatService().giveBoatItem(player, hold);
-        User.getInstance(player).sendMessage("tradewinds.boat.respawn-given", "[material]",
-                world.bentobox.tradewinds.economy.PriceEngine.prettify(boat.name()));
+        User.getInstance(player).sendMessage(
+                replacing ? "tradewinds.boat.respawn-given-replacing" : "tradewinds.boat.respawn-given",
+                "[material]", world.bentobox.tradewinds.economy.PriceEngine.prettify(boat.name()));
+    }
+
+    /**
+     * Whether their own boat is already in their pack - a keepInventory death,
+     * where the hull never left them. The loaner would demote a boat they are
+     * literally holding, cargo and all, so there is nothing to lend.
+     */
+    private boolean stillHasTheirBoat(org.bukkit.entity.Player player) {
+        var hold = addon.getHoldService().active(player.getUniqueId());
+        return hold.isPresent() && addon.getBoatService().isCarrying(player, hold.get());
     }
 
     /**

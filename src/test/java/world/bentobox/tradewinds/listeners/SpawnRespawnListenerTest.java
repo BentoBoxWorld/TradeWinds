@@ -50,6 +50,11 @@ class SpawnRespawnListenerTest extends CommonTestSetup {
         when(im.getSpawnPoint(world)).thenReturn(new Location(world, 72.5, 73, 72.5));
         when(mockPlayer.getWorld()).thenReturn(world);
         when(mockPlayer.isOnline()).thenReturn(true);
+        // A REAL post-respawn location on the plaza: the shared mock Location
+        // answers 0 to every distanceSquared, so "my boat is an ocean away"
+        // and "my boat is at my feet" were the same test
+        when(world.getName()).thenReturn("tradewinds_world");
+        when(mockPlayer.getLocation()).thenReturn(new Location(world, 72, 73, 72));
         // The loaner is granted a tick after the respawn: run it inline
         when(sch.runTask(org.mockito.ArgumentMatchers.any(),
                 org.mockito.ArgumentMatchers.any(Runnable.class))).thenAnswer(inv -> {
@@ -134,12 +139,28 @@ class SpawnRespawnListenerTest extends CommonTestSetup {
         boat.setX(9000);
         boat.setZ(9000);
         listener.onRespawn(new PlayerRespawnEvent(mockPlayer, deathBed, false, false));
-        // A loaner hull exists for them, and it did NOT displace the boat
-        // they still own an ocean away
+        // The loaner is their ACTIVE boat at once - an unowned hull is not a
+        // hold, and its carrier is turned away at every quay (playtest
+        // 2026-08-08). The distant hull becomes their OLD BOAT.
+        verify(boats).createFor(mockPlayer, org.bukkit.Material.BAMBOO_RAFT);
         verify(boats).giveBoatItem(org.mockito.ArgumentMatchers.eq(mockPlayer),
                 org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    void testCarriedBoatMeansNoLoaner() {
+        // keepInventory: the hull never left their pack, so lending would
+        // demote a boat they are holding - cargo and all
+        var boat = holds.giveBoat(uuid, org.bukkit.Material.OAK_BOAT);
+        boat.setWorld(world.getName());
+        boat.setX(9000);
+        boat.setZ(9000);
+        when(boats.isCarrying(mockPlayer, boat)).thenReturn(true);
+        listener.onRespawn(new PlayerRespawnEvent(mockPlayer, deathBed, false, false));
         verify(boats, never()).createFor(
                 org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
+        verify(boats, never()).giveBoatItem(org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any());
     }
 
     @Test
