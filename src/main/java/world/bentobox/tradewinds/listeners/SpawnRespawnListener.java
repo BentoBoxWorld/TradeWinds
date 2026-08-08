@@ -61,6 +61,12 @@ public class SpawnRespawnListener implements Listener {
         // seabed.
         var island = addon.getIslands().getIsland(overworld, event.getPlayer().getUniqueId());
         if (island != null && island.getMemberSet().contains(event.getPlayer().getUniqueId())) {
+            // ...but even a member's respawn deserves the safety net: a stale
+            // island record over a regenerated world sent a member through
+            // this branch into the campfire death-loop with no spiral to
+            // save them (playtest 2026-08-07). WHERE they respawn stays
+            // BentoBox's choice; we only nudge to the nearest safe column.
+            event.setRespawnLocation(safeNear(event.getRespawnLocation()));
             return;
         }
         // The spawn island's own spawn point - the market plaza, and wherever
