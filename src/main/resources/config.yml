@@ -1,0 +1,873 @@
+# TradeWinds Configuration ${version}
+tradewinds:
+  command:
+    # Player command. What command users will run to access the game mode.
+    island: tw tradewinds
+    # The admin command.
+    admin: twadmin
+    # The default action for new player command call.
+    # 'go' is the door into the ocean: it refuses if you are already at sea, and
+    # returns you to the water you left rather than to spawn, so it is not a free
+    # warp home. Only a sailor who has never set out starts at the spawn port.
+    new-player-action: go
+    # The default action for player command.
+    default-action: go
+ocean:
+  # The ocean seed. Every island position, type, security band, biome, name and
+  # route cost derives deterministically from this one number - share it and another
+  # server gets the same trading ocean. 0 means: use the world seed.
+  seed: 20260729
+  # Minimum separation between trading island centers in blocks.
+  min-separation: 2500
+  # Radius in blocks around spawn inside which the starter-cluster density floor applies.
+  starter-cluster-radius: 5000
+  # Minimum number of trading islands guaranteed inside the starter cluster radius.
+  starter-cluster-min-islands: 5
+  # Chance (0.0-1.0) that a ocean grid cell hosts a trading island.
+  density: 0.5
+  # Radius in blocks of an island's terrain footprint (land plus underwater shelf).
+  island-terrain-radius: 160
+  # Blocks of terrain lift at an island's center.
+  land-lift: 45
+  # Distance from spawn per security-band step (Safe -> Policed -> Frontier -> Lawless -> Anarchic).
+  band-radius: 5000
+  # Economy of the spawn island - the trading island reserved at the world origin,
+  # where players spawn and respawn. A working port: dock, plaza, market, warp zone.
+  # AGRICULTURAL, FOREST, FISHING, MINING, INDUSTRIAL, LUXURY, FROZEN, or RANDOM.
+  spawn-island-type: FISHING
+  # Biome of the spawn island - the one direct aesthetic knob in an otherwise
+  # fully seeded world, because spawn is every player's first sight of the
+  # game. Any biome key, e.g. minecraft:cherry_grove; the biome also picks
+  # the ground palette (a desert spawn is sand, a grove is snow). Empty keeps
+  # the seeded roll from the spawn type's own biome list. Unknown keys log an
+  # error and fall back to the default biome rather than breaking generation.
+  spawn-island-biome: ""
+  # Chance (0-1) that a wild-islet grid cell hosts one - small unnamed islands,
+  # unprotected: mine, farm, build, live.
+  wild-islet-chance: 0.55
+  # Grid size in blocks for wild islets - much finer than the trading island grid,
+  # so the open sea is dotted with land you can put ashore on: at 900 with chance
+  # 0.55 there is usually one within a few hundred blocks of anywhere.
+  wild-islet-grid: 900
+  # Mean terrain radius of wild islets. 0 disables them. Each islet rolls its own
+  # size between roughly half and one and a half times this, so the sea holds
+  # everything from sandbars to proper little islands.
+  wild-islet-radius: 75
+  # Chance (0-1) that a wild islet is a mushroom island: mycelium, mooshrooms and
+  # no hostile spawns. Rare enough to be worth the find.
+  mushroom-islet-chance: 0.06
+  # Chance (0-1) that a wild islet carries a small biome-appropriate vanilla
+  # structure at its heart: an igloo on the snowfields, fossils in the desert,
+  # a ruined portal in the jungle, an abandoned camp in the woods. Seeded and
+  # deterministic per islet. Mushroom islets and pale gardens always stay
+  # empty - there the biome itself is the find. 0 disables. Safe to change
+  # mid-game: it only affects islets whose center chunk is not yet generated.
+  islet-structure-chance: 0.25
+  # How far a coastline wanders in and out from the island's nominal radius, as a
+  # fraction of it: bays and headlands. 0 gives perfect circles - a radial mask on
+  # its own draws a coin. Above about 0.3 coasts start breaking into fragments.
+  coast-roughness: 0.25
+  # How much the land height varies across an island, as a fraction of its full
+  # lift: hills and hollows instead of a smooth dome. 0 gives the dome.
+  island-hilliness: 0.3
+  # Relative spawn weight per island type. Higher = more common; 0 disables a type.
+  type-weights:
+    AGRICULTURAL: 10
+    FOREST: 10
+    FISHING: 10
+    MINING: 10
+    INDUSTRIAL: 8
+    LUXURY: 4
+    FROZEN: 8
+travel:
+  warp:
+    # Base warp fuel cost multiplier: fuel units per block of Euclidean route distance.
+    fuel-per-block: 0.01
+    # Chance (0.0-1.0) that a warp fails and drops the player into the interstice.
+    # Re-engaging the warp from the interstice to the original destination is always free.
+    failure-chance: 0.05
+    # Half-width of the offer ring around an island's visible border (the protection
+    # edge - the RED particle curtain): boated players crossing it get the warp dialog.
+    # Small on purpose: you should have to touch the curtain. Keep a few blocks of
+    # width or ice-lane boats can cross the line between ticks.
+    trigger-distance: 5
+    # How far from the destination island's CENTRE a warp arrival lands. This wants
+    # to be just INSIDE the warp-offer ring (protection-range minus trigger-distance,
+    # with margin): landing on the ring itself reopened the warp dialog the sailor
+    # had just come through. 130 put sailors inside the island's own 160-block
+    # terrain footprint; 400 sat exactly on the offer ring.
+    arrival-distance: 320
+    # Seconds between automatic warp-dialog offers at the same island's border.
+    prompt-cooldown-seconds: 30
+    # Maximum destinations listed in the warp dialog (nearest first).
+    # 8 fits the dialog without scrolling - scrolling is easy to miss.
+    max-destinations: 8
+    # Seconds a player must hold still before an engaged warp fires (moving cancels it,
+    # fuel salvaged). Stops the warp being a panic button in a fight or customs chase.
+    # 0 = instant. Ops and tradewinds.mod.bypassdelays holders always warp instantly.
+    stand-still-seconds: 0
+    # Hostile mobs within this many blocks stop a warp engaging, the way monsters
+    # stop you sleeping in a bed. A warp is not a panic button out of a fight or a
+    # customs chase - run, fight, or jettison. 0 disables the check.
+    # The interstice re-engage is always exempt: it is the way OUT of somewhere
+    # dangerous, and gating it could strand a player for good.
+    enemy-radius: 12.0
+    # Warping hurts - it gates the under-equipped.
+    nausea-seconds: 8
+    blindness-seconds: 3
+    # Damage (in half-hearts) taken on warp arrival. 0 disables.
+    damage: 2.0
+    # Per-edge fuel cost overrides ('cx,cz>cx,cz' smaller cell first -> absolute fuel units).
+    edge-overrides: {}
+  fuel-warning:
+    # Warn a sailor standing at a port when they cannot afford to warp anywhere from
+    # it. Running dry at a port is not a soft failure - the only way onward is rowing
+    # - and it is only fixable while they are still standing next to the fuel.
+    enabled: true
+    # Seconds between repeats of the action bar while ashore and short. It repeats
+    # because an action bar fades and a one-shot is missed by exactly the players
+    # this is for; the chat line and the highlighted shop button are the other two.
+    repeat-seconds: 8
+    # Warn when fuel is below this multiple of the cheapest route out. 1.0 warns only
+    # when genuinely stuck; raise it to warn with something still in reserve.
+    margin: 1.0
+  # Fuel unit value per material. Fuel lives in the hold's seven dedicated fuel
+  # slots - never loose pockets - and moves freely in and out of them.
+  fuel-values:
+    OAK_LOG: 1.0
+    SPRUCE_LOG: 1.0
+    BIRCH_LOG: 1.0
+    JUNGLE_LOG: 1.0
+    ACACIA_LOG: 1.0
+    DARK_OAK_LOG: 1.0
+    MANGROVE_LOG: 1.0
+    CHERRY_LOG: 1.0
+    DRIED_KELP_BLOCK: 4.0
+    COAL: 8.0
+    CHARCOAL: 8.0
+    BLAZE_ROD: 12.0
+    COAL_BLOCK: 80.0
+    LAVA_BUCKET: 100.0
+bands:
+  # Hostile mob natural spawning inside the protection range, per security band.
+  # Outside the protection range (approaches and open ocean) mobs always spawn.
+  monster-natural-spawn:
+    SAFE: false
+    POLICED: false
+    FRONTIER: true
+    LAWLESS: true
+    ANARCHIC: true
+  # PvP inside island space, per security band.
+  pvp:
+    SAFE: false
+    POLICED: false
+    FRONTIER: false
+    LAWLESS: true
+    ANARCHIC: true
+  # Minimum rank to hurt villagers (0 = anyone, 500 = effectively nobody).
+  # SAFE prevents it outright; elsewhere it is allowed - and punished (Stage 6).
+  hurt-villagers-rank:
+    SAFE: 500
+    POLICED: 0
+    FRONTIER: 0
+    LAWLESS: 0
+    ANARCHIC: 0
+  # Trading islands are public markets: EVERY protection flag is allowed at visitor
+  # rank except a built-in deny list (anti-grief; the island's own crops, stores and
+  # livestock; and direct villager trading, which would bypass the hold).
+  # BentoBox flags default to member rank and nobody is ever a member of an unowned
+  # island, so allow-listing instead meant finding each missing permission in play.
+  # Add flag IDs here to deny them too, e.g. [BED, ENDER_PEARL].
+  port-denied-flags: []
+  # Flag IDs forced back to visitor rank, overriding the deny list, e.g. [HARVEST].
+  port-allowed-flags: []
+ranks:
+  # Seafarer rank ladder: rank slug -> charted islands required. A player's rank
+  # is the highest threshold at or below their charted count. Display names live
+  # in the locale under tradewinds.rank.<slug> - add a locale name for any new
+  # slug, keep exactly one rank at 0 so every sailor has a rank, and avoid dots
+  # in slugs (YAML nests on them).
+  thresholds:
+    deck-hand: 0
+    cabin-scout: 6
+    coast-finder: 8
+    bay-explorer: 10
+    island-hopper: 12
+    reef-runner: 15
+    wave-master: 17
+    chart-maker: 20
+    storm-navigator: 25
+    archipelago-ace: 30
+    tide-captain: 36
+    horizon-hunter: 42
+    sea-sentinel: 49
+    salty-commodore: 56
+    ocean-overlord: 64
+    pirate-pathfinder: 72
+    grand-admiral: 81
+    globe-voyager: 90
+    mythic-mariner: 100
+claims:
+  # Price of claiming a wild islet, in whole coins. Deliberately above the top
+  # boat (Pale Oak Chest Boat, 110,250 at defaults): the boat ladder comes first.
+  price: 150000
+  # Minimum Seafarer rank (a slug from ranks.thresholds) required to claim a
+  # wild islet. Team members need no rank - only the claimer.
+  minimum-rank: tide-captain
+  # Blocks of protected water beyond the islet's terrain radius. The protection
+  # range is islet radius + this margin.
+  protection-margin: 32
+crime:
+  # Master switch for the whole law layer: reputation, customs scans, police and
+  # bounties. False makes the world lawless in the sense of 'nothing is tracked'.
+  enabled: true
+  reputation:
+    floor: -1000
+    ceiling: 1000
+    # At or above this a player is UPSTANDING: better prices, fewer scans.
+    upstanding: 250
+    # Below this a player is an OFFENDER - and where a paid fine returns you.
+    offender: 0
+    # At or below this a player is WANTED: police respond, killing them is lawful.
+    wanted: -200
+    # At or below this a player is a FUGITIVE: shot on sight, barred from safe trade.
+    fugitive: -500
+    # Minutes of ONLINE play per decay tick, and points moved toward zero each
+    # tick. Credited only while online and in a TradeWinds world, so logging out
+    # for a week does not launder a reputation.
+    decay-minutes: 15
+    decay-points: 1
+  # Currency charged per point of reputation debt when paying a fine (/tw fine).
+  # A fine can only ever take you back to Clean - money buys you out of Wanted,
+  # not into virtue.
+  fine-per-point: 20.0
+  # The safest band that will still trade with a FUGITIVE. Safer ports refuse them
+  # outright: having burned your name, the only markets left are where the law is
+  # thin. SAFE, POLICED, FRONTIER, LAWLESS or ANARCHIC.
+  safest-fugitive-trader: FRONTIER
+  # Show a player's bounty beside their name (scoreboard team suffix). A bounty
+  # nobody can see is not a bounty - a hunter has to be able to tell at a glance.
+  # Turn OFF if the server runs TAB or another nametag plugin (they will fight over
+  # the team) and render %tradewinds_bounty% there instead.
+  bounty-nameplate: true
+  # Reputation lost per crime.
+  penalties:
+    HURT_VILLAGER: -5
+    KILL_VILLAGER: -25
+    KILL_POLICE: -15
+    KILL_INNOCENT: -100
+    SMUGGLING: -30
+    PASSENGER_TRADE: -20
+  # Money added to the offender's bounty per crime, paid once to whoever kills
+  # them while they are a lawful target.
+  bounties:
+    HURT_VILLAGER: 0
+    KILL_VILLAGER: 1000
+    KILL_POLICE: 1500
+    KILL_INNOCENT: 5000
+    SMUGGLING: 2000
+    PASSENGER_TRADE: 1500
+residents:
+  # Distance from the plaza center beyond which a resident is teleported home.
+  tether-radius: 24
+  # Minutes before a killed resident respawns at the plaza. The market always recovers.
+  respawn-delay-minutes: 10
+  # Seconds between resident audits (tether check + respawn accounting).
+  audit-period-seconds: 30
+chart:
+  # Ring radius in blocks for /tw chart's direction holograms.
+  hologram-distance: 10.0
+  # Seconds before chart holograms fade away.
+  hologram-duration-seconds: 15
+  # Maximum holograms shown at once (nearest islands first).
+  hologram-max: 12
+  # Islands added to a sailor's chart for free when they open the chart at a trading
+  # island - the port's own harbour charts. 8 matches the warp dialog. 0 disables.
+  port-scan: 8
+  # How close a sailor must pass an island to chart it. Slightly beyond island waters,
+  # so islands are charted as they are sighted. Only charted islands can be warped to.
+  sighting-range: 1200
+  # Show the hologram chart automatically whenever a player boards a boat.
+  show-on-boarding: true
+  # Star Chart map scale: blocks per map pixel. 64 shows ~8km across.
+  starchart-blocks-per-pixel: 64
+hud:
+  # Navigation boss bar in island waters: island name, standing, distance to dock.
+  navigation-bossbar: true
+  # Distance in blocks at which the course-home bar (toggled by /tw go at sea)
+  # reads empty at night; it fills as home approaches. By day the bar shows
+  # direction only - the stars are the precise instrument.
+  course-bar-scale: 5000
+economy:
+  # Money given to brand-new players with their starter kit.
+  starting-balance: 2500.0
+  # Coal tucked into the starter bundle - fuel for a first warp. 0 disables.
+  starter-coal: 8
+  # Multiplier on what players PAY an island (buying) / what an island PAYS players (selling).
+  # Together these make a same-island round trip always lose money.
+  buy-spread: 1.15
+  sell-spread: 0.85
+  # Price multiplier for categories an island produces (its own goods are cheap)
+  # and demands (it pays over the odds).
+  produce-factor: 0.6
+  demand-factor: 1.4
+  # Extra demand multiplier per security band step - margins scale with danger.
+  band-demand-bonus: 0.125
+  # Price tilt per tech-level step away from 4 (the neutral level): high-tech
+  # islands sell FINISHED goods (metals, food) cheaper and pay more for RAW
+  # goods (ores, crops, wood, fish, stone) by this fraction per step; low-tech
+  # islands the inverse. The best routes are tech differentials. 0 disables.
+  tech-price-step: 0.03
+  # COINS of stock for a full price swing - the size of a trader's purse. A port's
+  # capacity is its capacity to SPEND, not to count crates: ten diamonds are far
+  # more business than ten wheat. With drift-min 0.7 a port saturates after
+  # absorbing 30% of this in one category, then pays the floor until it recovers.
+  drift-value-scale: 30000
+  drift-min: 0.7
+  drift-max: 1.3
+  # Coins of stock decaying back toward equilibrium per hour - markets recover as
+  # the trader works through the inventory (9000 coins saturated / 3000 = 3 hours).
+  stock-decay-value-per-hour: 3000
+  # Cargo expanders: first price, doubling each purchase, hard cap per player.
+  expander-base-price: 50000.0
+  expander-cap: 4
+  # The harbourmaster's charity: a sailor with no cargo space, no boat and no money
+  # is given the bare minimum to work again. Charity goods cannot be sold. 0 disables.
+  charity-cooldown-minutes: 15
+  # Materials traders buy even WITHOUT a customs stamp - the contraband exceptions.
+  unstamped-sellables:
+    - SUGAR
+  # The secondhand shelf: notable goods sold to a trader go back out for sale
+  # instead of vanishing, so the world feels inhabited. They surface at a DIFFERENT
+  # port from the one they were sold at (the trader shipped it on), which stops
+  # shelves becoming an alt-account laundering channel - you cannot predict where
+  # your own goods reappear. false disables resale entirely.
+  resale-enabled: true
+  # Only NOTABLE goods resurface: enchanted, renamed, or worth at least this much.
+  resale-notable-value: 500.0
+  # Listings a port carries at once; oldest makes way. TTL in hours, 0 = forever.
+  resale-slots: 2
+  resale-ttl-hours: 72
+  # Trader's markup on book price. Must exceed 1 or the shelf lets players buy back
+  # their own goods at a profit.
+  resale-markup: 1.6
+  # How far a trader ships a consignment to reach another port's shelf.
+  resale-ship-radius: 8000
+  # The currency symbol shown before every price - "$27", "$1,728". Prices are
+  # whole coins by design, so TradeWinds formats money itself rather than asking
+  # the economy plugin, whose formatter may add cents and a currency name.
+  currency-symbol: "$"
+  # FEATURE FLAG, off by default: the price logbook and harbour reports. Parked as
+  # not required for MVP (2026-08-03) - see tradewinds-salvage-plan.md for what
+  # needs fixing before it returns. When true: /tw prices exists, market visits
+  # write the logbook, and brokers sell harbour reports.
+  price-logbook-enabled: false
+  # Harbour reports: what a broker charges PER PORT to fill in your logbook, and how
+  # far the report reaches per tech level of the island selling it. Gives a developed
+  # port a role beyond its shelves. 0 for either disables reports.
+  market-report-price-per-island: 250.0
+  market-report-radius-per-tech-level: 1500.0
+  # Enchantment premium: price is multiplied by (1 + quality x this), where quality
+  # weights each enchantment by usefulness and level. 0 ignores enchantments.
+  enchantment-price-factor: 0.05
+  # Coins per potion effect, times (1 + amplifier). Every potion shares one
+  # Material, so without this a Potion of Strength II prices as a water bottle.
+  potion-effect-price: 150.0
+  # How much value a port will handle in a SINGLE salvage item, per tech level: a
+  # TL1 fishing hamlet has no use for a diamond sword and nobody there could pay
+  # for one, while a TL7 hub will take anything. This is what gives loot a
+  # DESTINATION - and a destination is a voyage. Recognised trade goods are exempt:
+  # a port always deals in what its own shelves stock. 0 disables the gate.
+  salvage-value-per-tech-level: 1500.0
+  # What a port pays for SALVAGE - anything not a recognised trade good on some
+  # island's shelves: mob drops, worn gear, odd blocks. A fraction of book price.
+  # Keep well under 1: if scavenging and piracy pay as well as trading they replace
+  # it rather than feeding it. Salvage drifts against its own stock pool, so dumping
+  # junk cannot crater a port's legitimate cargo prices.
+  salvage-discount: 0.375
+  # Base prices (Material -> price). Anything not listed is priced by deriving from
+  # its crafting recipe (BlueBook logic, embedded); underivable = untradeable.
+  base-prices:
+    WHEAT: 20.0
+    CARROT: 15.0
+    POTATO: 15.0
+    BEETROOT: 15.0
+    SUGAR_CANE: 10.0
+    SUGAR: 15.0
+    PUMPKIN: 30.0
+    MELON_SLICE: 5.0
+    BREAD: 30.0
+    COOKED_BEEF: 40.0
+    COOKED_COD: 30.0
+    CAKE: 200.0
+    GOLDEN_APPLE: 1500.0
+    EGG: 10.0
+    HAY_BLOCK: 180.0
+    COD: 20.0
+    SALMON: 30.0
+    TROPICAL_FISH: 50.0
+    PUFFERFISH: 40.0
+    KELP: 3.0
+    OAK_LOG: 15.0
+    SPRUCE_LOG: 15.0
+    BIRCH_LOG: 15.0
+    DARK_OAK_LOG: 15.0
+    ACACIA_LOG: 15.0
+    JUNGLE_LOG: 15.0
+    CHERRY_LOG: 20.0
+    STONE: 5.0
+    COBBLESTONE: 3.0
+    GRANITE: 4.0
+    DIORITE: 4.0
+    ANDESITE: 4.0
+    DEEPSLATE: 6.0
+    SAND: 3.0
+    GRAVEL: 3.0
+    COAL: 40.0
+    CHARCOAL: 30.0
+    RAW_IRON: 60.0
+    RAW_COPPER: 30.0
+    RAW_GOLD: 120.0
+    FLINT: 10.0
+    IRON_INGOT: 90.0
+    COPPER_INGOT: 40.0
+    GOLD_INGOT: 180.0
+    IRON_NUGGET: 10.0
+    GOLD_NUGGET: 20.0
+    DIAMOND: 1000.0
+    EMERALD: 600.0
+    AMETHYST_SHARD: 100.0
+    QUARTZ: 80.0
+    LAPIS_LAZULI: 60.0
+    REDSTONE: 30.0
+    LEATHER: 40.0
+    WHITE_WOOL: 20.0
+    STRING: 15.0
+    BEEF: 25.0
+    PORKCHOP: 25.0
+    CHICKEN: 20.0
+    MUTTON: 20.0
+    BONE: 20.0
+    BONE_MEAL: 8.0
+    GUNPOWDER: 50.0
+    SPIDER_EYE: 30.0
+    ROTTEN_FLESH: 5.0
+    FEATHER: 15.0
+    INK_SAC: 25.0
+    GLOW_INK_SAC: 90.0
+    SLIME_BALL: 40.0
+    RABBIT: 20.0
+    RABBIT_HIDE: 15.0
+    RABBIT_FOOT: 150.0
+    ENDER_PEARL: 250.0
+    BLAZE_ROD: 200.0
+    GHAST_TEAR: 400.0
+    PHANTOM_MEMBRANE: 180.0
+    NETHER_STAR: 5000.0
+    PRISMARINE_SHARD: 60.0
+    PRISMARINE_CRYSTALS: 90.0
+    NAUTILUS_SHELL: 300.0
+    HEART_OF_THE_SEA: 2500.0
+    SHULKER_SHELL: 800.0
+    ECHO_SHARD: 600.0
+    TOTEM_OF_UNDYING: 4000.0
+    DRAGON_BREATH: 500.0
+    TURTLE_SCUTE: 120.0
+    ARMADILLO_SCUTE: 60.0
+    HONEYCOMB: 40.0
+    SADDLE: 300.0
+    NAME_TAG: 400.0
+    POTION: 60.0
+    SPLASH_POTION: 80.0
+    LINGERING_POTION: 120.0
+    APPLE: 25.0
+    MELON: 35.0
+    SWEET_BERRIES: 10.0
+    GLOW_BERRIES: 30.0
+    COCOA_BEANS: 20.0
+    BAMBOO: 5.0
+    CACTUS: 10.0
+    BROWN_MUSHROOM: 15.0
+    RED_MUSHROOM: 15.0
+    SEA_PICKLE: 25.0
+    SPONGE: 200.0
+    NETHER_WART: 30.0
+    CLAY_BALL: 8.0
+    SNOWBALL: 3.0
+    DIRT: 2.0
+    OBSIDIAN: 80.0
+    NETHERRACK: 3.0
+    SOUL_SAND: 15.0
+    END_STONE: 20.0
+    GLOWSTONE_DUST: 40.0
+    MAGMA_CREAM: 90.0
+    OAK_BOAT: 200.0
+    OAK_CHEST_BOAT: 600.0
+    # This is the COMPLETE table. BentoBox REPLACES map settings from config
+    # rather than merging them, so an entry deleted here is a good that can no
+    # longer be sold at all - not a fallback to the built-in price.
+border:
+  # Show island boundaries as particle curtains: the warp-offer ring at the
+  # protection edge (red - where the warp dialog fires) and the edge of island
+  # space (blue - where scans and island rules begin). Paint, not a wall.
+  particles-enabled: true
+  # Blocks from a boundary line within which its curtain renders.
+  view-distance: 32
+  # Dust colors as 'r,g,b' (0-255).
+  warp-ring-color: 255,64,64
+  edge-color: 64,128,255
+
+boats:
+  # The boat ladder: cargo slots per boat material. A player has exactly ONE
+  # boat (or none) and this is the ONLY thing that sizes their hold. Order is
+  # by slots; shops list every hull the island's tech can build (rank <= tech
+  # level x ranks-per-tech-level) except the size you sail. A bigger hull
+  # with your ship at the quay is a trade-in (cargo stays); anything else is
+  # bought outright and your old boat is left unowned where it lies.
+  # Crafting ignores tech gates.
+  ranks:
+    BAMBOO_RAFT: 2
+    OAK_BOAT: 3
+    SPRUCE_BOAT: 4
+    BAMBOO_CHEST_RAFT: 5
+    BIRCH_BOAT: 6
+    OAK_CHEST_BOAT: 7
+    JUNGLE_BOAT: 8
+    SPRUCE_CHEST_BOAT: 9
+    ACACIA_BOAT: 10
+    BIRCH_CHEST_BOAT: 11
+    DARK_OAK_BOAT: 12
+    JUNGLE_CHEST_BOAT: 13
+    MANGROVE_BOAT: 14
+    ACACIA_CHEST_BOAT: 15
+    CHERRY_BOAT: 16
+    DARK_OAK_CHEST_BOAT: 17
+    PALE_OAK_BOAT: 18
+    MANGROVE_CHEST_BOAT: 19
+    CHERRY_CHEST_BOAT: 20
+    PALE_OAK_CHEST_BOAT: 21
+  # Boat shop price = this x slots squared. Bamboo Raft 1000, Pale Oak Chest 110250.
+  price-per-slot-squared: 250.0
+  # Boat ranks sold at an island = its tech level x this (TL7 sells all 20).
+  ranks-per-tech-level: 3
+  # How close your own boat must be for you to move another hull's cargo into
+  # it. Beyond this the option is not offered at all - cargo is not teleported
+  # across the ocean; you may still take the boat itself.
+  cargo-transfer-range: 200
+  # The boat a boatless player is lent when they respawn (their own boat
+  # dropped where they died - rowing back out to reclaim it is the recovery
+  # trip). A boat-rank material name; NONE disables the loaner.
+  respawn-boat: BAMBOO_RAFT
+  # Minutes a dropped boat item (and the cargo riding in its record) survives
+  # before the sea claims it. Persisted in the database - restarts do not
+  # reset the clock.
+  dropped-boat-ttl-minutes: 30
+  # Write a console INFO line for every boat lifecycle transition: placed,
+  # broken to item, picked up, claimed, demoted, refit, shed, went down with
+  # its sailor. These are rare events, and they are the ONLY trail an admin
+  # has when a player asks where their boat went - leave this on.
+  logbook: true
+
+player:
+  # Career restarts a destitute player may use (/tw restart). -1 unlimited, 0 none.
+  max-restarts: 3
+interstice:
+  # Chance (0-1) that anything is waiting when a warp fails. Below 1, some failures
+  # are just dark water and a long silence - unsettling in its own right, and it
+  # means a failed warp is not automatically a fight.
+  ghast-chance: 0.6
+  # How far away ghasts appear, in blocks - close enough to see and identify, far
+  # enough to decide about. They arrive without a target and acquire one only when
+  # the arrival grace runs out, so a castaway can always leave before it starts.
+  # Keep it under the server's monster entity-tracking-range (48 on a default
+  # spigot.yml) or the client is never sent them at all.
+  ghast-distance: 28
+  # Give the interstice a ceiling this many blocks above its sea. A lid makes it feel
+  # like somewhere you are trapped rather than an empty void. 0 leaves it open.
+  ceiling-height: 48
+  # Chance per chunk of a burning netherrack brazier rising out of the interstice
+  # sea. They are the only light out there - without them it is a flat black nothing.
+  brazier-chance: 0.18
+  # --- Interstice resources (tradewinds-interstice-plan.md). Changing the
+  # needsReset ones moves every feature: regenerate tradewinds_world_nether. ---
+  # Wart shoals: grid size in blocks for the soul-sand banks that break the
+  # surface, chance (0-1) a cell hosts one, and their mean radius. 0 disables.
+  shoal-grid: 256
+  shoal-chance: 0.5
+  shoal-radius: 9
+  # Chance (0-1) a shoal is a GRAND shoal carrying a crimson or warped grove.
+  grand-shoal-chance: 0.2
+  # Fraction of a shoal's soul-sand surface planted with nether wart.
+  wart-density: 0.35
+  # Chance (0-1) that a brazier grows a nether-brick turret with a blaze
+  # spawner - the blaze pickets.
+  blaze-picket-chance: 0.25
+  # Chance per ceiling chunk of a glowstone cluster hanging from the lid.
+  # Needs ceiling-height > 0.
+  glowstone-cluster-chance: 0.2
+  # Chance per submerged shoal-core or brazier-root block of quartz ore.
+  quartz-chance: 0.12
+  # Wither watchtowers: grid size in blocks and chance (0-1) a cell hosts one -
+  # the interstice's only structure. Wither skeletons spawn inside; the loot
+  # chest uses the vanilla loot table named below.
+  watchtower-grid: 1536
+  watchtower-chance: 0.6
+  watchtower-loot-table: "minecraft:chests/bastion_treasure"
+  # Shipwrecks: the interstice is a graveyard of ships that misjumped and never
+  # re-engaged. Grid size in blocks and chance (0-1) a cell holds a wreck -
+  # the defaults put a hull roughly every 130 blocks - a graveyard, not a
+  # scattering. Each wreck perches on its own reef with its top works just
+  # breaking the surface. 0 chance disables the graveyard.
+  wreck-grid: 64
+  wreck-chance: 0.25
+  # Fraction of wrecks (0-1) whose chests are stocked at all. The rest are
+  # scenery - there to see, their chests empty. Dense graveyard, scarce gold.
+  wreck-loot-chance: 0.3
+  # The structure templates wrecks are drawn from - vanilla shipwreck variants
+  # by default; any structure key the server can load works. Which template,
+  # rotation and burial depth a wreck gets is seeded, like everything else.
+  wreck-templates:
+    - "minecraft:shipwreck/with_mast"
+    - "minecraft:shipwreck/with_mast_degraded"
+    - "minecraft:shipwreck/upsidedown_full"
+    - "minecraft:shipwreck/upsidedown_full_degraded"
+    - "minecraft:shipwreck/upsidedown_fronthalf"
+    - "minecraft:shipwreck/upsidedown_fronthalf_degraded"
+    - "minecraft:shipwreck/upsidedown_backhalf"
+    - "minecraft:shipwreck/upsidedown_backhalf_degraded"
+    - "minecraft:shipwreck/sideways_full"
+    - "minecraft:shipwreck/sideways_full_degraded"
+    - "minecraft:shipwreck/sideways_fronthalf"
+    - "minecraft:shipwreck/sideways_fronthalf_degraded"
+    - "minecraft:shipwreck/sideways_backhalf"
+    - "minecraft:shipwreck/sideways_backhalf_degraded"
+    - "minecraft:shipwreck/rightsideup_full"
+    - "minecraft:shipwreck/rightsideup_full_degraded"
+    - "minecraft:shipwreck/rightsideup_fronthalf"
+    - "minecraft:shipwreck/rightsideup_fronthalf_degraded"
+    - "minecraft:shipwreck/rightsideup_backhalf"
+    - "minecraft:shipwreck/rightsideup_backhalf_degraded"
+  # Chance per seafloor column of a piece of bottom life: glow lichen beds,
+  # basalt spikes, magma vents, soul-sand seeps, blackstone boulders. This is
+  # what keeps the interstice floor from reading as a snooker table when you
+  # look down through the water. 0 leaves it bare.
+  seafloor-clutter: 0.03
+  # Mark every wreck with a soul flame: a charred basalt mast rising through the
+  # hull to just above the surface, blue fire on top. Without it the graveyard
+  # is invisible - hulls on the seabed of a dark sea read as empty water.
+  wreck-flames: true
+  # Loot tables by wreck grade. COMMON wrecks (most) carry fortress-style chest
+  # loot; RARE ones carry bastion finds (Pigstep, armor trims, the netherite
+  # upgrade template chance); TREASURE wrecks carry the bastion treasure room -
+  # and their second chest, the captain's locker, rolls LOCKER: piglin-bartering
+  # goods (ender pearls, crying obsidian, soul speed). Every chest in a wreck is
+  # re-pointed at these tables, which also removes vanilla's buried-treasure maps
+  # (there is nothing in this ocean for them to point at).
+  wreck-loot:
+    COMMON: "minecraft:chests/nether_bridge"
+    RARE: "minecraft:chests/bastion_other"
+    TREASURE: "minecraft:chests/bastion_treasure"
+    LOCKER: "minecraft:gameplay/piglin_bartering"
+  # Seconds after a failed warp during which nothing in the interstice may target or
+  # hurt the player - long enough to read the dialog and take the free way out.
+  grace-seconds: 20
+  # Ghasts spawned around a stranded sailor, when any come at all.
+  ghasts-min: 1
+  ghasts-max: 3
+  # Seconds between quiet action-bar reminders that the free way out exists,
+  # while adrift in the interstice. The re-engage DIALOG shows once per
+  # stranding; /tw go (or /tw warp) raises it again on demand. 0 silences
+  # the reminders entirely.
+  prompt-seconds: 20
+encounters:
+  # Random mob encounters at sea - the risk that balances free rowing against
+  # the warp's fuel cost and interstice risk.
+  enabled: true
+  # Seconds between encounter rolls per player at sea.
+  check-seconds: 45
+  # Blocks ahead of the sailor an encounter appears - far enough to see and flee.
+  distance: 28
+  # Chance per roll, by the security band of the nearest island (ANARCHIC also
+  # governs the deep ocean). Scaled by distance from that island.
+  chance:
+    SAFE: 0.02
+    POLICED: 0.06
+    FRONTIER: 0.12
+    LAWLESS: 0.20
+    ANARCHIC: 0.28
+  # Chance a spawned drowned carries a trident.
+  drowned-trident-chance: 0.35
+  # How close a player must be (blocks) before a boated crew abandons ship,
+  # per encounter type. Pirates fight from the deck and only jump at boarding
+  # distance; the witch bails wide - potions overshoot from a drifting
+  # platform. Must be BELOW encounters.distance or the crew ejects on its
+  # first tick and nobody ever sees a manned boat.
+  abandon-ship:
+    PIRATE_CREW: 10
+    SEA_WITCH: 30
+  # Chance that a slain encounter mob yields booty, and what it may drop.
+  # Booty is customs-stamped, so it can be sold: fighting is the third way to earn.
+  booty-chance: 0.5
+  booty-table:
+    - NAUTILUS_SHELL
+    - PRISMARINE_SHARD
+    - PRISMARINE_CRYSTALS
+    - GOLD_INGOT
+    - IRON_INGOT
+    - EMERALD
+    - COAL
+    - COOKED_COD
+    - TRIDENT
+    # Nether goods trickle in through piracy too, for sailors who never fail
+    # a warp (tradewinds-interstice-plan.md, N3)
+    - NETHER_WART
+    - GHAST_TEAR
+illegal-trade:
+  # The contraband list: what customs care about, and what black markets pay
+  # the premium for. Only honored while illegal-trade.enabled is true.
+  contraband-materials:
+  - SUGAR
+  # Master gate for all illegal-goods mechanics: contraband, customs scans, smuggling.
+  # Set false for family-friendly servers - removes the entire crime layer cleanly.
+  enabled: true
+  # The safest band that will buy contraband at all. Safer ports refuse it, which is
+  # what pushes smuggling runs outward - crime pays, into danger.
+  # SAFE, POLICED, FRONTIER, LAWLESS or ANARCHIC.
+  safest-contraband-buyer: FRONTIER
+  # What a black market pays for contraband, as a multiplier on its ordinary price.
+  # This is the reward half of high-risk/high-reward and the main lever on how
+  # profitable smuggling is. Contraband is priced from its crafting recipe like
+  # everything else, and sugar's recipe price is about one unit - so without this a
+  # smuggler runs a customs patrol and is offered a dollar for the cargo.
+  # Ports that deal in it always want it, so the band demand bonus applies too: the
+  # rougher the port, the better it pays. Raise with care - contraband is farmable,
+  # and this is the one price in the game not paid for by a purchase somewhere else.
+  contraband-price-multiplier: 8.0
+  # Chance (0-1) that entering an island's space triggers a customs scan, per band.
+  # Safe space searches everyone; out in the lawless bands nobody is looking. Note
+  # these are deliberately the inverse of who will BUY contraband: nowhere both
+  # deals in it and searches hard for it.
+  scan-chance:
+    SAFE: 0.9
+    POLICED: 0.6
+    FRONTIER: 0.3
+    LAWLESS: 0.1
+    ANARCHIC: 0.0
+  # Scan chance multipliers by standing: a clean name is worth something at the
+  # border, a known offender is searched harder.
+  scan-upstanding-factor: 0.4
+  scan-offender-factor: 1.6
+  # Minutes before the same island scans the same player again. Without this a
+  # smuggler could bounce across the border re-rolling until they got a pass.
+  scan-cooldown-minutes: 10
+  # Minutes an island remembers a smuggler who ran from its patrol. While flagged,
+  # re-entering that island's space skips the roll: the patrol simply launches.
+  flee-flag-minutes: 20
+  # Customs patrol size per band. 0 means that band has nobody to send.
+  patrol-size:
+    SAFE: 4
+    POLICED: 3
+    FRONTIER: 2
+    LAWLESS: 1
+    ANARCHIC: 0
+  # The furthest a customs patrol may be from the smuggler when it launches. They
+  # set out from the island's pier, but a patrol beyond the server's simulation
+  # distance (10 chunks = 160 blocks by default) never ticks - it does not swim,
+  # does not chase, and does nothing at all - so the launch point is pulled along
+  # the line toward the smuggler until it is close enough to be alive. Keep this
+  # under the monster entity-tracking-range too, or it is invisible as well as inert.
+  patrol-distance: 80.0
+  # How close a patrol unit must get to make the arrest, in blocks.
+  caught-radius: 4.0
+  # How far beyond the protection range a smuggler must get to shake the chase, and
+  # the longest a chase can run before they are counted as away.
+  chase-break-off-distance: 400
+  chase-seconds: 120
+  # Fine per contraband item seized when caught, on top of losing the cargo and the
+  # reputation. A player who cannot cover it pays what they have.
+  smuggling-fine-per-item: 50.0
+  # Tell players when a scan finds nothing - how a player learns the mechanic exists
+  # before it costs them anything.
+  announce-clean-scans: true
+world:
+  friendly-name: TradeWinds
+  world-name: tradewinds_world
+  difficulty: NORMAL
+  # Radius of island space in blocks (island "range"). Islands are never in sight of each other.
+  distance-between-islands: 1000
+  # Protection radius of trading islands in blocks.
+  protection-range: 400
+  start-x: 0
+  start-z: 0
+  island-height: 70
+  use-own-generator: false
+  # Sea surface level.
+  sea-height: 70
+  # Base y below which the ocean floor terrain noise starts.
+  sea-floor: 25
+  # Vary the open sea through the ocean biomes (frozen, cold, ocean, lukewarm, warm)
+  # from a seeded temperature field. Transitions are gradual: warm sea never borders
+  # frozen sea. False uses default-biome everywhere.
+  vary-ocean-biomes: true
+  # Water block for the overworld ocean.
+  water-block: WATER
+  # Shape of the sea floor. The seabed is not scenery: its depth picks the ocean
+  # biome, and the biome is what tells vanilla where monuments, ruins and coral
+  # belong. Changing any of this needs a world reset to take effect everywhere.
+  seabed:
+    # False gives a featureless flat floor at the shelf depth; true gives shelves,
+    # basins, rifts and seamounts.
+    vary: true
+    # Depth below sea level of the shallowest open water - sunlit banks where
+    # coral, kelp and ocean ruins sit.
+    shelf-depth: 14
+    # Depth below sea level of the deepest basins. Deep water gets the deep ocean
+    # biomes, which is what lets vanilla place ocean monuments.
+    abyss-depth: 46
+    # Depth of the shelf every island and islet sits on. The natural floor blends
+    # toward this near land, so an island over an abyssal plain still stands in
+    # shallow water and still breaks the surface by the same amount.
+    island-shelf-depth: 18
+    # Amplitude of the rolling hills on top of the basins.
+    relief: 9
+    # How far below the surrounding floor a rift cuts at its deepest. 0 disables
+    # underwater canyons.
+    rift-depth: 26
+    # How rare and narrow the rifts are (0-1). Higher means fewer, tighter canyons.
+    rift-threshold: 0.8
+    # How far a seamount rises above the floor at its peak. They only grow on the
+    # deeper plains and never break the surface. 0 disables them.
+    seamount-height: 20
+  # Allow vanilla cave generation: caves, ravines and caverns under the sea floor
+  # and inside the islands. Dry air pockets down there are a feature - somewhere
+  # to surface, and something to mine.
+  make-caves: true
+  # Allow vanilla decoration (kelp, seagrass, coral, trees on island land).
+  make-decorations: true
+  # Allow vanilla structure generation: shipwrecks, ocean ruins, ocean monuments,
+  # buried treasure and trial chambers. Which appear where is decided by the biomes
+  # the ocean hands out - deep basins get monuments, warm shallows get warm ruins,
+  # islet beaches get treasure.
+  make-structures: true
+  # Keep vanilla structures off the trading islands themselves. A monument dropped
+  # through a market plaza would wreck the one part of the world that is hand-built.
+  # Wild islets are fair game either way.
+  keep-structures-off-islands: true
+  max-islands: -1
+  default-game-mode: SURVIVAL
+  nether:
+    # The interstice: the hostile Nether-environment sea that failed warps drop players
+    # into. Unreachable by any portal - warp failure is the only way in.
+    generate: true
+    islands: true
+    sea-height: 70
+    sea-floor: 25
+    water-block: WATER
+    create-and-link-portals: false
+  end:
+    # Never enable: no End means shulker shells stay unobtainable, keeping cargo
+    # expanders a purchase-only money sink.
+    generate: false
+    islands: false
+# Log detailed [TradeWinds DEBUG] lines around ocean generation, travel and trade.
+debug: false

@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <!-- This module was also published with a richer model, Gradle metadata,  -->
+  <!-- which should be used instead. Do not delete the following line which  -->
+  <!-- is to indicate to Gradle or any Gradle module metadata file consumer  -->
+  <!-- that they should prefer consuming it instead. -->
+  <!-- do_not_remove: published-with-gradle-metadata -->
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.mockbukkit.mockbukkit</groupId>
+  <artifactId>mockbukkit-v26.1.2</artifactId>
+  <version>4.113.4-p262-2</version>
+  <name>MockBukkit-v26.1.2</name>
+  <description>MockBukkit is a mocking framework for bukkit to allow the easy unit testing of Bukkit plugins.</description>
+  <url>https://github.com/MockBukkit/MockBukkit</url>
+  <licenses>
+    <license>
+      <name>MIT License</name>
+      <url>https://github.com/MockBukkit/MockBukkit/blob/v26.1.2/LICENSE</url>
+    </license>
+  </licenses>
+  <developers>
+    <developer>
+      <id>seeseemelk</id>
+      <name>Sebastiaan de Schaetzen</name>
+      <email>sebastiaan.de.schaetzen@gmail.com</email>
+    </developer>
+    <developer>
+      <id>thebusybiscuit</id>
+      <name>TheBusyBiscuit</name>
+    </developer>
+    <developer>
+      <id>insprill</id>
+      <name>Pierce Thompson</name>
+      <email>pierce@insprill.net</email>
+    </developer>
+    <developer>
+      <id>thelooter</id>
+      <name>Eve Kolb</name>
+      <email>me@thelooter.de</email>
+    </developer>
+    <developer>
+      <id>thorinwasher</id>
+      <name>Hjalmar Gunnarsson</name>
+      <email>officialhjalmar.gunnarsson@outlook.com</email>
+    </developer>
+    <developer>
+      <id>4everTheOne</id>
+      <name>Afonso Oliveira</name>
+    </developer>
+  </developers>
+  <scm>
+    <connection>scm:git:git://github.com/MockBukkit/MockBukkit.git</connection>
+    <developerConnection>scm:git:ssh://github.com:MockBukkit/MockBukkit.git</developerConnection>
+    <url>https://github.com/MockBukkit/MockBukkit/tree/v26.1.2</url>
+  </scm>
+  <dependencies>
+    <dependency>
+      <groupId>org.jetbrains</groupId>
+      <artifactId>annotations</artifactId>
+      <version>26.1.0</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.hamcrest</groupId>
+      <artifactId>hamcrest</artifactId>
+      <version>3.0</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
+      <version>6.1.0</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>net.kyori</groupId>
+      <artifactId>adventure-platform-bungeecord</artifactId>
+      <version>4.4.1</version>
+      <scope>runtime</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>net.kyori</groupId>
+          <artifactId>adventure-api</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>net.kyori</groupId>
+          <artifactId>adventure-platform-api</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>net.bytebuddy</groupId>
+      <artifactId>byte-buddy</artifactId>
+      <version>1.18.10</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-resolver-provider</artifactId>
+      <version>3.8.5</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven.resolver</groupId>
+      <artifactId>maven-resolver-connector-basic</artifactId>
+      <version>1.9.18</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven.resolver</groupId>
+      <artifactId>maven-resolver-transport-http</artifactId>
+      <version>1.9.18</version>
+      <scope>runtime</scope>
+    </dependency>
+  </dependencies>
+</project>

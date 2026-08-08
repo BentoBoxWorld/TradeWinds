@@ -1,0 +1,13 @@
+target/
+*.iml
+.idea/
+.classpath
+.project
+.settings/
+.DS_Store
+database/
+database_backup/
+docs/
+files/
+files.zip
+.claude/

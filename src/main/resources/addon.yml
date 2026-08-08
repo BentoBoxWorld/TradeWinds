@@ -1,0 +1,123 @@
+name: TradeWinds
+main: world.bentobox.tradewinds.TradeWinds
+version: ${version}${build.number}
+api-version: 3.18.0
+metrics: true
+icon: "OAK_CHEST_BOAT"
+repository: "BentoBoxWorld/TradeWinds"
+authors: tastybento
+softdepend: Border, Level, Challenges, Visit, Warps
+
+permissions:
+  tradewinds.island:
+    description: Allow use of the TradeWinds player command
+    default: true
+  tradewinds.island.spawn:
+    description: >
+      Allow /tw go - the door into the ocean, and the way home within the
+      rules. From outside it returns the player to the water they left; on
+      their own island it steps them to their home point; anywhere else at
+      sea it tells them the direction and distance home, never a ride.
+    default: true
+  tradewinds.island.warp:
+    description: >
+      Shortcut: open the warp dialog from anywhere in island waters. Off by
+      default - the intended path is to row to the island border, which offers
+      the dialog automatically. Grant to bypass the sailing.
+    default: op
+  tradewinds.island.chart:
+    description: Allow viewing the chart (holograms afloat, list ashore)
+    default: true
+  tradewinds.island.starchart:
+    description: Allow receiving the Star Chart map
+    default: true
+  tradewinds.island.trade:
+    description: >
+      Shortcut: open the market from anywhere in an island's protection range.
+      Off by default - the intended path is to dock and right-click a trader
+      on the plaza. Grant to bypass the walk.
+    default: op
+  tradewinds.island.restart:
+    description: Allow restarting the trading career (config-capped)
+    default: true
+  tradewinds.island.rank:
+    description: Allow viewing Seafarer rank and the charted-islands top ten
+    default: true
+  tradewinds.island.claim:
+    description: >
+      Allow claiming a wild islet as a player island. The real gates are in
+      config - Seafarer rank (claims.minimum-rank) and price (claims.price) -
+      so this stays on by default; turn it off to disable claiming outright.
+    default: true
+  tradewinds.island.sethome:
+    description: >
+      Allow setting a home point on your own island - only while standing
+      inside its protection range (owner or team member).
+    default: true
+  tradewinds.island.home:
+    description: >
+      Allow teleporting to your home point - only while already standing on
+      your own island, so it is a convenience around the base and never a way
+      home across the sea.
+    default: true
+  tradewinds.island.unclaim:
+    description: >
+      Allow the owner to give a claimed islet back to the wild. Requires the
+      team to be emptied first; no refund; every block stays as it was left.
+    default: true
+  tradewinds.island.prices:
+    description: >
+      Allow the trader's logbook - what ports you have called at were paying,
+      and how long ago. Prices only enter it by visiting a market or buying a
+      harbour report, so this reads a player's own knowledge back to them.
+    default: true
+  tradewinds.island.fine:
+    description: >
+      Allow settling a criminal record at a port. On by default - a player who
+      cannot pay off a reputation has no way back except waiting it out.
+    default: true
+  tradewinds.island.info:
+    description: Allow use of the island info command
+    default: true
+  tradewinds.island.settings:
+    description: Allow viewing island settings (editing is rank-gated)
+    default: true
+  tradewinds.island.language:
+    description: Allow use of the language command
+    default: true
+  tradewinds.admin:
+    description: Allow use of the TradeWinds admin command
+    default: op
+  tradewinds.admin.islands:
+    description: Allow listing the nearest trading islands
+    default: op
+  tradewinds.admin.tpisland:
+    description: Allow teleporting to trading islands
+    default: op
+  tradewinds.admin.customs:
+    description: Show the customs state at your position (contraband, scan odds, patrol)
+    default: op
+  tradewinds.admin.warpfail:
+    description: Rig a player's next warp to fail, dropping them into the interstice
+    default: op
+  tradewinds.admin.priceaudit:
+    description: Audit price coverage and write the report to price-audit.txt
+    default: op
+  tradewinds.admin.rank:
+    description: >
+      Inspect or set a player's Seafarer rank - stores an adjustment on top of
+      their real charted count, so promotion, demotion and reset all work and
+      the claim gate and leaderboard follow.
+    default: op
+  tradewinds.admin.reflag:
+    description: Allow re-applying security-band flags to all islands
+    default: op
+  tradewinds.admin.boat:
+    description: >
+      Inspect a player's boat records - cargo, fuel, last-seen position,
+      whether a hull is actually loaded there - and restore a lost active
+      boat from the database as an item in their pack.
+    default: op
+  tradewinds.admin.*:
+    description: All TradeWinds admin permissions
+    default: op

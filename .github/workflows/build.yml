@@ -1,0 +1,55 @@
+name: Build
+on:
+  push:
+    branches:
+      - develop
+      - main
+      - master
+  pull_request:
+    types: [opened, synchronize, reopened]
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of Sonar analysis
+      # JDK 25, not the 17 SonarCloud's wizard suggests: the Paper 26.2 and
+      # BentoBox dependencies ship Java 25 bytecode (class version 69), which
+      # older compilers cannot read. The pom still compiles TradeWinds' own
+      # sources at release 21.
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: 25
+      - name: Cache SonarCloud packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+      # No MockBukkit prep step (compare GushBlock): the locally patched
+      # MockBukkit the tests need ships INSIDE this repo under libs/ as a
+      # file-based Maven repository, so a bare checkout builds green.
+      - name: Build
+        run: mvn -B verify
+      # SonarCloud analysis: runs only when a SONAR_TOKEN is available and
+      # never fails the build. Project key, organization and host live in the
+      # pom's sonar.* properties.
+      - name: SonarCloud analysis
+        if: ${{ env.SONAR_TOKEN != '' }}
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: mvn -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
