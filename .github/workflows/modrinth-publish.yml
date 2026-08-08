@@ -1,0 +1,121 @@
+name: Publish to Modrinth
+
+# Triggers when you publish a GitHub Release
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to publish (e.g. 0.1.1)'
+        required: true
+        type: string
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      # 1. Check out the repository at the release tag
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. JDK 25, not the 17 SonarCloud's wizard suggests: the Paper 26.2 and
+      #    BentoBox dependencies ship Java 25 bytecode (class version 69),
+      #    which older compilers cannot read. The pom still compiles
+      #    TradeWinds' own sources at release 21.
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: 25
+
+      # 3. Cache Maven dependencies to speed up builds
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+
+      # 4. Build the jar - WITH tests, unlike GushBlock's copy of this
+      #    workflow, which skips them because the patched MockBukkit it needs
+      #    is not published anywhere. TradeWinds ships that jar inside the
+      #    repo (libs/), so a bare checkout tests green and the artifact we
+      #    publish is the artifact we tested.
+      #
+      #    GIT_BRANCH=origin/main activates the pom's 'main' profile, which
+      #    strips -SNAPSHOT and the build number so the jar is named
+      #    TradeWinds-<tag>.jar. This repo releases from main, NOT master -
+      #    point it at the wrong branch and every build stays a SNAPSHOT and
+      #    the upload below cannot find its file.
+      - name: Build with Maven
+        run: mvn -B clean package
+        env:
+          GIT_BRANCH: origin/main
+
+      # 5. Fail legibly if the jar is not where the upload expects it. The jar
+      #    is named from the POM's build.version, the upload from the release
+      #    TAG, so a tag that does not match the pom (v0.1.1, or a forgotten
+      #    version bump) means the upload step just says "file not found".
+      - name: Verify the jar matches the release tag
+        env:
+          TAG: ${{ github.event.release.tag_name || inputs.tag }}
+        run: |
+          jar="target/TradeWinds-${TAG}.jar"
+          if [ ! -f "$jar" ]; then
+            echo "::error::Expected $jar but the build produced:"
+            ls -1 target/*.jar || true
+            echo "::error::The release tag must match <build.version> in pom.xml (no 'v' prefix)."
+            exit 1
+          fi
+          echo "Publishing $jar"
+
+      # 6. Upload the jar to Modrinth
+      #
+      #    Repository secrets (Settings -> Secrets and variables -> Actions):
+      #
+      #      MODRINTH_TOKEN      - personal access token from
+      #                            https://modrinth.com/settings/pats
+      #                            (scope: "Create versions")
+      #      MODRINTH_PROJECT_ID - the Modrinth project ID for TradeWinds,
+      #                            on the project page under the three-dot
+      #                            menu ("Copy ID")
+      #
+      - name: Publish to Modrinth
+        uses: cloudnode-pro/modrinth-publish@0be4916ad5f081d936eb5615aa35ce3f0949979c # v2
+        with:
+          token: ${{ secrets.MODRINTH_TOKEN }}
+          project: ${{ secrets.MODRINTH_PROJECT_ID }}
+
+          # The release tag, or the manually supplied tag on workflow_dispatch
+          version: ${{ github.event.release.tag_name || inputs.tag }}
+
+          # The GitHub release body becomes the changelog (empty when run
+          # manually)
+          changelog: ${{ github.event.release.body }}
+
+          # Release channel - auto-detected from the version string:
+          #   *-alpha -> alpha, *-beta -> beta, anything else -> release
+          # Override here if needed: release | beta | alpha
+          # channel: release
+
+          # TradeWinds is a Paper addon
+          loaders: |-
+            paper
+            purpur
+
+          # Only 26.2 is TESTED, and 26.2+ is what the release notes promise.
+          # The compile floor is much lower - the sources build clean against
+          # paper-api 1.21.10, and the only thing that breaks below that is
+          # the dialog API (Minecraft 1.21.6) - so this list can be widened
+          # as older versions are actually played. Widening it untested just
+          # buys bug reports.
+          game-versions: |-
+            26.2
+
+          # Maven produces TradeWinds-<version>.jar in target/ (see the pom's
+          # finalName), and the release profile above makes <version> the tag
+          files: target/TradeWinds-${{ github.event.release.tag_name || inputs.tag }}.jar
