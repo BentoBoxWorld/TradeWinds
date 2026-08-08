@@ -29,23 +29,23 @@ import world.bentobox.tradewinds.CommonTestSetup;
 import world.bentobox.tradewinds.Settings;
 import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.WhiteBox;
-import world.bentobox.tradewinds.galaxy.GalaxyConfig;
-import world.bentobox.tradewinds.galaxy.GalaxyEngine;
-import world.bentobox.tradewinds.galaxy.IslandSpec;
+import world.bentobox.tradewinds.ocean.OceanConfig;
+import world.bentobox.tradewinds.ocean.OceanEngine;
+import world.bentobox.tradewinds.ocean.IslandSpec;
 
 /**
- * Tests {@link GalaxyIslandRegistrar}: island center chunks register unowned,
+ * Tests {@link OceanIslandRegistrar}: island center chunks register unowned,
  * named, band-flagged BentoBox islands exactly once.
  *
  * @author tastybento
  */
-class GalaxyIslandRegistrarTest extends CommonTestSetup {
+class OceanIslandRegistrarTest extends CommonTestSetup {
 
     private static final long SEED = 31337L;
 
     private TradeWinds addon;
-    private GalaxyEngine engine;
-    private GalaxyIslandRegistrar registrar;
+    private OceanEngine engine;
+    private OceanIslandRegistrar registrar;
     private IslandSpec spec;
 
     @Override
@@ -55,8 +55,8 @@ class GalaxyIslandRegistrarTest extends CommonTestSetup {
         addon = mock(TradeWinds.class);
         Settings settings = new Settings();
         when(addon.getSettings()).thenReturn(settings);
-        engine = new GalaxyEngine(new GalaxyConfig(SEED, 2500, 160, 45, 1.0, 0, 5000, 70));
-        when(addon.getGalaxyEngine(anyLong())).thenReturn(engine);
+        engine = new OceanEngine(new OceanConfig(SEED, 2500, 160, 45, 1.0, 0, 5000, 70));
+        when(addon.getOceanEngine(anyLong())).thenReturn(engine);
         when(addon.getOverWorld()).thenReturn(world);
         when(addon.getIslands()).thenReturn(im);
         when(world.getSeed()).thenReturn(SEED);
@@ -68,7 +68,7 @@ class GalaxyIslandRegistrarTest extends CommonTestSetup {
         Database<Island> db = mock(Database.class);
         when(db.saveObjectAsync(any())).thenReturn(CompletableFuture.completedFuture(true));
         WhiteBox.setInternalState(IslandsManager.class, "handler", db);
-        registrar = new GalaxyIslandRegistrar(addon);
+        registrar = new OceanIslandRegistrar(addon);
         spec = engine.islandInCell(0, 0).orElseThrow();
     }
 
@@ -126,7 +126,7 @@ class GalaxyIslandRegistrarTest extends CommonTestSetup {
         // Island.setFlag silently drops writes for keys that are not present
         Island fresh = mock(Island.class);
         when(fresh.getFlags()).thenReturn(new HashMap<>());
-        GalaxyIslandRegistrar.setRanks(fresh, java.util.Map.of(Flags.BOAT, 0));
+        OceanIslandRegistrar.setRanks(fresh, java.util.Map.of(Flags.BOAT, 0));
         ArgumentCaptor<java.util.Map<String, Integer>> flags = ArgumentCaptor.forClass(java.util.Map.class);
         verify(fresh).setFlags(flags.capture());
         assertEquals(0, flags.getValue().get(Flags.BOAT.getID()));

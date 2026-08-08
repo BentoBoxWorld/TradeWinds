@@ -31,7 +31,7 @@ import world.bentobox.bentobox.api.user.User;
 import world.bentobox.bentobox.util.Util;
 import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.api.events.TWWarpFailedEvent;
-import world.bentobox.tradewinds.galaxy.IslandSpec;
+import world.bentobox.tradewinds.ocean.IslandSpec;
 
 /**
  * The interstice: warps sometimes fail, dropping the sailor into a hostile
@@ -67,7 +67,7 @@ public class IntersticeService {
     /** Room a ghast needs under the interstice ceiling - they are 4 blocks tall. */
     private static final int GHAST_CLEARANCE = 6;
 
-    /** Pending-destination marker for a home warp: not a galaxy cell. */
+    /** Pending-destination marker for a home warp: not a ocean cell. */
     private static final String HOME_PENDING = "home";
 
     /** Player -> the destination cell they are still owed, free of charge. */
@@ -162,7 +162,7 @@ public class IntersticeService {
         if (addon.getNetherWorld() == null) {
             return;
         }
-        // A home destination is not a galaxy cell: mark it, and resolve it
+        // A home destination is not a ocean cell: mark it, and resolve it
         // back through the player's island on re-engage (Stage 7b)
         pendingDestination.put(player.getUniqueId(),
                 HomePort.isHome(to) ? HOME_PENDING : to.cellX() + "," + to.cellZ());
@@ -173,7 +173,7 @@ public class IntersticeService {
         // Open water here too: the interstice has its own sea floor, and
         // dropping a castaway inside it would be the same suffocation bug.
         // The interstice now HAS land (wart shoals) and masonry (watchtowers)
-        // - the feature map is the column test the galaxy cannot provide
+        // - the feature map is the column test the ocean cannot provide
         var map = addon.getIntersticeMap(addon.getNetherWorld().getSeed());
         Location target = SeaArrival.openSeaNear(map::isOpenWater, addon.getNetherWorld(), x, z,
                 addon.getSettings().getIntersticeSeaHeight());
@@ -453,12 +453,12 @@ public class IntersticeService {
             return HomePort.specFor(addon, User.getInstance(player));
         }
         String[] parts = cell.split(",");
-        return addon.getGalaxyEngine(addon.getOverWorld().getSeed())
+        return addon.getOceanEngine(addon.getOverWorld().getSeed())
                 .islandInCell(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]));
     }
 
     private IslandSpec nearestCharted(Player player) {
-        var engine = addon.getGalaxyEngine(addon.getOverWorld().getSeed());
+        var engine = addon.getOceanEngine(addon.getOverWorld().getSeed());
         return addon.getPlayerDataManager().get(player.getUniqueId()).getChartedIslands().stream()
                 .map(key -> key.split(","))
                 .map(cell -> engine.islandInCell(Integer.parseInt(cell[0]), Integer.parseInt(cell[1])))

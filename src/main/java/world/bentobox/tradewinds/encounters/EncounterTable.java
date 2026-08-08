@@ -3,7 +3,7 @@ package world.bentobox.tradewinds.encounters;
 import java.util.List;
 import java.util.Optional;
 
-import world.bentobox.tradewinds.galaxy.SecurityBand;
+import world.bentobox.tradewinds.ocean.SecurityBand;
 
 /**
  * Pure encounter selection: how likely the sea is to find you, and what it

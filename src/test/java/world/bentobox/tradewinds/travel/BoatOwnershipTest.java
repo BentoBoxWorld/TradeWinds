@@ -22,10 +22,10 @@ import world.bentobox.tradewinds.Settings;
 import world.bentobox.tradewinds.TestHolds;
 import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.dataobjects.BoatHold;
-import world.bentobox.tradewinds.galaxy.GalaxyConfig;
-import world.bentobox.tradewinds.galaxy.GalaxyEngine;
-import world.bentobox.tradewinds.galaxy.IslandSpec;
-import world.bentobox.tradewinds.galaxy.SecurityBand;
+import world.bentobox.tradewinds.ocean.OceanConfig;
+import world.bentobox.tradewinds.ocean.OceanEngine;
+import world.bentobox.tradewinds.ocean.IslandSpec;
+import world.bentobox.tradewinds.ocean.SecurityBand;
 
 /**
  * Ownership, abandonment and protection (rules ruled 2026-08-02): an owned
@@ -42,7 +42,7 @@ class BoatOwnershipTest extends CommonTestSetup {
     private TradeWinds addon;
     private BoatListener listener;
     private TestHolds holds;
-    private GalaxyEngine engine;
+    private OceanEngine engine;
     private IslandSpec island;
 
     @Override
@@ -54,8 +54,8 @@ class BoatOwnershipTest extends CommonTestSetup {
         when(addon.getBoatRanks()).thenReturn(new BoatRanks(addon));
         when(addon.getOverWorld()).thenReturn(world);
         when(world.getSeed()).thenReturn(SEED);
-        engine = new GalaxyEngine(new GalaxyConfig(SEED, 2500, 160, 45, 1.0, 0, 5000, 70));
-        when(addon.getGalaxyEngine(anyLong())).thenReturn(engine);
+        engine = new OceanEngine(new OceanConfig(SEED, 2500, 160, 45, 1.0, 0, 5000, 70));
+        when(addon.getOceanEngine(anyLong())).thenReturn(engine);
         holds = TestHolds.install(addon);
         when(addon.getFuelService()).thenReturn(new FuelService(addon));
         when(addon.getHoldService()).thenReturn(new HoldService(addon));
@@ -259,7 +259,7 @@ class BoatOwnershipTest extends CommonTestSetup {
         when(loc.getWorld()).thenReturn(world);
         when(loc.getBlockX()).thenReturn(anarchic.centerX());
         when(loc.getBlockZ()).thenReturn(anarchic.centerZ());
-        // No island of ours is at that spot in this galaxy, so nothing shields
+        // No island of ours is at that spot in this ocean, so nothing shields
         // it - the same answer an anarchic port gives
         assertFalse(listener.isProtected(hold, loc));
     }

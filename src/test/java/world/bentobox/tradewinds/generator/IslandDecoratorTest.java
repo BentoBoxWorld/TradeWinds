@@ -29,12 +29,12 @@ import org.mockito.stubbing.Answer;
 
 import world.bentobox.tradewinds.CommonTestSetup;
 import world.bentobox.tradewinds.TradeWinds;
-import world.bentobox.tradewinds.galaxy.DockPlan;
-import world.bentobox.tradewinds.galaxy.GalaxyConfig;
-import world.bentobox.tradewinds.galaxy.GalaxyEngine;
-import world.bentobox.tradewinds.galaxy.IslandSpec;
-import world.bentobox.tradewinds.galaxy.IslandType;
-import world.bentobox.tradewinds.galaxy.SecurityBand;
+import world.bentobox.tradewinds.ocean.DockPlan;
+import world.bentobox.tradewinds.ocean.OceanConfig;
+import world.bentobox.tradewinds.ocean.OceanEngine;
+import world.bentobox.tradewinds.ocean.IslandSpec;
+import world.bentobox.tradewinds.ocean.IslandType;
+import world.bentobox.tradewinds.ocean.SecurityBand;
 
 /**
  * Tests {@link IslandDecorator}: the plaza chunk gets its bell, stalls and
@@ -47,7 +47,7 @@ class IslandDecoratorTest extends CommonTestSetup {
     private static final long SEED = 777L;
 
     private TradeWinds addon;
-    private GalaxyEngine engine;
+    private OceanEngine engine;
     private IslandDecorator decorator;
     private IslandSpec spec;
     private DockPlan plan;
@@ -61,8 +61,8 @@ class IslandDecoratorTest extends CommonTestSetup {
     public void setUp() throws Exception {
         super.setUp();
         addon = mock(TradeWinds.class);
-        engine = new GalaxyEngine(new GalaxyConfig(SEED, 2500, 160, 45, 1.0, 0, 5000, 70));
-        when(addon.getGalaxyEngine(anyLong())).thenReturn(engine);
+        engine = new OceanEngine(new OceanConfig(SEED, 2500, 160, 45, 1.0, 0, 5000, 70));
+        when(addon.getOceanEngine(anyLong())).thenReturn(engine);
         decorator = new IslandDecorator(addon);
         spec = engine.islandInCell(0, 0).orElseThrow();
         plan = engine.dockPlan(spec);

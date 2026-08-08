@@ -12,10 +12,10 @@ tradewinds:
     new-player-action: go
     # The default action for player command.
     default-action: go
-galaxy:
-  # The galaxy seed. Every island position, type, security band, biome, name and
+ocean:
+  # The ocean seed. Every island position, type, security band, biome, name and
   # route cost derives deterministically from this one number - share it and another
-  # server gets the same trading galaxy. 0 means: use the world seed.
+  # server gets the same trading ocean. 0 means: use the world seed.
   seed: 20260729
   # Minimum separation between trading island centers in blocks.
   min-separation: 2500
@@ -23,7 +23,7 @@ galaxy:
   starter-cluster-radius: 5000
   # Minimum number of trading islands guaranteed inside the starter cluster radius.
   starter-cluster-min-islands: 5
-  # Chance (0.0-1.0) that a galaxy grid cell hosts a trading island.
+  # Chance (0.0-1.0) that a ocean grid cell hosts a trading island.
   density: 0.5
   # Radius in blocks of an island's terrain footprint (land plus underwater shelf).
   island-terrain-radius: 160
@@ -839,7 +839,7 @@ world:
   make-decorations: true
   # Allow vanilla structure generation: shipwrecks, ocean ruins, ocean monuments,
   # buried treasure and trial chambers. Which appear where is decided by the biomes
-  # the galaxy hands out - deep basins get monuments, warm shallows get warm ruins,
+  # the ocean hands out - deep basins get monuments, warm shallows get warm ruins,
   # islet beaches get treasure.
   make-structures: true
   # Keep vanilla structures off the trading islands themselves. A monument dropped
@@ -862,5 +862,5 @@ world:
     # expanders a purchase-only money sink.
     generate: false
     islands: false
-# Log detailed [TradeWinds DEBUG] lines around galaxy generation, travel and trade.
+# Log detailed [TradeWinds DEBUG] lines around ocean generation, travel and trade.
 debug: false

@@ -18,12 +18,12 @@ import org.bukkit.persistence.PersistentDataType;
 import org.eclipse.jdt.annotation.NonNull;
 
 import world.bentobox.tradewinds.TradeWinds;
-import world.bentobox.tradewinds.galaxy.DockPlan;
-import world.bentobox.tradewinds.galaxy.GalaxyEngine;
-import world.bentobox.tradewinds.galaxy.Hashing;
-import world.bentobox.tradewinds.galaxy.IslandSpec;
-import world.bentobox.tradewinds.galaxy.IslandType;
-import world.bentobox.tradewinds.galaxy.SecurityBand;
+import world.bentobox.tradewinds.ocean.DockPlan;
+import world.bentobox.tradewinds.ocean.OceanEngine;
+import world.bentobox.tradewinds.ocean.Hashing;
+import world.bentobox.tradewinds.ocean.IslandSpec;
+import world.bentobox.tradewinds.ocean.IslandType;
+import world.bentobox.tradewinds.ocean.SecurityBand;
 
 /**
  * Decorates each island's market plaza when its chunk generates: a bell,
@@ -58,7 +58,7 @@ public class IslandDecorator extends BlockPopulator {
         if (worldInfo.getEnvironment() != World.Environment.NORMAL) {
             return;
         }
-        GalaxyEngine engine = addon.getGalaxyEngine(worldInfo.getSeed());
+        OceanEngine engine = addon.getOceanEngine(worldInfo.getSeed());
         // Islands whose plaza center or pier end lands in this chunk
         int minX = chunkX << 4;
         int minZ = chunkZ << 4;
@@ -82,7 +82,7 @@ public class IslandDecorator extends BlockPopulator {
      * FISHING islands a moored rowboat.
      */
     private void decoratePierEnd(WorldInfo worldInfo, IslandSpec spec, int pierX, int pierZ, LimitedRegion region) {
-        int deckY = addon.getGalaxyEngine(worldInfo.getSeed()).getConfig().seaLevel() + GalaxyEngine.DOCK_RISE;
+        int deckY = addon.getOceanEngine(worldInfo.getSeed()).getConfig().seaLevel() + OceanEngine.DOCK_RISE;
         setIfPossible(region, pierX, deckY + 1, pierZ, IslandPalette.banner(spec.type()));
         // Lantern on a post one block to the side
         int lx = pierX + (spec.cellX() % 2 == 0 ? 2 : -2);
@@ -91,7 +91,7 @@ public class IslandDecorator extends BlockPopulator {
         if (spec.type() == IslandType.FISHING) {
             World world = Bukkit.getWorld(worldInfo.getUID());
             // Moored rowboat on the water beside the deck
-            Location loc = new Location(world, pierX + 0.5, deckY - GalaxyEngine.DOCK_RISE + 1.0, pierZ + 4.5);
+            Location loc = new Location(world, pierX + 0.5, deckY - OceanEngine.DOCK_RISE + 1.0, pierZ + 4.5);
             if (region.isInRegion(loc)) {
                 OakBoat boat = region.createEntity(loc, OakBoat.class);
                 boat.setPersistent(true);
@@ -103,7 +103,7 @@ public class IslandDecorator extends BlockPopulator {
     private void decoratePlaza(WorldInfo worldInfo, IslandSpec spec, DockPlan plan, LimitedRegion region) {
         // Island-deterministic randomness: the same island decorates the same way
         Random rand = new Random(Hashing.cellHash(engineSeed(worldInfo), spec.cellX(), spec.cellZ(), SALT_DECOR));
-        int surface = addon.getGalaxyEngine(worldInfo.getSeed()).getConfig().seaLevel() + GalaxyEngine.PLAZA_RISE;
+        int surface = addon.getOceanEngine(worldInfo.getSeed()).getConfig().seaLevel() + OceanEngine.PLAZA_RISE;
         int y = surface + 1; // first air block above the plaza
 
         // Bell at the plaza center - the market's landmark
@@ -299,7 +299,7 @@ public class IslandDecorator extends BlockPopulator {
     }
 
     private long engineSeed(WorldInfo worldInfo) {
-        return addon.getGalaxyEngine(worldInfo.getSeed()).getConfig().seed();
+        return addon.getOceanEngine(worldInfo.getSeed()).getConfig().seed();
     }
 
     private void buildStall(LimitedRegion region, IslandSpec spec, int sx, int y, int sz) {
@@ -326,7 +326,7 @@ public class IslandDecorator extends BlockPopulator {
             int y) {
         // Villagers: professions match the island's economy. Count is engine-
         // deterministic so the respawn audit knows what fully-staffed means.
-        int villagers = addon.getGalaxyEngine(addon.getOverWorld() == null ? 0 : addon.getOverWorld().getSeed())
+        int villagers = addon.getOceanEngine(addon.getOverWorld() == null ? 0 : addon.getOverWorld().getSeed())
                 .villagerCount(spec);
         for (int i = 0; i < villagers; i++) {
             int vx = plan.plazaX() + rand.nextInt(9) - 4;

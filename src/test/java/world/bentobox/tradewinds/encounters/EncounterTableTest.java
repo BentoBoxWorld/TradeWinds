@@ -10,7 +10,7 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
-import world.bentobox.tradewinds.galaxy.SecurityBand;
+import world.bentobox.tradewinds.ocean.SecurityBand;
 
 /**
  * Pure tests of sea-encounter selection: risk rises with lawlessness and open

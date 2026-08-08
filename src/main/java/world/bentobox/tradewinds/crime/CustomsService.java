@@ -19,8 +19,8 @@ import world.bentobox.bentobox.api.localization.TextVariables;
 import world.bentobox.bentobox.api.user.User;
 import world.bentobox.bentobox.hooks.VaultHook;
 import world.bentobox.tradewinds.TradeWinds;
-import world.bentobox.tradewinds.galaxy.IslandSpec;
-import world.bentobox.tradewinds.galaxy.SecurityBand;
+import world.bentobox.tradewinds.ocean.IslandSpec;
+import world.bentobox.tradewinds.ocean.SecurityBand;
 
 /**
  * Customs: the scan on entering island space, and the chase that follows a
@@ -479,7 +479,7 @@ public class CustomsService {
         int x = player.getLocation().getBlockX();
         int z = player.getLocation().getBlockZ();
         int range = addon.getSettings().getIslandProtectionRange();
-        return addon.getGalaxyEngine(addon.getOverWorld().getSeed()).islandsNear(x, z, range).stream()
+        return addon.getOceanEngine(addon.getOverWorld().getSeed()).islandsNear(x, z, range).stream()
                 .filter(s -> s.distanceSquared(x, z) <= (long) range * range).findFirst();
     }
 

@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
 /**
- * Headless tests of the reputation number line - no Bukkit, like the galaxy.
+ * Headless tests of the reputation number line - no Bukkit, like the ocean.
  *
  * @author tastybento
  */

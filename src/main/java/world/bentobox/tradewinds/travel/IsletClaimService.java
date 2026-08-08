@@ -15,8 +15,8 @@ import world.bentobox.bentobox.database.objects.Island;
 import world.bentobox.bentobox.hooks.VaultHook;
 import world.bentobox.bentobox.managers.IslandsManager;
 import world.bentobox.tradewinds.TradeWinds;
-import world.bentobox.tradewinds.galaxy.GalaxyEngine;
-import world.bentobox.tradewinds.galaxy.Islet;
+import world.bentobox.tradewinds.ocean.OceanEngine;
+import world.bentobox.tradewinds.ocean.Islet;
 
 /**
  * Claiming a wild islet: Stage 7's ownership. The land already exists - the
@@ -69,7 +69,7 @@ public class IsletClaimService {
      */
     public Result claim(Player player) {
         World world = addon.getOverWorld();
-        GalaxyEngine engine = addon.getGalaxyEngine(world.getSeed());
+        OceanEngine engine = addon.getOceanEngine(world.getSeed());
         Optional<Islet> standing = engine.isletAt(player.getLocation().getBlockX(),
                 player.getLocation().getBlockZ());
         if (standing.isEmpty()) {

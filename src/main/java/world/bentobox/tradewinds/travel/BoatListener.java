@@ -28,7 +28,7 @@ import org.bukkit.scheduler.BukkitTask;
 import world.bentobox.bentobox.api.user.User;
 import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.dataobjects.BoatHold;
-import world.bentobox.tradewinds.galaxy.IslandSpec;
+import world.bentobox.tradewinds.ocean.IslandSpec;
 
 /**
  * A boat's life in the world (rules ruled 2026-08-02):
@@ -232,7 +232,7 @@ public class BoatListener implements Listener {
             return false;
         }
         Optional<IslandSpec> island = islandProtecting(where);
-        return island.isPresent() && island.get().band() != world.bentobox.tradewinds.galaxy.SecurityBand.ANARCHIC;
+        return island.isPresent() && island.get().band() != world.bentobox.tradewinds.ocean.SecurityBand.ANARCHIC;
     }
 
     /**
@@ -244,7 +244,7 @@ public class BoatListener implements Listener {
             return Optional.empty();
         }
         int range = addon.getSettings().getIslandProtectionRange();
-        return addon.getGalaxyEngine(where.getWorld().getSeed())
+        return addon.getOceanEngine(where.getWorld().getSeed())
                 .islandsNear(where.getBlockX(), where.getBlockZ(), range).stream()
                 .filter(spec -> spec.distanceSquared(where.getBlockX(), where.getBlockZ()) <= (long) range * range)
                 .findFirst();

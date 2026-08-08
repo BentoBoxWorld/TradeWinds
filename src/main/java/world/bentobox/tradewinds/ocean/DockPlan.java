@@ -1,4 +1,4 @@
-package world.bentobox.tradewinds.galaxy;
+package world.bentobox.tradewinds.ocean;
 
 /**
  * Where an island's dock and market plaza sit - pure geometry derived from the

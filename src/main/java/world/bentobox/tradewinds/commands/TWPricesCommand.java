@@ -11,7 +11,7 @@ import world.bentobox.bentobox.api.user.User;
 import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.economy.Money;
 import world.bentobox.tradewinds.economy.TradeCategory;
-import world.bentobox.tradewinds.galaxy.IslandSpec;
+import world.bentobox.tradewinds.ocean.IslandSpec;
 
 /**
  * The trader's logbook: what ports you have visited were paying, and how long
@@ -81,7 +81,7 @@ public class TWPricesCommand extends CompositeCommand {
         // exists is not the same as having stood at its counter
         List<IslandSpec> known = new ArrayList<>();
         if (addon.getOverWorld() != null) {
-            var engine = addon.getGalaxyEngine(addon.getOverWorld().getSeed());
+            var engine = addon.getOceanEngine(addon.getOverWorld().getSeed());
             for (String key : data.getPriceLog().keySet()) {
                 String[] cell = key.split(",");
                 if (cell.length != 2) {

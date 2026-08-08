@@ -1,4 +1,4 @@
-package world.bentobox.tradewinds.galaxy;
+package world.bentobox.tradewinds.ocean;
 
 /**
  * Elite-BBC-style procedural island name generator: names are built from 2-4

@@ -7,9 +7,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.bukkit.Location;
 
-import world.bentobox.tradewinds.galaxy.GalaxyConfig;
-import world.bentobox.tradewinds.galaxy.GalaxyEngine;
-import world.bentobox.tradewinds.galaxy.IslandSpec;
+import world.bentobox.tradewinds.ocean.OceanConfig;
+import world.bentobox.tradewinds.ocean.OceanEngine;
+import world.bentobox.tradewinds.ocean.IslandSpec;
 
 import org.junit.jupiter.api.Test;
 
@@ -26,18 +26,18 @@ class WarpArrivalIntegrationTest {
     private static final int SEA = 70;
     private static final int ARRIVAL_DISTANCE = 400;
 
-    private GalaxyEngine engine() {
-        return new GalaxyEngine(new GalaxyConfig(SEED, 2500, 160, 45, 0.5, 6, 5000, SEA));
+    private OceanEngine engine() {
+        return new OceanEngine(new OceanConfig(SEED, 2500, 160, 45, 0.5, 6, 5000, SEA));
     }
 
     @Test
     void testArrivalPointCalculation() {
         // The arrival point is calculated from an island and a bearing
-        GalaxyEngine engine = engine();
+        OceanEngine engine = engine();
         IslandSpec island = engine.islandsNear(0, 0, 12_000).iterator().next();
 
         // arrivalPoint returns [x, z] coordinates
-        int[] arrive = world.bentobox.tradewinds.galaxy.RouteGraph.arrivalPoint(island, island, ARRIVAL_DISTANCE);
+        int[] arrive = world.bentobox.tradewinds.ocean.RouteGraph.arrivalPoint(island, island, ARRIVAL_DISTANCE);
         assertNotNull(arrive);
         assertEquals(2, arrive.length);
 
@@ -72,9 +72,9 @@ class WarpArrivalIntegrationTest {
     }
 
     @Test
-    void testOpenSeaCheckIsGalaxyOnly() {
-        // SeaArrival.isOpenSea uses only the galaxy, no block reads
-        GalaxyEngine engine = engine();
+    void testOpenSeaCheckIsOceanOnly() {
+        // SeaArrival.isOpenSea uses only the ocean, no block reads
+        OceanEngine engine = engine();
         IslandSpec island = engine.islandsNear(0, 0, 12_000).iterator().next();
 
         // Open water far from any island
@@ -87,7 +87,7 @@ class WarpArrivalIntegrationTest {
     @Test
     void testDockIsNotOpenSea() {
         // The dock reaches to the arrival ring and has a deck at sea level
-        GalaxyEngine engine = engine();
+        OceanEngine engine = engine();
         IslandSpec island = engine.islandsNear(0, 0, 12_000).iterator().next();
         var dockPlan = engine.dockPlan(island);
 
@@ -102,7 +102,7 @@ class WarpArrivalIntegrationTest {
     @Test
     void testOutwardSearchNeverMovesInward() {
         // The outward search steps away from the island, never toward it
-        GalaxyEngine engine = engine();
+        OceanEngine engine = engine();
         for (IslandSpec island : engine.islandsNear(0, 0, 12_000)) {
             for (int deg = 0; deg < 360; deg += 15) {
                 double rad = Math.toRadians(deg);
@@ -131,7 +131,7 @@ class WarpArrivalIntegrationTest {
     void testClearWaterRequiresSurroundingArea() {
         // isClearWater checks that surrounding blocks are also water,
         // not just the center
-        GalaxyEngine engine = engine();
+        OceanEngine engine = engine();
 
         // Far from any island, all should be clear
         assertTrue(SeaArrival.isOpenSea(engine, 1000, 1000, SEA));
@@ -144,7 +144,7 @@ class WarpArrivalIntegrationTest {
     @Test
     void testLocationHeightIsSeaLevel() {
         // Arrivals are placed at sea level + 1 (sea level 70 -> Y 71)
-        Location loc = SeaArrival.openSeaNear((GalaxyEngine) null, null, 0, 0, SEA);
+        Location loc = SeaArrival.openSeaNear((OceanEngine) null, null, 0, 0, SEA);
         // If engine is null, the implementation returns the intended point
         // Full test requires mocking or world setup - verify behavior when null
         assertTrue(loc == null || loc.getBlockY() == SEA + 1, "Location should be at sea level or null");
@@ -154,7 +154,7 @@ class WarpArrivalIntegrationTest {
     void testArrivalCoordinatesAreCentered() {
         // Block coordinates are centered for a smooth landing
         // (e.g., block 100 becomes location 100.5)
-        Location loc = SeaArrival.openSeaNear((GalaxyEngine) null, null, 100, 200, SEA);
+        Location loc = SeaArrival.openSeaNear((OceanEngine) null, null, 100, 200, SEA);
         // If engine is null, returns new Location(world, 100.5, 71.0, 200.5)
         // Full test requires world setup - verify behavior when null
         assertTrue(loc == null || (loc.getBlockX() == 100 && loc.getBlockZ() == 200), "Location coordinates or null when engine is null");

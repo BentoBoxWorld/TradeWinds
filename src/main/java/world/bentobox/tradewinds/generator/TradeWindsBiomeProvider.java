@@ -14,14 +14,14 @@ import org.bukkit.generator.BiomeProvider;
 import org.bukkit.generator.WorldInfo;
 
 import world.bentobox.tradewinds.TradeWinds;
-import world.bentobox.tradewinds.galaxy.GalaxyEngine;
-import world.bentobox.tradewinds.galaxy.IslandType;
+import world.bentobox.tradewinds.ocean.OceanEngine;
+import world.bentobox.tradewinds.ocean.IslandType;
 
 /**
  * Biomes for the TradeWinds worlds. Open ocean is the sea biome at and below
  * sea level and the air biome above (Poseidon pattern). Columns inside a
  * trading island's terrain footprint take the island's whole-island biome from
- * the seeded galaxy; FROZEN islands additionally freeze their approach ring
+ * the seeded ocean; FROZEN islands additionally freeze their approach ring
  * into fast ice lanes. The interstice has a single biome.
  *
  * @author tastybento
@@ -29,7 +29,7 @@ import world.bentobox.tradewinds.galaxy.IslandType;
 public class TradeWindsBiomeProvider extends BiomeProvider {
 
     private final TradeWinds addon;
-    // Biome key resolution cache; galaxy keys are a small fixed set
+    // Biome key resolution cache; ocean keys are a small fixed set
     private final Map<String, Biome> resolved = new ConcurrentHashMap<>();
 
     public TradeWindsBiomeProvider(TradeWinds addon) {
@@ -41,7 +41,7 @@ public class TradeWindsBiomeProvider extends BiomeProvider {
         if (worldInfo.getEnvironment() == org.bukkit.World.Environment.NETHER) {
             return addon.getSettings().getDefaultNetherBiome();
         }
-        GalaxyEngine engine = addon.getGalaxyEngine(worldInfo.getSeed());
+        OceanEngine engine = addon.getOceanEngine(worldInfo.getSeed());
         Optional<String> key = engine.biomeKeyAt(x, z);
         if (key.isPresent()) {
             return resolve(key.get());
@@ -65,7 +65,7 @@ public class TradeWindsBiomeProvider extends BiomeProvider {
             NamespacedKey nk = NamespacedKey.fromString(k);
             Biome biome = nk == null ? null : Registry.BIOME.get(nk);
             if (biome == null) {
-                addon.logError("Unknown biome key in galaxy tables: " + k);
+                addon.logError("Unknown biome key in ocean tables: " + k);
                 return addon.getSettings().getDefaultBiome();
             }
             return biome;
@@ -90,11 +90,11 @@ public class TradeWindsBiomeProvider extends BiomeProvider {
                 }
             });
         }
-        // Every biome the galaxy can hand out must be declared here or the
+        // Every biome the ocean can hand out must be declared here or the
         // server refuses to use it: the deep-water variants (which is what
         // decides where ocean monuments go), the islet land biomes, and the
         // beaches around them
-        Stream.concat(GalaxyEngine.oceanBiomes().stream(), GalaxyEngine.isletBiomes().stream()).forEach(key -> {
+        Stream.concat(OceanEngine.oceanBiomes().stream(), OceanEngine.isletBiomes().stream()).forEach(key -> {
             Biome b = resolve(key);
             if (!biomes.contains(b)) {
                 biomes.add(b);

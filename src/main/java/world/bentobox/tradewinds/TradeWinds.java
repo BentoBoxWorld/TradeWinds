@@ -61,7 +61,7 @@ import world.bentobox.tradewinds.encounters.EncounterListener;
 import world.bentobox.tradewinds.encounters.EncounterService;
 import world.bentobox.tradewinds.economy.TradeDialog;
 import world.bentobox.tradewinds.economy.TradeListener;
-import world.bentobox.tradewinds.galaxy.RouteGraph;
+import world.bentobox.tradewinds.ocean.RouteGraph;
 import world.bentobox.tradewinds.listeners.IntersticePortalListener;
 import world.bentobox.tradewinds.listeners.ResidentProtectionListener;
 import world.bentobox.tradewinds.tasks.FuelWarningTask;
@@ -82,13 +82,13 @@ import world.bentobox.tradewinds.travel.SeaPositionTracker;
 import world.bentobox.tradewinds.travel.StarChartService;
 import world.bentobox.tradewinds.travel.StarterKit;
 import world.bentobox.tradewinds.travel.WarpService;
-import world.bentobox.tradewinds.galaxy.GalaxyConfig;
-import world.bentobox.tradewinds.galaxy.GalaxyEngine;
-import world.bentobox.tradewinds.galaxy.IslandType;
-import world.bentobox.tradewinds.galaxy.SeabedConfig;
-import world.bentobox.tradewinds.galaxy.ShapeConfig;
+import world.bentobox.tradewinds.ocean.OceanConfig;
+import world.bentobox.tradewinds.ocean.OceanEngine;
+import world.bentobox.tradewinds.ocean.IslandType;
+import world.bentobox.tradewinds.ocean.SeabedConfig;
+import world.bentobox.tradewinds.ocean.ShapeConfig;
 import world.bentobox.tradewinds.generator.ChunkGeneratorWorld;
-import world.bentobox.tradewinds.generator.GalaxyIslandRegistrar;
+import world.bentobox.tradewinds.generator.OceanIslandRegistrar;
 import world.bentobox.tradewinds.generator.TradeWindsBiomeProvider;
 
 /**
@@ -109,7 +109,7 @@ public class TradeWinds extends GameModeAddon {
     private @Nullable ChunkGenerator chunkGenerator;
     private final Config<Settings> configObject = new Config<>(this, Settings.class);
     private BiomeProvider biomeProvider;
-    private @Nullable GalaxyEngine galaxyEngine;
+    private @Nullable OceanEngine oceanEngine;
     private PlayerDataManager playerDataManager;
     private FuelService fuelService;
     private WarpService warpService;
@@ -129,7 +129,7 @@ public class TradeWinds extends GameModeAddon {
     private world.bentobox.tradewinds.travel.RankService rankService;
     private world.bentobox.tradewinds.travel.ChartLeaderboard chartLeaderboard;
     private world.bentobox.tradewinds.travel.IsletClaimService isletClaimService;
-    private world.bentobox.tradewinds.galaxy.IntersticeMap intersticeMap;
+    private world.bentobox.tradewinds.ocean.IntersticeMap intersticeMap;
     private IntersticeService intersticeService;
     private @Nullable EncounterService encounterService;
     private ReputationService reputationService;
@@ -283,7 +283,7 @@ public class TradeWinds extends GameModeAddon {
                     }
                 });
         // Register trading islands lazily as their center chunks first load
-        registerListener(new GalaxyIslandRegistrar(this));
+        registerListener(new OceanIslandRegistrar(this));
         // Seal both worlds against portals - the interstice is warp-failure-only
         registerListener(new IntersticePortalListener(this));
         // Travel: charting, fuel, warp
@@ -522,17 +522,17 @@ public class TradeWinds extends GameModeAddon {
      * afterwards; only the first registration sets these.
      */
     private void bootstrapSpawnIsland() {
-        GalaxyEngine engine = getGalaxyEngine(islandWorld.getSeed());
-        world.bentobox.tradewinds.galaxy.IslandSpec spec = engine.spawnIsland();
+        OceanEngine engine = getOceanEngine(islandWorld.getSeed());
+        world.bentobox.tradewinds.ocean.IslandSpec spec = engine.spawnIsland();
         // The plaza is deterministic geometry - no chunk needs to be loaded
-        world.bentobox.tradewinds.galaxy.DockPlan plan = engine.dockPlan(spec);
+        world.bentobox.tradewinds.ocean.DockPlan plan = engine.dockPlan(spec);
         // Three blocks off the plaza centre: clear of the bell that stands
         // there, and well inside the stall ring
         org.bukkit.Location plaza = new org.bukkit.Location(islandWorld, plan.plazaX() + 3.5,
-                getSettings().getSeaHeight() + GalaxyEngine.PLAZA_RISE + 1.0, plan.plazaZ() + 3.5);
+                getSettings().getSeaHeight() + OceanEngine.PLAZA_RISE + 1.0, plan.plazaZ() + 3.5);
         islandWorld.setSpawnLocation(plaza);
 
-        GalaxyIslandRegistrar registrar = new GalaxyIslandRegistrar(this);
+        OceanIslandRegistrar registrar = new OceanIslandRegistrar(this);
         world.bentobox.bentobox.database.objects.Island spawn = getIslands().getSpawn(islandWorld)
                 .orElseGet(() -> registrar.register(spec, islandWorld));
         if (spawn == null) {
@@ -719,50 +719,50 @@ public class TradeWinds extends GameModeAddon {
     }
 
     /**
-     * The seeded galaxy for the overworld. Created on first use because the
-     * effective seed may be the world's own seed (config galaxy.seed = 0), which
+     * The seeded ocean for the overworld. Created on first use because the
+     * effective seed may be the world's own seed (config ocean.seed = 0), which
      * is only known once the world exists.
      *
      * @param worldSeed the overworld seed, used when the config seed is 0
-     * @return the galaxy engine
+     * @return the ocean engine
      */
-    public GalaxyEngine getGalaxyEngine(long worldSeed) {
-        if (galaxyEngine == null) {
+    public OceanEngine getOceanEngine(long worldSeed) {
+        if (oceanEngine == null) {
             Settings s = getSettings();
-            long seed = s.getGalaxySeed() != 0 ? s.getGalaxySeed() : worldSeed;
-            galaxyEngine = new GalaxyEngine(new GalaxyConfig(seed, s.getGalaxyMinSeparation(),
-                    s.getIslandTerrainRadius(), s.getLandLift(), s.getGalaxyDensity(),
+            long seed = s.getOceanSeed() != 0 ? s.getOceanSeed() : worldSeed;
+            oceanEngine = new OceanEngine(new OceanConfig(seed, s.getOceanMinSeparation(),
+                    s.getIslandTerrainRadius(), s.getLandLift(), s.getOceanDensity(),
                     s.getStarterClusterMinIslands(), s.getBandRadius(), s.getSeaHeight(), typeWeights(),
                     spawnIslandType(), s.getWildIsletChance(), s.getWildIsletRadius(), s.getWildIsletGrid(),
                     s.getMushroomIsletChance(), seabedConfig(),
                     new ShapeConfig(s.getCoastRoughness(), s.getIslandHilliness())));
-            log("TradeWinds galaxy seed: " + seed);
+            log("TradeWinds ocean seed: " + seed);
         }
-        return galaxyEngine;
+        return oceanEngine;
     }
 
     /**
      * The interstice's feature map (wart shoals, watchtowers, the ship
-     * graveyard) - pure seeded geometry off the GALAXY seed (fixed
+     * graveyard) - pure seeded geometry off the OCEAN seed (fixed
      * 2026-08-07; it used to salt the interstice world's own seed, which is
      * random on every world creation, so each nether regen shuffled every
-     * feature and two servers sharing a galaxy seed got different
+     * feature and two servers sharing a ocean seed got different
      * interstices - against spec principle 5, "the seed is the world").
-     * The world-seed fallback only applies when galaxy.seed is 0.
+     * The world-seed fallback only applies when ocean.seed is 0.
      *
      * @param worldSeed the interstice world's seed, used only as the
-     *        galaxy.seed=0 fallback
+     *        ocean.seed=0 fallback
      * @return the map
      */
-    public world.bentobox.tradewinds.galaxy.IntersticeMap getIntersticeMap(long worldSeed) {
+    public world.bentobox.tradewinds.ocean.IntersticeMap getIntersticeMap(long worldSeed) {
         if (intersticeMap == null) {
             Settings s = getSettings();
-            long seed = s.getGalaxySeed() != 0 ? s.getGalaxySeed() : worldSeed;
-            intersticeMap = new world.bentobox.tradewinds.galaxy.IntersticeMap(seed ^ 0x1E7E2571CEL,
+            long seed = s.getOceanSeed() != 0 ? s.getOceanSeed() : worldSeed;
+            intersticeMap = new world.bentobox.tradewinds.ocean.IntersticeMap(seed ^ 0x1E7E2571CEL,
                     s.getIntersticeShoalGrid(), s.getIntersticeShoalChance(), s.getIntersticeShoalRadius(),
                     s.getIntersticeGrandShoalChance(), s.getIntersticeWatchtowerGrid(),
                     s.getIntersticeWatchtowerChance(),
-                    new world.bentobox.tradewinds.galaxy.IntersticeMap.WreckTuning(
+                    new world.bentobox.tradewinds.ocean.IntersticeMap.WreckTuning(
                         s.getIntersticeWreckGrid(), s.getIntersticeWreckChance(), s.getIntersticeWreckLootChance()));
         }
         return intersticeMap;
@@ -793,7 +793,7 @@ public class TradeWinds extends GameModeAddon {
         try {
             return IslandType.valueOf(name.toUpperCase(java.util.Locale.ENGLISH));
         } catch (IllegalArgumentException e) {
-            logError("Unknown galaxy.spawn-island-type: " + name + " - using a seeded type");
+            logError("Unknown ocean.spawn-island-type: " + name + " - using a seeded type");
             return null;
         }
     }
@@ -801,7 +801,7 @@ public class TradeWinds extends GameModeAddon {
     /**
      * Parse the configured island type weights; unknown type names are logged
      * and skipped (a zero total falls back to built-in defaults inside
-     * GalaxyConfig).
+     * OceanConfig).
      */
     private Map<IslandType, Integer> typeWeights() {
         Map<IslandType, Integer> weights = new EnumMap<>(IslandType.class);
@@ -809,17 +809,17 @@ public class TradeWinds extends GameModeAddon {
             try {
                 weights.put(IslandType.valueOf(name.toUpperCase(java.util.Locale.ENGLISH)), weight);
             } catch (IllegalArgumentException e) {
-                logError("Unknown island type in galaxy.type-weights: " + name);
+                logError("Unknown island type in ocean.type-weights: " + name);
             }
         });
         return weights;
     }
 
     /**
-     * @return the galaxy engine, or null if no world query has initialized it yet
+     * @return the ocean engine, or null if no world query has initialized it yet
      */
     @Nullable
-    public GalaxyEngine getGalaxyEngine() {
-        return galaxyEngine;
+    public OceanEngine getOceanEngine() {
+        return oceanEngine;
     }
 }

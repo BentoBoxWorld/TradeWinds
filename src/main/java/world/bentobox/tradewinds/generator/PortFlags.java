@@ -60,7 +60,7 @@ public final class PortFlags {
             Flags.HURT_ANIMALS, Flags.HURT_TAMED_ANIMALS, Flags.SHEARING, Flags.MILKING,
             Flags.BREEDING, Flags.LEASH, Flags.NAME_TAG, Flags.DYE, Flags.EGGS, Flags.TURTLE_EGGS,
 
-            // 5. No portals out of the galaxy
+            // 5. No portals out of the ocean
             Flags.NETHER_PORTAL, Flags.END_PORTAL);
 
     /**

@@ -14,9 +14,9 @@ import org.junit.jupiter.api.Test;
 
 import world.bentobox.tradewinds.CommonTestSetup;
 import world.bentobox.tradewinds.TradeWinds;
-import world.bentobox.tradewinds.galaxy.GalaxyConfig;
-import world.bentobox.tradewinds.galaxy.GalaxyEngine;
-import world.bentobox.tradewinds.galaxy.IslandSpec;
+import world.bentobox.tradewinds.ocean.OceanConfig;
+import world.bentobox.tradewinds.ocean.OceanEngine;
+import world.bentobox.tradewinds.ocean.IslandSpec;
 
 /**
  * Tests the nearest-islands query behind /twadmin islands and tpisland.
@@ -34,8 +34,8 @@ class AdminIslandsCommandTest extends CommonTestSetup {
     public void setUp() throws Exception {
         super.setUp();
         addon = mock(TradeWinds.class);
-        GalaxyEngine engine = new GalaxyEngine(new GalaxyConfig(SEED, 2500, 160, 45, 0.5, 5, 5000, 70));
-        when(addon.getGalaxyEngine(anyLong())).thenReturn(engine);
+        OceanEngine engine = new OceanEngine(new OceanConfig(SEED, 2500, 160, 45, 0.5, 5, 5000, 70));
+        when(addon.getOceanEngine(anyLong())).thenReturn(engine);
         when(addon.getOverWorld()).thenReturn(world);
         when(world.getSeed()).thenReturn(SEED);
     }

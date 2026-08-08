@@ -1,4 +1,4 @@
-package world.bentobox.tradewinds.galaxy;
+package world.bentobox.tradewinds.ocean;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,7 +10,7 @@ import java.util.OptionalInt;
  * soul-sand banks breaking the dark sea), wither watchtowers, and the ship
  * graveyard (wrecks of hulls that misjumped and never re-engaged). Everything
  * is a pure function of (seed, position) - no Bukkit imports, headlessly
- * testable - mirroring how the galaxy treats wild islets (spec principle 5).
+ * testable - mirroring how the ocean treats wild islets (spec principle 5).
  * <p>
  * Interstice-plan sources 1 and 5; the decorator draws crops, groves, quartz
  * and the tower masonry on top of what this class places.

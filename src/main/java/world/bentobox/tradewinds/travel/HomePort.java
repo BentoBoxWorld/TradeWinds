@@ -6,9 +6,9 @@ import java.util.UUID;
 import world.bentobox.bentobox.api.user.User;
 import world.bentobox.bentobox.database.objects.Island;
 import world.bentobox.tradewinds.TradeWinds;
-import world.bentobox.tradewinds.galaxy.IslandSpec;
-import world.bentobox.tradewinds.galaxy.IslandType;
-import world.bentobox.tradewinds.galaxy.SecurityBand;
+import world.bentobox.tradewinds.ocean.IslandSpec;
+import world.bentobox.tradewinds.ocean.IslandType;
+import world.bentobox.tradewinds.ocean.SecurityBand;
 
 /**
  * A claimed islet seen through the travel system's eyes.

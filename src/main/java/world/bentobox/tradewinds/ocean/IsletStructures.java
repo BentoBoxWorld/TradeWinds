@@ -1,4 +1,4 @@
-package world.bentobox.tradewinds.galaxy;
+package world.bentobox.tradewinds.ocean;
 
 import java.util.List;
 import java.util.Map;
@@ -8,7 +8,7 @@ import java.util.Optional;
  * Which small vanilla structure - if any - stands at the heart of a wild
  * islet. Pure selection, no Bukkit: the generator loads the chosen template
  * by name and places it; this class only decides, deterministically from
- * (seed, islet), so the same galaxy grows the same ruins everywhere.
+ * (seed, islet), so the same ocean grows the same ruins everywhere.
  * <p>
  * The menu is deliberately restricted to vanilla's single-piece NBT templates
  * (fossils, igloo tops, ruined portals, pillager camp props) - jigsaw-built
@@ -141,7 +141,7 @@ public final class IsletStructures {
             Map.entry("minecraft:bamboo_jungle", JUNGLES),
             Map.entry("minecraft:mangrove_swamp", List.of(FOSSILS)),
             // Pristine
-            Map.entry(GalaxyEngine.MUSHROOM_BIOME, NONE));
+            Map.entry(OceanEngine.MUSHROOM_BIOME, NONE));
 
     private IsletStructures() {
         // Static use only
@@ -152,7 +152,7 @@ public final class IsletStructures {
      * answer - which is what lets the placing chunk be generated in any order
      * on any server.
      *
-     * @param seed the galaxy seed
+     * @param seed the ocean seed
      * @param islet the islet
      * @param chance the configured per-islet chance (0-1)
      * @return the placement, or empty for an untouched islet

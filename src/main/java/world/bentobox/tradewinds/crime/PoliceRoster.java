@@ -5,7 +5,7 @@ import java.util.List;
 
 /**
  * Who the law sends, and how many. Pure decision logic, unit tested headlessly
- * like the galaxy - the Bukkit half only turns these into entities.
+ * like the ocean - the Bukkit half only turns these into entities.
  * <p>
  * Two rules shape every roster. Units are picked by <b>mobility</b>, so each
  * one denies a different escape (spec section 7): golems take anyone ashore,

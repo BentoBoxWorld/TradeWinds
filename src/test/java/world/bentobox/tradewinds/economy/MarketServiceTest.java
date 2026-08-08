@@ -26,11 +26,11 @@ import world.bentobox.tradewinds.TestHolds;
 import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.dataobjects.BoatHold;
 import world.bentobox.tradewinds.dataobjects.IslandDataManager;
-import world.bentobox.tradewinds.galaxy.GalaxyConfig;
-import world.bentobox.tradewinds.galaxy.GalaxyEngine;
-import world.bentobox.tradewinds.galaxy.IslandSpec;
-import world.bentobox.tradewinds.galaxy.IslandType;
-import world.bentobox.tradewinds.galaxy.SecurityBand;
+import world.bentobox.tradewinds.ocean.OceanConfig;
+import world.bentobox.tradewinds.ocean.OceanEngine;
+import world.bentobox.tradewinds.ocean.IslandSpec;
+import world.bentobox.tradewinds.ocean.IslandType;
+import world.bentobox.tradewinds.ocean.SecurityBand;
 import world.bentobox.tradewinds.travel.BoatRanks;
 import world.bentobox.tradewinds.travel.BoatService;
 import world.bentobox.tradewinds.travel.HoldService;
@@ -76,10 +76,10 @@ class MarketServiceTest extends CommonTestSetup {
         when(addon.getPlugin()).thenReturn(plugin);
         when(plugin.getVault()).thenReturn(Optional.of(vault));
 
-        // Mock GalaxyEngine
-        when(addon.getGalaxyEngine(org.mockito.ArgumentMatchers.anyLong()))
-                .thenReturn(new GalaxyEngine(new GalaxyConfig(123L, 2500, 160, 45, 0.0, 0, 5000, 70,
-                        GalaxyConfig.defaultTypeWeights(), null)));
+        // Mock OceanEngine
+        when(addon.getOceanEngine(org.mockito.ArgumentMatchers.anyLong()))
+                .thenReturn(new OceanEngine(new OceanConfig(123L, 2500, 160, 45, 0.0, 0, 5000, 70,
+                        OceanConfig.defaultTypeWeights(), null)));
 
         // Install real hold manager
         holds = TestHolds.install(addon);

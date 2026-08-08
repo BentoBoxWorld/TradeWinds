@@ -14,7 +14,7 @@ import world.bentobox.bentobox.api.metadata.MetaDataValue;
 import world.bentobox.bentobox.database.objects.Island;
 import world.bentobox.bentobox.lists.Flags;
 import world.bentobox.tradewinds.TradeWinds;
-import world.bentobox.tradewinds.galaxy.IslandSpec;
+import world.bentobox.tradewinds.ocean.IslandSpec;
 
 /**
  * Registers trading islands as unowned BentoBox islands, lazily: when the chunk
@@ -25,7 +25,7 @@ import world.bentobox.tradewinds.galaxy.IslandSpec;
  *
  * @author tastybento
  */
-public class GalaxyIslandRegistrar implements Listener {
+public class OceanIslandRegistrar implements Listener {
 
     public static final String META_TYPE = "tradewinds-type";
     public static final String META_BAND = "tradewinds-band";
@@ -34,7 +34,7 @@ public class GalaxyIslandRegistrar implements Listener {
     // Cells already handled this session - cheap re-load guard
     private final Set<Long> handled = ConcurrentHashMap.newKeySet();
 
-    public GalaxyIslandRegistrar(TradeWinds addon) {
+    public OceanIslandRegistrar(TradeWinds addon) {
         this.addon = addon;
     }
 
@@ -47,7 +47,7 @@ public class GalaxyIslandRegistrar implements Listener {
         int minZ = event.getChunk().getZ() << 4;
         // Islands whose center falls inside this chunk (searching the chunk's
         // center with an 8-block box covers exactly the chunk)
-        addon.getGalaxyEngine(event.getWorld().getSeed()).islandsNear(minX + 8, minZ + 8, 8).stream()
+        addon.getOceanEngine(event.getWorld().getSeed()).islandsNear(minX + 8, minZ + 8, 8).stream()
                 .filter(s -> s.centerX() >= minX && s.centerX() < minX + 16
                         && s.centerZ() >= minZ && s.centerZ() < minZ + 16)
                 .forEach(s -> register(s, event));

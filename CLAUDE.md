@@ -22,7 +22,7 @@ second guard: it also refuses while `latest.log` has been written in the last
 minute, so a just-stopped server needs about a minute's wait - wait it out
 rather than bypass it.
 
-After any change to the hold, boat or galaxy model, the test server needs a
+After any change to the hold, boat or ocean model, the test server needs a
 **clean slate**: delete the `tradewinds_world*` folders and the `BoatHold`,
 `TWPlayerData`, `TWIslandData` database folders. Stale records from a previous
 model are indistinguishable from bugs. Say so when handing a build over.
@@ -46,9 +46,9 @@ Load-bearing design rules (from the spec — breaking one is a bug):
 trading transacts only against the **virtual hold**; **trader-bought** cargo
 leaves the hold only by sale or destruction (player-loaded salvage may be
 withdrawn — narrowed 2026-08-03, see `docs/tradewinds-salvage-plan.md`, and the
-distinction is a PDC mark, `travel/CargoMark`); everything downstream of the galaxy seed is a pure
+distinction is a PDC mark, `travel/CargoMark`); everything downstream of the ocean seed is a pure
 function of (seed, position) with **no Bukkit imports** (package
-`world.bentobox.tradewinds.galaxy`), unit-tested headlessly; no End world ever;
+`world.bentobox.tradewinds.ocean`), unit-tested headlessly; no End world ever;
 interstice re-engage is always free; police mobs never drop loot.
 
 ## The boat/hold model (read before touching cargo or boats)

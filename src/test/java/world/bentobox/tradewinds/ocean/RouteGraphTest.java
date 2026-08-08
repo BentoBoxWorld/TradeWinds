@@ -1,4 +1,4 @@
-package world.bentobox.tradewinds.galaxy;
+package world.bentobox.tradewinds.ocean;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
  */
 class RouteGraphTest {
 
-    private final GalaxyEngine engine = new GalaxyEngine(new GalaxyConfig(42L, 2500, 160, 45, 1.0, 0, 5000, 70));
+    private final OceanEngine engine = new OceanEngine(new OceanConfig(42L, 2500, 160, 45, 1.0, 0, 5000, 70));
     private final IslandSpec a = engine.islandInCell(0, 0).orElseThrow();
     private final IslandSpec b = engine.islandInCell(2, 1).orElseThrow();
 

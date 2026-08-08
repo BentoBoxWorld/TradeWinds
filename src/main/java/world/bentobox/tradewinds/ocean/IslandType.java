@@ -1,11 +1,11 @@
-package world.bentobox.tradewinds.galaxy;
+package world.bentobox.tradewinds.ocean;
 
 import java.util.List;
 
 /**
  * Economic character of a trading island. Drives the market modifiers (Stage 4),
  * the blueprint decoration set (Stage 2), and the island's biome. Biomes are
- * plain namespaced keys here - the galaxy package has no Bukkit imports; the
+ * plain namespaced keys here - the ocean package has no Bukkit imports; the
  * generator resolves keys to Biome instances at the edge.
  *
  * @author tastybento

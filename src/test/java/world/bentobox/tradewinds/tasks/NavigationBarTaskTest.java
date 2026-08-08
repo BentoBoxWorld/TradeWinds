@@ -8,11 +8,11 @@ import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 import net.kyori.adventure.bossbar.BossBar;
-import world.bentobox.tradewinds.galaxy.DockPlan;
-import world.bentobox.tradewinds.galaxy.GalaxyConfig;
-import world.bentobox.tradewinds.galaxy.GalaxyEngine;
-import world.bentobox.tradewinds.galaxy.IslandSpec;
-import world.bentobox.tradewinds.galaxy.SecurityBand;
+import world.bentobox.tradewinds.ocean.DockPlan;
+import world.bentobox.tradewinds.ocean.OceanConfig;
+import world.bentobox.tradewinds.ocean.OceanEngine;
+import world.bentobox.tradewinds.ocean.IslandSpec;
+import world.bentobox.tradewinds.ocean.SecurityBand;
 
 /**
  * Tests the navigation bar reading: shown only in island waters, distance to
@@ -22,7 +22,7 @@ import world.bentobox.tradewinds.galaxy.SecurityBand;
  */
 class NavigationBarTaskTest {
 
-    private final GalaxyEngine engine = new GalaxyEngine(new GalaxyConfig(11L, 2500, 160, 45, 1.0, 0, 5000, 70));
+    private final OceanEngine engine = new OceanEngine(new OceanConfig(11L, 2500, 160, 45, 1.0, 0, 5000, 70));
 
     @Test
     void testReadingInIslandWaters() {
@@ -47,7 +47,7 @@ class NavigationBarTaskTest {
 
     @Test
     void testNoReadingInOpenOcean() {
-        GalaxyEngine empty = new GalaxyEngine(new GalaxyConfig(11L, 2500, 160, 45, 0.0, 0, 5000, 70));
+        OceanEngine empty = new OceanEngine(new OceanConfig(11L, 2500, 160, 45, 0.0, 0, 5000, 70));
         assertTrue(NavigationBarTask.reading(empty, 500_000, 500_000, 1000).isEmpty());
     }
 

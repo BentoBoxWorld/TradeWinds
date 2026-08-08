@@ -24,7 +24,7 @@ import world.bentobox.bentobox.hooks.VaultHook;
 import world.bentobox.tradewinds.CommonTestSetup;
 import world.bentobox.tradewinds.Settings;
 import world.bentobox.tradewinds.TradeWinds;
-import world.bentobox.tradewinds.galaxy.SecurityBand;
+import world.bentobox.tradewinds.ocean.SecurityBand;
 
 /**
  * Tests for ReputationService: crime recording, fines, bounties, and decay.

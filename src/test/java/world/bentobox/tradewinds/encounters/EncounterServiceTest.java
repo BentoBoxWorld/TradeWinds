@@ -44,8 +44,8 @@ class EncounterServiceTest extends CommonTestSetup {
         when(addon.getSettings()).thenReturn(new Settings());
         when(addon.getBoatRanks()).thenReturn(new BoatRanks(addon));
         when(addon.getOverWorld()).thenReturn(world);
-        world.bentobox.tradewinds.galaxy.GalaxyEngine engine = mock(world.bentobox.tradewinds.galaxy.GalaxyEngine.class);
-        when(addon.getGalaxyEngine(anyLong())).thenReturn(engine);
+        world.bentobox.tradewinds.ocean.OceanEngine engine = mock(world.bentobox.tradewinds.ocean.OceanEngine.class);
+        when(addon.getOceanEngine(anyLong())).thenReturn(engine);
         TestHolds.install(addon);
         when(addon.getFuelService()).thenReturn(new FuelService(addon));
         when(addon.getHoldService()).thenReturn(new HoldService(addon));

@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.bukkit.entity.EntityType;
 
-import world.bentobox.tradewinds.galaxy.SecurityBand;
+import world.bentobox.tradewinds.ocean.SecurityBand;
 
 /**
  * The things that find you on the open sea. Each encounter names its mobs, the

@@ -13,7 +13,7 @@ import world.bentobox.bentobox.database.objects.DataObject;
 import world.bentobox.bentobox.database.objects.Table;
 
 /**
- * Per-trading-island market state, keyed by galaxy cell ("cellX,cellZ"):
+ * Per-trading-island market state, keyed by ocean cell ("cellX,cellZ"):
  * stock per trade category (relative to equilibrium 0) and the last decay
  * timestamp. This is what makes markets remember being flooded or bought out
  * across restarts (spec §9).

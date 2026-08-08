@@ -6,8 +6,8 @@ import world.bentobox.bentobox.api.commands.CompositeCommand;
 import world.bentobox.bentobox.api.localization.TextVariables;
 import world.bentobox.bentobox.api.user.User;
 import world.bentobox.tradewinds.TradeWinds;
-import world.bentobox.tradewinds.galaxy.GalaxyEngine;
-import world.bentobox.tradewinds.generator.GalaxyIslandRegistrar;
+import world.bentobox.tradewinds.ocean.OceanEngine;
+import world.bentobox.tradewinds.generator.OceanIslandRegistrar;
 
 /**
  * Re-applies the configured security-band flags to every registered trading
@@ -31,8 +31,8 @@ public class AdminReflagCommand extends CompositeCommand {
     @Override
     public boolean execute(User user, String label, List<String> args) {
         TradeWinds addon = getAddon();
-        GalaxyEngine engine = addon.getGalaxyEngine(addon.getOverWorld().getSeed());
-        GalaxyIslandRegistrar registrar = new GalaxyIslandRegistrar(addon);
+        OceanEngine engine = addon.getOceanEngine(addon.getOverWorld().getSeed());
+        OceanIslandRegistrar registrar = new OceanIslandRegistrar(addon);
         long count = addon.getIslands().getIslands(addon.getOverWorld()).stream()
                 .filter(island -> island.getOwner() == null && island.getCenter() != null)
                 .map(island -> engine.islandAt(island.getCenter().getBlockX(), island.getCenter().getBlockZ())

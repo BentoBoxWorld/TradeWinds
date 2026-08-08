@@ -18,7 +18,7 @@ import org.bukkit.loot.LootTable;
 import org.eclipse.jdt.annotation.NonNull;
 
 import world.bentobox.tradewinds.TradeWinds;
-import world.bentobox.tradewinds.galaxy.IntersticeMap;
+import world.bentobox.tradewinds.ocean.IntersticeMap;
 
 /**
  * The interstice's furniture (tradewinds-interstice-plan.md). Braziers were

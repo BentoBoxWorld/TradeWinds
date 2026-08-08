@@ -11,7 +11,7 @@ import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.persistence.PersistentDataType;
 
 import world.bentobox.tradewinds.TradeWinds;
-import world.bentobox.tradewinds.galaxy.IslandSpec;
+import world.bentobox.tradewinds.ocean.IslandSpec;
 import world.bentobox.tradewinds.generator.IslandDecorator;
 
 /**
@@ -36,7 +36,7 @@ public class TradeListener implements Listener {
         }
         event.setCancelled(true);
         Player player = event.getPlayer();
-        Optional<IslandSpec> spec = addon.getGalaxyEngine(addon.getOverWorld().getSeed())
+        Optional<IslandSpec> spec = addon.getOceanEngine(addon.getOverWorld().getSeed())
                 .islandAt(villager.getLocation().getBlockX(), villager.getLocation().getBlockZ());
         spec.ifPresent(island -> addon.getTradeDialog().openMain(player, island));
     }

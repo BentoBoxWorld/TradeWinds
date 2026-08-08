@@ -7,8 +7,8 @@ import world.bentobox.bentobox.api.commands.CompositeCommand;
 import world.bentobox.bentobox.api.localization.TextVariables;
 import world.bentobox.bentobox.api.user.User;
 import world.bentobox.tradewinds.TradeWinds;
-import world.bentobox.tradewinds.galaxy.GalaxyEngine;
-import world.bentobox.tradewinds.galaxy.IslandSpec;
+import world.bentobox.tradewinds.ocean.OceanEngine;
+import world.bentobox.tradewinds.ocean.IslandSpec;
 
 /**
  * Shows the player's chart: every island they have discovered, nearest first.
@@ -59,7 +59,7 @@ public class TWChartCommand extends CompositeCommand {
      * there, nearest first, plus where your boats lie.
      */
     private void chartList(TradeWinds addon, User user) {
-        GalaxyEngine engine = addon.getGalaxyEngine(addon.getOverWorld().getSeed());
+        OceanEngine engine = addon.getOceanEngine(addon.getOverWorld().getSeed());
         int x = getWorld().equals(user.getWorld()) ? user.getLocation().getBlockX() : 0;
         int z = getWorld().equals(user.getWorld()) ? user.getLocation().getBlockZ() : 0;
         List<IslandSpec> charted = addon.getPlayerDataManager().get(user.getUniqueId()).getChartedIslands().stream()
@@ -137,7 +137,7 @@ public class TWChartCommand extends CompositeCommand {
      * warps launch from an island, so that is the origin a cost is measured
      * from when there is one.
      */
-    private java.util.Optional<IslandSpec> portAt(GalaxyEngine engine, int x, int z) {
+    private java.util.Optional<IslandSpec> portAt(OceanEngine engine, int x, int z) {
         int range = ((TradeWinds) getAddon()).getSettings().getIslandProtectionRange();
         return engine.islandsNear(x, z, range).stream()
                 .filter(s -> s.distanceSquared(x, z) <= (long) range * range).findFirst();

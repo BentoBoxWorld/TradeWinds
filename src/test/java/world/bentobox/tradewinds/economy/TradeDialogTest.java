@@ -26,9 +26,9 @@ import world.bentobox.tradewinds.TestHolds;
 import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.dataobjects.BoatHold;
 import world.bentobox.tradewinds.dataobjects.IslandDataManager;
-import world.bentobox.tradewinds.galaxy.IslandSpec;
-import world.bentobox.tradewinds.galaxy.IslandType;
-import world.bentobox.tradewinds.galaxy.SecurityBand;
+import world.bentobox.tradewinds.ocean.IslandSpec;
+import world.bentobox.tradewinds.ocean.IslandType;
+import world.bentobox.tradewinds.ocean.SecurityBand;
 import world.bentobox.tradewinds.travel.BoatService;
 import world.bentobox.tradewinds.travel.HoldService;
 

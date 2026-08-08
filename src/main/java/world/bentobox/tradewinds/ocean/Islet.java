@@ -1,4 +1,4 @@
-package world.bentobox.tradewinds.galaxy;
+package world.bentobox.tradewinds.ocean;
 
 /**
  * A wild islet: unowned, unnamed land between the trading islands. Free to
@@ -38,6 +38,6 @@ public record Islet(int centerX, int centerZ, int radius, String biomeKey) {
      * @return true for mushroom fields
      */
     public boolean isMushroom() {
-        return GalaxyEngine.MUSHROOM_BIOME.equals(biomeKey);
+        return OceanEngine.MUSHROOM_BIOME.equals(biomeKey);
     }
 }

@@ -27,9 +27,9 @@ import world.bentobox.bentobox.util.Util;
 import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.api.events.TWWarpCompletedEvent;
 import world.bentobox.tradewinds.api.events.TWWarpEvent;
-import world.bentobox.tradewinds.galaxy.GalaxyEngine;
-import world.bentobox.tradewinds.galaxy.IslandSpec;
-import world.bentobox.tradewinds.galaxy.RouteGraph;
+import world.bentobox.tradewinds.ocean.OceanEngine;
+import world.bentobox.tradewinds.ocean.IslandSpec;
+import world.bentobox.tradewinds.ocean.RouteGraph;
 
 /**
  * The warp: fuel-powered jump between charted islands. Opens the Paper dialog
@@ -67,7 +67,7 @@ public class WarpService {
      * kept separate from dialog rendering for tests.
      */
     public List<Destination> destinations(Player player, IslandSpec origin, double fuelAboard) {
-        GalaxyEngine engine = addon.getGalaxyEngine(addon.getOverWorld().getSeed());
+        OceanEngine engine = addon.getOceanEngine(addon.getOverWorld().getSeed());
         RouteGraph routes = addon.getRouteGraph();
         List<Destination> ports = addon.getPlayerDataManager().get(player.getUniqueId()).getChartedIslands()
                 .stream()
@@ -269,7 +269,7 @@ public class WarpService {
         // and kill them ("suffocated in a wall").
         // Outward from the island, never inward: a ragged coast can reach the
         // arrival ring, and correcting sideways would drop the sailor in a bay
-        Location target = SeaArrival.openSeaOutward(addon.getGalaxyEngine(addon.getOverWorld().getSeed()),
+        Location target = SeaArrival.openSeaOutward(addon.getOceanEngine(addon.getOverWorld().getSeed()),
                 addon.getOverWorld(), to.centerX(), to.centerZ(), arrive[0], arrive[1],
                 addon.getSettings().getSeaHeight());
         // Face the boat (and the sailor) at the way in: the destination's
@@ -282,8 +282,8 @@ public class WarpService {
             pierX = to.centerX();
             pierZ = to.centerZ();
         } else {
-            world.bentobox.tradewinds.galaxy.DockPlan plan = addon
-                    .getGalaxyEngine(addon.getOverWorld().getSeed()).dockPlan(to);
+            world.bentobox.tradewinds.ocean.DockPlan plan = addon
+                    .getOceanEngine(addon.getOverWorld().getSeed()).dockPlan(to);
             // The dock FLAG: the banner near the pier end - the decorator
             // plants it two blocks short, and it is what a sailor steers for
             pierX = to.centerX() + Math.cos(plan.bearing()) * (plan.dockEnd() - 2);

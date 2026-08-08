@@ -15,7 +15,7 @@ public enum TradeCategory {
     CROPS, FOOD, FISH, WOOD, STONE, ORES, METALS, GEMS, LUXURY, MISC,
 
     /**
-     * Not a recognised trade good anywhere in the galaxy - scavenged loot,
+     * Not a recognised trade good anywhere in the ocean - scavenged loot,
      * worn gear, mob drops, odd blocks. No island type produces or demands it,
      * so it gets neutral type affinity, its own stock pool, and a discount
      * (see {@code economy.salvage-discount}).

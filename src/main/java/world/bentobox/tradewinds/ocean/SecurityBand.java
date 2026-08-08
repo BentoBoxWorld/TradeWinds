@@ -1,4 +1,4 @@
-package world.bentobox.tradewinds.galaxy;
+package world.bentobox.tradewinds.ocean;
 
 /**
  * Island security bands, EVE-style: safest nearest spawn, lawless out in the

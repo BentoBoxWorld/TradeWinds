@@ -11,7 +11,7 @@ import com.google.common.base.Enums;
 
 import world.bentobox.bentobox.api.user.User;
 import world.bentobox.tradewinds.TradeWinds;
-import world.bentobox.tradewinds.galaxy.IslandSpec;
+import world.bentobox.tradewinds.ocean.IslandSpec;
 
 /**
  * Makes the invisible lines visible: every trading island has two boundaries
@@ -80,7 +80,7 @@ public class BorderCurtainTask {
         int edgeRing = addon.getSettings().getIslandDistance();
         for (Player player : world.getPlayers()) {
             User user = User.getInstance(player);
-            for (IslandSpec spec : addon.getGalaxyEngine(world.getSeed()).islandsNear(
+            for (IslandSpec spec : addon.getOceanEngine(world.getSeed()).islandsNear(
                     player.getLocation().getBlockX(), player.getLocation().getBlockZ(), edgeRing + view)) {
                 drawRing(user, player, spec, warpRing, view, warpColor);
                 drawRing(user, player, spec, edgeRing, view, edgeColor);

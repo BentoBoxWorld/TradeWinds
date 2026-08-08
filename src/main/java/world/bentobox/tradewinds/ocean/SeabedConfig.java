@@ -1,4 +1,4 @@
-package world.bentobox.tradewinds.galaxy;
+package world.bentobox.tradewinds.ocean;
 
 /**
  * Shape of the ocean floor. All depths are in blocks below sea level, so the
@@ -56,7 +56,7 @@ public record SeabedConfig(int shelfDepth, int abyssDepth, int islandShelfDepth,
 
     public SeabedConfig {
         // A floor that rises above the waves would make land outside the
-        // galaxy's islands (spec principle 6), so depths are kept positive and
+        // ocean's islands (spec principle 6), so depths are kept positive and
         // ordered shallow-to-deep
         shelfDepth = Math.max(1, shelfDepth);
         abyssDepth = Math.max(shelfDepth, abyssDepth);

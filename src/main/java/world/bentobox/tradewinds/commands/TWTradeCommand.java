@@ -6,7 +6,7 @@ import java.util.Optional;
 import world.bentobox.bentobox.api.commands.CompositeCommand;
 import world.bentobox.bentobox.api.user.User;
 import world.bentobox.tradewinds.TradeWinds;
-import world.bentobox.tradewinds.galaxy.IslandSpec;
+import world.bentobox.tradewinds.ocean.IslandSpec;
 
 /**
  * Opens the island market from anywhere inside its protection range - the
@@ -37,7 +37,7 @@ public class TWTradeCommand extends CompositeCommand {
         int x = user.getLocation().getBlockX();
         int z = user.getLocation().getBlockZ();
         int range = addon.getSettings().getIslandProtectionRange();
-        Optional<IslandSpec> spec = addon.getGalaxyEngine(getWorld().getSeed()).islandsNear(x, z, range).stream()
+        Optional<IslandSpec> spec = addon.getOceanEngine(getWorld().getSeed()).islandsNear(x, z, range).stream()
                 .filter(s -> s.distanceSquared(x, z) <= (long) range * range).findFirst();
         if (spec.isEmpty()) {
             user.sendMessage("tradewinds.trade.not-at-market");

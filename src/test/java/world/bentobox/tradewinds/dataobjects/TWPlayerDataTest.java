@@ -6,11 +6,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
-import world.bentobox.tradewinds.galaxy.GalaxyConfig;
-import world.bentobox.tradewinds.galaxy.GalaxyEngine;
-import world.bentobox.tradewinds.galaxy.IslandSpec;
-import world.bentobox.tradewinds.galaxy.IslandType;
-import world.bentobox.tradewinds.galaxy.SecurityBand;
+import world.bentobox.tradewinds.ocean.OceanConfig;
+import world.bentobox.tradewinds.ocean.OceanEngine;
+import world.bentobox.tradewinds.ocean.IslandSpec;
+import world.bentobox.tradewinds.ocean.IslandType;
+import world.bentobox.tradewinds.ocean.SecurityBand;
 
 /**
  * Tests the player chart data object.
@@ -19,7 +19,7 @@ import world.bentobox.tradewinds.galaxy.SecurityBand;
  */
 class TWPlayerDataTest {
 
-    private final GalaxyEngine engine = new GalaxyEngine(new GalaxyConfig(9L, 2500, 160, 45, 1.0, 0, 5000, 70));
+    private final OceanEngine engine = new OceanEngine(new OceanConfig(9L, 2500, 160, 45, 1.0, 0, 5000, 70));
 
     @Test
     void testCharting() {

@@ -22,10 +22,10 @@ import world.bentobox.tradewinds.Settings;
 import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.dataobjects.PlayerDataManager;
 import world.bentobox.tradewinds.dataobjects.TWPlayerData;
-import world.bentobox.tradewinds.galaxy.GalaxyConfig;
-import world.bentobox.tradewinds.galaxy.GalaxyEngine;
-import world.bentobox.tradewinds.galaxy.IslandSpec;
-import world.bentobox.tradewinds.galaxy.RouteGraph;
+import world.bentobox.tradewinds.ocean.OceanConfig;
+import world.bentobox.tradewinds.ocean.OceanEngine;
+import world.bentobox.tradewinds.ocean.IslandSpec;
+import world.bentobox.tradewinds.ocean.RouteGraph;
 
 /**
  * The member-only warp node (Stage 7b): a claimed islet travels as a
@@ -41,7 +41,7 @@ class HomeWarpTest extends CommonTestSetup {
     private TradeWinds addon;
     private Settings settings;
     private WarpService service;
-    private GalaxyEngine engine;
+    private OceanEngine engine;
     private IslandSpec origin;
 
     @Override
@@ -53,8 +53,8 @@ class HomeWarpTest extends CommonTestSetup {
         when(addon.getSettings()).thenReturn(settings);
         when(addon.getOverWorld()).thenReturn(world);
         when(world.getSeed()).thenReturn(SEED);
-        engine = new GalaxyEngine(new GalaxyConfig(SEED, 2500, 160, 45, 1.0, 0, 5000, 70));
-        when(addon.getGalaxyEngine(anyLong())).thenReturn(engine);
+        engine = new OceanEngine(new OceanConfig(SEED, 2500, 160, 45, 1.0, 0, 5000, 70));
+        when(addon.getOceanEngine(anyLong())).thenReturn(engine);
         when(addon.getRouteGraph()).thenReturn(new RouteGraph(0.01, Map.of()));
         when(addon.getIslands()).thenReturn(im);
         origin = engine.islandInCell(0, 0).orElseThrow();

@@ -7,11 +7,11 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import world.bentobox.tradewinds.galaxy.DockPlan;
-import world.bentobox.tradewinds.galaxy.GalaxyConfig;
-import world.bentobox.tradewinds.galaxy.GalaxyEngine;
-import world.bentobox.tradewinds.galaxy.IslandSpec;
-import world.bentobox.tradewinds.galaxy.SecurityBand;
+import world.bentobox.tradewinds.ocean.DockPlan;
+import world.bentobox.tradewinds.ocean.OceanConfig;
+import world.bentobox.tradewinds.ocean.OceanEngine;
+import world.bentobox.tradewinds.ocean.IslandSpec;
+import world.bentobox.tradewinds.ocean.SecurityBand;
 
 /**
  * Pure tests of the rower navigation math: hologram marker geometry and star
@@ -21,7 +21,7 @@ import world.bentobox.tradewinds.galaxy.SecurityBand;
  */
 class ChartNavigationTest {
 
-    private final GalaxyEngine engine = new GalaxyEngine(new GalaxyConfig(77L, 2500, 160, 45, 1.0, 0, 5000, 70));
+    private final OceanEngine engine = new OceanEngine(new OceanConfig(77L, 2500, 160, 45, 1.0, 0, 5000, 70));
 
     @Test
     void testFuelRangeIsWhatTheFuelActuallyBuys() {
@@ -96,9 +96,9 @@ class ChartNavigationTest {
     @Test
     void testSharedBearingStacksByDistance() {
         // Two islands due east at different ranges: nearest sits lowest
-        IslandSpec near = new IslandSpec(0, 0, 3000, 0, world.bentobox.tradewinds.galaxy.IslandType.FISHING,
+        IslandSpec near = new IslandSpec(0, 0, 3000, 0, world.bentobox.tradewinds.ocean.IslandType.FISHING,
                 SecurityBand.SAFE, "minecraft:beach", "Nearby");
-        IslandSpec far = new IslandSpec(1, 0, 8000, 0, world.bentobox.tradewinds.galaxy.IslandType.MINING,
+        IslandSpec far = new IslandSpec(1, 0, 8000, 0, world.bentobox.tradewinds.ocean.IslandType.MINING,
                 SecurityBand.SAFE, "minecraft:stony_peaks", "Distant");
         List<ChartHolograms.Marker> markers = ChartHolograms.markers(List.of(far, near), 0, 0, 10.0, 12);
         assertEquals("Nearby", markers.get(0).island().name());

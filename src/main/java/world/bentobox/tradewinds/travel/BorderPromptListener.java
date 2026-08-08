@@ -15,8 +15,8 @@ import org.bukkit.event.vehicle.VehicleMoveEvent;
 
 import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.api.events.TWWarpCompletedEvent;
-import world.bentobox.tradewinds.galaxy.GalaxyEngine;
-import world.bentobox.tradewinds.galaxy.IslandSpec;
+import world.bentobox.tradewinds.ocean.OceanEngine;
+import world.bentobox.tradewinds.ocean.IslandSpec;
 
 /**
  * The warp trigger: reaching an island's border in a boat offers the warp
@@ -126,7 +126,7 @@ public class BorderPromptListener implements Listener {
      * skip it.
      */
     Optional<IslandSpec> originIslandNearBorder(int x, int z) {
-        GalaxyEngine engine = addon.getGalaxyEngine(addon.getOverWorld().getSeed());
+        OceanEngine engine = addon.getOceanEngine(addon.getOverWorld().getSeed());
         int border = addon.getSettings().getIslandProtectionRange();
         int trigger = addon.getSettings().getWarpTriggerDistance();
         long outerSq = (long) (border + trigger) * (border + trigger);

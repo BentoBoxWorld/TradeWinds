@@ -12,7 +12,7 @@ import org.bukkit.scheduler.BukkitTask;
 import world.bentobox.bentobox.api.localization.TextVariables;
 import world.bentobox.bentobox.api.user.User;
 import world.bentobox.tradewinds.TradeWinds;
-import world.bentobox.tradewinds.galaxy.IslandSpec;
+import world.bentobox.tradewinds.ocean.IslandSpec;
 import world.bentobox.tradewinds.travel.FuelWarning;
 
 /**
@@ -99,7 +99,7 @@ public class FuelWarningTask implements Runnable {
         int x = player.getLocation().getBlockX();
         int z = player.getLocation().getBlockZ();
         int range = addon.getSettings().getIslandProtectionRange();
-        return addon.getGalaxyEngine(addon.getOverWorld().getSeed()).islandsNear(x, z, range).stream()
+        return addon.getOceanEngine(addon.getOverWorld().getSeed()).islandsNear(x, z, range).stream()
                 .filter(s -> s.distanceSquared(x, z) <= (long) range * range).findFirst();
     }
 }

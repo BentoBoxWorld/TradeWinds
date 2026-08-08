@@ -1,11 +1,11 @@
-package world.bentobox.tradewinds.galaxy;
+package world.bentobox.tradewinds.ocean;
 
 /**
- * Everything the galaxy knows about one trading island, derived purely from
+ * Everything the ocean knows about one trading island, derived purely from
  * (seed, cell). Two engines with the same seed produce identical specs.
  *
- * @param cellX galaxy grid cell x
- * @param cellZ galaxy grid cell z
+ * @param cellX ocean grid cell x
+ * @param cellZ ocean grid cell z
  * @param centerX island center block x
  * @param centerZ island center block z
  * @param type economic character

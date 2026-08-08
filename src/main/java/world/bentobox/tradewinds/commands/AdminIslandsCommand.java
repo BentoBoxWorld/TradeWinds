@@ -7,10 +7,10 @@ import world.bentobox.bentobox.api.commands.CompositeCommand;
 import world.bentobox.bentobox.api.localization.TextVariables;
 import world.bentobox.bentobox.api.user.User;
 import world.bentobox.tradewinds.TradeWinds;
-import world.bentobox.tradewinds.galaxy.IslandSpec;
+import world.bentobox.tradewinds.ocean.IslandSpec;
 
 /**
- * Lists the trading islands nearest the caller (galaxy-engine query, so it
+ * Lists the trading islands nearest the caller (ocean-engine query, so it
  * works before any chunks are generated - this is the discovery tool for
  * admins and testing). The index shown is the argument for
  * {@code /twadmin tpisland <index>}.
@@ -37,7 +37,7 @@ public class AdminIslandsCommand extends CompositeCommand {
      * The trading islands nearest a position, closest first.
      */
     static List<IslandSpec> nearest(TradeWinds addon, int x, int z) {
-        return addon.getGalaxyEngine(addon.getOverWorld().getSeed()).islandsNear(x, z, SEARCH_RADIUS).stream()
+        return addon.getOceanEngine(addon.getOverWorld().getSeed()).islandsNear(x, z, SEARCH_RADIUS).stream()
                 .sorted(Comparator.comparingLong(s -> s.distanceSquared(x, z))).limit(COUNT).toList();
     }
 

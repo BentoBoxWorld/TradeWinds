@@ -6,13 +6,13 @@ import java.util.Map;
 import org.bukkit.Material;
 import org.bukkit.entity.Villager;
 
-import world.bentobox.tradewinds.galaxy.IslandType;
-import world.bentobox.tradewinds.galaxy.SurfaceKind;
+import world.bentobox.tradewinds.ocean.IslandType;
+import world.bentobox.tradewinds.ocean.SurfaceKind;
 
 /**
  * The Bukkit-material face of each island type: dock wood, plaza surface,
  * stall canopy color, pier banner, villager professions and their workstation
- * blocks. Kept out of the galaxy package so that stays Bukkit-free.
+ * blocks. Kept out of the ocean package so that stays Bukkit-free.
  *
  * @author tastybento
  */

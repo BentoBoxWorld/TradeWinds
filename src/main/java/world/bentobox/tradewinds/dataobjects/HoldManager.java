@@ -14,7 +14,7 @@ import world.bentobox.tradewinds.TradeWinds;
 
 /**
  * Cache-in-front-of-Database manager for {@link BoatHold} - every boat in the
- * galaxy that carries anything or belongs to anyone. Player pointers (which
+ * ocean that carries anything or belongs to anyone. Player pointers (which
  * boat is theirs, which is their abandoned OLD BOAT) live on
  * {@link TWPlayerData}; this class is the single place that moves ownership
  * between them, so a boat's cargo exists exactly once however its avatar

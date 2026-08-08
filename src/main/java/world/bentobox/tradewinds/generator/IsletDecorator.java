@@ -18,9 +18,9 @@ import org.bukkit.util.BlockVector;
 import org.eclipse.jdt.annotation.NonNull;
 
 import world.bentobox.tradewinds.TradeWinds;
-import world.bentobox.tradewinds.galaxy.GalaxyEngine;
-import world.bentobox.tradewinds.galaxy.Islet;
-import world.bentobox.tradewinds.galaxy.IsletStructures;
+import world.bentobox.tradewinds.ocean.OceanEngine;
+import world.bentobox.tradewinds.ocean.Islet;
+import world.bentobox.tradewinds.ocean.IsletStructures;
 
 /**
  * Places the small vanilla structure some wild islets carry - an igloo on the
@@ -52,7 +52,7 @@ public class IsletDecorator extends BlockPopulator {
         if (chance <= 0) {
             return;
         }
-        GalaxyEngine engine = addon.getGalaxyEngine(worldInfo.getSeed());
+        OceanEngine engine = addon.getOceanEngine(worldInfo.getSeed());
         int grid = engine.getConfig().wildIsletGrid();
         if (grid <= 0) {
             return;
@@ -74,7 +74,7 @@ public class IsletDecorator extends BlockPopulator {
         }
     }
 
-    private void place(GalaxyEngine engine, Islet islet, IsletStructures.Placement placement,
+    private void place(OceanEngine engine, Islet islet, IsletStructures.Placement placement,
             LimitedRegion region, WorldInfo worldInfo, Random random) {
         Structure structure = templates.computeIfAbsent(placement.template(),
                 key -> Bukkit.getStructureManager().loadStructure(NamespacedKey.minecraft(key)));
@@ -83,7 +83,7 @@ public class IsletDecorator extends BlockPopulator {
         }
         BlockVector size = structure.getSize();
         // Centered on the islet's heart, base sunk per the placement - the
-        // surface height is pure galaxy arithmetic, no block reads
+        // surface height is pure ocean arithmetic, no block reads
         int baseX = islet.centerX() - size.getBlockX() / 2;
         int baseZ = islet.centerZ() - size.getBlockZ() / 2;
         int baseY = engine.surfaceHeightAt(islet.centerX(), islet.centerZ()) + 1 - placement.sink();

@@ -1,8 +1,8 @@
-package world.bentobox.tradewinds.galaxy;
+package world.bentobox.tradewinds.ocean;
 
 /**
  * The ocean floor as a pure function of (seed, position) - no Bukkit, unit
- * tested headlessly like the rest of the galaxy (spec principle 5).
+ * tested headlessly like the rest of the ocean (spec principle 5).
  * <p>
  * Four fields stack to make a sea worth diving in:
  * <ol>
@@ -15,7 +15,7 @@ package world.bentobox.tradewinds.galaxy;
  * <li><b>Rifts</b> - ridged noise folded to a thin line, cutting narrow
  * canyons that wander across the floor and drop away sharply.</li>
  * <li><b>Seamounts</b> - underwater peaks rising off the deeper plains, capped
- * so they never break the surface (the galaxy's islands are the world's only
+ * so they never break the surface (the ocean's islands are the world's only
  * land, spec principle 6).</li>
  * </ol>
  * Near land all of that is blended away toward a standard island shelf, so an
@@ -114,7 +114,7 @@ public class Seabed {
         depth += riftCut(blockX, blockZ) * (1 - blend);
         depth -= seamountRise(blockX, blockZ, basin) * (1 - blend);
         // Open water everywhere: a shoal that reached the surface would be land
-        // the galaxy never placed (spec principle 6)
+        // the ocean never placed (spec principle 6)
         return Math.max(MINIMUM_WATER, depth);
     }
 

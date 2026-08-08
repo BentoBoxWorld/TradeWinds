@@ -18,8 +18,8 @@ import org.bukkit.entity.TextDisplay;
 import net.kyori.adventure.text.Component;
 import world.bentobox.bentobox.api.user.User;
 import world.bentobox.tradewinds.TradeWinds;
-import world.bentobox.tradewinds.galaxy.DockPlan;
-import world.bentobox.tradewinds.galaxy.IslandSpec;
+import world.bentobox.tradewinds.ocean.DockPlan;
+import world.bentobox.tradewinds.ocean.IslandSpec;
 
 /**
  * The hologram compass: {@code /tw chart} in a boat raises text holograms
@@ -195,7 +195,7 @@ public class ChartHolograms {
         // Which way is the dock - the one bearing a sailor in these waters
         // actually needs, and the one the chart never used to give them
         dockIsland(eye.getBlockX(), eye.getBlockZ()).ifPresent(island -> markers.add(dockMarker(island,
-                addon.getGalaxyEngine(addon.getOverWorld().getSeed()).dockPlan(island), eye.getBlockX(),
+                addon.getOceanEngine(addon.getOverWorld().getSeed()).dockPlan(island), eye.getBlockX(),
                 eye.getBlockZ(), radius)));
         markers.addAll(markers(chartedIslands(player), eye.getBlockX(), eye.getBlockZ(), radius,
                 addon.getSettings().getChartHologramMax()));
@@ -266,7 +266,7 @@ public class ChartHolograms {
             return java.util.Optional.empty();
         }
         int range = addon.getSettings().getIslandDistance();
-        return addon.getGalaxyEngine(addon.getOverWorld().getSeed()).islandsNear(x, z, range).stream()
+        return addon.getOceanEngine(addon.getOverWorld().getSeed()).islandsNear(x, z, range).stream()
                 .filter(spec -> spec.distanceSquared(x, z) <= (long) range * range).findFirst();
     }
 
@@ -311,7 +311,7 @@ public class ChartHolograms {
     }
 
     private List<IslandSpec> chartedIslands(Player player) {
-        var engine = addon.getGalaxyEngine(addon.getOverWorld().getSeed());
+        var engine = addon.getOceanEngine(addon.getOverWorld().getSeed());
         return addon.getPlayerDataManager().get(player.getUniqueId()).getChartedIslands().stream()
                 .map(key -> key.split(","))
                 .map(cell -> engine.islandInCell(Integer.parseInt(cell[0]), Integer.parseInt(cell[1])))

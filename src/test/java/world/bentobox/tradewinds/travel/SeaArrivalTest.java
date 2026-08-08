@@ -9,12 +9,12 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import world.bentobox.tradewinds.galaxy.ColumnPlan;
-import world.bentobox.tradewinds.galaxy.DockPlan;
-import world.bentobox.tradewinds.galaxy.GalaxyConfig;
-import world.bentobox.tradewinds.galaxy.GalaxyEngine;
-import world.bentobox.tradewinds.galaxy.IslandSpec;
-import world.bentobox.tradewinds.galaxy.RouteGraph;
+import world.bentobox.tradewinds.ocean.ColumnPlan;
+import world.bentobox.tradewinds.ocean.DockPlan;
+import world.bentobox.tradewinds.ocean.OceanConfig;
+import world.bentobox.tradewinds.ocean.OceanEngine;
+import world.bentobox.tradewinds.ocean.IslandSpec;
+import world.bentobox.tradewinds.ocean.RouteGraph;
 
 /**
  * Why warp arrivals have to look before they land.
@@ -30,8 +30,8 @@ class SeaArrivalTest {
     /** The distance that used to be used, and which the quay reaches past. */
     private static final int OLD_ARRIVAL_DISTANCE = 130;
 
-    private GalaxyEngine engine() {
-        return new GalaxyEngine(new GalaxyConfig(SEED, 2500, 160, 45, 0.5, 6, 5000, SEA));
+    private OceanEngine engine() {
+        return new OceanEngine(new OceanConfig(SEED, 2500, 160, 45, 0.5, 6, 5000, SEA));
     }
 
     @Test
@@ -44,7 +44,7 @@ class SeaArrivalTest {
         //
         // Natural land is NOT the culprit: the coast stops short of the ring.
         // It is the one structure that deliberately reaches past it.
-        GalaxyEngine engine = engine();
+        OceanEngine engine = engine();
         int onQuay = 0;
         int onLand = 0;
         int tested = 0;
@@ -70,7 +70,7 @@ class SeaArrivalTest {
         assertTrue(onQuay > 0, "No arrival point lands on a quay - has the dock or arrival distance moved?");
         // The deck sits exactly at the arrival height, which is what turned a
         // rare unlucky bearing into a death
-        assertEquals(SEA + 1, SEA + GalaxyEngine.DOCK_RISE);
+        assertEquals(SEA + 1, SEA + OceanEngine.DOCK_RISE);
         // And confirm the thing that is NOT to blame, so nobody re-fixes it
         assertEquals(0, onLand, "Natural land now reaches the arrival ring too - widen the search");
     }
@@ -81,7 +81,7 @@ class SeaArrivalTest {
         // correcting. Correcting sideways or inward would drop the sailor in a
         // bay or on a beach - which is what "I warped really close to the
         // island" looked like. Outward is the only direction that helps.
-        GalaxyEngine engine = engine();
+        OceanEngine engine = engine();
         for (IslandSpec island : engine.islandsNear(0, 0, 12_000)) {
             for (int deg = 0; deg < 360; deg += 15) {
                 double rad = Math.toRadians(deg);
@@ -125,12 +125,12 @@ class SeaArrivalTest {
     }
 
     @Test
-    void testOpenSeaIsAnswerableFromTheGalaxyAlone() {
+    void testOpenSeaIsAnswerableFromTheOceanAlone() {
         // The search must never read blocks. It used to, which meant a spiral
         // scan out to 160 blocks could force the main thread to GENERATE dozens
         // of chunks before a teleport could begin - and a chunk generation that
         // fails takes the whole chunk system down with it.
-        GalaxyEngine engine = engine();
+        OceanEngine engine = engine();
         IslandSpec island = engine.islandsNear(0, 0, 12_000).iterator().next();
         DockPlan plan = engine.dockPlan(island);
 

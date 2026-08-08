@@ -16,9 +16,9 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.Vector;
 
 import world.bentobox.tradewinds.TradeWinds;
-import world.bentobox.tradewinds.galaxy.DockPlan;
-import world.bentobox.tradewinds.galaxy.IslandSpec;
-import world.bentobox.tradewinds.galaxy.SecurityBand;
+import world.bentobox.tradewinds.ocean.DockPlan;
+import world.bentobox.tradewinds.ocean.IslandSpec;
+import world.bentobox.tradewinds.ocean.SecurityBand;
 
 /**
  * Launches a customs patrol from an island toward a smuggler.
@@ -123,7 +123,7 @@ public class PoliceDispatch {
      * The end of an island's quay - where a harbour's boats put out from.
      */
     private Location pierOf(IslandSpec island, org.bukkit.World world) {
-        DockPlan plan = addon.getGalaxyEngine(world.getSeed()).dockPlan(island);
+        DockPlan plan = addon.getOceanEngine(world.getSeed()).dockPlan(island);
         int pierX = island.centerX() + (int) Math.round(Math.cos(plan.bearing()) * plan.dockEnd());
         int pierZ = island.centerZ() + (int) Math.round(Math.sin(plan.bearing()) * plan.dockEnd());
         return new Location(world, pierX + 0.5, addon.getSettings().getSeaHeight() - 1.0, pierZ + 0.5);

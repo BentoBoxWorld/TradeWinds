@@ -8,7 +8,7 @@ import org.bukkit.entity.Boat;
 import world.bentobox.bentobox.api.commands.CompositeCommand;
 import world.bentobox.bentobox.api.user.User;
 import world.bentobox.tradewinds.TradeWinds;
-import world.bentobox.tradewinds.galaxy.IslandSpec;
+import world.bentobox.tradewinds.ocean.IslandSpec;
 
 /**
  * Opens the warp dialog. Requires being in a boat inside an island's space -
@@ -50,7 +50,7 @@ public class TWWarpCommand extends CompositeCommand {
         int x = user.getLocation().getBlockX();
         int z = user.getLocation().getBlockZ();
         int range = addon.getSettings().getIslandDistance();
-        Optional<IslandSpec> origin = addon.getGalaxyEngine(getWorld().getSeed()).islandsNear(x, z, range).stream()
+        Optional<IslandSpec> origin = addon.getOceanEngine(getWorld().getSeed()).islandsNear(x, z, range).stream()
                 .filter(spec -> spec.distanceSquared(x, z) <= (long) range * range).findFirst();
         if (origin.isEmpty()) {
             user.sendMessage("tradewinds.warp.not-at-island");

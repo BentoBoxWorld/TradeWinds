@@ -57,7 +57,7 @@ tradewinds:
         description: "admin command for TradeWinds"
       islands:
         description: "list the nearest trading islands"
-        none: "<red>No trading islands found - is the galaxy density 0?</red>"
+        none: "<red>No trading islands found - is the ocean density 0?</red>"
         header: "<aqua>Nearest trading islands (use </aqua><yellow>/twadmin tpisland <#></yellow><aqua> to visit):</aqua>"
         entry: "<yellow>[index]. </yellow><white>[name] </white><gray>- [type] (Tech [tech]), [band] at </gray><white>[x], [z] </white><gray>([distance] blocks)</gray>"
       tpisland:

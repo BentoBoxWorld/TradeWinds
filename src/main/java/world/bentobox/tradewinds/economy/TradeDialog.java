@@ -19,7 +19,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickCallback;
 import world.bentobox.bentobox.api.user.User;
 import world.bentobox.tradewinds.TradeWinds;
-import world.bentobox.tradewinds.galaxy.IslandSpec;
+import world.bentobox.tradewinds.ocean.IslandSpec;
 import world.bentobox.tradewinds.travel.CargoStore;
 import world.bentobox.tradewinds.travel.FuelWarning;
 
@@ -456,7 +456,7 @@ public class TradeDialog {
                     }));
         }
         // Expanders: the endgame sink, sold only where the tech tops out
-        if (spec.techLevel() >= world.bentobox.tradewinds.galaxy.GalaxyEngine.MAX_TECH_LEVEL) {
+        if (spec.techLevel() >= world.bentobox.tradewinds.ocean.OceanEngine.MAX_TECH_LEVEL) {
             int installed = addon.getHoldService().expanderCount(player.getUniqueId());
             double price = PriceModel.expanderPrice(addon.getSettings().getExpanderBasePrice(), installed);
             buttons.add(button(ui(player, "market.expander", VAR_PRICE, Money.format(addon, price)),

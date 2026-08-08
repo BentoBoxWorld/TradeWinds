@@ -1,4 +1,4 @@
-package world.bentobox.tradewinds.galaxy;
+package world.bentobox.tradewinds.ocean;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -13,19 +13,19 @@ import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 /**
- * Headless tests of the seeded galaxy - no Bukkit anywhere (spec principle 5).
+ * Headless tests of the seeded ocean - no Bukkit anywhere (spec principle 5).
  *
  * @author tastybento
  */
-class GalaxyEngineTest {
+class OceanEngineTest {
 
     private static final long SEED = 987654321L;
 
-    private GalaxyConfig config(long seed, double density) {
-        return new GalaxyConfig(seed, 2500, 160, 45, density, 5, 5000, 70);
+    private OceanConfig config(long seed, double density) {
+        return new OceanConfig(seed, 2500, 160, 45, density, 5, 5000, 70);
     }
 
-    private List<IslandSpec> islands(GalaxyEngine engine, int cellRange) {
+    private List<IslandSpec> islands(OceanEngine engine, int cellRange) {
         List<IslandSpec> list = new ArrayList<>();
         for (int cx = -cellRange; cx <= cellRange; cx++) {
             for (int cz = -cellRange; cz <= cellRange; cz++) {
@@ -36,9 +36,9 @@ class GalaxyEngineTest {
     }
 
     @Test
-    void testSameSeedSameGalaxy() {
-        GalaxyEngine a = new GalaxyEngine(config(SEED, 0.5));
-        GalaxyEngine b = new GalaxyEngine(config(SEED, 0.5));
+    void testSameSeedSameOcean() {
+        OceanEngine a = new OceanEngine(config(SEED, 0.5));
+        OceanEngine b = new OceanEngine(config(SEED, 0.5));
         List<IslandSpec> islandsA = islands(a, 10);
         List<IslandSpec> islandsB = islands(b, 10);
         assertFalse(islandsA.isEmpty());
@@ -47,16 +47,16 @@ class GalaxyEngineTest {
     }
 
     @Test
-    void testDifferentSeedDifferentGalaxy() {
-        List<IslandSpec> islandsA = islands(new GalaxyEngine(config(SEED, 0.5)), 10);
-        List<IslandSpec> islandsB = islands(new GalaxyEngine(config(SEED + 1, 0.5)), 10);
+    void testDifferentSeedDifferentOcean() {
+        List<IslandSpec> islandsA = islands(new OceanEngine(config(SEED, 0.5)), 10);
+        List<IslandSpec> islandsB = islands(new OceanEngine(config(SEED + 1, 0.5)), 10);
         assertNotEquals(islandsA, islandsB);
     }
 
     @Test
     void testQueryOrderIndependence() {
-        GalaxyEngine a = new GalaxyEngine(config(SEED, 0.5));
-        GalaxyEngine b = new GalaxyEngine(config(SEED, 0.5));
+        OceanEngine a = new OceanEngine(config(SEED, 0.5));
+        OceanEngine b = new OceanEngine(config(SEED, 0.5));
         // Query b in reverse order, and via a different entry point first
         b.landLiftAt(-31000, 17000);
         List<IslandSpec> reversed = new ArrayList<>();
@@ -71,7 +71,7 @@ class GalaxyEngineTest {
 
     @Test
     void testMinimumSeparation() {
-        GalaxyEngine engine = new GalaxyEngine(config(SEED, 1.0)); // every cell occupied - worst case
+        OceanEngine engine = new OceanEngine(config(SEED, 1.0)); // every cell occupied - worst case
         List<IslandSpec> list = islands(engine, 8);
         for (int i = 0; i < list.size(); i++) {
             for (int j = i + 1; j < list.size(); j++) {
@@ -87,7 +87,7 @@ class GalaxyEngineTest {
     @Test
     void testStarterClusterDensityFloor() {
         // Even with density 0, the starter cells host islands - and they are SAFE
-        GalaxyEngine engine = new GalaxyEngine(config(SEED, 0.0));
+        OceanEngine engine = new OceanEngine(config(SEED, 0.0));
         List<IslandSpec> list = islands(engine, 5);
         assertEquals(5, list.size(), "Starter density floor must guarantee the configured island count");
         list.forEach(s -> assertEquals(SecurityBand.SAFE, s.band(), s.name() + " must be SAFE"));
@@ -95,7 +95,7 @@ class GalaxyEngineTest {
 
     @Test
     void testBandsGetLawlessWithDistance() {
-        GalaxyEngine engine = new GalaxyEngine(config(SEED, 1.0));
+        OceanEngine engine = new OceanEngine(config(SEED, 1.0));
         // Far from spawn, islands must be lawless-side; near spawn, safe-side
         Optional<IslandSpec> far = engine.islandInCell(40, 40); // ~283km out
         assertTrue(far.isPresent());
@@ -107,7 +107,7 @@ class GalaxyEngineTest {
 
     @Test
     void testLandLift() {
-        GalaxyEngine engine = new GalaxyEngine(config(SEED, 1.0));
+        OceanEngine engine = new OceanEngine(config(SEED, 1.0));
         IslandSpec spec = engine.islandInCell(2, 3).orElseThrow();
         // Near full lift at the center - hilliness varies it a little either way
         int center = engine.landLiftAt(spec.centerX(), spec.centerZ());
@@ -118,12 +118,12 @@ class GalaxyEngineTest {
         // Zero well beyond the terrain radius, even allowing for a headland
         assertEquals(0, engine.landLiftAt(spec.centerX() + 250, spec.centerZ()));
         // Zero in open ocean (empty cell far out with density check impossible at 1.0 -> use ocean point between islands)
-        assertEquals(0, new GalaxyEngine(config(SEED, 0.0)).landLiftAt(1_000_000, 1_000_000));
+        assertEquals(0, new OceanEngine(config(SEED, 0.0)).landLiftAt(1_000_000, 1_000_000));
     }
 
     @Test
     void testIslandAtAndBiomeKey() {
-        GalaxyEngine engine = new GalaxyEngine(config(SEED, 1.0));
+        OceanEngine engine = new OceanEngine(config(SEED, 1.0));
         IslandSpec spec = engine.islandInCell(-4, 6).orElseThrow();
         assertEquals(spec, engine.islandAt(spec.centerX(), spec.centerZ()).orElseThrow());
         assertTrue(engine.islandAt(spec.centerX() + 500, spec.centerZ() + 500).isEmpty());
@@ -133,7 +133,7 @@ class GalaxyEngineTest {
 
     @Test
     void testFrozenApproachRing() {
-        GalaxyEngine engine = new GalaxyEngine(config(SEED, 1.0));
+        OceanEngine engine = new OceanEngine(config(SEED, 1.0));
         // Find a FROZEN island
         IslandSpec frozen = islands(engine, 15).stream().filter(s -> s.type() == IslandType.FROZEN).findFirst()
                 .orElseThrow();
@@ -144,12 +144,12 @@ class GalaxyEngineTest {
 
     @Test
     void testDockPlanGeometry() {
-        GalaxyEngine engine = new GalaxyEngine(config(SEED, 1.0));
+        OceanEngine engine = new OceanEngine(config(SEED, 1.0));
         IslandSpec spec = engine.islandInCell(3, -2).orElseThrow();
         DockPlan plan = engine.dockPlan(spec);
         // Deterministic
         assertEquals(plan, engine.dockPlan(spec));
-        assertEquals(plan, new GalaxyEngine(config(SEED, 1.0)).dockPlan(spec));
+        assertEquals(plan, new OceanEngine(config(SEED, 1.0)).dockPlan(spec));
         // Plaza sits inside the island's terrain footprint
         double plazaDist = Math.sqrt(spec.distanceSquared(plan.plazaX(), plan.plazaZ()));
         assertTrue(plazaDist < 160, "Plaza outside terrain: " + plazaDist);
@@ -159,13 +159,13 @@ class GalaxyEngineTest {
 
     @Test
     void testColumnPlans() {
-        GalaxyEngine engine = new GalaxyEngine(config(SEED, 1.0));
+        OceanEngine engine = new OceanEngine(config(SEED, 1.0));
         IslandSpec spec = engine.islandInCell(1, 1).orElseThrow();
         DockPlan plan = engine.dockPlan(spec);
         // Plaza center: fully flattened at sea level + PLAZA_RISE
         ColumnPlan plaza = engine.columnPlanAt(plan.plazaX(), plan.plazaZ()).orElseThrow();
         assertEquals(ColumnPlan.Feature.PLAZA, plaza.feature());
-        assertEquals(70 + GalaxyEngine.PLAZA_RISE, plaza.surfaceY());
+        assertEquals(70 + OceanEngine.PLAZA_RISE, plaza.surfaceY());
         assertEquals(1.0, plaza.blend());
         assertEquals(spec, plaza.island());
         // Seaward end of the quay: DOCK at sea level + DOCK_RISE
@@ -173,11 +173,11 @@ class GalaxyEngineTest {
         int dockZ = spec.centerZ() + (int) Math.round(Math.sin(plan.bearing()) * (plan.dockEnd() - 2));
         ColumnPlan dock = engine.columnPlanAt(dockX, dockZ).orElseThrow();
         assertEquals(ColumnPlan.Feature.DOCK, dock.feature());
-        assertEquals(70 + GalaxyEngine.DOCK_RISE, dock.surfaceY());
+        assertEquals(70 + OceanEngine.DOCK_RISE, dock.surfaceY());
         // Island center is natural terrain (no feature)
         assertTrue(engine.columnPlanAt(spec.centerX(), spec.centerZ()).isEmpty());
         // Open ocean has no plans
-        assertTrue(new GalaxyEngine(config(SEED, 0.0)).columnPlanAt(500_000, 500_000).isEmpty());
+        assertTrue(new OceanEngine(config(SEED, 0.0)).columnPlanAt(500_000, 500_000).isEmpty());
     }
 
     @Test
@@ -185,7 +185,7 @@ class GalaxyEngineTest {
         // Playtest regression: the quay used to start ~10 blocks offshore because
         // the plaza blend ring beat the dock strip. Walking the dock axis from the
         // plaza center to the pier end must never leave planned ground.
-        GalaxyEngine engine = new GalaxyEngine(config(SEED, 1.0));
+        OceanEngine engine = new OceanEngine(config(SEED, 1.0));
         for (int cell = 0; cell < 12; cell++) {
             IslandSpec spec = engine.islandInCell(cell, -cell - 1).orElseThrow();
             DockPlan plan = engine.dockPlan(spec);
@@ -203,41 +203,41 @@ class GalaxyEngineTest {
     @Test
     void testTypeWeightOverrides() {
         // Only LUXURY weighted -> every island is LUXURY
-        GalaxyConfig cfg = new GalaxyConfig(SEED, 2500, 160, 45, 1.0, 5, 5000, 70,
+        OceanConfig cfg = new OceanConfig(SEED, 2500, 160, 45, 1.0, 5, 5000, 70,
                 java.util.Map.of(IslandType.LUXURY, 1));
-        islands(new GalaxyEngine(cfg), 5).forEach(s -> assertEquals(IslandType.LUXURY, s.type()));
+        islands(new OceanEngine(cfg), 5).forEach(s -> assertEquals(IslandType.LUXURY, s.type()));
         // A zero/empty weight table falls back to the built-in defaults
-        GalaxyConfig broken = new GalaxyConfig(SEED, 2500, 160, 45, 1.0, 5, 5000, 70, java.util.Map.of());
-        assertEquals(GalaxyConfig.defaultTypeWeights(), broken.typeWeights());
-        // And the default-weights galaxy is unchanged by the new parameter
-        assertEquals(islands(new GalaxyEngine(config(SEED, 1.0)), 5),
-                islands(new GalaxyEngine(new GalaxyConfig(SEED, 2500, 160, 45, 1.0, 5, 5000, 70,
-                        GalaxyConfig.defaultTypeWeights())), 5));
+        OceanConfig broken = new OceanConfig(SEED, 2500, 160, 45, 1.0, 5, 5000, 70, java.util.Map.of());
+        assertEquals(OceanConfig.defaultTypeWeights(), broken.typeWeights());
+        // And the default-weights ocean is unchanged by the new parameter
+        assertEquals(islands(new OceanEngine(config(SEED, 1.0)), 5),
+                islands(new OceanEngine(new OceanConfig(SEED, 2500, 160, 45, 1.0, 5, 5000, 70,
+                        OceanConfig.defaultTypeWeights())), 5));
     }
 
     @Test
     void testSpawnIslandAtOrigin() {
         // The origin cell is reserved: a full SAFE trading island at exactly 0,0
-        GalaxyEngine engine = new GalaxyEngine(config(SEED, 0.0));
+        OceanEngine engine = new OceanEngine(config(SEED, 0.0));
         IslandSpec spawn = engine.spawnIsland();
         assertEquals(0, spawn.centerX());
         assertEquals(0, spawn.centerZ());
         assertEquals(SecurityBand.SAFE, spawn.band());
-        assertEquals(GalaxyEngine.SPAWN_NAME, spawn.name());
+        assertEquals(OceanEngine.SPAWN_NAME, spawn.name());
         // It has land and a dock like any trading island
         assertEquals(45, engine.landLiftAt(0, 0));
         assertEquals(spawn, engine.islandAt(0, 0).orElseThrow());
         assertTrue(engine.dockPlan(spawn).dockEnd() > 0);
         // Its economy is configurable
-        GalaxyEngine industrial = new GalaxyEngine(new GalaxyConfig(SEED, 2500, 160, 45, 0.0, 5, 5000, 70,
-                GalaxyConfig.defaultTypeWeights(), IslandType.INDUSTRIAL));
+        OceanEngine industrial = new OceanEngine(new OceanConfig(SEED, 2500, 160, 45, 0.0, 5, 5000, 70,
+                OceanConfig.defaultTypeWeights(), IslandType.INDUSTRIAL));
         assertEquals(IslandType.INDUSTRIAL, industrial.spawnIsland().type());
     }
 
     @Test
     void testNothingCrowdsTheSpawnIsland() {
         // Every other island keeps min separation from the origin
-        GalaxyEngine engine = new GalaxyEngine(config(SEED, 1.0));
+        OceanEngine engine = new OceanEngine(config(SEED, 1.0));
         for (IslandSpec spec : islands(engine, 6)) {
             if (spec.cellX() == 0 && spec.cellZ() == 0) {
                 continue;
@@ -249,7 +249,7 @@ class GalaxyEngineTest {
 
     @Test
     void testWildIslets() {
-        GalaxyEngine engine = new GalaxyEngine(config(SEED, 0.0));
+        OceanEngine engine = new OceanEngine(config(SEED, 0.0));
         // With density 0 almost every cell is empty: most roll wild islets
         int found = 0;
         Islet sample = null;
@@ -264,13 +264,13 @@ class GalaxyEngineTest {
         // ~55% of 441 cells
         assertTrue(found > 180 && found < 320, "Wild islet count off: " + found);
         // Deterministic across engines
-        GalaxyEngine again = new GalaxyEngine(config(SEED, 0.0));
+        OceanEngine again = new OceanEngine(config(SEED, 0.0));
         assertEquals(sample, again.isletAt(sample.centerX(), sample.centerZ()).orElseThrow());
         // Terrain rises there, with a vanilla wild biome
         assertTrue(engine.landLiftAt(sample.centerX(), sample.centerZ()) > 20);
         assertTrue(engine.biomeKeyAt(sample.centerX(), sample.centerZ()).orElseThrow().startsWith("minecraft:"));
         // Islets keep well clear of trading islands (terrain + islet + margin)
-        GalaxyEngine dense = new GalaxyEngine(config(SEED, 1.0));
+        OceanEngine dense = new OceanEngine(config(SEED, 1.0));
         for (int cx = -20; cx <= 20; cx++) {
             for (int cz = -20; cz <= 20; cz++) {
                 Optional<Islet> islet = dense.wildIsletInCell(cx, cz);
@@ -292,7 +292,7 @@ class GalaxyEngineTest {
         // An islet's land suits the water it stands in: its biome comes from
         // the band for the sea temperature at its center - no snowfields in
         // warm water, no jungles in the frozen sea
-        GalaxyEngine engine = new GalaxyEngine(config(SEED, 0.0));
+        OceanEngine engine = new OceanEngine(config(SEED, 0.0));
         java.util.Set<String> seen = new java.util.HashSet<>();
         for (int cx = -40; cx <= 40; cx++) {
             for (int cz = -40; cz <= 40; cz++) {
@@ -301,7 +301,7 @@ class GalaxyEngineTest {
                     continue;
                 }
                 Islet i = islet.get();
-                List<String> band = GalaxyEngine.WILD_BIOMES
+                List<String> band = OceanEngine.WILD_BIOMES
                         .get(engine.oceanTemperatureIndex(i.centerX(), i.centerZ()));
                 assertTrue(band.contains(i.biomeKey()),
                         i.biomeKey() + " does not belong in the sea at " + i.centerX() + "," + i.centerZ());
@@ -317,13 +317,13 @@ class GalaxyEngineTest {
 
     @Test
     void testTechLevels() {
-        GalaxyEngine engine = new GalaxyEngine(config(SEED, 0.5));
+        OceanEngine engine = new OceanEngine(config(SEED, 0.5));
         List<IslandSpec> all = islands(engine, 12);
         assertFalse(all.isEmpty());
         // In range, deterministic across engines
-        GalaxyEngine again = new GalaxyEngine(config(SEED, 0.5));
+        OceanEngine again = new OceanEngine(config(SEED, 0.5));
         for (IslandSpec spec : all) {
-            assertTrue(spec.techLevel() >= 1 && spec.techLevel() <= GalaxyEngine.MAX_TECH_LEVEL,
+            assertTrue(spec.techLevel() >= 1 && spec.techLevel() <= OceanEngine.MAX_TECH_LEVEL,
                     spec.name() + " has tech " + spec.techLevel());
             assertEquals(spec.techLevel(),
                     again.islandInCell(spec.cellX(), spec.cellZ()).orElseThrow().techLevel());
@@ -345,7 +345,7 @@ class GalaxyEngineTest {
         // Whatever the seed rolls, a fresh sailor can always reach a TL3+ shop
         // without leaving the pre-charted starter cluster
         for (long seed = 900; seed < 940; seed++) {
-            GalaxyEngine engine = new GalaxyEngine(config(seed, 0.5));
+            OceanEngine engine = new OceanEngine(config(seed, 0.5));
             int cells = 2; // starter cells are the 5 nearest the origin
             int best = 0;
             for (int cx = -cells; cx <= cells; cx++) {
@@ -382,9 +382,9 @@ class GalaxyEngineTest {
         expected.put("minecraft:snowy_slopes", SurfaceKind.SNOW);
         expected.put("minecraft:frozen_peaks", SurfaceKind.SNOW);
         expected.put("minecraft:ice_spikes", SurfaceKind.SNOW);
-        expected.put(GalaxyEngine.MUSHROOM_BIOME, SurfaceKind.MYCELIUM);
+        expected.put(OceanEngine.MUSHROOM_BIOME, SurfaceKind.MYCELIUM);
 
-        GalaxyEngine engine = new GalaxyEngine(config(SEED, 0.0));
+        OceanEngine engine = new OceanEngine(config(SEED, 0.0));
         java.util.Set<SurfaceKind> seen = new java.util.HashSet<>();
         for (int cx = -40; cx <= 40; cx++) {
             for (int cz = -40; cz <= 40; cz++) {
@@ -406,7 +406,7 @@ class GalaxyEngineTest {
 
         // Trading islands follow the same rule: an INDUSTRIAL island's desert
         // or badlands is sand or red sand at its heart
-        GalaxyEngine dense = new GalaxyEngine(config(SEED, 1.0));
+        OceanEngine dense = new OceanEngine(config(SEED, 1.0));
         boolean checkedIsland = false;
         for (IslandSpec spec : islands(dense, 15)) {
             if (spec.type() == IslandType.INDUSTRIAL) {
@@ -424,7 +424,7 @@ class GalaxyEngineTest {
         // The whole point: between trading islands and wild islets, every
         // generatable overworld land biome in the 26.2 registry has somewhere
         // it can appear (cave, river, ocean, Nether and End biomes excepted)
-        java.util.Set<String> reachable = new java.util.HashSet<>(GalaxyEngine.isletBiomes());
+        java.util.Set<String> reachable = new java.util.HashSet<>(OceanEngine.isletBiomes());
         for (IslandType type : IslandType.values()) {
             reachable.addAll(type.getBiomeKeys());
         }
@@ -448,7 +448,7 @@ class GalaxyEngineTest {
     @Test
     void testIsletsVaryInSize() {
         // Sandbars and proper little islands, not one stamped shape
-        GalaxyEngine engine = new GalaxyEngine(config(SEED, 0.0));
+        OceanEngine engine = new OceanEngine(config(SEED, 0.0));
         int smallest = Integer.MAX_VALUE;
         int largest = 0;
         for (int cx = -12; cx <= 12; cx++) {
@@ -465,7 +465,7 @@ class GalaxyEngineTest {
 
     @Test
     void testMushroomIsletsAreRareButReal() {
-        GalaxyEngine engine = new GalaxyEngine(config(SEED, 0.0));
+        OceanEngine engine = new OceanEngine(config(SEED, 0.0));
         int islets = 0;
         int mushroom = 0;
         for (int cx = -25; cx <= 25; cx++) {
@@ -478,7 +478,7 @@ class GalaxyEngineTest {
                         // A mushroom island is mycelium all over, with no beach
                         assertEquals(SurfaceKind.MYCELIUM,
                                 engine.surfaceKindAt(islet.get().centerX(), islet.get().centerZ()));
-                        assertEquals(GalaxyEngine.MUSHROOM_BIOME,
+                        assertEquals(OceanEngine.MUSHROOM_BIOME,
                                 engine.biomeKeyAt(islet.get().centerX(), islet.get().centerZ()).orElseThrow());
                     }
                 }
@@ -492,7 +492,7 @@ class GalaxyEngineTest {
     void testIsletsHaveSandyShores() {
         // The waterline is sand and beach biome - that is what lets vanilla
         // wash up beached shipwrecks and bury treasure there
-        GalaxyEngine engine = new GalaxyEngine(config(SEED, 0.0));
+        OceanEngine engine = new OceanEngine(config(SEED, 0.0));
         Islet islet = null;
         for (int cx = 0; cx <= 20 && islet == null; cx++) {
             for (int cz = 0; cz <= 20 && islet == null; cz++) {
@@ -527,7 +527,7 @@ class GalaxyEngineTest {
     void testCoastlinesAreNotCircles() {
         // Playtest: "almost comically circular". A cosine mask on true distance
         // draws a perfect disc; the distance is warped before the mask sees it.
-        GalaxyEngine engine = new GalaxyEngine(config(SEED, 0.0));
+        OceanEngine engine = new OceanEngine(config(SEED, 0.0));
         Islet islet = null;
         for (int cx = 0; cx <= 20 && islet == null; cx++) {
             for (int cz = 0; cz <= 20 && islet == null; cz++) {
@@ -562,10 +562,10 @@ class GalaxyEngineTest {
     @Test
     void testRoundShapeConfigRestoresPerfectCircles() {
         // The knob that turns it all off again
-        GalaxyConfig round = new GalaxyConfig(SEED, 2500, 160, 45, 1.0, 5, 5000, 70,
-                GalaxyConfig.defaultTypeWeights(), null, 0.0, 70, 1200, 0.0, SeabedConfig.flat(20),
+        OceanConfig round = new OceanConfig(SEED, 2500, 160, 45, 1.0, 5, 5000, 70,
+                OceanConfig.defaultTypeWeights(), null, 0.0, 70, 1200, 0.0, SeabedConfig.flat(20),
                 ShapeConfig.ROUND);
-        GalaxyEngine engine = new GalaxyEngine(round);
+        OceanEngine engine = new OceanEngine(round);
         IslandSpec spec = engine.islandInCell(1, 1).orElseThrow();
         int first = engine.landLiftAt(spec.centerX() + 100, spec.centerZ());
         // Same distance, every bearing, identical lift
@@ -582,11 +582,11 @@ class GalaxyEngineTest {
         // The open sea must not be empty: an islet within a short row of
         // anywhere (playtest: 6000x6000 blocks of nothing at 10000,10000, and
         // nothing found anywhere in 130 explored regions)
-        GalaxyEngine engine = new GalaxyEngine(config(SEED, 0.5));
+        OceanEngine engine = new OceanEngine(config(SEED, 0.5));
         for (int[] point : new int[][] { { 10000, 10000 }, { -5000, 15000 }, { 30000, -20000 },
                 { -120000, 90000 } }) {
             double nearest = Double.MAX_VALUE;
-            int grid = GalaxyConfig.DEFAULT_WILD_GRID;
+            int grid = OceanConfig.DEFAULT_WILD_GRID;
             int cx = Math.floorDiv(point[0], grid);
             int cz = Math.floorDiv(point[1], grid);
             for (int i = cx - 4; i <= cx + 4; i++) {
@@ -604,9 +604,9 @@ class GalaxyEngineTest {
 
     @Test
     void testOceanBiomesVaryButNeverJump() {
-        GalaxyEngine engine = new GalaxyEngine(config(SEED, 0.5));
-        java.util.List<String> shallow = GalaxyEngine.shallowOceanBiomes();
-        java.util.List<String> deep = GalaxyEngine.deepOceanBiomes();
+        OceanEngine engine = new OceanEngine(config(SEED, 0.5));
+        java.util.List<String> shallow = OceanEngine.shallowOceanBiomes();
+        java.util.List<String> deep = OceanEngine.deepOceanBiomes();
         java.util.Set<String> seen = new java.util.HashSet<>();
         int previous = -1;
         // Sail a long line, sampling every 50 blocks
@@ -630,7 +630,7 @@ class GalaxyEngineTest {
     void testDeepWaterExistsForMonuments() {
         // Ocean monuments only generate in the deep ocean biomes, so if the sea
         // never gets deep the whole vanilla structure set is unreachable
-        GalaxyEngine engine = new GalaxyEngine(config(SEED, 0.0));
+        OceanEngine engine = new OceanEngine(config(SEED, 0.0));
         int deep = 0;
         int total = 0;
         for (int x = -30_000; x <= 30_000; x += 250) {
@@ -653,13 +653,13 @@ class GalaxyEngineTest {
 
     @Test
     void testSeabedVariesAndNeverBreaksTheSurface() {
-        GalaxyEngine engine = new GalaxyEngine(config(SEED, 0.0));
+        OceanEngine engine = new OceanEngine(config(SEED, 0.0));
         int shallowest = Integer.MIN_VALUE;
         int deepest = Integer.MAX_VALUE;
         for (int x = -20_000; x <= 20_000; x += 137) {
             for (int z = -600; z <= 600; z += 137) {
                 int y = engine.seabedHeightAt(x, z);
-                // Open water everywhere: the galaxy's islands are the only land
+                // Open water everywhere: the ocean's islands are the only land
                 assertTrue(y < 70, "Sea floor broke the surface at " + x + "," + z + " (y=" + y + ")");
                 shallowest = Math.max(shallowest, y);
                 deepest = Math.min(deepest, y);
@@ -672,7 +672,7 @@ class GalaxyEngineTest {
 
     @Test
     void testRiftsCutDeepNarrowCanyons() {
-        Seabed seabed = new GalaxyEngine(config(SEED, 0.0)).getSeabed();
+        Seabed seabed = new OceanEngine(config(SEED, 0.0)).getSeabed();
         int cut = 0;
         int deepCut = 0;
         int samples = 0;
@@ -697,7 +697,7 @@ class GalaxyEngineTest {
     void testIslandsAlwaysStandOnTheirOwnShelf() {
         // An island that happens to fall over an abyssal plain must still break
         // the surface by the same amount as one over a shelf
-        GalaxyEngine engine = new GalaxyEngine(config(SEED, 1.0));
+        OceanEngine engine = new OceanEngine(config(SEED, 1.0));
         int shelf = SeabedConfig.DEFAULT.islandShelfDepth();
         for (int cx = -3; cx <= 3; cx++) {
             for (int cz = -3; cz <= 3; cz++) {
@@ -723,9 +723,9 @@ class GalaxyEngineTest {
 
     @Test
     void testFlatSeabedConfigRestoresTheOldOcean() {
-        GalaxyConfig flat = new GalaxyConfig(SEED, 2500, 160, 45, 0.0, 5, 5000, 70,
-                GalaxyConfig.defaultTypeWeights(), null, 0.0, 70, 1200, 0.0, SeabedConfig.flat(20));
-        GalaxyEngine engine = new GalaxyEngine(flat);
+        OceanConfig flat = new OceanConfig(SEED, 2500, 160, 45, 0.0, 5, 5000, 70,
+                OceanConfig.defaultTypeWeights(), null, 0.0, 70, 1200, 0.0, SeabedConfig.flat(20));
+        OceanEngine engine = new OceanEngine(flat);
         for (int x = -5_000; x <= 5_000; x += 311) {
             assertEquals(50, engine.seabedHeightAt(x, 700));
             // A floor with no basins has no deep water, so no monuments
@@ -735,9 +735,9 @@ class GalaxyEngineTest {
 
     @Test
     void testOceanBiomesAreSeeded() {
-        GalaxyEngine a = new GalaxyEngine(config(SEED, 0.5));
-        GalaxyEngine b = new GalaxyEngine(config(SEED, 0.5));
-        GalaxyEngine other = new GalaxyEngine(config(SEED + 1, 0.5));
+        OceanEngine a = new OceanEngine(config(SEED, 0.5));
+        OceanEngine b = new OceanEngine(config(SEED, 0.5));
+        OceanEngine other = new OceanEngine(config(SEED + 1, 0.5));
         boolean differs = false;
         for (int x = 0; x < 20_000; x += 500) {
             assertEquals(a.oceanBiomeKeyAt(x, 0), b.oceanBiomeKeyAt(x, 0));
@@ -748,7 +748,7 @@ class GalaxyEngineTest {
 
     @Test
     void testNamesAreDistinctEnough() {
-        GalaxyEngine engine = new GalaxyEngine(config(SEED, 1.0));
+        OceanEngine engine = new OceanEngine(config(SEED, 1.0));
         List<IslandSpec> list = islands(engine, 7);
         long distinct = list.stream().map(IslandSpec::name).distinct().count();
         // Names are not globally unique by design, but collisions must be rare

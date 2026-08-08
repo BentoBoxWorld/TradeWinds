@@ -1,4 +1,4 @@
-package world.bentobox.tradewinds.galaxy;
+package world.bentobox.tradewinds.ocean;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -21,7 +21,7 @@ class IsletStructuresTest {
     private static final long SEED = 424242L;
 
     /** Biomes that deliberately never decorate: the biome is the find. */
-    private static final Set<String> PRISTINE = Set.of("minecraft:pale_garden", GalaxyEngine.MUSHROOM_BIOME);
+    private static final Set<String> PRISTINE = Set.of("minecraft:pale_garden", OceanEngine.MUSHROOM_BIOME);
 
     private Islet islet(int x, int z, String biome) {
         return new Islet(x, z, 60, biome);
@@ -31,7 +31,7 @@ class IsletStructuresTest {
     void testEveryIsletBiomeHasATableEntry() {
         // A new islet biome with no entry would silently never decorate -
         // fail loudly instead. (Beaches are fringes, not whole-islet biomes.)
-        for (String biome : GalaxyEngine.isletBiomes()) {
+        for (String biome : OceanEngine.isletBiomes()) {
             if (biome.endsWith("beach")) {
                 continue;
             }
@@ -49,7 +49,7 @@ class IsletStructuresTest {
 
     @Test
     void testChanceOnePlacesOnEveryEligibleIslet() {
-        for (String biome : GalaxyEngine.isletBiomes()) {
+        for (String biome : OceanEngine.isletBiomes()) {
             if (biome.endsWith("beach")) {
                 continue;
             }
@@ -73,7 +73,7 @@ class IsletStructuresTest {
         // stand there glowing (playtest 2026-08-02), so every placement must
         // name a real material to put in their place - and the ruined portals
         // that sit on netherrack must say so, or the portal loses its footing.
-        for (String biome : GalaxyEngine.isletBiomes()) {
+        for (String biome : OceanEngine.isletBiomes()) {
             if (biome.endsWith("beach") || PRISTINE.contains(biome)) {
                 continue;
             }

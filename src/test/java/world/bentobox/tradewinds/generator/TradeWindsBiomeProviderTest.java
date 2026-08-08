@@ -17,9 +17,9 @@ import org.junit.jupiter.api.Test;
 import world.bentobox.tradewinds.CommonTestSetup;
 import world.bentobox.tradewinds.Settings;
 import world.bentobox.tradewinds.TradeWinds;
-import world.bentobox.tradewinds.galaxy.GalaxyConfig;
-import world.bentobox.tradewinds.galaxy.GalaxyEngine;
-import world.bentobox.tradewinds.galaxy.IslandSpec;
+import world.bentobox.tradewinds.ocean.OceanConfig;
+import world.bentobox.tradewinds.ocean.OceanEngine;
+import world.bentobox.tradewinds.ocean.IslandSpec;
 
 /**
  * Tests {@link TradeWindsBiomeProvider}.
@@ -33,8 +33,8 @@ class TradeWindsBiomeProviderTest extends CommonTestSetup {
     private TradeWinds addon;
     private Settings settings;
     private TradeWindsBiomeProvider provider;
-    private GalaxyEngine emptyGalaxy;
-    private GalaxyEngine denseGalaxy;
+    private OceanEngine emptyOcean;
+    private OceanEngine denseOcean;
 
     @Override
     @BeforeEach
@@ -43,11 +43,11 @@ class TradeWindsBiomeProviderTest extends CommonTestSetup {
         addon = mock(TradeWinds.class);
         settings = new Settings();
         when(addon.getSettings()).thenReturn(settings);
-        emptyGalaxy = new GalaxyEngine(new GalaxyConfig(SEED, 2500, 160, 45, 0.0, 0, 5000, 70,
-                GalaxyConfig.defaultTypeWeights(), null));
-        denseGalaxy = new GalaxyEngine(new GalaxyConfig(SEED, 2500, 160, 45, 1.0, 0, 5000, 70,
-                GalaxyConfig.defaultTypeWeights(), null));
-        when(addon.getGalaxyEngine(anyLong())).thenReturn(emptyGalaxy);
+        emptyOcean = new OceanEngine(new OceanConfig(SEED, 2500, 160, 45, 0.0, 0, 5000, 70,
+                OceanConfig.defaultTypeWeights(), null));
+        denseOcean = new OceanEngine(new OceanConfig(SEED, 2500, 160, 45, 1.0, 0, 5000, 70,
+                OceanConfig.defaultTypeWeights(), null));
+        when(addon.getOceanEngine(anyLong())).thenReturn(emptyOcean);
         provider = new TradeWindsBiomeProvider(addon);
     }
 
@@ -63,11 +63,11 @@ class TradeWindsBiomeProviderTest extends CommonTestSetup {
         // Sampled far from the origin - the spawn island sits at 0,0
         WorldInfo wi = worldInfo(Environment.NORMAL);
         java.util.Set<Biome> seen = new java.util.HashSet<>();
-        java.util.Set<Biome> oceans = GalaxyEngine.oceanBiomes().stream()
+        java.util.Set<Biome> oceans = OceanEngine.oceanBiomes().stream()
                 .map(key -> org.bukkit.Registry.BIOME.get(org.bukkit.NamespacedKey.fromString(key)))
                 .collect(java.util.stream.Collectors.toSet());
         for (int x = 100_000; x < 140_000; x += 500) {
-            if (emptyGalaxy.isletAt(x, 12_345).isPresent()) {
+            if (emptyOcean.isletAt(x, 12_345).isPresent()) {
                 continue; // A wild islet is land, not sea - it has its own biome
             }
             Biome biome = provider.getBiome(wi, x, settings.getSeaHeight(), 12_345);
@@ -90,8 +90,8 @@ class TradeWindsBiomeProviderTest extends CommonTestSetup {
 
     @Test
     void testIslandBiome() {
-        when(addon.getGalaxyEngine(anyLong())).thenReturn(denseGalaxy);
-        IslandSpec spec = denseGalaxy.islandInCell(0, 0).orElseThrow();
+        when(addon.getOceanEngine(anyLong())).thenReturn(denseOcean);
+        IslandSpec spec = denseOcean.islandInCell(0, 0).orElseThrow();
         WorldInfo wi = worldInfo(Environment.NORMAL);
         Biome islandBiome = provider.getBiome(wi, spec.centerX(), settings.getSeaHeight() + 5, spec.centerZ());
         // The island biome applies to the whole column and is one of the type's table
@@ -111,7 +111,7 @@ class TradeWindsBiomeProviderTest extends CommonTestSetup {
     void testGetBiomesListsAllPossible() {
         List<Biome> biomes = provider.getBiomes(worldInfo(Environment.NORMAL));
         assertTrue(biomes.contains(Biome.OCEAN));
-        // All galaxy island biomes must be declared to the world
+        // All ocean island biomes must be declared to the world
         assertTrue(biomes.contains(Biome.PLAINS));
         assertTrue(biomes.contains(Biome.SNOWY_PLAINS));
         assertTrue(biomes.contains(Biome.FROZEN_OCEAN));

@@ -27,10 +27,10 @@ import world.bentobox.tradewinds.TestHolds;
 import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.dataobjects.BoatHold;
 import world.bentobox.tradewinds.encounters.EncounterService;
-import world.bentobox.tradewinds.galaxy.GalaxyConfig;
-import world.bentobox.tradewinds.galaxy.GalaxyEngine;
-import world.bentobox.tradewinds.galaxy.IslandSpec;
-import world.bentobox.tradewinds.galaxy.SecurityBand;
+import world.bentobox.tradewinds.ocean.OceanConfig;
+import world.bentobox.tradewinds.ocean.OceanEngine;
+import world.bentobox.tradewinds.ocean.IslandSpec;
+import world.bentobox.tradewinds.ocean.SecurityBand;
 
 /**
  * Tests for BoatListener.onDestroy: ownership, protection, and lava destruction.
@@ -50,7 +50,7 @@ class BoatListenerDestroyTest extends CommonTestSetup {
     private TradeWinds addon;
     private BoatListener listener;
     private TestHolds holds;
-    private GalaxyEngine engine;
+    private OceanEngine engine;
     private UUID playerId;
     private UUID otherId;
 
@@ -65,8 +65,8 @@ class BoatListenerDestroyTest extends CommonTestSetup {
         when(addon.getBoatRanks()).thenReturn(new BoatRanks(addon));
         when(addon.getOverWorld()).thenReturn(world);
         when(world.getSeed()).thenReturn(SEED);
-        engine = new GalaxyEngine(new GalaxyConfig(SEED, 2500, 160, 45, 1.0, 0, 5000, 70));
-        when(addon.getGalaxyEngine(anyLong())).thenReturn(engine);
+        engine = new OceanEngine(new OceanConfig(SEED, 2500, 160, 45, 1.0, 0, 5000, 70));
+        when(addon.getOceanEngine(anyLong())).thenReturn(engine);
         holds = TestHolds.install(addon);
         when(addon.getFuelService()).thenReturn(new FuelService(addon));
         when(addon.getHoldService()).thenReturn(new HoldService(addon));
@@ -173,7 +173,7 @@ class BoatListenerDestroyTest extends CommonTestSetup {
     }
 
     @Test
-    @Disabled("harness limitation: the seeded galaxy places ANARCHIC bands ~20km out; the test search never reaches one - band geometry, not a bug")
+    @Disabled("harness limitation: the seeded ocean places ANARCHIC bands ~20km out; the test search never reaches one - band geometry, not a bug")
     void testNonOwnerInAnarchicCanBreak() {
         BoatHold hold = holds.giveBoat(otherId, Material.OAK_BOAT);
 

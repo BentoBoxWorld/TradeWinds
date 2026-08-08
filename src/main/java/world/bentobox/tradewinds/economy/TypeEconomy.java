@@ -6,7 +6,7 @@ import java.util.Set;
 
 import org.bukkit.Material;
 
-import world.bentobox.tradewinds.galaxy.IslandType;
+import world.bentobox.tradewinds.ocean.IslandType;
 
 /**
  * What each island type produces (sells cheap) and demands (buys dear), and
@@ -115,7 +115,7 @@ public final class TypeEconomy {
 
     /**
      * Every material that is a recognised trade good <i>somewhere</i> in the
-     * galaxy: the union of all type catalogs plus every outfitter shelf.
+     * ocean: the union of all type catalogs plus every outfitter shelf.
      * Anything else a player turns up - mob drops, worn gear, odd blocks - is
      * salvage, priced at a discount into its own stock pool.
      * <p>

@@ -6,7 +6,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import world.bentobox.bentobox.database.Database;
 import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.economy.TradeCategory;
-import world.bentobox.tradewinds.galaxy.IslandSpec;
+import world.bentobox.tradewinds.ocean.IslandSpec;
 
 /**
  * Cache-in-front-of-Database manager for {@link TWIslandData}. Stock decays

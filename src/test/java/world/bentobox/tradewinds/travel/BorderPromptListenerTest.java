@@ -14,9 +14,9 @@ import org.junit.jupiter.api.Test;
 import world.bentobox.tradewinds.CommonTestSetup;
 import world.bentobox.tradewinds.Settings;
 import world.bentobox.tradewinds.TradeWinds;
-import world.bentobox.tradewinds.galaxy.GalaxyConfig;
-import world.bentobox.tradewinds.galaxy.GalaxyEngine;
-import world.bentobox.tradewinds.galaxy.IslandSpec;
+import world.bentobox.tradewinds.ocean.OceanConfig;
+import world.bentobox.tradewinds.ocean.OceanEngine;
+import world.bentobox.tradewinds.ocean.IslandSpec;
 
 /**
  * Tests the warp-offer geometry: the dialog is offered just inside the border,
@@ -38,8 +38,8 @@ class BorderPromptListenerTest extends CommonTestSetup {
         TradeWinds addon = mock(TradeWinds.class);
         Settings settings = new Settings();
         when(addon.getSettings()).thenReturn(settings);
-        GalaxyEngine engine = new GalaxyEngine(new GalaxyConfig(SEED, 2500, 160, 45, 1.0, 0, 5000, 70));
-        when(addon.getGalaxyEngine(anyLong())).thenReturn(engine);
+        OceanEngine engine = new OceanEngine(new OceanConfig(SEED, 2500, 160, 45, 1.0, 0, 5000, 70));
+        when(addon.getOceanEngine(anyLong())).thenReturn(engine);
         when(addon.getOverWorld()).thenReturn(world);
         when(world.getSeed()).thenReturn(SEED);
         listener = new BorderPromptListener(addon);

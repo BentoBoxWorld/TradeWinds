@@ -1,8 +1,8 @@
-package world.bentobox.tradewinds.galaxy;
+package world.bentobox.tradewinds.ocean;
 
 /**
  * What the top block of a land column should be, expressed without Bukkit so
- * the galaxy stays pure. {@code IslandPalette} maps these to materials. The
+ * the ocean stays pure. {@code IslandPalette} maps these to materials. The
  * kind follows the column's governing biome, so a desert stands on sand and a
  * mangrove swamp on mud instead of everything wearing grass.
  *

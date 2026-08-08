@@ -28,7 +28,7 @@ import world.bentobox.tradewinds.TestHolds;
 import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.dataobjects.PlayerDataManager;
 import world.bentobox.tradewinds.dataobjects.TWPlayerData;
-import world.bentobox.tradewinds.galaxy.SecurityBand;
+import world.bentobox.tradewinds.ocean.SecurityBand;
 
 /**
  * Tests for CrimeListener: crime recording from entity damage and death events.

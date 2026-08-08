@@ -10,7 +10,7 @@ import java.util.Set;
 
 import org.bukkit.Difficulty;
 
-import world.bentobox.tradewinds.galaxy.SecurityBand;
+import world.bentobox.tradewinds.ocean.SecurityBand;
 import org.bukkit.Material;
 import org.bukkit.GameMode;
 import org.bukkit.block.Biome;
@@ -70,73 +70,73 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "tradewinds.command.default-action")
     private String defaultPlayerAction = "go";
 
-    /*      GALAXY      */
-    @ConfigComment("The galaxy seed. Every island position, type, security band, biome, name and")
+    /*      OCEAN      */
+    @ConfigComment("The ocean seed. Every island position, type, security band, biome, name and")
     @ConfigComment("route cost derives deterministically from this one number - share it and another")
-    @ConfigComment("server gets the same trading galaxy. 0 means: use the world seed.")
-    @ConfigEntry(path = "galaxy.seed", needsReset = true)
-    private long galaxySeed = 0;
+    @ConfigComment("server gets the same trading ocean. 0 means: use the world seed.")
+    @ConfigEntry(path = "ocean.seed", needsReset = true)
+    private long oceanSeed = 0;
 
     @ConfigComment("Minimum separation between trading island centers in blocks. Enforced by")
     @ConfigComment("rejection sampling at placement; must be at least 2x distance-between-islands.")
-    @ConfigEntry(path = "galaxy.min-separation", needsReset = true)
-    private int galaxyMinSeparation = 2500;
+    @ConfigEntry(path = "ocean.min-separation", needsReset = true)
+    private int oceanMinSeparation = 2500;
 
     @ConfigComment("Radius in blocks around spawn inside which the starter-cluster density floor applies.")
-    @ConfigEntry(path = "galaxy.starter-cluster-radius", needsReset = true)
+    @ConfigEntry(path = "ocean.starter-cluster-radius", needsReset = true)
     private int starterClusterRadius = 5000;
 
     @ConfigComment("Minimum number of trading islands guaranteed inside the starter cluster radius,")
     @ConfigComment("regardless of seed luck. These are pre-charted for new players.")
-    @ConfigEntry(path = "galaxy.starter-cluster-min-islands", needsReset = true)
+    @ConfigEntry(path = "ocean.starter-cluster-min-islands", needsReset = true)
     private int starterClusterMinIslands = 5;
 
-    @ConfigComment("Chance (0.0-1.0) that a galaxy grid cell hosts a trading island.")
+    @ConfigComment("Chance (0.0-1.0) that a ocean grid cell hosts a trading island.")
     @ConfigComment("Cells are 2 x min-separation across, so 0.5 averages one island per ~2 cells.")
-    @ConfigEntry(path = "galaxy.density", needsReset = true)
-    private double galaxyDensity = 0.5;
+    @ConfigEntry(path = "ocean.density", needsReset = true)
+    private double oceanDensity = 0.5;
 
     @ConfigComment("Radius in blocks of an island's terrain footprint (land plus underwater shelf).")
-    @ConfigEntry(path = "galaxy.island-terrain-radius", needsReset = true)
+    @ConfigEntry(path = "ocean.island-terrain-radius", needsReset = true)
     private int islandTerrainRadius = 160;
 
     @ConfigComment("Blocks of terrain lift at an island's center. With sea-floor 25 and sea-height 70,")
     @ConfigComment("45 puts mean island centers just above the waves with hills to ~30 blocks.")
-    @ConfigEntry(path = "galaxy.land-lift", needsReset = true)
+    @ConfigEntry(path = "ocean.land-lift", needsReset = true)
     private int landLift = 45;
 
     @ConfigComment("Distance from spawn per security-band step (Safe -> Policed -> Frontier -> Lawless -> Anarchic).")
-    @ConfigEntry(path = "galaxy.band-radius", needsReset = true)
+    @ConfigEntry(path = "ocean.band-radius", needsReset = true)
     private int bandRadius = 5000;
 
     @ConfigComment("Economy of the spawn island - the trading island reserved at the world origin,")
     @ConfigComment("where players spawn and respawn. A working port: dock, plaza, market, warp zone.")
     @ConfigComment("One of AGRICULTURAL, FOREST, FISHING, MINING, INDUSTRIAL, LUXURY, FROZEN,")
     @ConfigComment("or RANDOM to let the seed decide.")
-    @ConfigEntry(path = "galaxy.spawn-island-type", needsReset = true)
+    @ConfigEntry(path = "ocean.spawn-island-type", needsReset = true)
     private String spawnIslandType = "FISHING";
 
     @ConfigComment("Chance (0-1) that a wild-islet grid cell hosts one - small unnamed islands,")
     @ConfigComment("unprotected: mine, farm, build, live. Minecraft-stuff land.")
-    @ConfigEntry(path = "galaxy.wild-islet-chance", needsReset = true)
+    @ConfigEntry(path = "ocean.wild-islet-chance", needsReset = true)
     private double wildIsletChance = 0.55;
 
     @ConfigComment("Grid size in blocks for wild islets. Much finer than the trading island grid,")
     @ConfigComment("so the open sea is dotted with land: at 900 with chance 0.55 there is usually")
     @ConfigComment("an islet within a few hundred blocks of anywhere - close enough to row to")
     @ConfigComment("without the sea feeling empty.")
-    @ConfigEntry(path = "galaxy.wild-islet-grid", needsReset = true)
+    @ConfigEntry(path = "ocean.wild-islet-grid", needsReset = true)
     private int wildIsletGrid = 900;
 
     @ConfigComment("Mean terrain radius of wild islets. 0 disables them. Each islet rolls its own")
     @ConfigComment("size between roughly half and one and a half times this, so the sea holds")
     @ConfigComment("everything from sandbars to proper little islands.")
-    @ConfigEntry(path = "galaxy.wild-islet-radius", needsReset = true)
+    @ConfigEntry(path = "ocean.wild-islet-radius", needsReset = true)
     private int wildIsletRadius = 75;
 
     @ConfigComment("Chance (0-1) that a wild islet is a mushroom island: mycelium, mooshrooms,")
     @ConfigComment("and no hostile spawns. Rare enough to be worth the find.")
-    @ConfigEntry(path = "galaxy.mushroom-islet-chance", needsReset = true)
+    @ConfigEntry(path = "ocean.mushroom-islet-chance", needsReset = true)
     private double mushroomIsletChance = 0.06;
 
     @ConfigComment("Chance (0-1) that a wild islet carries a small biome-appropriate vanilla")
@@ -145,28 +145,28 @@ public class Settings implements WorldSettings {
     @ConfigComment("deterministic per islet. Mushroom islets and pale gardens always stay")
     @ConfigComment("empty - there the biome itself is the find. 0 disables. Safe to change")
     @ConfigComment("mid-game: it only affects islets whose center chunk is not yet generated.")
-    @ConfigEntry(path = "galaxy.islet-structure-chance")
+    @ConfigEntry(path = "ocean.islet-structure-chance")
     private double isletStructureChance = 0.25;
 
     @ConfigComment("How far a coastline wanders in and out from the island's nominal radius, as a")
     @ConfigComment("fraction of it: bays and headlands. 0 gives perfect circles - a radial mask")
     @ConfigComment("on its own draws a coin. Above about 0.3 coasts start breaking into fragments.")
-    @ConfigEntry(path = "galaxy.coast-roughness", needsReset = true)
+    @ConfigEntry(path = "ocean.coast-roughness", needsReset = true)
     private double coastRoughness = 0.25;
 
     @ConfigComment("How much the land height varies across an island, as a fraction of its full")
     @ConfigComment("lift: hills and hollows instead of a smooth dome. 0 gives the dome.")
-    @ConfigEntry(path = "galaxy.island-hilliness", needsReset = true)
+    @ConfigEntry(path = "ocean.island-hilliness", needsReset = true)
     private double islandHilliness = 0.30;
 
     @ConfigComment("Relative spawn weight per island type. Higher = more common; 0 disables a type.")
     @ConfigComment("Types: AGRICULTURAL, FOREST, FISHING, MINING, INDUSTRIAL, LUXURY, FROZEN.")
-    @ConfigEntry(path = "galaxy.type-weights", needsReset = true)
+    @ConfigEntry(path = "ocean.type-weights", needsReset = true)
     private Map<String, Integer> typeWeights = defaultTypeWeights();
 
     private static Map<String, Integer> defaultTypeWeights() {
         Map<String, Integer> map = new HashMap<>();
-        for (world.bentobox.tradewinds.galaxy.IslandType t : world.bentobox.tradewinds.galaxy.IslandType.values()) {
+        for (world.bentobox.tradewinds.ocean.IslandType t : world.bentobox.tradewinds.ocean.IslandType.values()) {
             map.put(t.name(), t.getWeight());
         }
         return map;
@@ -1217,17 +1217,17 @@ public class Settings implements WorldSettings {
      *
      * @return the band
      */
-    public world.bentobox.tradewinds.galaxy.SecurityBand safestContrabandBuyer() {
+    public world.bentobox.tradewinds.ocean.SecurityBand safestContrabandBuyer() {
         try {
-            return world.bentobox.tradewinds.galaxy.SecurityBand
+            return world.bentobox.tradewinds.ocean.SecurityBand
                     .valueOf(safestContrabandBuyer.toUpperCase(java.util.Locale.ENGLISH));
         } catch (IllegalArgumentException e) {
-            return world.bentobox.tradewinds.galaxy.SecurityBand.FRONTIER;
+            return world.bentobox.tradewinds.ocean.SecurityBand.FRONTIER;
         }
     }
 
     /*      DEBUG       */
-    @ConfigComment("Log detailed [TradeWinds DEBUG] lines around galaxy generation, travel and trade.")
+    @ConfigComment("Log detailed [TradeWinds DEBUG] lines around ocean generation, travel and trade.")
     @ConfigEntry(path = "debug")
     private boolean debug = false;
 
@@ -1355,7 +1355,7 @@ public class Settings implements WorldSettings {
 
     @ConfigComment("Allow vanilla structure generation: shipwrecks, ocean ruins, ocean monuments,")
     @ConfigComment("buried treasure and trial chambers. Which of them appear where is decided by")
-    @ConfigComment("the biomes the galaxy hands out, so deep basins get monuments, warm shallows")
+    @ConfigComment("the biomes the ocean hands out, so deep basins get monuments, warm shallows")
     @ConfigComment("get warm ruins, and islet beaches get treasure.")
     @ConfigEntry(path = "world.make-structures")
     private boolean makeStructures = true;
@@ -3179,16 +3179,16 @@ public class Settings implements WorldSettings {
     // TradeWinds-specific accessors
     // ---------------------------------------------------------------------
 
-    public long getGalaxySeed() { return galaxySeed; }
-    public void setGalaxySeed(long galaxySeed) { this.galaxySeed = galaxySeed; }
-    public int getGalaxyMinSeparation() { return galaxyMinSeparation; }
-    public void setGalaxyMinSeparation(int galaxyMinSeparation) { this.galaxyMinSeparation = galaxyMinSeparation; }
+    public long getOceanSeed() { return oceanSeed; }
+    public void setOceanSeed(long oceanSeed) { this.oceanSeed = oceanSeed; }
+    public int getOceanMinSeparation() { return oceanMinSeparation; }
+    public void setOceanMinSeparation(int oceanMinSeparation) { this.oceanMinSeparation = oceanMinSeparation; }
     public int getStarterClusterRadius() { return starterClusterRadius; }
     public void setStarterClusterRadius(int starterClusterRadius) { this.starterClusterRadius = starterClusterRadius; }
     public int getStarterClusterMinIslands() { return starterClusterMinIslands; }
     public void setStarterClusterMinIslands(int starterClusterMinIslands) { this.starterClusterMinIslands = starterClusterMinIslands; }
-    public double getGalaxyDensity() { return galaxyDensity; }
-    public void setGalaxyDensity(double galaxyDensity) { this.galaxyDensity = galaxyDensity; }
+    public double getOceanDensity() { return oceanDensity; }
+    public void setOceanDensity(double oceanDensity) { this.oceanDensity = oceanDensity; }
     public int getIslandTerrainRadius() { return islandTerrainRadius; }
     public void setIslandTerrainRadius(int islandTerrainRadius) { this.islandTerrainRadius = islandTerrainRadius; }
     public int getLandLift() { return landLift; }
@@ -3295,12 +3295,12 @@ public class Settings implements WorldSettings {
      *
      * @return the band
      */
-    public world.bentobox.tradewinds.galaxy.SecurityBand safestFugitiveTrader() {
+    public world.bentobox.tradewinds.ocean.SecurityBand safestFugitiveTrader() {
         try {
-            return world.bentobox.tradewinds.galaxy.SecurityBand
+            return world.bentobox.tradewinds.ocean.SecurityBand
                     .valueOf(safestFugitiveTrader.toUpperCase(java.util.Locale.ENGLISH));
         } catch (IllegalArgumentException e) {
-            return world.bentobox.tradewinds.galaxy.SecurityBand.FRONTIER;
+            return world.bentobox.tradewinds.ocean.SecurityBand.FRONTIER;
         }
     }
 

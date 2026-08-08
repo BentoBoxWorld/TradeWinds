@@ -12,7 +12,7 @@ import world.bentobox.bentobox.api.user.User;
 import world.bentobox.bentobox.hooks.VaultHook;
 import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.api.events.TWTradeEvent;
-import world.bentobox.tradewinds.galaxy.IslandSpec;
+import world.bentobox.tradewinds.ocean.IslandSpec;
 import world.bentobox.tradewinds.travel.BoatRanks;
 import world.bentobox.tradewinds.travel.CargoStore;
 
@@ -240,7 +240,7 @@ public class MarketService {
         if (!isNotable(item) || addon.getOverWorld() == null) {
             return;
         }
-        List<IslandSpec> elsewhere = addon.getGalaxyEngine(addon.getOverWorld().getSeed())
+        List<IslandSpec> elsewhere = addon.getOceanEngine(addon.getOverWorld().getSeed())
                 .islandsNear(soldAt.centerX(), soldAt.centerZ(), addon.getSettings().getResaleShipRadius())
                 .stream().filter(other -> other.cellX() != soldAt.cellX() || other.cellZ() != soldAt.cellZ())
                 .toList();
@@ -391,7 +391,7 @@ public class MarketService {
         if (radius <= 0 || addon.getOverWorld() == null) {
             return List.of();
         }
-        return addon.getGalaxyEngine(addon.getOverWorld().getSeed())
+        return addon.getOceanEngine(addon.getOverWorld().getSeed())
                 .islandsNear(spec.centerX(), spec.centerZ(), radius).stream()
                 .filter(other -> other.cellX() != spec.cellX() || other.cellZ() != spec.cellZ()).toList();
     }
@@ -460,7 +460,7 @@ public class MarketService {
     }
 
     /**
-     * Whether a material is a recognised trade good somewhere in the galaxy.
+     * Whether a material is a recognised trade good somewhere in the ocean.
      * Everything else is salvage: still sellable, but at a discount and into a
      * pool of its own.
      *
@@ -771,7 +771,7 @@ public class MarketService {
             return false;
         }
         User user = User.getInstance(player);
-        if (spec.techLevel() < world.bentobox.tradewinds.galaxy.GalaxyEngine.MAX_TECH_LEVEL) {
+        if (spec.techLevel() < world.bentobox.tradewinds.ocean.OceanEngine.MAX_TECH_LEVEL) {
             user.sendMessage("tradewinds.trade.expander-not-sold-here");
             thud(player);
             return false;

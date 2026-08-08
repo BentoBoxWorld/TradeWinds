@@ -21,8 +21,8 @@ import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.dataobjects.PlayerDataManager;
 import world.bentobox.tradewinds.dataobjects.TWPlayerData;
 import world.bentobox.tradewinds.economy.TradeCategory;
-import world.bentobox.tradewinds.galaxy.GalaxyEngine;
-import world.bentobox.tradewinds.galaxy.IslandSpec;
+import world.bentobox.tradewinds.ocean.OceanEngine;
+import world.bentobox.tradewinds.ocean.IslandSpec;
 
 /**
  * Tests for TWPricesCommand: the trader's logbook showing ports visited and
@@ -35,7 +35,7 @@ class TWPricesCommandTest extends CommonTestSetup {
     private TradeWinds addon;
     private TWPricesCommand command;
     private User user;
-    private GalaxyEngine engine;
+    private OceanEngine engine;
 
     @Override
     @BeforeEach
@@ -49,9 +49,9 @@ class TWPricesCommandTest extends CommonTestSetup {
         command = new TWPricesCommand(parent);
         user = User.getInstance(mockPlayer);
 
-        // Setup galaxy engine and addon mocks
-        engine = mock(GalaxyEngine.class);
-        when(addon.getGalaxyEngine(anyLong())).thenReturn(engine);
+        // Setup ocean engine and addon mocks
+        engine = mock(OceanEngine.class);
+        when(addon.getOceanEngine(anyLong())).thenReturn(engine);
         when(addon.getOverWorld()).thenReturn(world);
         when(world.getSeed()).thenReturn(1234L);
     }

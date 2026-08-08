@@ -13,10 +13,10 @@ import net.kyori.adventure.bossbar.BossBar;
 import net.kyori.adventure.text.Component;
 import world.bentobox.bentobox.api.user.User;
 import world.bentobox.tradewinds.TradeWinds;
-import world.bentobox.tradewinds.galaxy.DockPlan;
-import world.bentobox.tradewinds.galaxy.GalaxyEngine;
-import world.bentobox.tradewinds.galaxy.IslandSpec;
-import world.bentobox.tradewinds.galaxy.SecurityBand;
+import world.bentobox.tradewinds.ocean.DockPlan;
+import world.bentobox.tradewinds.ocean.OceanEngine;
+import world.bentobox.tradewinds.ocean.IslandSpec;
+import world.bentobox.tradewinds.ocean.SecurityBand;
 
 /**
  * The navigation boss bar: while in an island's waters it shows the island
@@ -70,7 +70,7 @@ public class NavigationBarTask implements Runnable {
                 hide(player);
                 continue;
             }
-            GalaxyEngine engine = addon.getGalaxyEngine(addon.getOverWorld().getSeed());
+            OceanEngine engine = addon.getOceanEngine(addon.getOverWorld().getSeed());
             Optional<Reading> reading = reading(engine, player.getLocation().getBlockX(),
                     player.getLocation().getBlockZ(), addon.getSettings().getIslandDistance());
             if (reading.isPresent()) {
@@ -150,13 +150,13 @@ public class NavigationBarTask implements Runnable {
     /**
      * What the bar should show at a position, if anything. Pure and testable.
      *
-     * @param engine the galaxy
+     * @param engine the ocean
      * @param x player block x
      * @param z player block z
      * @param range island space radius
      * @return the reading, or empty in open ocean
      */
-    static Optional<Reading> reading(GalaxyEngine engine, int x, int z, int range) {
+    static Optional<Reading> reading(OceanEngine engine, int x, int z, int range) {
         return engine.islandsNear(x, z, range).stream()
                 .filter(spec -> spec.distanceSquared(x, z) <= (long) range * range)
                 .findFirst()

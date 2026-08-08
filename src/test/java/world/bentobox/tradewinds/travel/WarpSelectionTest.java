@@ -18,10 +18,10 @@ import world.bentobox.tradewinds.Settings;
 import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.dataobjects.PlayerDataManager;
 import world.bentobox.tradewinds.dataobjects.TWPlayerData;
-import world.bentobox.tradewinds.galaxy.GalaxyConfig;
-import world.bentobox.tradewinds.galaxy.GalaxyEngine;
-import world.bentobox.tradewinds.galaxy.IslandSpec;
-import world.bentobox.tradewinds.galaxy.RouteGraph;
+import world.bentobox.tradewinds.ocean.OceanConfig;
+import world.bentobox.tradewinds.ocean.OceanEngine;
+import world.bentobox.tradewinds.ocean.IslandSpec;
+import world.bentobox.tradewinds.ocean.RouteGraph;
 
 /**
  * Tests the warp dialog's destination selection: charted-only, origin
@@ -34,7 +34,7 @@ class WarpSelectionTest extends CommonTestSetup {
     private static final long SEED = 2026L;
 
     private TradeWinds addon;
-    private GalaxyEngine engine;
+    private OceanEngine engine;
     private WarpService service;
     private TWPlayerData data;
     private IslandSpec origin;
@@ -46,8 +46,8 @@ class WarpSelectionTest extends CommonTestSetup {
         addon = mock(TradeWinds.class);
         Settings settings = new Settings();
         when(addon.getSettings()).thenReturn(settings);
-        engine = new GalaxyEngine(new GalaxyConfig(SEED, 2500, 160, 45, 1.0, 0, 5000, 70));
-        when(addon.getGalaxyEngine(anyLong())).thenReturn(engine);
+        engine = new OceanEngine(new OceanConfig(SEED, 2500, 160, 45, 1.0, 0, 5000, 70));
+        when(addon.getOceanEngine(anyLong())).thenReturn(engine);
         when(addon.getOverWorld()).thenReturn(world);
         when(world.getSeed()).thenReturn(SEED);
         when(addon.getRouteGraph()).thenReturn(new RouteGraph(0.01, Map.of()));

@@ -15,9 +15,9 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitTask;
 
 import world.bentobox.tradewinds.TradeWinds;
-import world.bentobox.tradewinds.galaxy.DockPlan;
-import world.bentobox.tradewinds.galaxy.GalaxyEngine;
-import world.bentobox.tradewinds.galaxy.IslandSpec;
+import world.bentobox.tradewinds.ocean.DockPlan;
+import world.bentobox.tradewinds.ocean.OceanEngine;
+import world.bentobox.tradewinds.ocean.IslandSpec;
 import world.bentobox.tradewinds.generator.IslandDecorator;
 
 /**
@@ -56,7 +56,7 @@ public class ResidentAuditTask implements Runnable {
         if (world == null) {
             return;
         }
-        GalaxyEngine engine = addon.getGalaxyEngine(world.getSeed());
+        OceanEngine engine = addon.getOceanEngine(world.getSeed());
         // Tether: return loaded strays to their home
         for (Entity entity : world.getEntities()) {
             String home = entity.getPersistentDataContainer().get(IslandDecorator.HOME_KEY,
@@ -82,12 +82,12 @@ public class ResidentAuditTask implements Runnable {
         }
     }
 
-    private void audit(World world, GalaxyEngine engine, IslandSpec spec) {
+    private void audit(World world, OceanEngine engine, IslandSpec spec) {
         DockPlan plan = engine.dockPlan(spec);
         if (!world.isChunkLoaded(plan.plazaX() >> 4, plan.plazaZ() >> 4)) {
             return;
         }
-        int surface = engine.getConfig().seaLevel() + GalaxyEngine.PLAZA_RISE;
+        int surface = engine.getConfig().seaLevel() + OceanEngine.PLAZA_RISE;
         Location plaza = new Location(world, plan.plazaX() + 0.5, surface + 1.0, plan.plazaZ() + 0.5);
         List<Entity> nearby = List.copyOf(world.getNearbyEntities(plaza, 48, 24, 48,
                 e -> spec.name().equals(e.getPersistentDataContainer().get(IslandDecorator.RESIDENT_KEY,

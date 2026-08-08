@@ -1,8 +1,8 @@
-package world.bentobox.tradewinds.galaxy;
+package world.bentobox.tradewinds.ocean;
 
 /**
  * Smooth value noise over a seeded lattice. Pure maths, no Bukkit: the ocean's
- * temperature field is built from this, so it is deterministic from the galaxy
+ * temperature field is built from this, so it is deterministic from the ocean
  * seed like everything else.
  *
  * @author tastybento
@@ -16,7 +16,7 @@ public final class Noise {
     /**
      * Smooth noise in [0, 1] at a world position.
      *
-     * @param seed galaxy seed
+     * @param seed ocean seed
      * @param salt distinguishes independent fields
      * @param x world x
      * @param z world z
@@ -43,7 +43,7 @@ public final class Noise {
      * shrinks its contribution, so one call gives broad shapes with fine detail
      * riding on top. This is what turns a flat noise field into terrain.
      *
-     * @param seed galaxy seed
+     * @param seed ocean seed
      * @param salt distinguishes independent fields
      * @param x world x
      * @param z world z
@@ -74,7 +74,7 @@ public final class Noise {
      * canyons are cut where this runs high - folding is what makes them long and
      * narrow instead of round.
      *
-     * @param seed galaxy seed
+     * @param seed ocean seed
      * @param salt distinguishes independent fields
      * @param x world x
      * @param z world z

@@ -7,7 +7,7 @@ import java.util.List;
 import org.bukkit.Location;
 import org.bukkit.World;
 
-import world.bentobox.tradewinds.galaxy.GalaxyEngine;
+import world.bentobox.tradewinds.ocean.OceanEngine;
 
 /**
  * Finds open water to arrive on.
@@ -17,7 +17,7 @@ import world.bentobox.tradewinds.galaxy.GalaxyEngine;
  * that ring with its deck at exactly that height, so an unlucky bearing
  * materialised a sailor inside the decking ("suffocated in a wall").
  * <p>
- * The search asks the <b>galaxy</b>, not the world. Everything about the sea
+ * The search asks the <b>ocean</b>, not the world. Everything about the sea
  * floor and the island masks is a pure function of (seed, position), so
  * "is this open water?" can be answered by arithmetic - no block reads, and
  * therefore no chunk loading. The first cut did read blocks, which meant a
@@ -62,20 +62,20 @@ public final class SeaArrival {
     }
 
     /**
-     * Whether a column is open water, from the galaxy alone.
+     * Whether a column is open water, from the ocean alone.
      * <p>
      * Two ways a column can fail: the sea floor plus any island lift reaches
      * the surface, or a dock or plaza has been terraformed over it - the quay
      * is solid to a block above sea level, which is exactly where an arrival
      * lands.
      *
-     * @param engine the galaxy
+     * @param engine the ocean
      * @param x block x
      * @param z block z
      * @param seaLevel the sea surface Y
      * @return true if it is somewhere to arrive
      */
-    public static boolean isOpenSea(GalaxyEngine engine, int x, int z, int seaLevel) {
+    public static boolean isOpenSea(OceanEngine engine, int x, int z, int seaLevel) {
         return engine.surfaceHeightAt(x, z) < seaLevel && engine.columnPlanAt(x, z).isEmpty();
     }
 
@@ -89,7 +89,7 @@ public final class SeaArrival {
      * sailor <em>inward</em> into a bay, which is how a warp ends up putting
      * someone on top of an island. Outward is the only direction that helps.
      *
-     * @param engine the galaxy
+     * @param engine the ocean
      * @param world the world to arrive in
      * @param centerX island centre x
      * @param centerZ island centre z
@@ -98,7 +98,7 @@ public final class SeaArrival {
      * @param seaLevel the sea surface Y
      * @return a location on open water
      */
-    public static Location openSeaOutward(GalaxyEngine engine, World world, int centerX, int centerZ, int x,
+    public static Location openSeaOutward(OceanEngine engine, World world, int centerX, int centerZ, int x,
             int z, int seaLevel) {
         double dx = (double) x - centerX;
         double dz = (double) z - centerZ;
@@ -122,7 +122,7 @@ public final class SeaArrival {
      * Open water with elbow room - not a one-block puddle between two
      * headlands, which is technically water and no use to a boat.
      */
-    private static boolean isClearWater(GalaxyEngine engine, int x, int z, int seaLevel) {
+    private static boolean isClearWater(OceanEngine engine, int x, int z, int seaLevel) {
         if (!isOpenSea(engine, x, z, seaLevel)) {
             return false;
         }
@@ -139,7 +139,7 @@ public final class SeaArrival {
     /**
      * The nearest open water to an intended arrival point.
      *
-     * @param engine the galaxy, or null for a world it does not describe (the
+     * @param engine the ocean, or null for a world it does not describe (the
      *        interstice, which has no islands and no docks - its floor can
      *        never reach the surface, so the intended point always serves)
      * @param world the world to arrive in
@@ -148,7 +148,7 @@ public final class SeaArrival {
      * @param seaLevel the sea surface Y
      * @return a location on open water
      */
-    public static Location openSeaNear(GalaxyEngine engine, World world, int x, int z, int seaLevel) {
+    public static Location openSeaNear(OceanEngine engine, World world, int x, int z, int seaLevel) {
         if (engine == null) {
             return new Location(world, x + 0.5, seaLevel + 1.0, z + 0.5);
         }
@@ -164,7 +164,7 @@ public final class SeaArrival {
         return new Location(world, x + 0.5, engine.surfaceHeightAt(x, z) + 1.0, z + 0.5);
     }
 
-    /** A column test for worlds the galaxy does not describe. */
+    /** A column test for worlds the ocean does not describe. */
     public interface ColumnTest {
         boolean isOpen(int x, int z);
     }

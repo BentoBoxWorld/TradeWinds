@@ -15,26 +15,26 @@ import org.bukkit.generator.WorldInfo;
 import org.eclipse.jdt.annotation.NonNull;
 
 import world.bentobox.tradewinds.TradeWinds;
-import world.bentobox.tradewinds.galaxy.ColumnPlan;
-import world.bentobox.tradewinds.galaxy.GalaxyEngine;
-import world.bentobox.tradewinds.galaxy.Seabed;
-import world.bentobox.tradewinds.galaxy.SeabedConfig;
-import world.bentobox.tradewinds.galaxy.SurfaceKind;
+import world.bentobox.tradewinds.ocean.ColumnPlan;
+import world.bentobox.tradewinds.ocean.OceanEngine;
+import world.bentobox.tradewinds.ocean.Seabed;
+import world.bentobox.tradewinds.ocean.SeabedConfig;
+import world.bentobox.tradewinds.ocean.SurfaceKind;
 
 /**
  * Generates the TradeWinds ocean: a sea floor of shelves, basins, rifts and
  * seamounts under open water, everywhere.
  * <p>
  * Vanilla noise is off so no vanilla continents can appear - the only land in
- * the world comes from the seeded galaxy's radial island masks. Everything
+ * the world comes from the seeded ocean's radial island masks. Everything
  * else vanilla offers is left switched on: its carvers cut the caves under the
  * sea floor, and its structure placement supplies the shipwrecks, ocean ruins,
- * monuments and trial chambers, guided entirely by the biomes the galaxy hands
+ * monuments and trial chambers, guided entirely by the biomes the ocean hands
  * out. That is the hybrid: we own the shape of the floor, vanilla furnishes it.
  * <p>
  * Both the overworld and the interstice (NETHER environment) use this
  * generator; the interstice gets its own drab, shallow sea floor and none of
- * the galaxy.
+ * the ocean.
  *
  * @author tastybento
  */
@@ -91,7 +91,7 @@ public class ChunkGeneratorWorld extends ChunkGenerator {
     }
 
     /**
-     * Terrain lift in blocks at a world column - the seeded galaxy's radial
+     * Terrain lift in blocks at a world column - the seeded ocean's radial
      * island mask. This is the only source of land in the world: 0 is plain
      * ocean floor; near an island center the lift raises the floor above sea
      * level. The interstice has no islands.
@@ -105,18 +105,18 @@ public class ChunkGeneratorWorld extends ChunkGenerator {
         if (worldInfo.getEnvironment() != Environment.NORMAL) {
             return 0;
         }
-        return addon.getGalaxyEngine(worldInfo.getSeed()).landLiftAt(worldX, worldZ);
+        return addon.getOceanEngine(worldInfo.getSeed()).landLiftAt(worldX, worldZ);
     }
 
     /**
-     * The sea floor field for an environment. The overworld shares the galaxy's
+     * The sea floor field for an environment. The overworld shares the ocean's
      * so terrain and biomes agree on where the deep water is; the interstice
      * gets its own.
      */
     private Seabed seabed(WorldInfo worldInfo) {
         return seabeds.computeIfAbsent(worldInfo.getEnvironment(), env -> {
             if (env == Environment.NORMAL) {
-                return addon.getGalaxyEngine(worldInfo.getSeed()).getSeabed();
+                return addon.getOceanEngine(worldInfo.getSeed()).getSeabed();
             }
             return new Seabed(worldInfo.getSeed() ^ INTERSTICE_SALT,
                     seaConfig.get(Environment.NETHER).seaHeight(),
@@ -134,7 +134,7 @@ public class ChunkGeneratorWorld extends ChunkGenerator {
         }
         boolean overworld = worldInfo.getEnvironment() == Environment.NORMAL;
         Seabed floor = seabed(worldInfo);
-        GalaxyEngine engine = overworld ? addon.getGalaxyEngine(worldInfo.getSeed()) : null;
+        OceanEngine engine = overworld ? addon.getOceanEngine(worldInfo.getSeed()) : null;
 
         int minHeight = worldInfo.getMinHeight();
         // Bedrock floor
@@ -213,8 +213,8 @@ public class ChunkGeneratorWorld extends ChunkGenerator {
             return;
         }
         Seabed floor = seabed(worldInfo);
-        GalaxyEngine engine = worldInfo.getEnvironment() == Environment.NORMAL
-                ? addon.getGalaxyEngine(worldInfo.getSeed())
+        OceanEngine engine = worldInfo.getEnvironment() == Environment.NORMAL
+                ? addon.getOceanEngine(worldInfo.getSeed())
                 : null;
         int lowestY = worldInfo.getMinHeight() + 1;
         for (int x = 0; x < 16; x++) {
@@ -225,7 +225,7 @@ public class ChunkGeneratorWorld extends ChunkGenerator {
     }
 
     private void sealCaveColumn(ChunkData chunkData, WorldInfo worldInfo, WorldConfig wc, Seabed floor,
-            GalaxyEngine engine, int x, int z, int chunkX, int chunkZ, int lowestY) {
+            OceanEngine engine, int x, int z, int chunkX, int chunkZ, int lowestY) {
         int worldX = (chunkX << 4) + x;
         int worldZ = (chunkZ << 4) + z;
         int floorTop = floorTopAt(worldInfo, wc, floor, engine, worldX, worldZ);
@@ -255,9 +255,9 @@ public class ChunkGeneratorWorld extends ChunkGenerator {
 
     /**
      * The Y of the topmost floor block in a column: the sea floor, plus the
-     * galaxy's island lift, overridden by any dock or plaza terraforming.
+     * ocean's island lift, overridden by any dock or plaza terraforming.
      */
-    private int floorTopAt(WorldInfo worldInfo, WorldConfig wc, Seabed floor, GalaxyEngine engine, int worldX,
+    private int floorTopAt(WorldInfo worldInfo, WorldConfig wc, Seabed floor, OceanEngine engine, int worldX,
             int worldZ) {
         double shelfBlend = engine == null ? 0 : engine.shelfBlendAt(worldX, worldZ);
         int floorTop = floor.heightAt(worldX, worldZ, shelfBlend) + terrainLift(worldInfo, worldX, worldZ);
@@ -290,7 +290,7 @@ public class ChunkGeneratorWorld extends ChunkGenerator {
      * surface.
      */
     private void generateColumn(ChunkData chunkData, WorldInfo worldInfo, WorldConfig wc, Seabed floor,
-            GalaxyEngine engine, int x, int z, int worldX, int worldZ, int baseTop, int floorTop) {
+            OceanEngine engine, int x, int z, int worldX, int worldZ, int baseTop, int floorTop) {
         ColumnPlan plan = engine == null ? null : engine.columnPlanAt(worldX, worldZ).orElse(null);
         boolean land = floorTop > wc.seaHeight() + 1;
         int depth = wc.seaHeight() - floorTop;
@@ -449,7 +449,7 @@ public class ChunkGeneratorWorld extends ChunkGenerator {
         int centerZ = (chunkZ << 4) + 8;
         // A chunk's worth of margin so a structure anchored just outside cannot
         // reach in
-        return addon.getGalaxyEngine(worldInfo.getSeed())
+        return addon.getOceanEngine(worldInfo.getSeed())
                 .islandsNear(centerX, centerZ, addon.getSettings().getIslandTerrainRadius() + 16).isEmpty();
     }
 

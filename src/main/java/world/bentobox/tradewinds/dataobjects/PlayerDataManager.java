@@ -6,7 +6,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import world.bentobox.bentobox.database.Database;
 import world.bentobox.tradewinds.TradeWinds;
-import world.bentobox.tradewinds.galaxy.GalaxyEngine;
+import world.bentobox.tradewinds.ocean.OceanEngine;
 
 /**
  * Cache-in-front-of-Database manager for {@link TWPlayerData} (AOneBlock
@@ -55,7 +55,7 @@ public class PlayerDataManager {
         if (addon.getOverWorld() == null) {
             return;
         }
-        GalaxyEngine engine = addon.getGalaxyEngine(addon.getOverWorld().getSeed());
+        OceanEngine engine = addon.getOceanEngine(addon.getOverWorld().getSeed());
         // The starter cells are the nearest guaranteed islands; chart everything
         // within the starter cluster radius for good measure
         engine.islandsNear(0, 0, addon.getSettings().getStarterClusterRadius() * 2).forEach(data::chart);
@@ -69,24 +69,24 @@ public class PlayerDataManager {
      * @param player the sailor, expected to be at an island
      * @return the islands newly charted
      */
-    public java.util.List<world.bentobox.tradewinds.galaxy.IslandSpec> portScan(org.bukkit.entity.Player player) {
+    public java.util.List<world.bentobox.tradewinds.ocean.IslandSpec> portScan(org.bukkit.entity.Player player) {
         int count = addon.getSettings().getPortScan();
         if (count <= 0 || addon.getOverWorld() == null || !player.getWorld().equals(addon.getOverWorld())) {
             return java.util.List.of();
         }
-        GalaxyEngine engine = addon.getGalaxyEngine(addon.getOverWorld().getSeed());
+        OceanEngine engine = addon.getOceanEngine(addon.getOverWorld().getSeed());
         int x = player.getLocation().getBlockX();
         int z = player.getLocation().getBlockZ();
         // Must actually be AT a port, not merely in its waters
         int range = addon.getSettings().getIslandProtectionRange();
-        java.util.Optional<world.bentobox.tradewinds.galaxy.IslandSpec> port = engine.islandsNear(x, z, range)
+        java.util.Optional<world.bentobox.tradewinds.ocean.IslandSpec> port = engine.islandsNear(x, z, range)
                 .stream().filter(spec -> spec.distanceSquared(x, z) <= (long) range * range).findFirst();
         if (port.isEmpty()) {
             return java.util.List.of();
         }
-        world.bentobox.tradewinds.galaxy.IslandSpec here = port.get();
+        world.bentobox.tradewinds.ocean.IslandSpec here = port.get();
         TWPlayerData data = get(player.getUniqueId());
-        java.util.List<world.bentobox.tradewinds.galaxy.IslandSpec> charted = engine
+        java.util.List<world.bentobox.tradewinds.ocean.IslandSpec> charted = engine
                 .islandsNear(here.centerX(), here.centerZ(), PORT_SCAN_RADIUS).stream()
                 .sorted(java.util.Comparator
                         .comparingLong(spec -> spec.distanceSquared(here.centerX(), here.centerZ())))

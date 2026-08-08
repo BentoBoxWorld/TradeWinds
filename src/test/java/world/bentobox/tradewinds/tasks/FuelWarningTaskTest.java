@@ -22,9 +22,9 @@ import world.bentobox.tradewinds.CommonTestSetup;
 import world.bentobox.tradewinds.Settings;
 import world.bentobox.tradewinds.TestHolds;
 import world.bentobox.tradewinds.TradeWinds;
-import world.bentobox.tradewinds.galaxy.GalaxyConfig;
-import world.bentobox.tradewinds.galaxy.GalaxyEngine;
-import world.bentobox.tradewinds.galaxy.IslandSpec;
+import world.bentobox.tradewinds.ocean.OceanConfig;
+import world.bentobox.tradewinds.ocean.OceanEngine;
+import world.bentobox.tradewinds.ocean.IslandSpec;
 import world.bentobox.tradewinds.travel.FuelService;
 import world.bentobox.tradewinds.travel.HoldService;
 import world.bentobox.tradewinds.travel.WarpService;
@@ -45,7 +45,7 @@ class FuelWarningTaskTest extends CommonTestSetup {
     private TradeWinds addon;
     private FuelWarningTask task;
     private TestHolds holds;
-    private GalaxyEngine engine;
+    private OceanEngine engine;
     private UUID playerId;
     private Player player;
 
@@ -59,8 +59,8 @@ class FuelWarningTaskTest extends CommonTestSetup {
         when(addon.getSettings()).thenReturn(new Settings());
         when(addon.getOverWorld()).thenReturn(world);
         when(world.getSeed()).thenReturn(SEED);
-        engine = new GalaxyEngine(new GalaxyConfig(SEED, 2500, 160, 45, 1.0, 0, 5000, 70));
-        when(addon.getGalaxyEngine(anyLong())).thenReturn(engine);
+        engine = new OceanEngine(new OceanConfig(SEED, 2500, 160, 45, 1.0, 0, 5000, 70));
+        when(addon.getOceanEngine(anyLong())).thenReturn(engine);
         holds = TestHolds.install(addon);
         when(addon.getFuelService()).thenReturn(new FuelService(addon));
         when(addon.getHoldService()).thenReturn(new HoldService(addon));

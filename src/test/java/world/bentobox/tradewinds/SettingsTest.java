@@ -72,12 +72,12 @@ class SettingsTest extends CommonTestSetup {
     }
 
     @Test
-    void testGalaxyDefaults() {
-        assertEquals(0, settings.getGalaxySeed());
-        assertTrue(settings.getGalaxyMinSeparation() >= 2 * settings.getIslandDistance());
+    void testOceanDefaults() {
+        assertEquals(0, settings.getOceanSeed());
+        assertTrue(settings.getOceanMinSeparation() >= 2 * settings.getIslandDistance());
         assertEquals(5000, settings.getStarterClusterRadius());
         assertEquals(5, settings.getStarterClusterMinIslands());
-        assertEquals(0.5, settings.getGalaxyDensity());
+        assertEquals(0.5, settings.getOceanDensity());
         assertEquals(160, settings.getIslandTerrainRadius());
         assertEquals(45, settings.getLandLift());
         assertEquals(5000, settings.getBandRadius());

@@ -8,7 +8,7 @@ import world.bentobox.bentobox.api.localization.TextVariables;
 import world.bentobox.bentobox.api.user.User;
 import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.crime.Contraband;
-import world.bentobox.tradewinds.galaxy.IslandSpec;
+import world.bentobox.tradewinds.ocean.IslandSpec;
 
 /**
  * Shows what customs would make of you, here, right now.
@@ -41,7 +41,7 @@ public class AdminCustomsCommand extends CompositeCommand {
         int x = user.getLocation().getBlockX();
         int z = user.getLocation().getBlockZ();
         int range = addon.getSettings().getIslandProtectionRange();
-        Optional<IslandSpec> here = addon.getGalaxyEngine(getWorld().getSeed()).islandsNear(x, z, range).stream()
+        Optional<IslandSpec> here = addon.getOceanEngine(getWorld().getSeed()).islandsNear(x, z, range).stream()
                 .filter(s -> s.distanceSquared(x, z) <= (long) range * range).findFirst();
 
         user.sendMessage("tradewinds.commands.admin.customs.header");

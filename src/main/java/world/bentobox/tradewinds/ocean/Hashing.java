@@ -1,8 +1,8 @@
-package world.bentobox.tradewinds.galaxy;
+package world.bentobox.tradewinds.ocean;
 
 /**
- * Deterministic hashing for the galaxy: SplitMix64 finalizer over (seed, cell,
- * salt). Everything the galaxy decides flows through these functions - never
+ * Deterministic hashing for the ocean: SplitMix64 finalizer over (seed, cell,
+ * salt). Everything the ocean decides flows through these functions - never
  * {@code java.util.Random} state shared across queries, so results are
  * order-independent.
  *

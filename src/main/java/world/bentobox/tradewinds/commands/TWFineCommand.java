@@ -8,8 +8,8 @@ import world.bentobox.bentobox.api.commands.ConfirmableCommand;
 import world.bentobox.bentobox.api.user.User;
 import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.crime.Standing;
-import world.bentobox.tradewinds.galaxy.IslandSpec;
-import world.bentobox.tradewinds.galaxy.SecurityBand;
+import world.bentobox.tradewinds.ocean.IslandSpec;
+import world.bentobox.tradewinds.ocean.SecurityBand;
 
 /**
  * Pay off a criminal record at a civilized port.
@@ -77,7 +77,7 @@ public class TWFineCommand extends ConfirmableCommand {
         int x = user.getLocation().getBlockX();
         int z = user.getLocation().getBlockZ();
         int range = addon.getSettings().getIslandProtectionRange();
-        return addon.getGalaxyEngine(getWorld().getSeed()).islandsNear(x, z, range).stream()
+        return addon.getOceanEngine(getWorld().getSeed()).islandsNear(x, z, range).stream()
                 .filter(s -> s.distanceSquared(x, z) <= (long) range * range).findFirst();
     }
 

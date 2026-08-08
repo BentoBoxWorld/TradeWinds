@@ -1,4 +1,4 @@
-package world.bentobox.tradewinds.galaxy;
+package world.bentobox.tradewinds.ocean;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -10,9 +10,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
- * The seeded galaxy: which cells host trading islands, where exactly, and what
+ * The seeded ocean: which cells host trading islands, where exactly, and what
  * each island is (type, security band, biome, name). Every answer is a pure
- * function of (seed, cell) - same seed, same galaxy, on any server (spec
+ * function of (seed, cell) - same seed, same ocean, on any server (spec
  * principle 5). No Bukkit imports; results are cached but cache state never
  * affects outcomes.
  * <p>
@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
  *
  * @author tastybento
  */
-public class GalaxyEngine {
+public class OceanEngine {
 
     // Salts for the independent per-cell attribute rolls
     private static final long SALT_OCCUPANCY = 0x0CCA9A9CL;
@@ -184,14 +184,14 @@ public class GalaxyEngine {
             IslandType.INDUSTRIAL, 5,
             IslandType.LUXURY, 5);
 
-    private final GalaxyConfig config;
+    private final OceanConfig config;
     private final Set<Long> starterCells;
     private final Map<Long, Optional<IslandSpec>> cache = new ConcurrentHashMap<>();
     private final Seabed seabed;
     /** The starter cell whose island is lifted to the tech floor, if any needs it. */
     private final long boostedTechCell;
 
-    public GalaxyEngine(GalaxyConfig config) {
+    public OceanEngine(OceanConfig config) {
         this.config = config;
         this.starterCells = computeStarterCells();
         this.seabed = new Seabed(config.seed(), config.seaLevel(), config.seabed());
@@ -230,13 +230,13 @@ public class GalaxyEngine {
     /**
      * The ocean floor field - basins, relief, rifts and seamounts.
      *
-     * @return this galaxy's seabed
+     * @return this ocean's seabed
      */
     public Seabed getSeabed() {
         return seabed;
     }
 
-    public GalaxyConfig getConfig() {
+    public OceanConfig getConfig() {
         return config;
     }
 
@@ -282,7 +282,7 @@ public class GalaxyEngine {
     }
 
     /**
-     * The island hosted by a galaxy cell, if any. Pure function of (seed, cell).
+     * The island hosted by a ocean cell, if any. Pure function of (seed, cell).
      *
      * @param cellX cell x
      * @param cellZ cell z

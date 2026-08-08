@@ -74,7 +74,7 @@ public class ChartingListener implements Listener {
         // waters, so passing an island puts it on the chart
         int range = addon.getSettings().getChartSightingRange();
         TWPlayerData data = addon.getPlayerDataManager().get(player.getUniqueId());
-        addon.getGalaxyEngine(player.getWorld().getSeed()).islandsNear(x, z, range).stream()
+        addon.getOceanEngine(player.getWorld().getSeed()).islandsNear(x, z, range).stream()
                 .filter(spec -> spec.distanceSquared(x, z) <= (long) range * range)
                 .filter(data::chart)
                 .forEach(spec -> {

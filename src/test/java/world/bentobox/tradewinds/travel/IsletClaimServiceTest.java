@@ -35,13 +35,13 @@ import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.WhiteBox;
 import world.bentobox.tradewinds.dataobjects.PlayerDataManager;
 import world.bentobox.tradewinds.dataobjects.TWPlayerData;
-import world.bentobox.tradewinds.galaxy.GalaxyConfig;
-import world.bentobox.tradewinds.galaxy.GalaxyEngine;
-import world.bentobox.tradewinds.galaxy.Islet;
+import world.bentobox.tradewinds.ocean.OceanConfig;
+import world.bentobox.tradewinds.ocean.OceanEngine;
+import world.bentobox.tradewinds.ocean.Islet;
 
 /**
  * Tests islet claiming end to end against the real rank service and a real
- * galaxy engine - only BentoBox's island grid and the economy are mocked.
+ * ocean engine - only BentoBox's island grid and the economy are mocked.
  *
  * @author tastybento
  */
@@ -55,7 +55,7 @@ class IsletClaimServiceTest extends CommonTestSetup {
     private IslandCache cache;
     private VaultHook vault;
     private IsletClaimService service;
-    private GalaxyEngine engine;
+    private OceanEngine engine;
     private Islet islet;
 
     @Override
@@ -70,10 +70,10 @@ class IsletClaimServiceTest extends CommonTestSetup {
         when(world.getSeed()).thenReturn(SEED);
         when(world.getHighestBlockYAt(anyInt(), anyInt())).thenReturn(75);
 
-        // Empty galaxy (no trading islands), wild islets on at defaults
-        engine = new GalaxyEngine(new GalaxyConfig(SEED, 2500, 160, 45, 0.0, 0, 5000, 70,
-                GalaxyConfig.defaultTypeWeights(), null, 0.55, 75, 900));
-        when(addon.getGalaxyEngine(anyLong())).thenReturn(engine);
+        // Empty ocean (no trading islands), wild islets on at defaults
+        engine = new OceanEngine(new OceanConfig(SEED, 2500, 160, 45, 0.0, 0, 5000, 70,
+                OceanConfig.defaultTypeWeights(), null, 0.55, 75, 900));
+        when(addon.getOceanEngine(anyLong())).thenReturn(engine);
 
         // Find a wild islet to stand on
         islet = findIslet();

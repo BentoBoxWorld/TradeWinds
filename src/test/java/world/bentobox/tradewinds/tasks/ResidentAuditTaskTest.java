@@ -23,8 +23,8 @@ import world.bentobox.tradewinds.CommonTestSetup;
 import world.bentobox.tradewinds.Settings;
 import world.bentobox.tradewinds.TestHolds;
 import world.bentobox.tradewinds.TradeWinds;
-import world.bentobox.tradewinds.galaxy.GalaxyConfig;
-import world.bentobox.tradewinds.galaxy.GalaxyEngine;
+import world.bentobox.tradewinds.ocean.OceanConfig;
+import world.bentobox.tradewinds.ocean.OceanEngine;
 import world.bentobox.tradewinds.generator.IslandDecorator;
 
 /**
@@ -40,7 +40,7 @@ class ResidentAuditTaskTest extends CommonTestSetup {
 
     private TradeWinds addon;
     private ResidentAuditTask task;
-    private GalaxyEngine engine;
+    private OceanEngine engine;
 
     @Override
     @BeforeEach
@@ -51,8 +51,8 @@ class ResidentAuditTaskTest extends CommonTestSetup {
         when(addon.getSettings()).thenReturn(settings);
         when(addon.getOverWorld()).thenReturn(world);
         when(world.getSeed()).thenReturn(SEED);
-        engine = new GalaxyEngine(new GalaxyConfig(SEED, 2500, 160, 45, 1.0, 0, 5000, 70));
-        when(addon.getGalaxyEngine(anyLong())).thenReturn(engine);
+        engine = new OceanEngine(new OceanConfig(SEED, 2500, 160, 45, 1.0, 0, 5000, 70));
+        when(addon.getOceanEngine(anyLong())).thenReturn(engine);
         TestHolds.install(addon);
         task = new ResidentAuditTask(addon);
         when(world.getEntities()).thenReturn(List.of());
@@ -132,7 +132,7 @@ class ResidentAuditTaskTest extends CommonTestSetup {
         when(world.getPlayers()).thenReturn(List.of(player));
 
         // Use the real engine we already set up (it was created in setUp)
-        // The engine is already wired into addon via getGalaxyEngine(anyLong())
+        // The engine is already wired into addon via getOceanEngine(anyLong())
         // Just verify that the task checks the player location
         task.run();
 

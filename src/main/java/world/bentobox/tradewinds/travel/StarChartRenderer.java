@@ -15,8 +15,8 @@ import org.bukkit.map.MapPalette;
 import org.bukkit.map.MinecraftFont;
 
 import world.bentobox.tradewinds.TradeWinds;
-import world.bentobox.tradewinds.galaxy.GalaxyEngine;
-import world.bentobox.tradewinds.galaxy.SecurityBand;
+import world.bentobox.tradewinds.ocean.OceanEngine;
+import world.bentobox.tradewinds.ocean.SecurityBand;
 
 /**
  * The Star Chart: a contextual map renderer that keeps the holder centered and
@@ -112,7 +112,7 @@ public class StarChartRenderer extends MapRenderer {
         // island dots and names stay on top of it
         drawFuelRange(canvas, addon.getFuelService().holdFuel(player), bpp);
         // Charted islands
-        GalaxyEngine engine = addon.getGalaxyEngine(addon.getOverWorld().getSeed());
+        OceanEngine engine = addon.getOceanEngine(addon.getOverWorld().getSeed());
         int islandPixelRadius = Math.max(1, engine.getConfig().terrainRadius() / bpp);
         drawChartedIslands(canvas, player, engine, islandPixelRadius, px, pz, bpp);
         // HOME: a member's claimed islet, in gold - drawn after the islands
@@ -122,7 +122,7 @@ public class StarChartRenderer extends MapRenderer {
         drawPlayerCursor(canvas, player);
     }
 
-    private void drawChartedIslands(MapCanvas canvas, Player player, GalaxyEngine engine, int islandPixelRadius,
+    private void drawChartedIslands(MapCanvas canvas, Player player, OceanEngine engine, int islandPixelRadius,
             int px, int pz, int bpp) {
         for (String key : addon.getPlayerDataManager().get(player.getUniqueId()).getChartedIslands()) {
             String[] cell = key.split(",");

@@ -19,8 +19,8 @@ import world.bentobox.tradewinds.CommonTestSetup;
 import world.bentobox.tradewinds.Settings;
 import world.bentobox.tradewinds.TestHolds;
 import world.bentobox.tradewinds.TradeWinds;
-import world.bentobox.tradewinds.galaxy.GalaxyConfig;
-import world.bentobox.tradewinds.galaxy.GalaxyEngine;
+import world.bentobox.tradewinds.ocean.OceanConfig;
+import world.bentobox.tradewinds.ocean.OceanEngine;
 
 /**
  * Tests for BoatCraftListener: craft-based boat upgrades following the One Boat Rule.
@@ -52,7 +52,7 @@ class BoatCraftListenerTest extends CommonTestSetup {
         when(addon.getOverWorld()).thenReturn(world);
         when(addon.getNetherWorld()).thenReturn(null);
         when(world.getSeed()).thenReturn(SEED);
-        when(addon.getGalaxyEngine(anyLong())).thenReturn(new GalaxyEngine(new GalaxyConfig(SEED, 2500, 160, 45, 1.0, 0, 5000, 70)));
+        when(addon.getOceanEngine(anyLong())).thenReturn(new OceanEngine(new OceanConfig(SEED, 2500, 160, 45, 1.0, 0, 5000, 70)));
         holds = TestHolds.install(addon);
         when(addon.getFuelService()).thenReturn(new FuelService(addon));
         when(addon.getHoldService()).thenReturn(new HoldService(addon));

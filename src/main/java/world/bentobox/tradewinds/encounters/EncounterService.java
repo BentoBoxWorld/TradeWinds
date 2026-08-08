@@ -22,9 +22,9 @@ import org.bukkit.util.Vector;
 
 import world.bentobox.bentobox.api.user.User;
 import world.bentobox.tradewinds.TradeWinds;
-import world.bentobox.tradewinds.galaxy.GalaxyEngine;
-import world.bentobox.tradewinds.galaxy.IslandSpec;
-import world.bentobox.tradewinds.galaxy.SecurityBand;
+import world.bentobox.tradewinds.ocean.OceanEngine;
+import world.bentobox.tradewinds.ocean.IslandSpec;
+import world.bentobox.tradewinds.ocean.SecurityBand;
 
 /**
  * Random sea encounters: the risk that makes rowing a choice rather than a
@@ -142,7 +142,7 @@ public class EncounterService {
     }
 
     private void maybeSpawn(Player player) {
-        GalaxyEngine engine = addon.getGalaxyEngine(addon.getOverWorld().getSeed());
+        OceanEngine engine = addon.getOceanEngine(addon.getOverWorld().getSeed());
         int x = player.getLocation().getBlockX();
         int z = player.getLocation().getBlockZ();
         int range = addon.getSettings().getIslandDistance();

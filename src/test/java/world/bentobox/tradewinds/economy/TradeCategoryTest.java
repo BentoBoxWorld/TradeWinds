@@ -8,7 +8,7 @@ import org.bukkit.Material;
 import org.junit.jupiter.api.Test;
 
 import world.bentobox.tradewinds.CommonTestSetup;
-import world.bentobox.tradewinds.galaxy.IslandType;
+import world.bentobox.tradewinds.ocean.IslandType;
 
 /**
  * Tests category classification and the type economy tables.

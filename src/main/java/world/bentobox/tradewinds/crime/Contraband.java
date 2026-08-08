@@ -2,7 +2,7 @@ package world.bentobox.tradewinds.crime;
 
 import java.util.Set;
 
-import world.bentobox.tradewinds.galaxy.SecurityBand;
+import world.bentobox.tradewinds.ocean.SecurityBand;
 
 /**
  * What customs would rather you were not carrying.

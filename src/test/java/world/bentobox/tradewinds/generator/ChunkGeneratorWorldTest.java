@@ -24,10 +24,10 @@ import org.mockito.stubbing.Answer;
 import world.bentobox.tradewinds.CommonTestSetup;
 import world.bentobox.tradewinds.Settings;
 import world.bentobox.tradewinds.TradeWinds;
-import world.bentobox.tradewinds.galaxy.DockPlan;
-import world.bentobox.tradewinds.galaxy.GalaxyConfig;
-import world.bentobox.tradewinds.galaxy.GalaxyEngine;
-import world.bentobox.tradewinds.galaxy.IslandSpec;
+import world.bentobox.tradewinds.ocean.DockPlan;
+import world.bentobox.tradewinds.ocean.OceanConfig;
+import world.bentobox.tradewinds.ocean.OceanEngine;
+import world.bentobox.tradewinds.ocean.IslandSpec;
 
 /**
  * Tests the ocean generation of {@link ChunkGeneratorWorld}: determinism, sea
@@ -66,14 +66,14 @@ class ChunkGeneratorWorldTest extends CommonTestSetup {
         addon = mock(TradeWinds.class);
         settings = new Settings();
         when(addon.getSettings()).thenReturn(settings);
-        // Default: an empty galaxy (density 0, no starter islands, no spawn islet) - pure ocean
-        when(addon.getGalaxyEngine(org.mockito.ArgumentMatchers.anyLong()))
-                .thenReturn(new GalaxyEngine(new GalaxyConfig(SEED, 2500, 160, 45, 0.0, 0, 5000, 70,
-                        GalaxyConfig.defaultTypeWeights(), null)));
+        // Default: an empty ocean (density 0, no starter islands, no spawn islet) - pure ocean
+        when(addon.getOceanEngine(org.mockito.ArgumentMatchers.anyLong()))
+                .thenReturn(new OceanEngine(new OceanConfig(SEED, 2500, 160, 45, 0.0, 0, 5000, 70,
+                        OceanConfig.defaultTypeWeights(), null)));
         // Default: a featureless interstice (no shoals, no towers) - pure dark sea
         when(addon.getIntersticeMap(org.mockito.ArgumentMatchers.anyLong()))
-                .thenReturn(new world.bentobox.tradewinds.galaxy.IntersticeMap(SEED, 256, 0.0, 9, 0.2, 1536,
-                        0.0, new world.bentobox.tradewinds.galaxy.IntersticeMap.WreckTuning(320, 0.0, 0.0)));
+                .thenReturn(new world.bentobox.tradewinds.ocean.IntersticeMap(SEED, 256, 0.0, 9, 0.2, 1536,
+                        0.0, new world.bentobox.tradewinds.ocean.IntersticeMap.WreckTuning(320, 0.0, 0.0)));
     }
 
     private WorldInfo worldInfo(Environment env, long seed) {
@@ -211,10 +211,10 @@ class ChunkGeneratorWorldTest extends CommonTestSetup {
     @Test
     void testWartShoalsBreakTheIntersticeSurface() {
         // Shoals on at defaults: find one and generate its chunk
-        world.bentobox.tradewinds.galaxy.IntersticeMap map = new world.bentobox.tradewinds.galaxy.IntersticeMap(
-                SEED, 256, 0.5, 9, 0.2, 1536, 0.0, new world.bentobox.tradewinds.galaxy.IntersticeMap.WreckTuning(320, 0.0, 0.0));
+        world.bentobox.tradewinds.ocean.IntersticeMap map = new world.bentobox.tradewinds.ocean.IntersticeMap(
+                SEED, 256, 0.5, 9, 0.2, 1536, 0.0, new world.bentobox.tradewinds.ocean.IntersticeMap.WreckTuning(320, 0.0, 0.0));
         when(addon.getIntersticeMap(org.mockito.ArgumentMatchers.anyLong())).thenReturn(map);
-        world.bentobox.tradewinds.galaxy.IntersticeMap.Shoal shoal = null;
+        world.bentobox.tradewinds.ocean.IntersticeMap.Shoal shoal = null;
         for (int cx = 0; cx < 30 && shoal == null; cx++) {
             shoal = map.shoalInCell(cx, 4).orElse(null);
         }
@@ -238,12 +238,12 @@ class ChunkGeneratorWorldTest extends CommonTestSetup {
         RecordingChunkData a = generate(new ChunkGeneratorWorld(addon), Environment.NORMAL, SEED, 3, -7);
         RecordingChunkData b = generate(new ChunkGeneratorWorld(addon), Environment.NORMAL, SEED, 3, -7);
         assertEquals(a.blocks, b.blocks);
-        // A different galaxy seed -> a different sea floor. The seabed hangs off
-        // the galaxy seed, not the world seed, so that one number still decides
+        // A different ocean seed -> a different sea floor. The seabed hangs off
+        // the ocean seed, not the world seed, so that one number still decides
         // the whole world (spec principle 5).
-        when(addon.getGalaxyEngine(org.mockito.ArgumentMatchers.anyLong()))
-                .thenReturn(new GalaxyEngine(new GalaxyConfig(SEED + 1, 2500, 160, 45, 0.0, 0, 5000, 70,
-                        GalaxyConfig.defaultTypeWeights(), null)));
+        when(addon.getOceanEngine(org.mockito.ArgumentMatchers.anyLong()))
+                .thenReturn(new OceanEngine(new OceanConfig(SEED + 1, 2500, 160, 45, 0.0, 0, 5000, 70,
+                        OceanConfig.defaultTypeWeights(), null)));
         RecordingChunkData c = generate(new ChunkGeneratorWorld(addon), Environment.NORMAL, SEED, 3, -7);
         assertNotEquals(a.blocks, c.blocks);
     }
@@ -252,9 +252,9 @@ class ChunkGeneratorWorldTest extends CommonTestSetup {
     void testNoLandAboveSeaLevelAtScaleOne() {
         // With no islands and no islets, nothing may poke above the sea surface:
         // seamounts, shoals and relief all stay under water
-        when(addon.getGalaxyEngine(org.mockito.ArgumentMatchers.anyLong()))
-                .thenReturn(new GalaxyEngine(new GalaxyConfig(SEED, 2500, 160, 45, 0.0, 0, 5000, 70,
-                        GalaxyConfig.defaultTypeWeights(), null, 0.0, 0, 900)));
+        when(addon.getOceanEngine(org.mockito.ArgumentMatchers.anyLong()))
+                .thenReturn(new OceanEngine(new OceanConfig(SEED, 2500, 160, 45, 0.0, 0, 5000, 70,
+                        OceanConfig.defaultTypeWeights(), null, 0.0, 0, 900)));
         ChunkGeneratorWorld gen = new ChunkGeneratorWorld(addon);
         RecordingChunkData r = generate(gen, Environment.NORMAL, SEED, 200, 200);
         for (int x = 0; x < 16; x++) {
@@ -268,10 +268,10 @@ class ChunkGeneratorWorldTest extends CommonTestSetup {
 
     @Test
     void testTerrainLiftMakesIslands() {
-        // A galaxy with an island at this chunk must lift grassy land above the sea
-        world.bentobox.tradewinds.galaxy.GalaxyEngine denseEngine = new GalaxyEngine(
-                new GalaxyConfig(SEED, 2500, 160, 45, 1.0, 0, 5000, 70));
-        when(addon.getGalaxyEngine(org.mockito.ArgumentMatchers.anyLong())).thenReturn(denseEngine);
+        // A ocean with an island at this chunk must lift grassy land above the sea
+        world.bentobox.tradewinds.ocean.OceanEngine denseEngine = new OceanEngine(
+                new OceanConfig(SEED, 2500, 160, 45, 1.0, 0, 5000, 70));
+        when(addon.getOceanEngine(org.mockito.ArgumentMatchers.anyLong())).thenReturn(denseEngine);
         IslandSpec spec = denseEngine.islandInCell(0, 0).orElseThrow();
         ChunkGeneratorWorld gen = new ChunkGeneratorWorld(addon);
         RecordingChunkData r = generate(gen, Environment.NORMAL, SEED, spec.centerX() >> 4, spec.centerZ() >> 4);
@@ -292,7 +292,7 @@ class ChunkGeneratorWorldTest extends CommonTestSetup {
         }
         assertTrue(landAboveSea, "The island mask should lift land above sea level");
 
-        // And the interstice ignores the galaxy entirely
+        // And the interstice ignores the ocean entirely
         RecordingChunkData nether = generate(gen, Environment.NETHER, SEED, spec.centerX() >> 4, spec.centerZ() >> 4);
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
@@ -303,9 +303,9 @@ class ChunkGeneratorWorldTest extends CommonTestSetup {
 
     @Test
     void testPlazaAndDockTerraform() {
-        world.bentobox.tradewinds.galaxy.GalaxyEngine denseEngine = new GalaxyEngine(
-                new GalaxyConfig(SEED, 2500, 160, 45, 1.0, 0, 5000, 70));
-        when(addon.getGalaxyEngine(org.mockito.ArgumentMatchers.anyLong())).thenReturn(denseEngine);
+        world.bentobox.tradewinds.ocean.OceanEngine denseEngine = new OceanEngine(
+                new OceanConfig(SEED, 2500, 160, 45, 1.0, 0, 5000, 70));
+        when(addon.getOceanEngine(org.mockito.ArgumentMatchers.anyLong())).thenReturn(denseEngine);
         IslandSpec spec = denseEngine.islandInCell(0, 0).orElseThrow();
         DockPlan plan = denseEngine.dockPlan(spec);
         ChunkGeneratorWorld gen = new ChunkGeneratorWorld(addon);
@@ -314,7 +314,7 @@ class ChunkGeneratorWorldTest extends CommonTestSetup {
         RecordingChunkData plaza = generate(gen, Environment.NORMAL, SEED, plan.plazaX() >> 4, plan.plazaZ() >> 4);
         int px = plan.plazaX() & 15;
         int pz = plan.plazaZ() & 15;
-        int plazaSurface = settings.getSeaHeight() + GalaxyEngine.PLAZA_RISE;
+        int plazaSurface = settings.getSeaHeight() + OceanEngine.PLAZA_RISE;
         assertEquals(IslandPalette.plazaSurface(spec.type()), plaza.get(px, plazaSurface, pz));
         assertEquals(Material.AIR, plaza.get(px, plazaSurface + 1, pz));
 
@@ -323,7 +323,7 @@ class ChunkGeneratorWorldTest extends CommonTestSetup {
         int dx = spec.centerX() + (int) Math.round(Math.cos(plan.bearing()) * dockDist);
         int dz = spec.centerZ() + (int) Math.round(Math.sin(plan.bearing()) * dockDist);
         RecordingChunkData dock = generate(gen, Environment.NORMAL, SEED, dx >> 4, dz >> 4);
-        int deckY = settings.getSeaHeight() + GalaxyEngine.DOCK_RISE;
+        int deckY = settings.getSeaHeight() + OceanEngine.DOCK_RISE;
         assertEquals(IslandPalette.planks(spec.type()), dock.get(dx & 15, deckY, dz & 15));
         assertEquals(Material.STONE_BRICKS, dock.get(dx & 15, deckY - 1, dz & 15));
         assertEquals(Material.AIR, dock.get(dx & 15, deckY + 1, dz & 15));
@@ -331,9 +331,9 @@ class ChunkGeneratorWorldTest extends CommonTestSetup {
 
     @Test
     void testSpawnIslandRisesAtOrigin() {
-        // Even with an empty galaxy, the reserved spawn island makes land at 0,0
-        when(addon.getGalaxyEngine(org.mockito.ArgumentMatchers.anyLong()))
-                .thenReturn(new GalaxyEngine(new GalaxyConfig(SEED, 2500, 160, 45, 0.0, 0, 5000, 70)));
+        // Even with an empty ocean, the reserved spawn island makes land at 0,0
+        when(addon.getOceanEngine(org.mockito.ArgumentMatchers.anyLong()))
+                .thenReturn(new OceanEngine(new OceanConfig(SEED, 2500, 160, 45, 0.0, 0, 5000, 70)));
         ChunkGeneratorWorld gen = new ChunkGeneratorWorld(addon);
         RecordingChunkData r = generate(gen, Environment.NORMAL, SEED, 0, 0);
         // Any solid ground counts: the spawn island's surface follows its
@@ -384,8 +384,8 @@ class ChunkGeneratorWorldTest extends CommonTestSetup {
     @Test
     void testCaveMouthsInIslandFlanksAreLeftAlone() {
         // Above the waterline a cave opening is just a cave opening
-        GalaxyEngine denseEngine = new GalaxyEngine(new GalaxyConfig(SEED, 2500, 160, 45, 1.0, 0, 5000, 70));
-        when(addon.getGalaxyEngine(org.mockito.ArgumentMatchers.anyLong())).thenReturn(denseEngine);
+        OceanEngine denseEngine = new OceanEngine(new OceanConfig(SEED, 2500, 160, 45, 1.0, 0, 5000, 70));
+        when(addon.getOceanEngine(org.mockito.ArgumentMatchers.anyLong())).thenReturn(denseEngine);
         ChunkGeneratorWorld gen = new ChunkGeneratorWorld(addon);
         IslandSpec spec = denseEngine.islandInCell(0, 0).orElseThrow();
         RecordingChunkData r = new RecordingChunkData();
@@ -420,8 +420,8 @@ class ChunkGeneratorWorldTest extends CommonTestSetup {
 
     @Test
     void testStructuresAreKeptOffTradingIslands() {
-        GalaxyEngine denseEngine = new GalaxyEngine(new GalaxyConfig(SEED, 2500, 160, 45, 1.0, 0, 5000, 70));
-        when(addon.getGalaxyEngine(org.mockito.ArgumentMatchers.anyLong())).thenReturn(denseEngine);
+        OceanEngine denseEngine = new OceanEngine(new OceanConfig(SEED, 2500, 160, 45, 1.0, 0, 5000, 70));
+        when(addon.getOceanEngine(org.mockito.ArgumentMatchers.anyLong())).thenReturn(denseEngine);
         ChunkGeneratorWorld gen = new ChunkGeneratorWorld(addon);
         IslandSpec spec = denseEngine.islandInCell(0, 0).orElseThrow();
         WorldInfo wi = worldInfo(Environment.NORMAL, SEED);
