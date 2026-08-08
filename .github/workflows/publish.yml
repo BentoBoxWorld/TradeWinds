@@ -1,17 +1,19 @@
 # TradeWinds — .github/workflows/publish.yml
-# Publishes the jar attached to a GitHub release to CurseForge via the shared
-# BentoBoxWorld/.github reusable workflow. Downloads the release asset instead
-# of rebuilding from source, so a dependency-repo outage cannot block a release
-# that already has a built jar. The reusable workflow is pinned to a commit SHA
-# (Sonar githubactions:S7637). workflow_dispatch lets you (re)publish a version.
+# Publishes the jar attached to a GitHub release to CurseForge and Hangar via
+# the shared BentoBoxWorld/.github reusable workflow. Downloads the release
+# asset instead of rebuilding from source, so a dependency-repo outage cannot
+# block a release that already has a built jar. The reusable workflow is pinned
+# to a commit SHA (Sonar githubactions:S7637). workflow_dispatch lets you
+# (re)publish a version.
 #
 # Modrinth is published by modrinth-publish.yml, which is a separate action and
 # rebuilds from source - both fire on the same `release: published` event.
 #
-# Needs a CURSEFORGE_TOKEN repo secret. The reusable workflow skips a platform
-# whose secret is missing, so without it this job runs and quietly does nothing.
+# CURSEFORGE_TOKEN and HANGAR_API_KEY are ORGANISATION secrets, already
+# available here. The reusable workflow skips a platform whose secret is
+# missing, so a lost secret is a quiet no-op rather than a failed release.
 
-name: Publish release to CurseForge
+name: Publish release to CurseForge and Hangar
 
 on:
   release:
@@ -29,7 +31,12 @@ jobs:
     with:
       use_release_asset: "true"          # publish the jar attached to the release; do not rebuild
       java_version: "25"                 # only a fallback if use_release_asset is turned off - Paper 26.x and BentoBox ship Java 25 bytecode
-      hangar_slug: ""                    # no Hangar project yet; blank = skip Hangar
+      # hangar.papermc.io/BentoboxWorld/TradeWinds. hangar_owner is left at its
+      # default of "BentoBoxWorld": Hangar stores the namespace as
+      # "BentoboxWorld" (lower-case b) and every sibling project - Border,
+      # AcidIsland, bentobox - reports that spelling while publishing with the
+      # default, so the lookup is case-insensitive. Do not "fix" the casing.
+      hangar_slug: "TradeWinds"          # blank = skip Hangar
       curseforge_id: "1644572"
       # The 26.x family only, matching modrinth-publish.yml - NOT the longer
       # 1.21.x list the other addons publish. BentoBox 3.18.1, which addon.yml
@@ -39,4 +46,5 @@ jobs:
       game_versions: "26.2,26.1.2,26.1.1,26.1"
       version: ${{ inputs.version }}     # empty on release events -> falls back to the release tag
     secrets:
+      HANGAR_API_KEY: ${{ secrets.HANGAR_API_KEY }}
       CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
