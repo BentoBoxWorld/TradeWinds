@@ -78,12 +78,17 @@
                 <build.number>-b${env.BUILD_NUMBER}</build.number>
             </properties>
         </profile>
+        <!-- Release profile: fires only when Jenkins builds the release branch,
+             stripping the -SNAPSHOT and the -bNNN build number so the artifact is
+             just ${build.version}. The older addons match `origin/master`; this
+             repo's release branch is `main`, so the value has to match that or
+             every build stays a SNAPSHOT. -->
         <profile>
-            <id>master</id>
+            <id>main</id>
             <activation>
                 <property>
                     <name>env.GIT_BRANCH</name>
-                    <value>origin/master</value>
+                    <value>origin/main</value>
                 </property>
             </activation>
             <properties>
