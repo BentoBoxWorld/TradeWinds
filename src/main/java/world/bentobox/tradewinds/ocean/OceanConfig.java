@@ -33,13 +33,18 @@ import java.util.stream.Collectors;
  *        rare enough to be worth the find
  * @param seabed shape of the ocean floor between the islands
  * @param shape how ragged coastlines and island surfaces are
+ * @param spawnIslandBiome biome key for the spawn island, e.g.
+ *        "minecraft:cherry_grove" (null or blank = seeded roll from the spawn
+ *        type's own biome list, like any other island). The one direct
+ *        aesthetic knob in an otherwise fully seeded world: spawn is every
+ *        player's first sight of it.
  *
  * @author tastybento
  */
 public record OceanConfig(long seed, int minSeparation, int terrainRadius, int landLift, double density,
         int starterMinIslands, int bandRadius, int seaLevel, Map<IslandType, Integer> typeWeights,
         IslandType spawnIslandType, double wildIsletChance, int wildIsletRadius, int wildIsletGrid,
-        double mushroomIsletChance, SeabedConfig seabed, ShapeConfig shape) {
+        double mushroomIsletChance, SeabedConfig seabed, ShapeConfig shape, String spawnIslandBiome) {
 
     /** Default wild islet chance / radius / grid. */
     public static final double DEFAULT_WILD_CHANCE = 0.55;
@@ -58,6 +63,22 @@ public record OceanConfig(long seed, int minSeparation, int terrainRadius, int l
         if (shape == null) {
             shape = ShapeConfig.DEFAULT;
         }
+        if (spawnIslandBiome != null && spawnIslandBiome.isBlank()) {
+            spawnIslandBiome = null;
+        }
+    }
+
+    /**
+     * The pre-override form: every caller predating the spawn-biome knob, and
+     * every test that does not care, gets the seeded roll.
+     */
+    public OceanConfig(long seed, int minSeparation, int terrainRadius, int landLift, double density,
+            int starterMinIslands, int bandRadius, int seaLevel, Map<IslandType, Integer> typeWeights,
+            IslandType spawnIslandType, double wildIsletChance, int wildIsletRadius, int wildIsletGrid,
+            double mushroomIsletChance, SeabedConfig seabed, ShapeConfig shape) {
+        this(seed, minSeparation, terrainRadius, landLift, density, starterMinIslands, bandRadius, seaLevel,
+                typeWeights, spawnIslandType, wildIsletChance, wildIsletRadius, wildIsletGrid,
+                mushroomIsletChance, seabed, shape, null);
     }
 
     /**

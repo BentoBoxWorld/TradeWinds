@@ -116,6 +116,15 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "ocean.spawn-island-type", needsReset = true)
     private String spawnIslandType = "FISHING";
 
+    @ConfigComment("Biome of the spawn island - the one direct aesthetic knob in an otherwise")
+    @ConfigComment("fully seeded world, because spawn is every player's first sight of the")
+    @ConfigComment("game. Any biome key, e.g. minecraft:cherry_grove; the biome also picks")
+    @ConfigComment("the ground palette (a desert spawn is sand, a grove is snow). Empty keeps")
+    @ConfigComment("the seeded roll from the spawn type's own biome list. Unknown keys log an")
+    @ConfigComment("error and fall back to the default biome rather than breaking generation.")
+    @ConfigEntry(path = "ocean.spawn-island-biome", needsReset = true)
+    private String spawnIslandBiome = "";
+
     @ConfigComment("Chance (0-1) that a wild-islet grid cell hosts one - small unnamed islands,")
     @ConfigComment("unprotected: mine, farm, build, live. Minecraft-stuff land.")
     @ConfigEntry(path = "ocean.wild-islet-chance", needsReset = true)
@@ -3197,6 +3206,8 @@ public class Settings implements WorldSettings {
     public void setBandRadius(int bandRadius) { this.bandRadius = bandRadius; }
     public String getSpawnIslandType() { return spawnIslandType; }
     public void setSpawnIslandType(String spawnIslandType) { this.spawnIslandType = spawnIslandType; }
+    public String getSpawnIslandBiome() { return spawnIslandBiome; }
+    public void setSpawnIslandBiome(String spawnIslandBiome) { this.spawnIslandBiome = spawnIslandBiome; }
     public double getWildIsletChance() { return wildIsletChance; }
     public void setWildIsletChance(double wildIsletChance) { this.wildIsletChance = wildIsletChance; }
     public int getWildIsletRadius() { return wildIsletRadius; }

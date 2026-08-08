@@ -35,6 +35,13 @@ ocean:
   # where players spawn and respawn. A working port: dock, plaza, market, warp zone.
   # AGRICULTURAL, FOREST, FISHING, MINING, INDUSTRIAL, LUXURY, FROZEN, or RANDOM.
   spawn-island-type: FISHING
+  # Biome of the spawn island - the one direct aesthetic knob in an otherwise
+  # fully seeded world, because spawn is every player's first sight of the
+  # game. Any biome key, e.g. minecraft:cherry_grove; the biome also picks
+  # the ground palette (a desert spawn is sand, a grove is snow). Empty keeps
+  # the seeded roll from the spawn type's own biome list. Unknown keys log an
+  # error and fall back to the default biome rather than breaking generation.
+  spawn-island-biome: ""
   # Chance (0-1) that a wild-islet grid cell hosts one - small unnamed islands,
   # unprotected: mine, farm, build, live.
   wild-islet-chance: 0.55

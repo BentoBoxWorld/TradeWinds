@@ -735,7 +735,8 @@ public class TradeWinds extends GameModeAddon {
                     s.getStarterClusterMinIslands(), s.getBandRadius(), s.getSeaHeight(), typeWeights(),
                     spawnIslandType(), s.getWildIsletChance(), s.getWildIsletRadius(), s.getWildIsletGrid(),
                     s.getMushroomIsletChance(), seabedConfig(),
-                    new ShapeConfig(s.getCoastRoughness(), s.getIslandHilliness())));
+                    new ShapeConfig(s.getCoastRoughness(), s.getIslandHilliness()),
+                    s.getSpawnIslandBiome()));
             log("TradeWinds ocean seed: " + seed);
         }
         return oceanEngine;

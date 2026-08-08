@@ -755,4 +755,30 @@ class OceanEngineTest {
         assertTrue(distinct > list.size() * 0.8,
                 "Too many name collisions: " + distinct + " distinct of " + list.size());
     }
+    @Test
+    void testSpawnBiomeOverrideIsTheOneAestheticKnob() {
+        // An admin may pick the spawn island's biome outright; every other
+        // island still rolls from the seed, and blank keeps the seeded roll
+        OceanConfig overridden = new OceanConfig(SEED, 2500, 160, 45, 0.5, 5, 5000, 70,
+                OceanConfig.defaultTypeWeights(), IslandType.FISHING, 0.0, 0, 900, 0.0,
+                null, null, "minecraft:cherry_grove");
+        OceanEngine engine = new OceanEngine(overridden);
+        assertEquals("minecraft:cherry_grove", engine.spawnIsland().biomeKey());
+
+        OceanConfig seeded = new OceanConfig(SEED, 2500, 160, 45, 0.5, 5, 5000, 70,
+                OceanConfig.defaultTypeWeights(), IslandType.FISHING, 0.0, 0, 900, 0.0,
+                null, null, "");
+        assertEquals(new OceanEngine(seeded).spawnIsland().biomeKey(),
+                new OceanEngine(new OceanConfig(SEED, 2500, 160, 45, 0.5, 5, 5000, 70,
+                        OceanConfig.defaultTypeWeights(), IslandType.FISHING)).spawnIsland().biomeKey(),
+                "Blank must be byte-identical to the pre-knob seeded roll");
+        // The override never leaks onto other islands
+        OceanEngine e2 = new OceanEngine(overridden);
+        e2.islandsNear(20000, 20000, 30000).stream()
+                .filter(spec -> spec.cellX() != 0 || spec.cellZ() != 0)
+                .limit(5)
+                .forEach(spec -> org.junit.jupiter.api.Assertions.assertNotEquals(
+                        "spawn-only override leaked: " + spec.name(),
+                        "minecraft:cherry_grove".equals(spec.biomeKey()) ? "leaked" : "ok", "leaked"));
+    }
 }

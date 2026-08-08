@@ -301,7 +301,12 @@ public class OceanEngine {
         // new sailors start in a working port instead of empty water.
         if (cellX == 0 && cellZ == 0) {
             IslandType type = config.spawnIslandType() != null ? config.spawnIslandType() : rollType(0, 0);
-            return Optional.of(new IslandSpec(0, 0, 0, 0, type, SecurityBand.SAFE, rollBiome(0, 0, type),
+            // The one direct aesthetic knob in a seeded world: an admin may
+            // pick the spawn island's biome outright (it is every player's
+            // first sight of the game); blank keeps the seeded roll
+            String biome = config.spawnIslandBiome() != null ? config.spawnIslandBiome()
+                    : rollBiome(0, 0, type);
+            return Optional.of(new IslandSpec(0, 0, 0, 0, type, SecurityBand.SAFE, biome,
                     SPAWN_NAME, techLevel(0, 0, type)));
         }
         boolean starter = starterCells.contains(cellKey(cellX, cellZ));

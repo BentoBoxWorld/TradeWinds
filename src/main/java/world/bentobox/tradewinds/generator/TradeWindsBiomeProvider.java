@@ -90,6 +90,15 @@ public class TradeWindsBiomeProvider extends BiomeProvider {
                 }
             });
         }
+        // An admin-chosen spawn biome may lie outside every type's list and
+        // still has to be declared as possible
+        String spawnBiome = addon.getSettings().getSpawnIslandBiome();
+        if (spawnBiome != null && !spawnBiome.isBlank()) {
+            Biome b = resolve(spawnBiome);
+            if (!biomes.contains(b)) {
+                biomes.add(b);
+            }
+        }
         // Every biome the ocean can hand out must be declared here or the
         // server refuses to use it: the deep-water variants (which is what
         // decides where ocean monuments go), the islet land biomes, and the
