@@ -49,10 +49,15 @@ public class TWRestartCommand extends ConfirmableCommand {
         data.setStarterKitGiven(false);
         addon.getPlayerDataManager().save(user.getUniqueId());
         // A fresh career means a fresh hold: the old boat and everything in
-        // it are struck from the record (only the chart survives - knowledge
-        // is not wealth)
-        addon.getHoldManager().activeBoat(user.getUniqueId())
-                .ifPresent(hold -> addon.getHoldManager().delete(hold.getUniqueId()));
+        // it are struck - AVATARS FIRST, record second. Deleting only the
+        // record left the carried hull item in the pack as a zombie that
+        // re-registered as a free boat on first touch, so a restart handed
+        // out two boats (playtest 2026-08-07). Only the chart survives -
+        // knowledge is not wealth.
+        addon.getHoldManager().activeBoat(user.getUniqueId()).ifPresent(hold -> {
+            addon.getBoatService().strikeAvatars(user.getPlayer(), hold);
+            addon.getHoldManager().delete(hold.getUniqueId());
+        });
         addon.getHoldManager().setActiveBoat(user.getUniqueId(), null);
         addon.getHoldManager().clearOldBoat(user.getUniqueId());
         // Back to the spawn islet with a fresh kit

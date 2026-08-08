@@ -219,6 +219,27 @@ class BoatArchaeologyTest extends CommonTestSetup {
     }
 
     @Test
+    void testCareerRestartStrikesEveryAvatar() {
+        // /tw restart must destroy the boat's PHYSICAL forms, not just the
+        // record - deleting only the record left a zombie hull in the pack
+        // that re-registered as a free boat on first touch, so a restart
+        // handed out two boats (playtest 2026-08-07)
+        ItemStack carried = stamped();
+        ItemStack dupe = stamped();
+        when(inv.getContents()).thenReturn(new ItemStack[] { carried, dupe });
+        Boat moored = boat(false);
+        when(world.getEntitiesByClass(Boat.class)).thenReturn(List.of(moored));
+        // findPlaced resolves the record's world by name
+        mockedBukkit.when(() -> org.bukkit.Bukkit.getWorld(WORLD_NAME)).thenReturn(world);
+
+        service.strikeAvatars(mockPlayer, hold);
+
+        verify(carried).setAmount(0);
+        verify(dupe).setAmount(0);
+        verify(moored).remove();
+    }
+
+    @Test
     void testShedRemovesEveryCopyAndDropsExactlyOne() {
         ItemStack first = stamped();
         ItemStack second = stamped();

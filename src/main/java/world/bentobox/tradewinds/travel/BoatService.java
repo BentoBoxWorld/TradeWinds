@@ -168,6 +168,30 @@ public class BoatService {
         return true;
     }
 
+    /**
+     * Strike a boat's physical avatars from the world: every carried item
+     * with its id leaves the pack, and a loaded placed avatar (entity or
+     * dropped item) is removed. For career resets, where the boat is
+     * DESTROYED rather than shed - deleting only the record left a zombie
+     * hull in the pack that re-registered as a free boat on first touch
+     * (playtest 2026-08-07: /tw restart put two boats in the inventory).
+     * An avatar asleep in an unloaded chunk is out of reach; with its record
+     * gone it wakes as ownerless salvage, which is acceptable - the cargo
+     * died with the record.
+     *
+     * @param player the owner being reset
+     * @param hold the boat being struck
+     */
+    public void strikeAvatars(Player player, BoatHold hold) {
+        for (ItemStack stack : player.getInventory().getContents()) {
+            if (stack != null && hold.getUniqueId().equals(boatId(stack))) {
+                stack.setAmount(0);
+            }
+        }
+        findPlaced(hold).ifPresent(Entity::remove);
+        logbook("struck (career restart)", hold, player.getLocation());
+    }
+
     // --------------------------------------------------------------- logbook
 
     /**
