@@ -61,7 +61,13 @@ public final class TypeEconomy {
     private static final Map<IslandType, List<Material>> OUTFITTER_EXTRAS = Map.of(
             IslandType.INDUSTRIAL, List.of(Material.IRON_SWORD, Material.SHIELD, Material.IRON_HELMET,
                     Material.IRON_CHESTPLATE, Material.IRON_LEGGINGS, Material.IRON_BOOTS),
-            IslandType.AGRICULTURAL, List.of(Material.WHITE_BED),
+            // The farms are where a sailor outfits a home: a bed to sleep in,
+            // white wool and meat off the flock. Wool has to be OUTFITTER
+            // stock, not trade cargo - trader-bought cargo may only leave the
+            // hold by sale or destruction, so wool in the hold could never
+            // become a bed (2026-08-08).
+            IslandType.AGRICULTURAL,
+            List.of(Material.WHITE_BED, Material.WHITE_WOOL, Material.COOKED_BEEF, Material.COOKED_MUTTON),
             // Rod and compass: the fisheries are the navigator's shop. A
             // compass bought by an island member leaves the counter bound to
             // their island (the ship's compass - see MarketService); for
@@ -83,6 +89,31 @@ public final class TypeEconomy {
      */
     public static List<Material> outfitterExtras(IslandType type) {
         return OUTFITTER_EXTRAS.getOrDefault(type, List.of());
+    }
+
+    /** Salt for the flock's colour - one dyed wool per farm port. */
+    private static final long SALT_WOOL = 0x5EEDF00DL;
+
+    /** The dyed wools, white excepted: white is stocked at every farm. */
+    private static final List<Material> DYED_WOOL = List.of(Material.ORANGE_WOOL, Material.MAGENTA_WOOL,
+            Material.LIGHT_BLUE_WOOL, Material.YELLOW_WOOL, Material.LIME_WOOL, Material.PINK_WOOL,
+            Material.GRAY_WOOL, Material.LIGHT_GRAY_WOOL, Material.CYAN_WOOL, Material.PURPLE_WOOL,
+            Material.BLUE_WOOL, Material.BROWN_WOOL, Material.GREEN_WOOL, Material.RED_WOOL,
+            Material.BLACK_WOOL);
+
+    /**
+     * The colour this farm port's flock happens to be - seeded, so a given
+     * island always sells the same wool and a sailor after a particular colour
+     * has somewhere to sail TO. Pure arithmetic; no Bukkit state consulted.
+     *
+     * @param seed the ocean seed
+     * @param cellX island cell x
+     * @param cellZ island cell z
+     * @return the dyed wool this island stocks
+     */
+    public static Material localWool(long seed, int cellX, int cellZ) {
+        long hash = world.bentobox.tradewinds.ocean.Hashing.cellHash(seed, cellX, cellZ, SALT_WOOL);
+        return DYED_WOOL.get((int) Math.floorMod(hash, DYED_WOOL.size()));
     }
 
     public static Set<TradeCategory> produces(IslandType type) {

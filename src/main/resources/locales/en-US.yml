@@ -371,6 +371,8 @@ tradewinds:
     adrift-raft: "<gold>Adrift with no boat - the harbourmaster's [material] is in your pack.</gold>"
     respawn-given: "<gold>The port lends you a [material] - she is yours, and your hold sails with her.</gold>"
     respawn-given-replacing: "<gold>The port lends you a [material] - she is yours now.</gold><gray> Your old boat lies adrift where you fell, cargo aboard; your chart still marks her.</gray>"
+    own-aboard: "<green>Your [material] is back in your pack - she is your hold again.</green>"
+    own-resumed: "<gold>Your [material] is your ship again</gold><gray> - the [old] you were sailing is an OLD BOAT now, unowned where it lies. </gray><white>/tw chart list</white><gray> marks her.</gray>"
     claimed-plain: "<gold>The [material] is yours now - your hold awaits its first cargo.</gold>"
     upgraded-plain: "<gold>You take the [material] - [slots] cargo slots. Your old boat is broken up; your cargo is aboard.</gold>"
     claimed: "<gold>You haul in the [material] - it is yours now, cargo and all.</gold>"

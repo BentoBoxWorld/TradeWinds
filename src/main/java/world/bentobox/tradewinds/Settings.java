@@ -157,6 +157,14 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "ocean.islet-structure-chance")
     private double isletStructureChance = 0.25;
 
+    @ConfigComment("Island types whose plaza carries an INN: a roofed room with a made bed you")
+    @ConfigComment("may sleep in. Sleeping is otherwise impossible at sea - there is nowhere to")
+    @ConfigComment("put a bed but an island of your own - and a bed you sleep in becomes your")
+    @ConfigComment("respawn point, vanilla-style. Empty disables inns everywhere. Only affects")
+    @ConfigComment("plazas not yet generated.")
+    @ConfigEntry(path = "ocean.inn-island-types")
+    private List<String> innIslandTypes = new ArrayList<>(List.of("LUXURY", "AGRICULTURAL", "FOREST"));
+
     @ConfigComment("How far a coastline wanders in and out from the island's nominal radius, as a")
     @ConfigComment("fraction of it: bays and headlands. 0 gives perfect circles - a radial mask")
     @ConfigComment("on its own draws a coin. Above about 0.3 coasts start breaking into fragments.")
@@ -558,7 +566,7 @@ public class Settings implements WorldSettings {
     private static Map<String, Double> defaultFuelValues() {
         Map<String, Double> map = new HashMap<>();
         for (String log : List.of("OAK_LOG", "SPRUCE_LOG", "BIRCH_LOG", "JUNGLE_LOG", "ACACIA_LOG", "DARK_OAK_LOG",
-                "MANGROVE_LOG", "CHERRY_LOG")) {
+                "MANGROVE_LOG", "CHERRY_LOG", "PALE_OAK_LOG")) {
             map.put(log, 1.0);
         }
         map.put("COAL", 8.0);
@@ -871,6 +879,19 @@ public class Settings implements WorldSettings {
         map.put("KELP", 3.0);
         map.put("OAK_LOG", 15.0); map.put("SPRUCE_LOG", 15.0); map.put("BIRCH_LOG", 15.0); map.put("DARK_OAK_LOG", 15.0);
         map.put("ACACIA_LOG", 15.0); map.put("JUNGLE_LOG", 15.0); map.put("CHERRY_LOG", 20.0);
+        // The rare woods gate the top of the boat ladder, so an islet stand of
+        // them is a find worth carrying home: priced above the common logs.
+        // Both were missing entirely until 2026-08-08, which made pale oak -
+        // the wood the best hulls are built from - literally unsellable.
+        map.put("MANGROVE_LOG", 18.0); map.put("PALE_OAK_LOG", 25.0);
+        // Dyed wool is the farm ports' speciality and the way a sailor makes a
+        // bed of their own. It cannot be left to the recipe engine: most dyes
+        // come from flowers, which have no price, so every colour derived to
+        // zero and was neither buyable nor sellable.
+        for (String colour : List.of("ORANGE", "MAGENTA", "LIGHT_BLUE", "YELLOW", "LIME", "PINK", "GRAY",
+                "LIGHT_GRAY", "CYAN", "PURPLE", "BLUE", "BROWN", "GREEN", "RED", "BLACK")) {
+            map.put(colour + "_WOOL", 24.0);
+        }
         map.put("STONE", 5.0); map.put("COBBLESTONE", 3.0); map.put("GRANITE", 4.0); map.put("DIORITE", 4.0);
         map.put("ANDESITE", 4.0); map.put("DEEPSLATE", 6.0); map.put("SAND", 3.0); map.put("GRAVEL", 3.0);
         map.put("COAL", 40.0); map.put("CHARCOAL", 30.0); map.put("RAW_IRON", 60.0); map.put("RAW_COPPER", 30.0);
@@ -3218,6 +3239,8 @@ public class Settings implements WorldSettings {
     public void setMushroomIsletChance(double mushroomIsletChance) { this.mushroomIsletChance = mushroomIsletChance; }
     public double getIsletStructureChance() { return isletStructureChance; }
     public void setIsletStructureChance(double isletStructureChance) { this.isletStructureChance = isletStructureChance; }
+    public List<String> getInnIslandTypes() { return innIslandTypes; }
+    public void setInnIslandTypes(List<String> innIslandTypes) { this.innIslandTypes = innIslandTypes; }
     public double getCoastRoughness() { return coastRoughness; }
     public void setCoastRoughness(double coastRoughness) { this.coastRoughness = coastRoughness; }
     public double getIslandHilliness() { return islandHilliness; }

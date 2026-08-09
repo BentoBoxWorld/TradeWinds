@@ -200,6 +200,22 @@ public class IslandDecorator extends BlockPopulator {
         int lz = plan.plazaZ() - (int) Math.round(Math.sin(plan.bearing()) * landmarkDist);
         buildLandmark(region, spec, lx, y, lz);
 
+        // The inn: the one place in the ocean a sailor can sleep. Everything
+        // else about this world is boats and water, and a bed needs a roof and
+        // a floor that is not moving (playtest 2026-08-08: "it's very difficult
+        // to sleep - there are no beds"). Ports that keep one are configurable;
+        // it stands across the plaza from the galley so the two do not fight
+        // over the same ground.
+        if (addon.getSettings().getInnIslandTypes().contains(spec.type().name())) {
+            double innAngle = plan.bearing() - 1.4;
+            int innDist = plan.plazaRadius() - 6;
+            int ix = plan.plazaX() + (int) Math.round(Math.cos(innAngle) * innDist);
+            int iz = plan.plazaZ() + (int) Math.round(Math.sin(innAngle) * innDist);
+            if (!onSpawnPad(plan, ix, iz)) {
+                buildInn(region, spec, ix, y, iz);
+            }
+        }
+
         World world = Bukkit.getWorld(worldInfo.getUID());
         spawnResidents(spec, plan, region, rand, world, y);
     }
@@ -318,6 +334,59 @@ public class IslandDecorator extends BlockPopulator {
 
     private long engineSeed(WorldInfo worldInfo) {
         return addon.getOceanEngine(worldInfo.getSeed()).getConfig().seed();
+    }
+
+    /**
+     * The inn: a 5x5 room in the island's own wood with a doorway facing the
+     * plaza, a lantern, and a made bed against the back wall. The bed is the
+     * whole point - it is the only one in the ocean, and sleeping in it sets
+     * the sleeper's respawn the way any bed does.
+     *
+     * @param region the populate region
+     * @param spec the island (its palette)
+     * @param x inn centre x
+     * @param y first air block above the plaza
+     * @param z inn centre z
+     */
+    private void buildInn(LimitedRegion region, IslandSpec spec, int x, int y, int z) {
+        Material planks = IslandPalette.planks(spec.type());
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dz = -2; dz <= 2; dz++) {
+                boolean wall = Math.abs(dx) == 2 || Math.abs(dz) == 2;
+                // Doorway: a two-block gap in the middle of the +x wall
+                boolean doorway = dx == 2 && dz == 0;
+                for (int dy = 0; dy <= 2; dy++) {
+                    if (wall && !(doorway && dy < 2)) {
+                        setIfPossible(region, x + dx, y + dy, z + dz, planks);
+                    }
+                }
+                setIfPossible(region, x + dx, y + 3, z + dz, planks); // roof
+            }
+        }
+        setIfPossible(region, x, y + 2, z, Material.LANTERN); // hanging from the roof beam
+        placeBed(region, x - 1, y, z);
+    }
+
+    /**
+     * Lay a bed with its two halves agreeing: a foot and a head block sharing a
+     * facing, or the bed is not a bed and cannot be slept in.
+     */
+    private void placeBed(LimitedRegion region, int x, int y, int z) {
+        if (!region.isInRegion(x, y, z) || !region.isInRegion(x, y, z + 1)) {
+            return;
+        }
+        org.bukkit.block.data.BlockData footData = Bukkit.createBlockData(Material.WHITE_BED);
+        org.bukkit.block.data.BlockData headData = Bukkit.createBlockData(Material.WHITE_BED);
+        if (!(footData instanceof org.bukkit.block.data.type.Bed foot)
+                || !(headData instanceof org.bukkit.block.data.type.Bed head)) {
+            return;
+        }
+        foot.setPart(org.bukkit.block.data.type.Bed.Part.FOOT);
+        foot.setFacing(org.bukkit.block.BlockFace.SOUTH);
+        head.setPart(org.bukkit.block.data.type.Bed.Part.HEAD);
+        head.setFacing(org.bukkit.block.BlockFace.SOUTH);
+        region.setBlockData(x, y, z, foot);
+        region.setBlockData(x, y, z + 1, head);
     }
 
     private void buildStall(LimitedRegion region, IslandSpec spec, int sx, int y, int sz) {

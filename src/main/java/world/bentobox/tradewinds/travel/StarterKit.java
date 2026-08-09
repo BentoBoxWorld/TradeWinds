@@ -85,21 +85,39 @@ public class StarterKit {
     }
 
     /**
-     * Remove one boat item the player OWNS from the inventory - the hold
-     * record's boat, so a stray vanilla boat is never mistaken for theirs.
+     * Remove the boat item that IS the player's record from the inventory, so
+     * launching it at spawn consumes their hull and nobody else's. Identity,
+     * not material: matching by type spent whichever oak boat came first in
+     * the pack, which could be a hull they had found or were ferrying (the
+     * same trap as the crafting refit, 2026-08-08). An unstamped hull of the
+     * right type is the fallback - a legacy or hand-given boat looks like
+     * that, and it is still the only candidate.
      *
      * @return the removed boat material, or null if none carried
      */
-    private Material consumeBoatItem(Player player) {
-        Material owned = addon.getHoldService().boat(player);
-        if (owned == null) {
+    Material consumeBoatItem(Player player) {
+        var hold = addon.getHoldService().active(player.getUniqueId()).orElse(null);
+        if (hold == null) {
             return null;
         }
+        Material owned = Material.matchMaterial(hold.getMaterial());
+        ItemStack unstamped = null;
         for (ItemStack stack : player.getInventory().getContents()) {
-            if (stack != null && stack.getType() == owned) {
+            if (stack == null) {
+                continue;
+            }
+            String id = BoatService.boatId(stack);
+            if (hold.getUniqueId().equals(id)) {
                 stack.setAmount(stack.getAmount() - 1);
                 return owned;
             }
+            if (id == null && owned != null && stack.getType() == owned && unstamped == null) {
+                unstamped = stack;
+            }
+        }
+        if (unstamped != null) {
+            unstamped.setAmount(unstamped.getAmount() - 1);
+            return owned;
         }
         return null;
     }

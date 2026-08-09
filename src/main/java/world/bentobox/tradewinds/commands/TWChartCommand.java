@@ -48,6 +48,13 @@ public class TWChartCommand extends CompositeCommand {
         if (!wantList && getWorld().equals(user.getWorld())) {
             addon.getChartHolograms().show(user.getPlayer());
             user.sendMessage("tradewinds.chart.holograms-shown");
+            // ...and say where the boats are in words as well. The holograms
+            // skip a boat that is carried or within a few paces - sensible
+            // markers, useless answers: at a quay the compass drew nothing and
+            // a sailor could not tell "no OLD BOAT" from "not drawn"
+            // (playtest 2026-08-08). One line each, always.
+            reportBoat(addon, user, user.getLocation().getBlockX(), user.getLocation().getBlockZ(), false);
+            reportBoat(addon, user, user.getLocation().getBlockX(), user.getLocation().getBlockZ(), true);
         } else {
             chartList(addon, user);
         }

@@ -63,6 +63,15 @@ ocean:
   # empty - there the biome itself is the find. 0 disables. Safe to change
   # mid-game: it only affects islets whose center chunk is not yet generated.
   islet-structure-chance: 0.25
+  # Island types whose plaza carries an INN: a roofed room with a made bed you
+  # may sleep in. Sleeping is otherwise impossible at sea - there is nowhere to
+  # put a bed but an island of your own - and a bed you sleep in becomes your
+  # respawn point, vanilla-style. Empty disables inns everywhere. Only affects
+  # plazas not yet generated.
+  inn-island-types:
+  - LUXURY
+  - AGRICULTURAL
+  - FOREST
   # How far a coastline wanders in and out from the island's nominal radius, as a
   # fraction of it: bays and headlands. 0 gives perfect circles - a radial mask on
   # its own draws a coin. Above about 0.3 coasts start breaking into fragments.
@@ -142,6 +151,7 @@ travel:
     DARK_OAK_LOG: 1.0
     MANGROVE_LOG: 1.0
     CHERRY_LOG: 1.0
+    PALE_OAK_LOG: 1.0
     DRIED_KELP_BLOCK: 4.0
     COAL: 8.0
     CHARCOAL: 8.0
@@ -415,6 +425,8 @@ economy:
     ACACIA_LOG: 15.0
     JUNGLE_LOG: 15.0
     CHERRY_LOG: 20.0
+    MANGROVE_LOG: 18.0
+    PALE_OAK_LOG: 25.0
     STONE: 5.0
     COBBLESTONE: 3.0
     GRANITE: 4.0
@@ -442,6 +454,21 @@ economy:
     REDSTONE: 30.0
     LEATHER: 40.0
     WHITE_WOOL: 20.0
+    ORANGE_WOOL: 24.0
+    MAGENTA_WOOL: 24.0
+    LIGHT_BLUE_WOOL: 24.0
+    YELLOW_WOOL: 24.0
+    LIME_WOOL: 24.0
+    PINK_WOOL: 24.0
+    GRAY_WOOL: 24.0
+    LIGHT_GRAY_WOOL: 24.0
+    CYAN_WOOL: 24.0
+    PURPLE_WOOL: 24.0
+    BLUE_WOOL: 24.0
+    BROWN_WOOL: 24.0
+    GREEN_WOOL: 24.0
+    RED_WOOL: 24.0
+    BLACK_WOOL: 24.0
     STRING: 15.0
     BEEF: 25.0
     PORKCHOP: 25.0
