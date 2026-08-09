@@ -344,9 +344,6 @@ economy:
   # The harbourmaster's charity: a sailor with no cargo space, no boat and no money
   # is given the bare minimum to work again. Charity goods cannot be sold. 0 disables.
   charity-cooldown-minutes: 15
-  # Materials traders buy even WITHOUT a customs stamp - the contraband exceptions.
-  unstamped-sellables:
-    - SUGAR
   # The secondhand shelf: notable goods sold to a trader go back out for sale
   # instead of vanishing, so the world feels inhabited. They surface at a DIFFERENT
   # port from the one they were sold at (the trader shipped it on), which stops
@@ -733,7 +730,7 @@ encounters:
     PIRATE_CREW: 10
     SEA_WITCH: 30
   # Chance that a slain encounter mob yields booty, and what it may drop.
-  # Booty is customs-stamped, so it can be sold: fighting is the third way to earn.
+  # Booty is sellable like any other cargo: fighting is the third way to earn.
   booty-chance: 0.5
   booty-table:
     - NAUTILUS_SHELL

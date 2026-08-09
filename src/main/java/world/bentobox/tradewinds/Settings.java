@@ -1138,8 +1138,8 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "encounters.booty-chance")
     private double bootyChance = 0.5;
 
-    @ConfigComment("Booty materials. Dropped customs-stamped, so salvage can be sold -")
-    @ConfigComment("fighting is the third way to earn, beside trading and smuggling.")
+    @ConfigComment("Booty materials. Sellable like any other cargo, so fighting is the third")
+    @ConfigComment("way to earn, beside trading and smuggling.")
     @ConfigEntry(path = "encounters.booty-table")
     private List<String> bootyTable = new ArrayList<>(List.of("NAUTILUS_SHELL", "PRISMARINE_SHARD",
             "PRISMARINE_CRYSTALS", "GOLD_INGOT", "IRON_INGOT", "EMERALD", "COAL", "COOKED_COD", "TRIDENT",
