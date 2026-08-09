@@ -495,8 +495,9 @@ public class CustomsService {
     }
 
     /**
-     * Whether an item may be sold at this island - the contraband rule on top
-     * of the customs stamp.
+     * Whether an item may be sold at this island. Since customs stamping went
+     * (hold plan, 2026-08-01) the contraband band rule is the ONLY thing that
+     * refuses a sale: anything else with a price, a port will take.
      *
      * @param spec the island
      * @param item the item
