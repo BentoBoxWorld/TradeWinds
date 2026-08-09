@@ -752,8 +752,12 @@ encounters:
 illegal-trade:
   # The contraband list: what customs care about, and what black markets pay
   # the premium for. Only honored while illegal-trade.enabled is true.
+  # List the FEEDSTOCK as well as the finished good, or the law is theatre:
+  # one sugar cane crafts into one sugar, so cane smuggled past a scan is
+  # sugar smuggled past a scan (playtest 2026-08-09).
   contraband-materials:
   - SUGAR
+  - SUGAR_CANE
   # Master gate for all illegal-goods mechanics: contraband, customs scans, smuggling.
   # Set false for family-friendly servers - removes the entire crime layer cleanly.
   enabled: true

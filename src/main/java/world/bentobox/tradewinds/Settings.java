@@ -742,8 +742,11 @@ public class Settings implements WorldSettings {
 
     @ConfigComment("The contraband list: what customs care about, and what black markets pay")
     @ConfigComment("the premium for. Only honored while illegal-trade.enabled is true.")
+    @ConfigComment("List the FEEDSTOCK as well as the finished good, or the law is theatre:")
+    @ConfigComment("one sugar cane crafts into one sugar, so cane smuggled past a scan is")
+    @ConfigComment("sugar smuggled past a scan (playtest 2026-08-09).")
     @ConfigEntry(path = "illegal-trade.contraband-materials")
-    private List<String> contrabandMaterials = new ArrayList<>(List.of("SUGAR"));
+    private List<String> contrabandMaterials = new ArrayList<>(List.of("SUGAR", "SUGAR_CANE"));
 
     @ConfigComment("Career restarts a destitute player may use (/tw restart): fresh kit, starting")
     @ConfigComment("balance, chart kept. -1 = unlimited, 0 = none.")
