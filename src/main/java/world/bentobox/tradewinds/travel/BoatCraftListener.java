@@ -91,20 +91,46 @@ public class BoatCraftListener implements Listener {
             org.bukkit.Bukkit.getScheduler().runTaskLater(addon.getPlugin(),
                     () -> stampCrafted(player, result.getType(), hold), 5L);
         }
-        removeOldBoat(player, old);
+        removeOldBoat(player, old, hold);
         User.getInstance(player).sendMessage("tradewinds.trade.boat-crafted", "[material]",
                 world.bentobox.tradewinds.economy.PriceEngine.prettify(result.getType().name()),
                 "[slots]", String.valueOf(newSlots));
     }
 
-    private void removeOldBoat(Player player, Material old) {
-        if (old != null) {
-            for (ItemStack stack : player.getInventory().getContents()) {
-                if (stack != null && stack.getType() == old) {
-                    stack.setAmount(stack.getAmount() - 1);
-                    break;
-                }
+    /**
+     * Break up the hull the refit replaced - the one that IS this record, not
+     * merely one of the same wood. Matching by material ate any oak boat in
+     * the pack: a hull you were carrying for someone, an OLD BOAT you had just
+     * fished out of the sea, the lot (playtest 2026-08-08: "the oak boat
+     * disappeared"). A hull stamped with somebody else's record is never
+     * touched; an UNSTAMPED hull of the old type is taken only as a last
+     * resort, since that is what a legacy or hand-given boat looks like.
+     *
+     * @param player the crafter
+     * @param old the material of the hull being replaced
+     * @param hold their boat record - the identity that decides
+     */
+    void removeOldBoat(Player player, Material old,
+            world.bentobox.tradewinds.dataobjects.BoatHold hold) {
+        if (old == null) {
+            return;
+        }
+        ItemStack unstamped = null;
+        for (ItemStack stack : player.getInventory().getContents()) {
+            if (stack == null || stack.getType() != old) {
+                continue;
             }
+            String id = BoatService.boatId(stack);
+            if (hold.getUniqueId().equals(id)) {
+                stack.setAmount(stack.getAmount() - 1);
+                return;
+            }
+            if (id == null && unstamped == null) {
+                unstamped = stack;
+            }
+        }
+        if (unstamped != null) {
+            unstamped.setAmount(unstamped.getAmount() - 1);
         }
     }
 

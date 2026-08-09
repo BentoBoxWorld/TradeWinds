@@ -28,6 +28,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.stubbing.Answer;
 
 import world.bentobox.tradewinds.CommonTestSetup;
+import world.bentobox.tradewinds.Settings;
+import world.bentobox.tradewinds.economy.TypeEconomy;
 import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.ocean.DockPlan;
 import world.bentobox.tradewinds.ocean.OceanConfig;
@@ -61,6 +63,7 @@ class IslandDecoratorTest extends CommonTestSetup {
     public void setUp() throws Exception {
         super.setUp();
         addon = mock(TradeWinds.class);
+        when(addon.getSettings()).thenReturn(new Settings());
         engine = new OceanEngine(new OceanConfig(SEED, 2500, 160, 45, 1.0, 0, 5000, 70));
         when(addon.getOceanEngine(anyLong())).thenReturn(engine);
         decorator = new IslandDecorator(addon);
@@ -206,6 +209,40 @@ class IslandDecoratorTest extends CommonTestSetup {
         decorator.populate(worldInfo(Environment.NORMAL), new Random(1), pierX >> 4, pierZ >> 4, region);
         assertTrue(placed.contains(IslandPalette.banner(spec.type())), "No banner at pier end");
         assertTrue(placed.contains(Material.LANTERN), "No lantern at pier end");
+    }
+
+    @Test
+    void testInnPortsGetABedYouCanSleepIn() {
+        // Sleeping is otherwise impossible in an ocean: no bed anywhere but an
+        // island of your own (playtest 2026-08-08). Ports on the inn list get
+        // a room with a made bed - both halves, or it is not a bed at all.
+        var innSpec = engine.islandsNear(0, 0, 40000).stream()
+                .filter(s -> new Settings().getInnIslandTypes()
+                        .contains(s.type().name()))
+                .findFirst().orElseThrow();
+        var innPlan = engine.dockPlan(innSpec);
+        org.bukkit.block.data.type.Bed bed = mock(org.bukkit.block.data.type.Bed.class);
+        mockedBukkit.when(() -> org.bukkit.Bukkit.createBlockData(Material.WHITE_BED)).thenReturn(bed);
+        LimitedRegion region = region();
+
+        decorator.populate(worldInfo(Environment.NORMAL), new Random(1), innPlan.plazaX() >> 4,
+                innPlan.plazaZ() >> 4, region);
+
+        assertTrue(placed.contains(IslandPalette.planks(innSpec.type())), "The inn has no walls");
+        verify(bed).setPart(org.bukkit.block.data.type.Bed.Part.FOOT);
+        verify(bed).setPart(org.bukkit.block.data.type.Bed.Part.HEAD);
+        verify(region, org.mockito.Mockito.times(2)).setBlockData(anyInt(), anyInt(), anyInt(), any());
+    }
+
+    @Test
+    void testFarmPortsKeepTheirOwnFlockColour() {
+        // Seeded, so a sailor after a particular colour has somewhere to sail
+        // TO - and the same port always sells the same wool
+        Material first = TypeEconomy.localWool(SEED, 3, 7);
+        assertEquals(first, TypeEconomy.localWool(SEED, 3, 7));
+        assertTrue(java.util.stream.IntStream.range(0, 40)
+                .mapToObj(i -> TypeEconomy.localWool(SEED, i, i * 3))
+                .distinct().count() > 1, "Every farm port sells the same colour - the roll is not rolling");
     }
 
     @Test
