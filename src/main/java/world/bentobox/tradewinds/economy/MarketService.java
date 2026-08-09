@@ -89,7 +89,19 @@ public class MarketService {
             shelf.add(Material.CHARCOAL);
         }
         shelf.addAll(TypeEconomy.outfitterExtras(spec.type()));
+        // Every farm port's flock has its own colour, so bed-making is not a
+        // white-sheep monopoly and a sailor after a particular dye has a
+        // destination worth the trip
+        if (spec.type() == world.bentobox.tradewinds.ocean.IslandType.AGRICULTURAL) {
+            shelf.add(TypeEconomy.localWool(oceanSeed(), spec.cellX(), spec.cellZ()));
+        }
         return shelf;
+    }
+
+    /** The ocean seed everything positional derives from. */
+    private long oceanSeed() {
+        return addon.getOverWorld() == null ? 0L
+                : addon.getOceanEngine(addon.getOverWorld().getSeed()).getConfig().seed();
     }
 
     /**

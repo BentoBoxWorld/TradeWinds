@@ -392,11 +392,23 @@ public class BoatListener implements Listener {
             return;
         }
         if (playerId.toString().equals(hold.getOwner())) {
+            // Their own boat, back in the pack - but SAY so. This pickup makes
+            // the hull their hold again, and if they were sailing something
+            // else (a respawn loaner, say) that boat is demoted to an OLD BOAT
+            // by the same stroke. It used to happen in total silence: the
+            // playtest picked an oak hull off the quay, heard nothing, and had
+            // no idea the raft it had just been lent was now flotsam
+            // (2026-08-08).
+            Optional<BoatHold> demoted = addon.getHoldService().active(playerId)
+                    .filter(other -> !other.getUniqueId().equals(hold.getUniqueId()));
             hold.setExpiresAt(0);
             addon.getHoldManager().save(hold);
             addon.getHoldManager().setActiveBoat(playerId, hold);
             addon.getBoatService().logbook("picked up by its owner", hold, event.getItem().getLocation());
-            return; // their own boat, back in the pack
+            if (shouldPrompt(playerId, hold.getUniqueId())) {
+                announceOwnPickup(player, hold, demoted.orElse(null));
+            }
+            return;
         }
         if (System.currentTimeMillis() < swapQuietUntil.getOrDefault(playerId, 0L)) {
             // Just swapped: leave the hull we shed alone for a moment rather
@@ -405,7 +417,13 @@ public class BoatListener implements Listener {
             return;
         }
         if (addon.getHoldService().active(playerId).isEmpty()) {
-            // Nothing to lose: claim it outright, no dialog
+            // Nothing to lose: claim it outright, no dialog. The event MUST be
+            // cancelled even though the item entity is going: vanilla adds the
+            // stack it captured before the event regardless of the entity
+            // dying, so an uncancelled pickup landed the ground hull AND the
+            // stamped one giveBoatItem hands over - two items, one record,
+            // which is the duplication everything else here fights.
+            event.setCancelled(true);
             event.getItem().remove();
             hold.setExpiresAt(0);
             addon.getBoatService().claim(player, hold);
@@ -427,6 +445,25 @@ public class BoatListener implements Listener {
             takeBoat(player, hold);
             addon.getBoatService().giveBoatItem(player, hold);
         });
+    }
+
+    /**
+     * Tell a sailor what pocketing their own hull just did: it is their hold
+     * again, and any other boat they had is now an unowned OLD BOAT lying
+     * where they left it. A hold changing hands is never a silent event.
+     *
+     * @param player the owner
+     * @param hold the hull they picked up
+     * @param demoted the boat this displaced, or null if it was already theirs
+     */
+    private void announceOwnPickup(Player player, BoatHold hold, BoatHold demoted) {
+        String material = pretty(Material.matchMaterial(hold.getMaterial()));
+        if (demoted == null) {
+            User.getInstance(player).sendMessage("tradewinds.boat.own-aboard", MATERIAL_PLACEHOLDER, material);
+            return;
+        }
+        User.getInstance(player).sendMessage("tradewinds.boat.own-resumed", MATERIAL_PLACEHOLDER, material,
+                "[old]", pretty(Material.matchMaterial(demoted.getMaterial())));
     }
 
     /**
