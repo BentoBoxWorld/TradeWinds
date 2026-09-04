@@ -26,7 +26,9 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import net.kyori.adventure.text.Component;
 import world.bentobox.bentobox.api.user.User;
+import world.bentobox.bentobox.util.Util;
 import world.bentobox.tradewinds.economy.ItemNames;
 import world.bentobox.tradewinds.TradeWinds;
 
@@ -196,7 +198,7 @@ public class HoldGui implements Listener {
         ItemStack tnt = new ItemStack(Material.TNT);
         ItemMeta meta = tnt.getItemMeta();
         meta.displayName(user.getTranslationAsComponent("tradewinds.hold.tnt", NO_VARS));
-        meta.lore(List.of(user.getTranslationAsComponent("tradewinds.hold.tnt-lore", NO_VARS)));
+        meta.lore(loreLines(user, "tradewinds.hold.tnt-lore"));
         tnt.setItemMeta(meta);
         return tnt;
     }
@@ -208,7 +210,7 @@ public class HoldGui implements Listener {
                 PLACEHOLDER_NUMBER, String.valueOf(index + 1)));
         String loreKey = addon.getHoldService().expandersOpenable(id) ? "tradewinds.hold.expander-lore"
                 : "tradewinds.hold.expander-inert-lore";
-        meta.lore(List.of(user.getTranslationAsComponent(loreKey, NO_VARS)));
+        meta.lore(loreLines(user, loreKey));
         item.setItemMeta(meta);
         return item;
     }
@@ -254,12 +256,27 @@ public class HoldGui implements Listener {
         return stacks;
     }
 
+    /**
+     * A lore entry as lines: the locale string split on newlines, one lore
+     * line each, the same convention BentoBox's own panels use. A tooltip
+     * never wraps, so a long instruction must be broken by hand - and each
+     * line must carry its own colour tags, because a tag left open on one
+     * line does not reach the next.
+     */
+    public static List<Component> loreLines(User user, String key) {
+        List<Component> lines = new ArrayList<>();
+        for (String line : user.getTranslationNoColor(key).split("\n")) {
+            lines.add(Util.parseMiniMessageOrLegacy(line));
+        }
+        return lines;
+    }
+
     private ItemStack pane(Material material, User user, String nameKey, String loreKey) {
         ItemStack pane = new ItemStack(material);
         ItemMeta meta = pane.getItemMeta();
         meta.displayName(user.getTranslationAsComponent(nameKey, NO_VARS));
         if (loreKey != null) {
-            meta.lore(List.of(user.getTranslationAsComponent(loreKey, NO_VARS)));
+            meta.lore(loreLines(user, loreKey));
         }
         pane.setItemMeta(meta);
         return pane;
