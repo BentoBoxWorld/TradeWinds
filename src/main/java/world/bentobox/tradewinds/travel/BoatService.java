@@ -17,6 +17,7 @@ import org.bukkit.persistence.PersistentDataType;
 
 import world.bentobox.bentobox.api.user.User;
 import world.bentobox.tradewinds.TradeWinds;
+import world.bentobox.tradewinds.economy.ItemNames;
 import world.bentobox.tradewinds.dataobjects.BoatHold;
 
 /**
@@ -105,15 +106,19 @@ public class BoatService {
         ItemMeta meta = stack.getItemMeta();
         if (meta != null) {
             meta.getPersistentDataContainer().set(BOAT_ID_KEY, PersistentDataType.STRING, hold.getUniqueId());
-            User console = User.getInstance(Bukkit.getConsoleSender());
+            User user = ownerOrConsole(hold);
             Material material = Material.matchMaterial(hold.getMaterial());
+            // The hull's own name, through the locale: item_name replaces the
+            // vanilla name without the renamed-on-an-anvil italics
+            meta.itemName(user.getTranslationAsComponent("tradewinds.item.boat-name", "[material]",
+                    ItemNames.label(user, material)));
             meta.lore(java.util.List.of(
-                    console.getTranslationAsComponent("tradewinds.item.boat-lore-cargo",
+                    user.getTranslationAsComponent("tradewinds.item.boat-lore-cargo",
                             "[used]", String.valueOf(HoldService.slotsUsedIn(hold)),
                             "[slots]", String.valueOf(addon.getBoatRanks().slots(material))),
-                    console.getTranslationAsComponent("tradewinds.item.boat-lore-fuel",
+                    user.getTranslationAsComponent("tradewinds.item.boat-lore-fuel",
                             "[units]", String.format("%.0f", addon.getFuelService().unitsOf(hold))),
-                    console.getTranslationAsComponent("tradewinds.item.boat-lore-open", NO_VARS)));
+                    user.getTranslationAsComponent("tradewinds.item.boat-lore-open", NO_VARS)));
             stack.setItemMeta(meta);
         }
         return stack;
@@ -241,15 +246,31 @@ public class BoatService {
             boat.setCustomNameVisible(false);
             return;
         }
-        User console = User.getInstance(Bukkit.getConsoleSender());
+        User user = ownerOrConsole(hold);
         if (hold.isUnowned()) {
-            boat.customName(console.getTranslationAsComponent("tradewinds.boat.label-unowned", NO_VARS));
+            boat.customName(user.getTranslationAsComponent("tradewinds.boat.label-unowned", NO_VARS));
         } else {
             String name = Bukkit.getOfflinePlayer(UUID.fromString(hold.getOwner())).getName();
-            boat.customName(console.getTranslationAsComponent("tradewinds.boat.label-owned", "[name]",
-                    name == null ? console.getTranslation("tradewinds.general.unknown") : name));
+            boat.customName(user.getTranslationAsComponent("tradewinds.boat.label-owned", "[name]",
+                    name == null ? user.getTranslation("tradewinds.general.unknown") : name));
         }
         boat.setCustomNameVisible(true);
+    }
+
+    /**
+     * Whose locale a boat's baked-in text (item name, lore, floating label) is
+     * written in: the owner's when they are online, else the server's. Text on
+     * an item or an entity is one string for every viewer, so the owner - who
+     * reads it most - is the best choice there is.
+     */
+    private User ownerOrConsole(BoatHold hold) {
+        if (!hold.isUnowned()) {
+            Player owner = Bukkit.getPlayer(UUID.fromString(hold.getOwner()));
+            if (owner != null) {
+                return User.getInstance(owner);
+            }
+        }
+        return User.getInstance(Bukkit.getConsoleSender());
     }
 
     /**

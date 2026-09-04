@@ -28,6 +28,7 @@ import world.bentobox.tradewinds.ocean.OceanEngine;
 public final class PortNames {
 
     private static final String TOKEN_PREFIX = "tradewinds.name-token.";
+    private static final String SPAWN_KEY = "tradewinds.spawn.name";
 
     private PortNames() {
         // Static use only
@@ -43,6 +44,10 @@ public final class PortNames {
      *         engine is not up or the spec is not one of its islands
      */
     public static String display(TradeWinds addon, User user, IslandSpec spec) {
+        if (OceanEngine.SPAWN_NAME.equals(spec.name())) {
+            // The one island with a given name rather than a generated one
+            return user.getTranslation(SPAWN_KEY);
+        }
         OceanEngine engine = addon.getOceanEngine();
         if (engine == null) {
             return spec.name();

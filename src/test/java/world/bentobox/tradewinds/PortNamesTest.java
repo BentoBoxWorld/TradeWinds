@@ -84,6 +84,16 @@ class PortNamesTest extends CommonTestSetup {
     }
 
     @Test
+    void testSpawnPortIsNamedByTheLocale() {
+        IslandSpec spawn = engine.islandInCell(0, 0).orElseThrow();
+        assertEquals(OceanEngine.SPAWN_NAME, spawn.name());
+        // The test locale renders every key as itself
+        assertEquals("tradewinds.spawn.name", PortNames.display(addon, user, spawn));
+        when(lm.get(any(), eq("tradewinds.spawn.name"))).thenReturn("出生港");
+        assertEquals("出生港", PortNames.display(addon, user, spawn));
+    }
+
+    @Test
     void testChartDrawsOnlyWhatTheMapFontCan() {
         assertEquals("Lave", StarChartRenderer.drawableName(port, "Lave"));
         assertEquals(port.name(), StarChartRenderer.drawableName(port, "\u62c9\u7ef4"));

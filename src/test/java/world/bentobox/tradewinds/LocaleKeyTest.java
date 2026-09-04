@@ -17,7 +17,10 @@ import java.util.stream.Stream;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.junit.jupiter.api.Test;
 
+import org.bukkit.Material;
+
 import world.bentobox.tradewinds.economy.TradeCategory;
+import world.bentobox.tradewinds.economy.TypeEconomy;
 import world.bentobox.tradewinds.ocean.IslandType;
 import world.bentobox.tradewinds.ocean.NameGenerator;
 import world.bentobox.tradewinds.ocean.SecurityBand;
@@ -137,6 +140,12 @@ class LocaleKeyTest {
         materials.addAll(settings.getBasePrices().keySet());
         materials.addAll(settings.getFuelValues().keySet());
         materials.addAll(settings.getBoatRanks().keySet());
+        // The outfitter's shelf is code, not config
+        materials.add(Material.BREAD.name());
+        materials.add(Material.CHARCOAL.name());
+        for (IslandType type : IslandType.values()) {
+            TypeEconomy.outfitterExtras(type).forEach(material -> materials.add(material.name()));
+        }
         List<String> missing = materials.stream()
                 .map(name -> "tradewinds.materials." + name.toLowerCase(java.util.Locale.ENGLISH))
                 .filter(key -> !(locale.get(key) instanceof String)).sorted().toList();

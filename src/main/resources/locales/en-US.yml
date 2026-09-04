@@ -116,6 +116,8 @@ tradewinds:
         hull-carried: "<red>Not restored: they are already carrying it.</red>"
         restored: "<green>[name]'s [material] restored to their pack from the database, cargo record intact.</green>"
   spawn:
+    # The spawn port's name, wherever a port is named to a player
+    name: "Spawn"
     teleported: "<aqua>You come ashore at the spawn port. Your boat is your hold and your livelihood - keep it close.</aqua>"
     resumed: "<aqua>You take up your voyage where you left it.</aqua>"
     already-at-sea: "<red>You are already at sea. There is no commanding your way across it - row, or warp from an island's border.</red>"
@@ -445,6 +447,18 @@ tradewinds:
     mangrove_chest_boat: ""
     cherry_chest_boat: ""
     pale_oak_chest_boat: ""
+    # Outfitter gear
+    iron_sword: ""
+    shield: ""
+    iron_helmet: ""
+    iron_chestplate: ""
+    iron_leggings: ""
+    iron_boots: ""
+    white_bed: ""
+    cooked_mutton: ""
+    fishing_rod: ""
+    compass: ""
+    iron_pickaxe: ""
   fuel:
     low-actionbar: "[actionbar]<gold>LOW FUEL</gold><gray> - [fuel]/[needed] to warp out. Buy fuel at the market.</gray>"
     low-chat: "<gold>Low fuel at this port.</gold><gray> You have [fuel] units; the cheapest warp from here needs [needed]. Buy at least [number] more from the market before you leave, or you will be rowing.</gray>"
@@ -552,6 +566,8 @@ tradewinds:
       stay: "<gray>Stay a while</gray>"
       stay-tooltip: "<gray>Close this and explore. /tw go brings the offer back whenever you are ready - the fuel is already spent.</gray>"
   item:
+    # The hull's item name; [material] is the boat type
+    boat-name: "[material]"
     boat-lore-cargo: "<gray>Cargo: </gray><white>[used]/[slots] slots</white>"
     boat-lore-fuel: "<gray>Fuel: </gray><white>[units] units</white>"
     boat-lore-open: "<yellow>Right-click to open the hold</yellow>"
