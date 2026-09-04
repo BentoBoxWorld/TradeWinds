@@ -56,7 +56,7 @@
         <!-- Do not change unless you want different name for local builds. -->
         <build.number>-LOCAL</build.number>
         <!-- This allows to change between versions. -->
-        <build.version>0.2.1</build.version>
+        <build.version>0.3.0</build.version>
         <!-- SonarCloud analysis (bentobox-world org). Requires the project to be
              registered on SonarCloud as BentoBoxWorld_TradeWinds; the CI Sonar
              step is non-fatal so an unregistered project never fails the build. -->
