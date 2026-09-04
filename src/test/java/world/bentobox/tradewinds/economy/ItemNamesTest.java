@@ -14,7 +14,11 @@ import org.bukkit.enchantments.Enchantment;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import world.bentobox.bentobox.api.user.User;
+import world.bentobox.bentobox.util.Util;
 import world.bentobox.tradewinds.CommonTestSetup;
 
 /**
@@ -74,6 +78,26 @@ class ItemNamesTest extends CommonTestSetup {
         // Every tag opener is escaped, so MiniMessage renders it as literal text
         assertEquals("\\<red>Sword of \\<bold>Doom", escaped);
         assertFalse(escaped.matches(".*(?<!\\\\)<.*"), escaped);
+    }
+
+    /**
+     * The whole design rests on two BentoBox behaviours: variables are
+     * substituted and THEN the string is parsed as MiniMessage, and the
+     * legacy flattener chat goes through prints a translatable's fallback.
+     * Pin both to the real BentoBox code so a core change fails here.
+     */
+    @Test
+    void testBentoBoxRendersTheTagBothWays() {
+        String label = ItemNames.label(user, Material.OAK_LOG);
+        // Component path (dialogs, GUIs): a translatable the client resolves
+        Component component = Util.parseMiniMessage("<white>[material]</white>".replace("[material]", label));
+        String plain = PlainTextComponentSerializer.plainText()
+                .serialize(component);
+        assertEquals("Oak Log", plain, "plain-text flattening should use the fallback");
+        assertTrue(GsonComponentSerializer.gson().serialize(component)
+                .contains("\"translate\""), "the client should receive a translatable component");
+        // Chat path: BentoBox flattens to legacy text using the fallback
+        assertEquals("§fOak Log", Util.componentToLegacy(component));
     }
 
     @Test
