@@ -31,6 +31,18 @@ class ContrabandTest {
     }
 
     @Test
+    void testTheFeedstockIsAsIllegalAsTheGood() {
+        // One cane crafts into one sugar, so cane past a scan is sugar past a
+        // scan - and the shipped default has to say so, or the whole customs
+        // layer is theatre for anyone who reads a recipe book (2026-08-09).
+        // Both lists, because a map/list in config.yml REPLACES the code
+        // default rather than merging with it.
+        var shipped = new world.bentobox.tradewinds.Settings().getContrabandMaterials();
+        assertTrue(shipped.contains("SUGAR"), "SUGAR must be contraband by default");
+        assertTrue(shipped.contains("SUGAR_CANE"), "SUGAR_CANE must be contraband by default");
+    }
+
+    @Test
     void testSafePortsRefuseContraband() {
         // Crime pays, into danger: the safe ports will not touch it, so a
         // smuggling run has to be a voyage outward

@@ -8,6 +8,7 @@ import java.util.Map;
 import world.bentobox.bentobox.api.commands.CompositeCommand;
 import world.bentobox.bentobox.api.localization.TextVariables;
 import world.bentobox.bentobox.api.user.User;
+import world.bentobox.tradewinds.PortNames;
 import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.economy.Money;
 import world.bentobox.tradewinds.economy.TradeCategory;
@@ -32,6 +33,7 @@ public class TWPricesCommand extends CompositeCommand {
 
     private static final int MAX_ROWS = 12;
     private static final String VALUE_PLACEHOLDER = "[value]";
+    private static final String KEY_NONE = "tradewinds.general.none";
 
     public TWPricesCommand(CompositeCommand parent) {
         super(parent, "prices");
@@ -105,7 +107,7 @@ public class TWPricesCommand extends CompositeCommand {
             known.sort(Comparator.comparingInt(
                     (IslandSpec spec) -> data.loggedPrices(spec).getOrDefault(sought.name(), 0)).reversed());
             user.sendMessage("tradewinds.commands.prices.header-category", VALUE_PLACEHOLDER,
-                    prettyCategory(sought));
+                    user.getTranslation(sought.getLocaleKey()));
         } else {
             known.sort(Comparator.comparingLong(data::lastSeenPrices).reversed());
             user.sendMessage("tradewinds.commands.prices.header");
@@ -121,11 +123,13 @@ public class TWPricesCommand extends CompositeCommand {
                 if (price == null || price <= 0) {
                     continue;
                 }
-                user.sendMessage("tradewinds.commands.prices.row-category", "[name]", spec.name(), "[price]",
+                user.sendMessage("tradewinds.commands.prices.row-category", "[name]",
+                        PortNames.display(addon, user, spec), "[price]",
                         Money.format(addon, price), "[age]", age);
             } else {
-                user.sendMessage("tradewinds.commands.prices.row", "[name]", spec.name(), VALUE_PLACEHOLDER,
-                        best(addon, prices), "[age]", age);
+                user.sendMessage("tradewinds.commands.prices.row", "[name]", PortNames.display(addon, user, spec),
+                        VALUE_PLACEHOLDER,
+                        best(user, addon, prices), "[age]", age);
             }
         }
     }
@@ -134,11 +138,11 @@ public class TWPricesCommand extends CompositeCommand {
      * The best-paying category remembered at a port - the one line worth showing
      * when not filtering.
      */
-    private String best(TradeWinds addon, Map<String, Integer> prices) {
+    private String best(User user, TradeWinds addon, Map<String, Integer> prices) {
         return prices.entrySet().stream().max(Map.Entry.comparingByValue())
-                .map(entry -> prettyCategory(category(entry.getKey())) + " "
+                .map(entry -> prettyCategory(user, category(entry.getKey())) + " "
                         + Money.format(addon, entry.getValue()))
-                .orElse("-");
+                .orElse(user.getTranslation(KEY_NONE));
     }
 
     private static TradeCategory category(String name) {
@@ -150,9 +154,8 @@ public class TWPricesCommand extends CompositeCommand {
         return null;
     }
 
-    private static String prettyCategory(TradeCategory category) {
-        return category == null ? "-"
-                : world.bentobox.tradewinds.economy.PriceEngine.prettify(category.name());
+    private static String prettyCategory(User user, TradeCategory category) {
+        return user.getTranslation(category == null ? KEY_NONE : category.getLocaleKey());
     }
 
     /**

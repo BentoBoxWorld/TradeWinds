@@ -7,11 +7,13 @@ import world.bentobox.tradewinds.ocean.SecurityBand;
 /**
  * What customs would rather you were not carrying.
  * <p>
- * Contraband is the one thing a player can <em>make</em> and still sell (spec
- * 5.0): everything else traders buy must carry a customs stamp, so money only
- * ever enters the game through trade margins. Contraband is the deliberate
- * hole in that rule, and scan risk is what it is priced against - crime pays,
- * into danger (principle 4).
+ * Contraband is what a port's law cares about, and what a black market pays
+ * the premium for. Scan risk is what that premium is priced against - crime
+ * pays, into danger (principle 4).
+ * <p>
+ * It no longer marks the boundary of what may be sold: customs STAMPING was
+ * removed with the hold plan (2026-08-01), and the market now buys anything
+ * with a price. What survived is the smuggling risk.
  * <p>
  * Pure logic, no Bukkit: which bands deal in it, and how likely a search is.
  * The material list itself lives in config.

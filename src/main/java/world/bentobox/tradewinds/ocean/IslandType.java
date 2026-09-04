@@ -43,6 +43,17 @@ public enum IslandType {
     }
 
     /**
+     * The locale key for this type's name, for every player-facing line that
+     * says what kind of island a port is. The enum name is an identifier
+     * (config keys, island metadata), never text a sailor should read.
+     *
+     * @return locale key
+     */
+    public String getLocaleKey() {
+        return "tradewinds.type." + name().toLowerCase(java.util.Locale.ENGLISH);
+    }
+
+    /**
      * @return true if this type's surrounding waters freeze into fast ice lanes
      */
     public boolean isIcyApproach() {

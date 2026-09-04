@@ -10,6 +10,7 @@ import org.bukkit.inventory.ItemStack;
 
 import world.bentobox.bentobox.api.user.User;
 import world.bentobox.bentobox.hooks.VaultHook;
+import world.bentobox.tradewinds.PortNames;
 import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.api.events.TWTradeEvent;
 import world.bentobox.tradewinds.ocean.IslandSpec;
@@ -140,7 +141,7 @@ public class MarketService {
         player.getInventory().addItem(stores).values()
                 .forEach(left -> player.getWorld().dropItem(player.getLocation(), left));
         user.sendMessage("tradewinds.trade.bought", VAR_AMOUNT, String.valueOf(affordable), VAR_MATERIAL,
-                pretty(material), VAR_PRICE, Money.format(addon, total));
+                ItemNames.label(user, material), VAR_PRICE, Money.format(addon, total));
         chime(player);
         return affordable;
     }
@@ -327,7 +328,7 @@ public class MarketService {
         // Only now take it off the shelf, so a full hold cannot destroy a listing
         addon.getIslandDataManager().takeFromShelf(spec, index);
         vault.get().withdraw(user, price.get());
-        user.sendMessage("tradewinds.trade.shelf-bought", VAR_MATERIAL, pretty(item.getType()), VAR_PRICE,
+        user.sendMessage("tradewinds.trade.shelf-bought", VAR_MATERIAL, ItemNames.label(user, item.getType()), VAR_PRICE,
                 Money.format(addon, price.get()));
         chime(player);
         return true;
@@ -593,8 +594,9 @@ public class MarketService {
         }
         // Too rich for this port to handle - take it somewhere more developed
         if (!handlesValue(spec, item)) {
-            User.getInstance(player).sendMessage("tradewinds.trade.too-advanced", VAR_MATERIAL, pretty(material),
-                    "[name]", spec.name());
+            User user = User.getInstance(player);
+            user.sendMessage("tradewinds.trade.too-advanced", VAR_MATERIAL, ItemNames.label(user, material),
+                    "[name]", PortNames.display(addon, user, spec));
             thud(player);
             return 0;
         }
@@ -618,8 +620,9 @@ public class MarketService {
         addon.getIslandDataManager().adjustStockValue(spec, driftPool(material), (int) Math.round(total));
         // Notable goods go back out for sale somewhere else rather than vanishing
         consign(spec, item);
-        User.getInstance(player).sendMessage("tradewinds.trade.sold", VAR_AMOUNT, String.valueOf(removed),
-                VAR_MATERIAL, pretty(material), VAR_PRICE, Money.format(addon, total));
+        User user = User.getInstance(player);
+        user.sendMessage("tradewinds.trade.sold", VAR_AMOUNT, String.valueOf(removed),
+                VAR_MATERIAL, ItemNames.label(user, material), VAR_PRICE, Money.format(addon, total));
         chime(player);
         return removed;
     }
@@ -670,7 +673,7 @@ public class MarketService {
         vault.get().withdraw(user, total);
         addon.getIslandDataManager().adjustStockValue(spec, driftPool(material), -(int) Math.round(total));
         user.sendMessage("tradewinds.trade.bought", VAR_AMOUNT, String.valueOf(added), VAR_MATERIAL,
-                pretty(material), VAR_PRICE, Money.format(addon, total));
+                ItemNames.label(user, material), VAR_PRICE, Money.format(addon, total));
         chime(player);
         return added;
     }
@@ -712,13 +715,13 @@ public class MarketService {
             addon.getBoatService().logbook("bought by " + player.getName() + " at " + spec.name(), fresh,
                     player.getLocation());
             addon.getBoatService().giveBoatItem(player, fresh);
-            user.sendMessage("tradewinds.trade.boat-bought-first", VAR_MATERIAL, pretty(rank.material()),
+            user.sendMessage("tradewinds.trade.boat-bought-first", VAR_MATERIAL, ItemNames.label(user, rank.material()),
                     VAR_SLOTS, String.valueOf(rank.slots()), VAR_PRICE, Money.format(addon, price));
         } else if (isTradeIn(player, spec, rank)) {
             // The ship is at the quay and the new hull is bigger: a trade-in
             // - same record, cargo stays, old hull broken up
             addon.getBoatService().refit(player, owned.get(), rank.material());
-            user.sendMessage("tradewinds.trade.boat-bought", VAR_MATERIAL, pretty(rank.material()),
+            user.sendMessage("tradewinds.trade.boat-bought", VAR_MATERIAL, ItemNames.label(user, rank.material()),
                     VAR_SLOTS, String.valueOf(rank.slots()), VAR_PRICE, Money.format(addon, price));
         } else {
             // Bought outright (ruled 2026-08-05): the yard ALWAYS sells - a
@@ -728,7 +731,7 @@ public class MarketService {
             // served. The dialog confirmed this before the money moved.
             var old = owned.get();
             String oldName = Material.matchMaterial(old.getMaterial()) == null ? old.getMaterial()
-                    : pretty(Material.matchMaterial(old.getMaterial()));
+                    : ItemNames.label(user, Material.matchMaterial(old.getMaterial()));
             var fresh = addon.getBoatService().createFor(player, rank.material());
             addon.getBoatService().logbook("bought by " + player.getName() + " at " + spec.name()
                     + ", replacing their " + old.getMaterial(), fresh, player.getLocation());
@@ -741,7 +744,7 @@ public class MarketService {
             addon.getBoatService().shedCarriedHull(player, old);
             // The plate on the abandoned hull flips to UNOWNED, if it is loaded
             addon.getBoatService().relabel(old);
-            user.sendMessage("tradewinds.trade.boat-replaced", VAR_MATERIAL, pretty(rank.material()),
+            user.sendMessage("tradewinds.trade.boat-replaced", VAR_MATERIAL, ItemNames.label(user, rank.material()),
                     VAR_SLOTS, String.valueOf(rank.slots()), VAR_PRICE, Money.format(addon, price),
                     "[old]", oldName);
         }
@@ -854,10 +857,6 @@ public class MarketService {
         user.sendMessage("tradewinds.trade.charity-given");
         chime(player);
         return true;
-    }
-
-    static String pretty(Material material) {
-        return PriceEngine.prettify(material.name());
     }
 
     /**

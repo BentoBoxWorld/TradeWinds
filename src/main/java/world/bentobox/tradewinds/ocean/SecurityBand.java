@@ -8,24 +8,11 @@ package world.bentobox.tradewinds.ocean;
  * @author tastybento
  */
 public enum SecurityBand {
-    SAFE("Safe"),
-    POLICED("Policed"),
-    FRONTIER("Frontier"),
-    LAWLESS("Lawless"),
-    ANARCHIC("Anarchic");
-
-    private final String displayName;
-
-    SecurityBand(String displayName) {
-        this.displayName = displayName;
-    }
-
-    public String getDisplayName() {
-        return displayName;
-    }
+    SAFE, POLICED, FRONTIER, LAWLESS, ANARCHIC;
 
     /**
-     * The locale key for this band's name. Bands are coloured in the locale so
+     * The locale key for this band's name - the ONLY way a band is named to a
+     * player; there is deliberately no English display name on the enum. Bands are coloured in the locale so
      * a sailor can read where they are at a glance - arriving in anarchic water
      * and having no way to tell is how people lose cargo.
      *

@@ -11,6 +11,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.vehicle.VehicleEnterEvent;
 
 import world.bentobox.bentobox.api.user.User;
+import world.bentobox.tradewinds.PortNames;
 import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.api.events.IslandChartedEvent;
 import world.bentobox.tradewinds.dataobjects.TWPlayerData;
@@ -80,7 +81,8 @@ public class ChartingListener implements Listener {
                 .forEach(spec -> {
                     // The locale string carries an [actionbar] marker, so
                     // BentoBox delivers and formats it - never do that here
-                    User.getInstance(player).sendMessage("tradewinds.chart.charted", "[name]", spec.name());
+                    User user = User.getInstance(player);
+                    user.sendMessage("tradewinds.chart.charted", "[name]", PortNames.display(addon, user, spec));
                     addon.getPlayerDataManager().save(player.getUniqueId());
                     Bukkit.getPluginManager().callEvent(new IslandChartedEvent(player.getUniqueId(), spec));
                 });

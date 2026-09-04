@@ -26,6 +26,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitTask;
 
 import world.bentobox.bentobox.api.user.User;
+import world.bentobox.tradewinds.economy.ItemNames;
 import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.dataobjects.BoatHold;
 import world.bentobox.tradewinds.ocean.IslandSpec;
@@ -429,7 +430,7 @@ public class BoatListener implements Listener {
             addon.getBoatService().claim(player, hold);
             addon.getBoatService().giveBoatItem(player, hold);
             User.getInstance(player).sendMessage("tradewinds.boat.claimed", MATERIAL_PLACEHOLDER,
-                    pretty(Material.matchMaterial(hold.getMaterial())));
+                    pretty(player, Material.matchMaterial(hold.getMaterial())));
             return;
         }
         // Someone else's hull, and they have a boat of their own: ask. Pickup
@@ -457,13 +458,13 @@ public class BoatListener implements Listener {
      * @param demoted the boat this displaced, or null if it was already theirs
      */
     private void announceOwnPickup(Player player, BoatHold hold, BoatHold demoted) {
-        String material = pretty(Material.matchMaterial(hold.getMaterial()));
+        String material = pretty(player, Material.matchMaterial(hold.getMaterial()));
         if (demoted == null) {
             User.getInstance(player).sendMessage("tradewinds.boat.own-aboard", MATERIAL_PLACEHOLDER, material);
             return;
         }
         User.getInstance(player).sendMessage("tradewinds.boat.own-resumed", MATERIAL_PLACEHOLDER, material,
-                "[old]", pretty(Material.matchMaterial(demoted.getMaterial())));
+                "[old]", pretty(player, Material.matchMaterial(demoted.getMaterial())));
     }
 
     /**
@@ -512,7 +513,7 @@ public class BoatListener implements Listener {
             addon.getHoldManager().clearOldBoat(player.getUniqueId());
         }
         User.getInstance(player).sendMessage(old.isEmpty() ? "tradewinds.boat.merged-empty"
-                : "tradewinds.boat.merged-partial", MATERIAL_PLACEHOLDER, pretty(Material.matchMaterial(old.getMaterial())));
+                : "tradewinds.boat.merged-partial", MATERIAL_PLACEHOLDER, pretty(player, Material.matchMaterial(old.getMaterial())));
     }
 
     /**
@@ -547,7 +548,7 @@ public class BoatListener implements Listener {
         } else {
             onTransfer = null;
         }
-        addon.getTradeDialog().confirmBoatFound(player, pretty(taking), pretty(leaving), cargo, onTake,
+        addon.getTradeDialog().confirmBoatFound(player, pretty(player, taking), pretty(player, leaving), cargo, onTake,
                 onTransfer);
     }
 
@@ -667,7 +668,7 @@ public class BoatListener implements Listener {
                     BoatHold raft = addon.getBoatService().createFor(player, respawnBoat());
                     addon.getBoatService().giveBoatItem(player, raft);
                     User.getInstance(player).sendMessage("tradewinds.boat.adrift-raft", MATERIAL_PLACEHOLDER,
-                            pretty(respawnBoat()));
+                            pretty(player, respawnBoat()));
                 }
             }
         }, 20L);
@@ -708,7 +709,7 @@ public class BoatListener implements Listener {
         return world.equals(addon.getOverWorld()) || world.equals(addon.getNetherWorld());
     }
 
-    private static String pretty(Material material) {
-        return material == null ? "?" : world.bentobox.tradewinds.economy.PriceEngine.prettify(material.name());
+    private static String pretty(Player player, Material material) {
+        return ItemNames.label(User.getInstance(player), material);
     }
 }
