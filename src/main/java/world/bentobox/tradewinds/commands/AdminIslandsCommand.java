@@ -57,9 +57,9 @@ public class AdminIslandsCommand extends CompositeCommand {
                 user.sendMessage("tradewinds.commands.admin.islands.entry",
                         "[index]", String.valueOf(i + 1),
                         TextVariables.NAME, s.name(),
-                        "[type]", s.type().name(),
+                        "[type]", user.getTranslation(s.type().getLocaleKey()),
                         "[tech]", String.valueOf(s.techLevel()),
-                        "[band]", s.band().getDisplayName(),
+                        "[band]", user.getTranslation(s.band().getLocaleKey()),
                         "[x]", String.valueOf(s.centerX()),
                         "[z]", String.valueOf(s.centerZ()),
                         "[distance]", String.valueOf(dist));

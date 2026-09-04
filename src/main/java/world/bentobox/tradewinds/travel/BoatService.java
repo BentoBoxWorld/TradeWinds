@@ -247,7 +247,7 @@ public class BoatService {
         } else {
             String name = Bukkit.getOfflinePlayer(UUID.fromString(hold.getOwner())).getName();
             boat.customName(console.getTranslationAsComponent("tradewinds.boat.label-owned", "[name]",
-                    name == null ? "?" : name));
+                    name == null ? console.getTranslation("tradewinds.general.unknown") : name));
         }
         boat.setCustomNameVisible(true);
     }

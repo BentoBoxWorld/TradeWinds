@@ -48,6 +48,8 @@ public class TradeDialog {
     private static final String VAR_MATERIAL = "[material]";
     private static final String VAR_AMOUNT = "[amount]";
     private static final String KEY_SELL_QTY_TOOLTIP = "market.sell-qty-tooltip";
+    /** The locale's "nothing here" mark - a dash in English, but not everywhere. */
+    private static final String KEY_NONE = "tradewinds.general.none";
 
     private final TradeWinds addon;
 
@@ -130,7 +132,8 @@ public class TradeDialog {
      */
     private List<Component> buildMainBody(Player player, IslandSpec spec, boolean boatHere, boolean lowFuel) {
         List<Component> body = new ArrayList<>(List.of(
-                ui(player, "market.subtitle", "[type]", spec.type().name(), "[tech]",
+                ui(player, "market.subtitle", "[type]",
+                        User.getInstance(player).getTranslation(spec.type().getLocaleKey()), "[tech]",
                         String.valueOf(spec.techLevel()), "[band]",
                         User.getInstance(player).getTranslation(spec.band().getLocaleKey())),
                 statusLine(player)));
@@ -183,7 +186,7 @@ public class TradeDialog {
                     ui(player, "market.sell-pick", VAR_MATERIAL, itemLabel(player, offer.item()), VAR_AMOUNT,
                             String.valueOf(offer.amount()), VAR_PRICE, Money.format(addon, offer.unitPrice())),
                     ui(player, "market.sell-pick-tooltip", VAR_PRICE, Money.format(addon, offer.unitPrice()),
-                            "[depth]", depthOf(spec, offer)),
+                            "[depth]", depthOf(player, spec, offer)),
                     () -> openSellItem(player, spec, offer.item())));
         }
         List<Component> body = new ArrayList<>(List.of(ui(player, "market.selling-body", NO_VARS),
@@ -220,7 +223,7 @@ public class TradeDialog {
                         VAR_PRICE, each)))
                 .showTooltip(true).showDecorations(true).width(32).height(32).build());
         body.add(DialogBody.plainMessage(ui(player, "market.sell-item-depth", "[depth]",
-                depthOf(spec, offer))));
+                depthOf(player, spec, offer))));
         body.add(DialogBody.plainMessage(statusLine(player)));
 
         int batch = Math.min(MID_BATCH, offer.amount());
@@ -289,7 +292,8 @@ public class TradeDialog {
             ItemStack item = shelf.get(i);
             final int index = i;
             String price = addon.getMarketService().shelfPrice(item)
-                    .map(value -> Money.format(addon, value)).orElse("-");
+                    .map(value -> Money.format(addon, value))
+                    .orElse(User.getInstance(player).getTranslation(KEY_NONE));
             // Secondhand goods are notable by definition, so the icon and its real
             // tooltip are the whole point of the page
             body.add(DialogBody.item(item)
@@ -331,11 +335,11 @@ public class TradeDialog {
      *
      * @return the count, or "-" where the port is already saturated
      */
-    private String depthOf(IslandSpec spec, SellOffer offer) {
+    private String depthOf(Player player, IslandSpec spec, SellOffer offer) {
         int headroom = addon.getIslandDataManager().absorbableValue(spec,
                 addon.getMarketService().driftPool(offer.material()));
         if (offer.unitPrice() <= 0) {
-            return "-";
+            return User.getInstance(player).getTranslation(KEY_NONE);
         }
         return String.valueOf((int) Math.floor(headroom / offer.unitPrice()));
     }

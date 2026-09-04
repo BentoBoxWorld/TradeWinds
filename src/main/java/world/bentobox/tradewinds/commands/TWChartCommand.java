@@ -92,7 +92,7 @@ public class TWChartCommand extends CompositeCommand {
             boolean reachable = cost <= fuelAboard;
             user.sendMessage(reachable ? "tradewinds.chart.entry-reachable" : "tradewinds.chart.entry-far",
                     TextVariables.NAME, spec.name(),
-                    "[type]", spec.type().name(),
+                    "[type]", user.getTranslation(spec.type().getLocaleKey()),
                     "[tech]", String.valueOf(spec.techLevel()),
                     "[band]", user.getTranslation(spec.band().getLocaleKey()),
                     "[distance]", String.valueOf((int) Math.sqrt(spec.distanceSquared(x, z))),

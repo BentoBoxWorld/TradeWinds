@@ -12,6 +12,9 @@ tradewinds:
     worlds:
       overworld: "the open ocean"
       interstice: "the interstice"
+    # Shown where a value is missing: no price yet, no known name
+    none: "-"
+    unknown: "?"
   commands:
     help:
       description: "TradeWinds trading command"
@@ -220,6 +223,29 @@ tradewinds:
     frontier: "<yellow>Frontier</yellow>"
     lawless: "<red>Lawless</red>"
     anarchic: "<dark_red><bold>ANARCHIC</bold></dark_red>"
+  # The economic character of a port, wherever a line says what kind it is
+  type:
+    agricultural: "Agricultural"
+    forest: "Forest"
+    fishing: "Fishing"
+    mining: "Mining"
+    industrial: "Industrial"
+    luxury: "Luxury"
+    frozen: "Frozen"
+  # Kinds of goods, as named in the logbook (/tw prices). The command still
+  # takes the English word as its argument.
+  category:
+    crops: "Crops"
+    food: "Food"
+    fish: "Fish"
+    wood: "Wood"
+    stone: "Stone"
+    ores: "Ores"
+    metals: "Metals"
+    gems: "Gems"
+    luxury: "Luxury"
+    misc: "Misc"
+    salvage: "Salvage"
   fuel:
     low-actionbar: "[actionbar]<gold>LOW FUEL</gold><gray> - [fuel]/[needed] to warp out. Buy fuel at the market.</gray>"
     low-chat: "<gold>Low fuel at this port.</gold><gray> You have [fuel] units; the cheapest warp from here needs [needed]. Buy at least [number] more from the market before you leave, or you will be rowing.</gray>"

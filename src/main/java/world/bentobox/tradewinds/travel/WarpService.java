@@ -147,8 +147,9 @@ public class WarpService {
                 dest.affordable() ? "tradewinds.ui.warp.destination" : "tradewinds.ui.warp.destination-poor",
                 NAME_PLACEHOLDER, spec.name(), "[fuel]", String.valueOf(dest.fuelCost()));
         Component tooltip = user(player).getTranslationAsComponent("tradewinds.ui.warp.destination-tooltip",
-                "[type]", spec.type().name(), "[tech]", String.valueOf(spec.techLevel()),
-                "[band]", spec.band().getDisplayName(), "[distance]", distance);
+                "[type]", user(player).getTranslation(spec.type().getLocaleKey()),
+                "[tech]", String.valueOf(spec.techLevel()),
+                "[band]", user(player).getTranslation(spec.band().getLocaleKey()), "[distance]", distance);
         DialogAction action = DialogAction.customClick(
                 (response, audience) -> {
                     if (dest.affordable()) {

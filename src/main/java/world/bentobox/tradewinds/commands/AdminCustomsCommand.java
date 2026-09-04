@@ -68,7 +68,7 @@ public class AdminCustomsCommand extends CompositeCommand {
                 addon.getReputationService().standing(user.getUniqueId()),
                 addon.getSettings().getScanUpstandingFactor(), addon.getSettings().getScanOffenderFactor());
         user.sendMessage("tradewinds.commands.admin.customs.island", "[name]", island.name(), "[band]",
-                island.band().getDisplayName());
+                user.getTranslation(island.band().getLocaleKey()));
         user.sendMessage("tradewinds.commands.admin.customs.scan-chance", VALUE_PLACEHOLDER,
                 String.format("%.0f%%", effective * 100));
         user.sendMessage("tradewinds.commands.admin.customs.buys", VALUE_PLACEHOLDER,
