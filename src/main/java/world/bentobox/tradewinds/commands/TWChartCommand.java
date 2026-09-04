@@ -7,6 +7,7 @@ import world.bentobox.bentobox.api.commands.CompositeCommand;
 import world.bentobox.bentobox.api.localization.TextVariables;
 import world.bentobox.bentobox.api.user.User;
 import world.bentobox.tradewinds.economy.ItemNames;
+import world.bentobox.tradewinds.PortNames;
 import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.ocean.OceanEngine;
 import world.bentobox.tradewinds.ocean.IslandSpec;
@@ -92,7 +93,7 @@ public class TWChartCommand extends CompositeCommand {
             int cost = routeCost(addon, origin, spec, x, z);
             boolean reachable = cost <= fuelAboard;
             user.sendMessage(reachable ? "tradewinds.chart.entry-reachable" : "tradewinds.chart.entry-far",
-                    TextVariables.NAME, spec.name(),
+                    TextVariables.NAME, PortNames.display(addon, user, spec),
                     "[type]", user.getTranslation(spec.type().getLocaleKey()),
                     "[tech]", String.valueOf(spec.techLevel()),
                     "[band]", user.getTranslation(spec.band().getLocaleKey()),

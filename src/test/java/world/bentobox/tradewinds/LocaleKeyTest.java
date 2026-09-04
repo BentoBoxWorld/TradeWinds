@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Test;
 
 import world.bentobox.tradewinds.economy.TradeCategory;
 import world.bentobox.tradewinds.ocean.IslandType;
+import world.bentobox.tradewinds.ocean.NameGenerator;
 import world.bentobox.tradewinds.ocean.SecurityBand;
 
 /**
@@ -140,6 +141,20 @@ class LocaleKeyTest {
                 .map(name -> "tradewinds.materials." + name.toLowerCase(java.util.Locale.ENGLISH))
                 .filter(key -> !(locale.get(key) instanceof String)).sorted().toList();
         assertTrue(missing.isEmpty(), "Traded materials without a locale line: " + missing);
+    }
+
+    /**
+     * Every syllable the name generator can produce has a token line, so a
+     * translator sees the full table to transliterate.
+     */
+    @Test
+    void testEveryNameTokenHasALocaleLine() {
+        YamlConfiguration locale = YamlConfiguration.loadConfiguration(new InputStreamReader(
+                getClass().getClassLoader().getResourceAsStream("locales/en-US.yml")));
+        List<String> missing = NameGenerator.vocabulary().stream()
+                .map(token -> "tradewinds.name-token." + token.toLowerCase(java.util.Locale.ENGLISH))
+                .filter(key -> !(locale.get(key) instanceof String)).sorted().toList();
+        assertTrue(missing.isEmpty(), "Name tokens without a locale line: " + missing);
     }
 
     private void collect(Matcher matcher, Set<String> into, String prefix) {

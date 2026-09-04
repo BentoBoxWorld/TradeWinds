@@ -18,6 +18,7 @@ import io.papermc.paper.registry.data.dialog.type.DialogType;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickCallback;
 import world.bentobox.bentobox.api.user.User;
+import world.bentobox.tradewinds.PortNames;
 import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.ocean.IslandSpec;
 import world.bentobox.tradewinds.travel.CargoStore;
@@ -75,7 +76,7 @@ public class TradeDialog {
 
         List<ActionButton> buttons = buildMainButtons(player, spec, boatHere, lowFuel, fuelInTradeCatalog);
         List<Component> body = buildMainBody(player, spec, boatHere, lowFuel);
-        show(player, ui(player, "market.title", VAR_NAME, spec.name()), body, buttons, closeButton(player), 1);
+        show(player, ui(player, "market.title", VAR_NAME, portName(player, spec)), body, buttons, closeButton(player), 1);
     }
 
     /**
@@ -194,7 +195,7 @@ public class TradeDialog {
         if (offers.size() > MAX_ROWS) {
             body.add(ui(player, "market.selling-truncated", "[number]", String.valueOf(MAX_ROWS)));
         }
-        show(player, ui(player, "market.selling-title", VAR_NAME, spec.name()), body, buttons,
+        show(player, ui(player, "market.selling-title", VAR_NAME, portName(player, spec)), body, buttons,
                 backButton(player, spec), 2);
     }
 
@@ -244,7 +245,7 @@ public class TradeDialog {
                 ui(player, KEY_SELL_QTY_TOOLTIP, NO_VARS),
                 () -> sellThenReopen(player, spec, offer.item(), Integer.MAX_VALUE)));
 
-        showBodies(player, ui(player, "market.selling-title", VAR_NAME, spec.name()), body, buttons,
+        showBodies(player, ui(player, "market.selling-title", VAR_NAME, portName(player, spec)), body, buttons,
                 button(ui(player, "market.back", NO_VARS), ui(player, "market.back-tooltip", NO_VARS),
                         () -> openSell(player, spec)),
                 3);
@@ -307,7 +308,7 @@ public class TradeDialog {
                         openShelf(player, spec);
                     }));
         }
-        showBodies(player, ui(player, "market.shelf-title", VAR_NAME, spec.name()), body, buttons,
+        showBodies(player, ui(player, "market.shelf-title", VAR_NAME, portName(player, spec)), body, buttons,
                 backButton(player, spec), 2);
     }
 
@@ -375,7 +376,7 @@ public class TradeDialog {
             openMain(player, spec);
             return;
         }
-        show(player, ui(player, "market." + page + "-title", "[name]", spec.name()),
+        show(player, ui(player, "market." + page + "-title", "[name]", portName(player, spec)),
                 List.of(ui(player, "market." + page + "-body", NO_VARS), statusLine(player)), buttons,
                 backButton(player, spec), 3);
     }
@@ -417,7 +418,7 @@ public class TradeDialog {
             openMain(player, spec);
             return;
         }
-        show(player, ui(player, "market.outfitter-title", "[name]", spec.name()),
+        show(player, ui(player, "market.outfitter-title", "[name]", portName(player, spec)),
                 List.of(ui(player, "market.outfitter-body", NO_VARS), statusLine(player)), buttons,
                 backButton(player, spec), 2);
     }
@@ -489,7 +490,7 @@ public class TradeDialog {
                         openShipwright(player, spec);
                     }));
         }
-        show(player, ui(player, "market.shipwright-title", "[name]", spec.name()), body, buttons,
+        show(player, ui(player, "market.shipwright-title", "[name]", portName(player, spec)), body, buttons,
                 backButton(player, spec), 1);
     }
 
@@ -609,6 +610,10 @@ public class TradeDialog {
      * A translated UI component. All dialog text goes through the locale so it
      * can be translated - never build player-facing strings in code.
      */
+    private String portName(Player player, IslandSpec spec) {
+        return PortNames.display(addon, User.getInstance(player), spec);
+    }
+
     private Component ui(Player player, String key, String... variables) {
         return User.getInstance(player).getTranslationAsComponent("tradewinds.ui." + key, variables);
     }

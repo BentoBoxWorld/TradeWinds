@@ -24,6 +24,7 @@ import io.papermc.paper.registry.data.dialog.type.DialogType;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickCallback;
 import world.bentobox.bentobox.util.Util;
+import world.bentobox.tradewinds.PortNames;
 import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.api.events.TWWarpCompletedEvent;
 import world.bentobox.tradewinds.api.events.TWWarpEvent;
@@ -114,7 +115,7 @@ public class WarpService {
         List<ActionButton> buttons = destinations.stream().map(dest -> button(player, origin, dest)).toList();
         Dialog dialog = Dialog.create(factory -> factory.empty()
                 .base(DialogBase.builder(user(player).getTranslationAsComponent("tradewinds.ui.warp.title",
-                        NAME_PLACEHOLDER, origin.name()))
+                        NAME_PLACEHOLDER, PortNames.display(addon, user(player), origin)))
                         .body(List.of(DialogBody.plainMessage(
                                 user(player).getTranslationAsComponent("tradewinds.ui.warp.fuel", "[amount]",
                                         String.valueOf((int) fuelAboard)))))
@@ -131,7 +132,8 @@ public class WarpService {
             // A home has no port sheet - no type, no tech, no market
             Component homeLabel = user(player).getTranslationAsComponent(
                     dest.affordable() ? "tradewinds.ui.warp.home" : "tradewinds.ui.warp.home-poor",
-                    NAME_PLACEHOLDER, spec.name(), "[fuel]", String.valueOf(dest.fuelCost()));
+                    NAME_PLACEHOLDER, PortNames.display(addon, user(player), spec), "[fuel]",
+                    String.valueOf(dest.fuelCost()));
             Component homeTooltip = user(player).getTranslationAsComponent(
                     "tradewinds.ui.warp.home-tooltip", "[distance]", distance);
             return ActionButton.create(homeLabel, homeTooltip, 250, DialogAction.customClick(
@@ -145,7 +147,8 @@ public class WarpService {
         }
         Component label = user(player).getTranslationAsComponent(
                 dest.affordable() ? "tradewinds.ui.warp.destination" : "tradewinds.ui.warp.destination-poor",
-                NAME_PLACEHOLDER, spec.name(), "[fuel]", String.valueOf(dest.fuelCost()));
+                NAME_PLACEHOLDER, PortNames.display(addon, user(player), spec), "[fuel]",
+                String.valueOf(dest.fuelCost()));
         Component tooltip = user(player).getTranslationAsComponent("tradewinds.ui.warp.destination-tooltip",
                 "[type]", user(player).getTranslation(spec.type().getLocaleKey()),
                 "[tech]", String.valueOf(spec.techLevel()),
@@ -333,7 +336,8 @@ public class WarpService {
                     }
                 }, (addon.getSettings().getWarpBlindnessSeconds() + 1) * 20L);
             }
-            user(player).sendMessage("tradewinds.warp.arrived", NAME_PLACEHOLDER, to.name());
+            user(player).sendMessage("tradewinds.warp.arrived", NAME_PLACEHOLDER,
+                    PortNames.display(addon, user(player), to));
             Bukkit.getPluginManager().callEvent(new TWWarpCompletedEvent(player, bearingFrom, to, fuelCost));
         });
     }

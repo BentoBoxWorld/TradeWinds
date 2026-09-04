@@ -232,6 +232,44 @@ tradewinds:
     industrial: "Industrial"
     luxury: "Luxury"
     frozen: "Frozen"
+  # Port names are built from these syllables (2-4 per name: LA+VE is
+  # "Lave"). Write each one in your own script and every port name follows,
+  # the same for every player on this locale. Leave a line blank to keep that
+  # syllable as it is. The star chart map can only draw Latin letters, so it
+  # keeps the English names when a syllable is written in another script.
+  name-token:
+    le: "le"
+    xe: "xe"
+    ge: "ge"
+    za: "za"
+    ce: "ce"
+    bi: "bi"
+    so: "so"
+    us: "us"
+    es: "es"
+    ar: "ar"
+    ma: "ma"
+    in: "in"
+    di: "di"
+    re: "re"
+    a: "a"
+    er: "er"
+    at: "at"
+    en: "en"
+    be: "be"
+    ra: "ra"
+    la: "la"
+    ve: "ve"
+    ti: "ti"
+    ed: "ed"
+    or: "or"
+    qu: "qu"
+    an: "an"
+    te: "te"
+    is: "is"
+    ri: "ri"
+    # "on" must stay quoted: bare on/off/yes/no are YAML booleans, not words
+    "on": "on"
   # Kinds of goods, as named in the logbook (/tw prices). The command still
   # takes the English word as its argument.
   category:

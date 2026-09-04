@@ -12,6 +12,7 @@ import org.bukkit.scheduler.BukkitTask;
 import net.kyori.adventure.bossbar.BossBar;
 import net.kyori.adventure.text.Component;
 import world.bentobox.bentobox.api.user.User;
+import world.bentobox.tradewinds.PortNames;
 import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.ocean.DockPlan;
 import world.bentobox.tradewinds.ocean.OceanEngine;
@@ -179,7 +180,7 @@ public class NavigationBarTask implements Runnable {
     private void show(Player player, Reading reading) {
         User user = User.getInstance(player);
         Component name = user.getTranslationAsComponent("tradewinds.hud.navigation",
-                "[name]", reading.island().name(),
+                "[name]", PortNames.display(addon, user, reading.island()),
                 "[tech]", String.valueOf(reading.island().techLevel()),
                 "[band]", user.getTranslation(reading.island().band().getLocaleKey()),
                 "[standing]", addon.getPlayerStanding(user, player.getUniqueId()),

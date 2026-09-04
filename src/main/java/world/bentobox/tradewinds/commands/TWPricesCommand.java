@@ -8,6 +8,7 @@ import java.util.Map;
 import world.bentobox.bentobox.api.commands.CompositeCommand;
 import world.bentobox.bentobox.api.localization.TextVariables;
 import world.bentobox.bentobox.api.user.User;
+import world.bentobox.tradewinds.PortNames;
 import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.economy.Money;
 import world.bentobox.tradewinds.economy.TradeCategory;
@@ -122,10 +123,12 @@ public class TWPricesCommand extends CompositeCommand {
                 if (price == null || price <= 0) {
                     continue;
                 }
-                user.sendMessage("tradewinds.commands.prices.row-category", "[name]", spec.name(), "[price]",
+                user.sendMessage("tradewinds.commands.prices.row-category", "[name]",
+                        PortNames.display(addon, user, spec), "[price]",
                         Money.format(addon, price), "[age]", age);
             } else {
-                user.sendMessage("tradewinds.commands.prices.row", "[name]", spec.name(), VALUE_PLACEHOLDER,
+                user.sendMessage("tradewinds.commands.prices.row", "[name]", PortNames.display(addon, user, spec),
+                        VALUE_PLACEHOLDER,
                         best(user, addon, prices), "[age]", age);
             }
         }

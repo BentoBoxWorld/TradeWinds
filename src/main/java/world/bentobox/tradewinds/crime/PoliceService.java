@@ -21,6 +21,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.scheduler.BukkitTask;
 
 import world.bentobox.bentobox.api.user.User;
+import world.bentobox.tradewinds.PortNames;
 import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.ocean.IslandSpec;
 
@@ -122,7 +123,8 @@ public class PoliceService implements Listener {
                 return; // This band has nobody to send - lawless water
             }
             responses.put(player.getUniqueId(), new Response(island, units));
-            User.getInstance(player).sendMessage("tradewinds.police.responding", "[name]", island.name());
+            User user = User.getInstance(player);
+            user.sendMessage("tradewinds.police.responding", "[name]", PortNames.display(addon, user, island));
             return;
         }
         // Mobs forget, and a target seated in a boat is forgotten fast: keep

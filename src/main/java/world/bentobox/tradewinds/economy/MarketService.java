@@ -10,6 +10,7 @@ import org.bukkit.inventory.ItemStack;
 
 import world.bentobox.bentobox.api.user.User;
 import world.bentobox.bentobox.hooks.VaultHook;
+import world.bentobox.tradewinds.PortNames;
 import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.api.events.TWTradeEvent;
 import world.bentobox.tradewinds.ocean.IslandSpec;
@@ -595,7 +596,7 @@ public class MarketService {
         if (!handlesValue(spec, item)) {
             User user = User.getInstance(player);
             user.sendMessage("tradewinds.trade.too-advanced", VAR_MATERIAL, ItemNames.label(user, material),
-                    "[name]", spec.name());
+                    "[name]", PortNames.display(addon, user, spec));
             thud(player);
             return 0;
         }

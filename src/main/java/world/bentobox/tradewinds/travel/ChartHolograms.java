@@ -17,6 +17,7 @@ import org.bukkit.entity.TextDisplay;
 
 import net.kyori.adventure.text.Component;
 import world.bentobox.bentobox.api.user.User;
+import world.bentobox.tradewinds.PortNames;
 import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.ocean.DockPlan;
 import world.bentobox.tradewinds.ocean.IslandSpec;
@@ -300,10 +301,11 @@ public class ChartHolograms {
         IslandSpec spec = marker.island();
         if (marker.dock()) {
             return User.getInstance(player).getTranslationAsComponent("tradewinds.hologram.dock",
-                    "[name]", spec.name(), PLACEHOLDER_DISTANCE, String.valueOf(marker.distance()));
+                    "[name]", PortNames.display(addon, User.getInstance(player), spec), PLACEHOLDER_DISTANCE,
+                    String.valueOf(marker.distance()));
         }
         return User.getInstance(player).getTranslationAsComponent("tradewinds.hologram.island",
-                "[name]", spec.name(),
+                "[name]", PortNames.display(addon, User.getInstance(player), spec),
                 "[type]", User.getInstance(player).getTranslation(spec.type().getLocaleKey()),
                 "[tech]", String.valueOf(spec.techLevel()),
                 "[band]", User.getInstance(player).getTranslation(spec.band().getLocaleKey()),

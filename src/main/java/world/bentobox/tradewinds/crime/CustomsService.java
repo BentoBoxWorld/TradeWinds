@@ -18,6 +18,7 @@ import org.bukkit.scheduler.BukkitTask;
 import world.bentobox.bentobox.api.localization.TextVariables;
 import world.bentobox.bentobox.api.user.User;
 import world.bentobox.bentobox.hooks.VaultHook;
+import world.bentobox.tradewinds.PortNames;
 import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.ocean.IslandSpec;
 import world.bentobox.tradewinds.ocean.SecurityBand;
@@ -218,9 +219,10 @@ public class CustomsService {
             seize(player, island);
             return;
         }
+        String port = PortNames.display(addon, user, island);
         user.sendMessage(flagged ? "tradewinds.customs.flagged" : "tradewinds.customs.detected",
-                NAME_VAR, island.name(), TextVariables.NUMBER, String.valueOf(aboard));
-        user.sendMessage("tradewinds.customs.detected-chat", NAME_VAR, island.name(), TextVariables.NUMBER,
+                NAME_VAR, port, TextVariables.NUMBER, String.valueOf(aboard));
+        user.sendMessage("tradewinds.customs.detected-chat", NAME_VAR, port, TextVariables.NUMBER,
                 String.valueOf(aboard));
         chases.put(player.getUniqueId(), new Chase(island, System.currentTimeMillis(), units));
         addon.log("Customs at " + island.name() + " detected " + aboard + " contraband on " + player.getName()
@@ -234,8 +236,9 @@ public class CustomsService {
     private void seize(Player player, IslandSpec island) {
         int seized = confiscate(player);
         double fine = charge(player, seized);
-        User.getInstance(player).sendMessage("tradewinds.customs.seized", TextVariables.NUMBER,
-                String.valueOf(seized), "[amount]", format(fine), NAME_VAR, island.name());
+        User user = User.getInstance(player);
+        user.sendMessage("tradewinds.customs.seized", TextVariables.NUMBER,
+                String.valueOf(seized), "[amount]", format(fine), NAME_VAR, PortNames.display(addon, user, island));
         addon.getReputationService().recordCrime(player, Crime.SMUGGLING);
     }
 
@@ -294,8 +297,9 @@ public class CustomsService {
     void caught(Player player, Chase chase) {
         int seized = confiscate(player);
         double fine = charge(player, seized);
-        User.getInstance(player).sendMessage("tradewinds.customs.caught", TextVariables.NUMBER,
-                String.valueOf(seized), "[amount]", format(fine), NAME_VAR, chase.island().name());
+        User user = User.getInstance(player);
+        user.sendMessage("tradewinds.customs.caught", TextVariables.NUMBER, String.valueOf(seized), "[amount]",
+                format(fine), NAME_VAR, PortNames.display(addon, user, chase.island()));
         addon.getReputationService().recordCrime(player, Crime.SMUGGLING);
     }
 
@@ -353,7 +357,8 @@ public class CustomsService {
      * of time. No flee flag: nobody ran, so the port has nothing to remember.
      */
     private void calledOff(Player player, Chase chase) {
-        User.getInstance(player).sendMessage("tradewinds.customs.called-off", NAME_VAR, chase.island().name());
+        User user = User.getInstance(player);
+        user.sendMessage("tradewinds.customs.called-off", NAME_VAR, PortNames.display(addon, user, chase.island()));
     }
 
     /**
@@ -363,7 +368,8 @@ public class CustomsService {
     private void escaped(Player player, Chase chase) {
         String key = key(player, chase.island());
         fleeFlags.put(key, System.currentTimeMillis() + addon.getSettings().getFleeFlagMinutes() * 60_000L);
-        User.getInstance(player).sendMessage("tradewinds.customs.escaped", NAME_VAR, chase.island().name());
+        User user = User.getInstance(player);
+        user.sendMessage("tradewinds.customs.escaped", NAME_VAR, PortNames.display(addon, user, chase.island()));
     }
 
     private void end(UUID id, Chase chase) {
