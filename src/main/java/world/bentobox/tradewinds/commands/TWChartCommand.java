@@ -6,6 +6,7 @@ import java.util.List;
 import world.bentobox.bentobox.api.commands.CompositeCommand;
 import world.bentobox.bentobox.api.localization.TextVariables;
 import world.bentobox.bentobox.api.user.User;
+import world.bentobox.tradewinds.economy.ItemNames;
 import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.ocean.OceanEngine;
 import world.bentobox.tradewinds.ocean.IslandSpec;
@@ -123,7 +124,7 @@ public class TWChartCommand extends CompositeCommand {
             return;
         }
         var hold = boatRecord.get();
-        String material = world.bentobox.tradewinds.economy.PriceEngine.prettify(hold.getMaterial());
+        String material = ItemNames.label(user, org.bukkit.Material.matchMaterial(hold.getMaterial()));
         if (hold.getWorld() == null || hold.getWorld().isEmpty()) {
             user.sendMessage(key + "-lost", MATERIAL_PLACEHOLDER, material);
             return;

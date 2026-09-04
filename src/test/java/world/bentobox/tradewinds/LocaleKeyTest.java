@@ -122,6 +122,26 @@ class LocaleKeyTest {
         assertTrue(missing.isEmpty(), "Enum locale keys missing from en-US.yml: " + missing);
     }
 
+    /**
+     * Every good, fuel and hull the ocean trades has a materials line, so a
+     * translator who copies en-US sees the whole list. A blank line is the
+     * normal state (the client translates), so only presence is checked.
+     */
+    @Test
+    void testEveryTradedMaterialHasALocaleLine() {
+        YamlConfiguration locale = YamlConfiguration.loadConfiguration(new InputStreamReader(
+                getClass().getClassLoader().getResourceAsStream("locales/en-US.yml")));
+        Settings settings = new Settings();
+        Set<String> materials = new TreeSet<>();
+        materials.addAll(settings.getBasePrices().keySet());
+        materials.addAll(settings.getFuelValues().keySet());
+        materials.addAll(settings.getBoatRanks().keySet());
+        List<String> missing = materials.stream()
+                .map(name -> "tradewinds.materials." + name.toLowerCase(java.util.Locale.ENGLISH))
+                .filter(key -> !(locale.get(key) instanceof String)).sorted().toList();
+        assertTrue(missing.isEmpty(), "Traded materials without a locale line: " + missing);
+    }
+
     private void collect(Matcher matcher, Set<String> into, String prefix) {
         while (matcher.find()) {
             into.add(prefix + matcher.group(1));

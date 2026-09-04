@@ -27,6 +27,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import world.bentobox.bentobox.api.user.User;
+import world.bentobox.tradewinds.economy.ItemNames;
 import world.bentobox.tradewinds.TradeWinds;
 
 /**
@@ -525,7 +526,7 @@ public class HoldGui implements Listener {
             selected.put(id, new Selection(shown, shown.getAmount(), -1));
             User user = User.getInstance(player);
             user.sendMessage("tradewinds.hold.selected", PLACEHOLDER_AMOUNT, String.valueOf(shown.getAmount()),
-                    PLACEHOLDER_MATERIAL, world.bentobox.tradewinds.economy.PriceEngine.prettify(shown.getType().name()));
+                    PLACEHOLDER_MATERIAL, ItemNames.label(user, shown.getType()));
             return;
         }
         if (click.isShiftClick()) {
@@ -577,7 +578,7 @@ public class HoldGui implements Listener {
             return;
         }
         user.sendMessage("tradewinds.hold.withdrawn", PLACEHOLDER_AMOUNT, String.valueOf(taken), PLACEHOLDER_MATERIAL,
-                world.bentobox.tradewinds.economy.PriceEngine.prettify(holding.item().getType().name()));
+                ItemNames.label(user, holding.item().getType()));
         chime(player);
         clearHeld(player);
     }
@@ -653,7 +654,7 @@ public class HoldGui implements Listener {
             thud(player);
         } else {
             user.sendMessage("tradewinds.hold.withdrawn", PLACEHOLDER_AMOUNT, String.valueOf(taken), PLACEHOLDER_MATERIAL,
-                    world.bentobox.tradewinds.economy.PriceEngine.prettify(shown.getType().name()));
+                    ItemNames.label(user, shown.getType()));
             chime(player);
         }
     }
@@ -663,7 +664,7 @@ public class HoldGui implements Listener {
         User user = User.getInstance(player);
         if (moved > 0) {
             user.sendMessage("tradewinds.hold.moved-to-fuel", PLACEHOLDER_AMOUNT, String.valueOf(moved),
-                    PLACEHOLDER_MATERIAL, world.bentobox.tradewinds.economy.PriceEngine.prettify(shown.getType().name()));
+                    PLACEHOLDER_MATERIAL, ItemNames.label(user, shown.getType()));
             chime(player);
         } else {
             user.sendMessage(MESSAGE_FUEL_FULL);
@@ -683,7 +684,7 @@ public class HoldGui implements Listener {
             int destroyed = addon.getHoldService().removeFromExpander(id, index, selection.item(),
                     selection.amount());
             user.sendMessage("tradewinds.hold.destroyed", PLACEHOLDER_AMOUNT, String.valueOf(destroyed), PLACEHOLDER_MATERIAL,
-                    world.bentobox.tradewinds.economy.PriceEngine.prettify(selection.item().getType().name()));
+                    ItemNames.label(user, selection.item().getType()));
             player.playSound(player.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, 0.4f, 1.4f);
             return;
         }
@@ -698,7 +699,7 @@ public class HoldGui implements Listener {
         }
         nestedSelected.put(id, new Selection(shown, shown.getAmount(), -1));
         user.sendMessage("tradewinds.hold.selected", PLACEHOLDER_AMOUNT, String.valueOf(shown.getAmount()),
-                PLACEHOLDER_MATERIAL, world.bentobox.tradewinds.economy.PriceEngine.prettify(shown.getType().name()));
+                PLACEHOLDER_MATERIAL, ItemNames.label(user, shown.getType()));
     }
 
     private void destroySelection(Player player, Selection selection) {
@@ -719,7 +720,7 @@ public class HoldGui implements Listener {
         }
         int destroyed = addon.getHoldService().remove(player, selection.item(), selection.amount());
         user.sendMessage("tradewinds.hold.destroyed", PLACEHOLDER_AMOUNT, String.valueOf(destroyed), PLACEHOLDER_MATERIAL,
-                world.bentobox.tradewinds.economy.PriceEngine.prettify(selection.item().getType().name()));
+                ItemNames.label(user, selection.item().getType()));
         player.playSound(player.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, 0.4f, 1.4f);
     }
 

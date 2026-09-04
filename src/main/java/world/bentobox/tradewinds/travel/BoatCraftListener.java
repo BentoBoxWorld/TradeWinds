@@ -9,6 +9,7 @@ import org.bukkit.event.inventory.CraftItemEvent;
 import org.bukkit.inventory.ItemStack;
 
 import world.bentobox.bentobox.api.user.User;
+import world.bentobox.tradewinds.economy.ItemNames;
 import world.bentobox.tradewinds.TradeWinds;
 
 /**
@@ -92,8 +93,8 @@ public class BoatCraftListener implements Listener {
                     () -> stampCrafted(player, result.getType(), hold), 5L);
         }
         removeOldBoat(player, old, hold);
-        User.getInstance(player).sendMessage("tradewinds.trade.boat-crafted", "[material]",
-                world.bentobox.tradewinds.economy.PriceEngine.prettify(result.getType().name()),
+        User user = User.getInstance(player);
+        user.sendMessage("tradewinds.trade.boat-crafted", "[material]", ItemNames.label(user, result.getType()),
                 "[slots]", String.valueOf(newSlots));
     }
 

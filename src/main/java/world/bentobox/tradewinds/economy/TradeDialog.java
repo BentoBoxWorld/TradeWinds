@@ -257,11 +257,11 @@ public class TradeDialog {
      * beside it is for.
      */
     private String itemLabel(Player player, ItemStack item) {
-        String material = MarketService.pretty(item.getType());
+        String material = ItemNames.label(User.getInstance(player), item.getType());
         var meta = item.getItemMeta();
         if (meta != null && meta.hasDisplayName()) {
-            return net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText()
-                    .serialize(meta.displayName());
+            return ItemNames.escape(net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
+                    .plainText().serialize(meta.displayName()));
         }
         if (!item.getEnchantments().isEmpty()) {
             return uiText(player, "market.item-enchanted", VAR_MATERIAL, material);
@@ -301,7 +301,7 @@ public class TradeDialog {
                             itemLabel(player, item), VAR_PRICE, price)))
                     .showTooltip(true).showDecorations(true).build());
             buttons.add(button(ui(player, "market.shelf-buy", VAR_MATERIAL, itemLabel(player, item),
-                    VAR_PRICE, price), ui(player, "market.shelf-buy-tooltip", "[details]", details(item)),
+                    VAR_PRICE, price), ui(player, "market.shelf-buy-tooltip", "[details]", details(player, item)),
                     () -> {
                         addon.getMarketService().buyFromShelf(player, spec, index);
                         openShelf(player, spec);
@@ -314,18 +314,18 @@ public class TradeDialog {
     /**
      * What makes a shelf item worth looking at - its name, or its enchantments.
      */
-    private String details(ItemStack item) {
+    private String details(Player player, ItemStack item) {
         var meta = item.getItemMeta();
         if (meta != null && meta.hasDisplayName()) {
-            return net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText()
-                    .serialize(meta.displayName());
+            return ItemNames.escape(net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
+                    .plainText().serialize(meta.displayName()));
         }
         if (!item.getEnchantments().isEmpty()) {
             return item.getEnchantments().entrySet().stream()
-                    .map(e -> PriceEngine.prettify(e.getKey().getKey().getKey()) + " " + e.getValue())
+                    .map(e -> ItemNames.label(e.getKey(), e.getValue()))
                     .reduce((a, b) -> a + ", " + b).orElse("");
         }
-        return MarketService.pretty(item.getType());
+        return ItemNames.label(User.getInstance(player), item.getType());
     }
 
     /**
@@ -357,7 +357,7 @@ public class TradeDialog {
         for (Material material : catalog) {
             Optional<Double> price = addon.getMarketService().playerBuysAt(spec, material);
             price.ifPresent(unit -> {
-                String name = MarketService.pretty(material);
+                String name = ItemNames.label(User.getInstance(player), material);
                 Component each = ui(player, "market.buy-tooltip-each", VAR_PRICE, Money.format(addon, unit));
                 buttons.add(button(ui(player, "market.buy-one", VAR_MATERIAL, name, VAR_PRICE,
                         Money.format(addon, unit)), each,
@@ -395,7 +395,7 @@ public class TradeDialog {
         List<ActionButton> buttons = new ArrayList<>();
         for (Material material : addon.getMarketService().outfitterCatalog(spec)) {
             addon.getMarketService().playerBuysAt(spec, material).ifPresent(unit -> {
-                String name = MarketService.pretty(material);
+                String name = ItemNames.label(User.getInstance(player), material);
                 Component each = ui(player, "market.outfit-tooltip", VAR_PRICE, Money.format(addon, unit));
                 buttons.add(button(ui(player, "market.outfit-one", VAR_MATERIAL, name, VAR_PRICE,
                         Money.format(addon, unit)), each,
@@ -440,7 +440,7 @@ public class TradeDialog {
                 .shopListing(current, spec.techLevel())) {
             double price = addon.getBoatRanks().price(rank);
             buttons.add(button(
-                    ui(player, "market.hull", VAR_MATERIAL, MarketService.pretty(rank.material()), VAR_PRICE,
+                    ui(player, "market.hull", VAR_MATERIAL, ItemNames.label(User.getInstance(player), rank.material()), VAR_PRICE,
                             Money.format(addon, price)),
                     ui(player, "market.hull-tooltip", "[slots]", String.valueOf(rank.slots())),
                     () -> {
@@ -448,8 +448,8 @@ public class TradeDialog {
                         // lies - that gets the same confirmation a capture
                         // does, because it is the same decision
                         if (addon.getMarketService().wouldReplaceCurrent(player, spec, rank)) {
-                            confirmBoatCapture(player, MarketService.pretty(rank.material()),
-                                    MarketService.pretty(current), () -> {
+                            confirmBoatCapture(player, ItemNames.label(User.getInstance(player), rank.material()),
+                                    ItemNames.label(User.getInstance(player), current), () -> {
                                         addon.getMarketService().buyBoat(player, spec, rank);
                                         openShipwright(player, spec);
                                     });
