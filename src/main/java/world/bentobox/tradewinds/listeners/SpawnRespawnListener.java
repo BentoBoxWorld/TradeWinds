@@ -9,6 +9,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerRespawnEvent;
 
 import world.bentobox.bentobox.api.user.User;
+import world.bentobox.tradewinds.economy.ItemNames;
 import world.bentobox.tradewinds.TradeWinds;
 
 /**
@@ -132,9 +133,9 @@ public class SpawnRespawnListener implements Listener {
         boolean replacing = addon.getHoldService().active(player.getUniqueId()).isPresent();
         var hold = addon.getBoatService().createFor(player, boat);
         addon.getBoatService().giveBoatItem(player, hold);
-        User.getInstance(player).sendMessage(
-                replacing ? "tradewinds.boat.respawn-given-replacing" : "tradewinds.boat.respawn-given",
-                "[material]", world.bentobox.tradewinds.economy.PriceEngine.prettify(boat.name()));
+        User user = User.getInstance(player);
+        user.sendMessage(replacing ? "tradewinds.boat.respawn-given-replacing" : "tradewinds.boat.respawn-given",
+                "[material]", ItemNames.label(user, boat));
     }
 
     /**

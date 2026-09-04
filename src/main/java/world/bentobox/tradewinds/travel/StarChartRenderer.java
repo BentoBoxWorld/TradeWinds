@@ -14,6 +14,8 @@ import org.bukkit.map.MapView;
 import org.bukkit.map.MapPalette;
 import org.bukkit.map.MinecraftFont;
 
+import world.bentobox.tradewinds.PortNames;
+import world.bentobox.tradewinds.ocean.IslandSpec;
 import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.ocean.OceanEngine;
 import world.bentobox.tradewinds.ocean.SecurityBand;
@@ -128,13 +130,14 @@ public class StarChartRenderer extends MapRenderer {
             String[] cell = key.split(",");
             engine.islandInCell(Integer.parseInt(cell[0]), Integer.parseInt(cell[1])).ifPresent(spec -> {
                 int[] pixel = toPixel(spec.centerX() - (long) px, spec.centerZ() - (long) pz, bpp);
+                String name = drawableName(player, spec);
                 if (pixel[2] == 1) {
                     canvas.setPixelColor(pixel[0], pixel[1], EDGE);
-                    drawName(canvas, pixel[0], pixel[1], spec.name());
+                    drawName(canvas, pixel[0], pixel[1], name);
                 } else {
                     Color color = bandColor(spec.band());
                     fillDot(canvas, pixel[0], pixel[1], islandPixelRadius, color);
-                    drawName(canvas, pixel[0], pixel[1], spec.name());
+                    drawName(canvas, pixel[0], pixel[1], name);
                 }
             });
         }
@@ -203,6 +206,21 @@ public class StarChartRenderer extends MapRenderer {
                 }
             }
         }
+    }
+
+    /**
+     * The port's name in the player's locale if the map font can draw it,
+     * else the canonical Latin name. {@link MinecraftFont} is a bitmap of the
+     * ASCII range and {@code drawText} throws on anything else, so a Chinese
+     * locale gets Chinese names everywhere but the chart.
+     */
+    public static String drawableName(IslandSpec spec, String localized) {
+        return MinecraftFont.Font.isValid(localized) ? localized : spec.name();
+    }
+
+    private String drawableName(Player player, IslandSpec spec) {
+        return drawableName(spec,
+                PortNames.display(addon, world.bentobox.bentobox.api.user.User.getInstance(player), spec));
     }
 
     /**

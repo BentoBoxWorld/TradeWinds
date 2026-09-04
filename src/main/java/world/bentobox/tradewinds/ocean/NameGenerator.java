@@ -1,10 +1,20 @@
 package world.bentobox.tradewinds.ocean;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+
 /**
  * Elite-BBC-style procedural island name generator: names are built from 2-4
  * two-letter tokens drawn from the classic digraph table, so they come out
  * pronounceable and distinct ("Lave", "Zaonce", "Tibedied"...). Pure function
  * of the input hash.
+ * <p>
+ * The token sequence is exposed as well as the joined name because a locale
+ * may transliterate each token into its own script (GitHub #7): "LA"+"VE"
+ * is "Lave" in English and whatever the Chinese locale says those syllables
+ * are. The joined English name is the island's IDENTITY - island registry,
+ * resident tags, logs - and must never change for a given hash.
  *
  * @author tastybento
  */
@@ -29,29 +39,62 @@ public final class NameGenerator {
      * @return a capitalized, pronounceable island name (2-8 letters)
      */
     public static String name(long hash) {
+        return join(tokens(hash));
+    }
+
+    /**
+     * The tokens a name is built from, in order, skips removed: upper-case
+     * digraphs from the table, plus the single letter "A" (the table's "A."
+     * slot). {@link #name(long)} is exactly the join of these.
+     *
+     * @param hash seed for this name
+     * @return the tokens, never fewer than needed for a 3-letter name
+     */
+    public static List<String> tokens(long hash) {
         long h = hash;
-        StringBuilder sb = new StringBuilder();
+        List<String> tokens = new ArrayList<>();
+        int letters = 0;
         // 3 or 4 token slots
-        int tokens = 3 + (int) (Hashing.mix(h) & 1);
-        for (int i = 0; i < tokens; i++) {
+        int slots = 3 + (int) (Hashing.mix(h) & 1);
+        for (int i = 0; i < slots; i++) {
             h = Hashing.mix(h + i + 1);
-            String pair = PAIRS[Math.floorMod(h, PAIRS.length)];
-            for (char c : pair.toCharArray()) {
-                if (c != '.') {
-                    sb.append(c);
-                }
-            }
+            letters += add(tokens, PAIRS[Math.floorMod(h, PAIRS.length)]);
         }
-        while (sb.length() < 3) {
+        while (letters < 3) {
             // Degenerate skip-heavy roll: keep appending until pronounceable
             h = Hashing.mix(h);
-            for (char c : PAIRS[1 + Math.floorMod(h, PAIRS.length - 1)].toCharArray()) {
-                if (c != '.') {
-                    sb.append(c);
-                }
-            }
+            letters += add(tokens, PAIRS[1 + Math.floorMod(h, PAIRS.length - 1)]);
         }
-        String s = sb.toString().toLowerCase();
+        return tokens;
+    }
+
+    /**
+     * Every token the table can produce, for a locale to transliterate: the
+     * 30 digraphs and the lone "A".
+     */
+    public static List<String> vocabulary() {
+        List<String> all = new ArrayList<>();
+        for (String pair : PAIRS) {
+            add(all, pair);
+        }
+        return all;
+    }
+
+    /**
+     * The canonical English rendering of a token sequence: lower case, first
+     * letter capitalized.
+     */
+    public static String join(List<String> tokens) {
+        String s = String.join("", tokens).toLowerCase(Locale.ENGLISH);
         return Character.toUpperCase(s.charAt(0)) + s.substring(1);
+    }
+
+    /** Add a table entry minus its skip markers; returns the letters added. */
+    private static int add(List<String> into, String pair) {
+        String token = pair.replace(".", "");
+        if (!token.isEmpty()) {
+            into.add(token);
+        }
+        return token.length();
     }
 }

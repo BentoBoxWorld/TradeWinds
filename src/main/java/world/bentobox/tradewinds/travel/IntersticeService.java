@@ -29,6 +29,7 @@ import io.papermc.paper.registry.data.dialog.type.DialogType;
 import net.kyori.adventure.text.event.ClickCallback;
 import world.bentobox.bentobox.api.user.User;
 import world.bentobox.bentobox.util.Util;
+import world.bentobox.tradewinds.PortNames;
 import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.api.events.TWWarpFailedEvent;
 import world.bentobox.tradewinds.ocean.IslandSpec;
@@ -411,7 +412,8 @@ public class IntersticeService {
         }
         User user = User.getInstance(player);
         ActionButton engage = ActionButton.create(
-                user.getTranslationAsComponent("tradewinds.ui.interstice.re-engage", "[name]", target.name()),
+                user.getTranslationAsComponent("tradewinds.ui.interstice.re-engage", "[name]",
+                        PortNames.display(addon, user, target)),
                 user.getTranslationAsComponent("tradewinds.ui.interstice.re-engage-tooltip", NO_VARS), 320,
                 DialogAction.customClick((response, audience) -> reEngage(player, target),
                         ClickCallback.Options.builder().build()));

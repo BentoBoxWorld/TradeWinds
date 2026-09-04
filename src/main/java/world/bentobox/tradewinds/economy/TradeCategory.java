@@ -29,6 +29,16 @@ public enum TradeCategory {
     SALVAGE;
 
     /**
+     * The locale key for this category's name. The enum name stays the
+     * command argument and the logbook key; this is what the player reads.
+     *
+     * @return locale key
+     */
+    public String getLocaleKey() {
+        return "tradewinds.category." + name().toLowerCase(Locale.ENGLISH);
+    }
+
+    /**
      * Raw goods - what low-tech islands live on. High-tech ports pay over the
      * odds for these (they feed the works), low-tech ports sell them cheap.
      */

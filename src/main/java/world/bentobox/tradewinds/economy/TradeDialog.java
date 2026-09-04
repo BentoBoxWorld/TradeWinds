@@ -18,6 +18,7 @@ import io.papermc.paper.registry.data.dialog.type.DialogType;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickCallback;
 import world.bentobox.bentobox.api.user.User;
+import world.bentobox.tradewinds.PortNames;
 import world.bentobox.tradewinds.TradeWinds;
 import world.bentobox.tradewinds.ocean.IslandSpec;
 import world.bentobox.tradewinds.travel.CargoStore;
@@ -48,6 +49,8 @@ public class TradeDialog {
     private static final String VAR_MATERIAL = "[material]";
     private static final String VAR_AMOUNT = "[amount]";
     private static final String KEY_SELL_QTY_TOOLTIP = "market.sell-qty-tooltip";
+    /** The locale's "nothing here" mark - a dash in English, but not everywhere. */
+    private static final String KEY_NONE = "tradewinds.general.none";
 
     private final TradeWinds addon;
 
@@ -73,7 +76,7 @@ public class TradeDialog {
 
         List<ActionButton> buttons = buildMainButtons(player, spec, boatHere, lowFuel, fuelInTradeCatalog);
         List<Component> body = buildMainBody(player, spec, boatHere, lowFuel);
-        show(player, ui(player, "market.title", VAR_NAME, spec.name()), body, buttons, closeButton(player), 1);
+        show(player, ui(player, "market.title", VAR_NAME, portName(player, spec)), body, buttons, closeButton(player), 1);
     }
 
     /**
@@ -130,7 +133,8 @@ public class TradeDialog {
      */
     private List<Component> buildMainBody(Player player, IslandSpec spec, boolean boatHere, boolean lowFuel) {
         List<Component> body = new ArrayList<>(List.of(
-                ui(player, "market.subtitle", "[type]", spec.type().name(), "[tech]",
+                ui(player, "market.subtitle", "[type]",
+                        User.getInstance(player).getTranslation(spec.type().getLocaleKey()), "[tech]",
                         String.valueOf(spec.techLevel()), "[band]",
                         User.getInstance(player).getTranslation(spec.band().getLocaleKey())),
                 statusLine(player)));
@@ -183,7 +187,7 @@ public class TradeDialog {
                     ui(player, "market.sell-pick", VAR_MATERIAL, itemLabel(player, offer.item()), VAR_AMOUNT,
                             String.valueOf(offer.amount()), VAR_PRICE, Money.format(addon, offer.unitPrice())),
                     ui(player, "market.sell-pick-tooltip", VAR_PRICE, Money.format(addon, offer.unitPrice()),
-                            "[depth]", depthOf(spec, offer)),
+                            "[depth]", depthOf(player, spec, offer)),
                     () -> openSellItem(player, spec, offer.item())));
         }
         List<Component> body = new ArrayList<>(List.of(ui(player, "market.selling-body", NO_VARS),
@@ -191,7 +195,7 @@ public class TradeDialog {
         if (offers.size() > MAX_ROWS) {
             body.add(ui(player, "market.selling-truncated", "[number]", String.valueOf(MAX_ROWS)));
         }
-        show(player, ui(player, "market.selling-title", VAR_NAME, spec.name()), body, buttons,
+        show(player, ui(player, "market.selling-title", VAR_NAME, portName(player, spec)), body, buttons,
                 backButton(player, spec), 2);
     }
 
@@ -220,7 +224,7 @@ public class TradeDialog {
                         VAR_PRICE, each)))
                 .showTooltip(true).showDecorations(true).width(32).height(32).build());
         body.add(DialogBody.plainMessage(ui(player, "market.sell-item-depth", "[depth]",
-                depthOf(spec, offer))));
+                depthOf(player, spec, offer))));
         body.add(DialogBody.plainMessage(statusLine(player)));
 
         int batch = Math.min(MID_BATCH, offer.amount());
@@ -241,7 +245,7 @@ public class TradeDialog {
                 ui(player, KEY_SELL_QTY_TOOLTIP, NO_VARS),
                 () -> sellThenReopen(player, spec, offer.item(), Integer.MAX_VALUE)));
 
-        showBodies(player, ui(player, "market.selling-title", VAR_NAME, spec.name()), body, buttons,
+        showBodies(player, ui(player, "market.selling-title", VAR_NAME, portName(player, spec)), body, buttons,
                 button(ui(player, "market.back", NO_VARS), ui(player, "market.back-tooltip", NO_VARS),
                         () -> openSell(player, spec)),
                 3);
@@ -254,11 +258,11 @@ public class TradeDialog {
      * beside it is for.
      */
     private String itemLabel(Player player, ItemStack item) {
-        String material = MarketService.pretty(item.getType());
+        String material = ItemNames.label(User.getInstance(player), item.getType());
         var meta = item.getItemMeta();
         if (meta != null && meta.hasDisplayName()) {
-            return net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText()
-                    .serialize(meta.displayName());
+            return ItemNames.escape(net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
+                    .plainText().serialize(meta.displayName()));
         }
         if (!item.getEnchantments().isEmpty()) {
             return uiText(player, "market.item-enchanted", VAR_MATERIAL, material);
@@ -289,7 +293,8 @@ public class TradeDialog {
             ItemStack item = shelf.get(i);
             final int index = i;
             String price = addon.getMarketService().shelfPrice(item)
-                    .map(value -> Money.format(addon, value)).orElse("-");
+                    .map(value -> Money.format(addon, value))
+                    .orElse(User.getInstance(player).getTranslation(KEY_NONE));
             // Secondhand goods are notable by definition, so the icon and its real
             // tooltip are the whole point of the page
             body.add(DialogBody.item(item)
@@ -297,31 +302,31 @@ public class TradeDialog {
                             itemLabel(player, item), VAR_PRICE, price)))
                     .showTooltip(true).showDecorations(true).build());
             buttons.add(button(ui(player, "market.shelf-buy", VAR_MATERIAL, itemLabel(player, item),
-                    VAR_PRICE, price), ui(player, "market.shelf-buy-tooltip", "[details]", details(item)),
+                    VAR_PRICE, price), ui(player, "market.shelf-buy-tooltip", "[details]", details(player, item)),
                     () -> {
                         addon.getMarketService().buyFromShelf(player, spec, index);
                         openShelf(player, spec);
                     }));
         }
-        showBodies(player, ui(player, "market.shelf-title", VAR_NAME, spec.name()), body, buttons,
+        showBodies(player, ui(player, "market.shelf-title", VAR_NAME, portName(player, spec)), body, buttons,
                 backButton(player, spec), 2);
     }
 
     /**
      * What makes a shelf item worth looking at - its name, or its enchantments.
      */
-    private String details(ItemStack item) {
+    private String details(Player player, ItemStack item) {
         var meta = item.getItemMeta();
         if (meta != null && meta.hasDisplayName()) {
-            return net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText()
-                    .serialize(meta.displayName());
+            return ItemNames.escape(net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
+                    .plainText().serialize(meta.displayName()));
         }
         if (!item.getEnchantments().isEmpty()) {
             return item.getEnchantments().entrySet().stream()
-                    .map(e -> PriceEngine.prettify(e.getKey().getKey().getKey()) + " " + e.getValue())
+                    .map(e -> ItemNames.label(e.getKey(), e.getValue()))
                     .reduce((a, b) -> a + ", " + b).orElse("");
         }
-        return MarketService.pretty(item.getType());
+        return ItemNames.label(User.getInstance(player), item.getType());
     }
 
     /**
@@ -331,11 +336,11 @@ public class TradeDialog {
      *
      * @return the count, or "-" where the port is already saturated
      */
-    private String depthOf(IslandSpec spec, SellOffer offer) {
+    private String depthOf(Player player, IslandSpec spec, SellOffer offer) {
         int headroom = addon.getIslandDataManager().absorbableValue(spec,
                 addon.getMarketService().driftPool(offer.material()));
         if (offer.unitPrice() <= 0) {
-            return "-";
+            return User.getInstance(player).getTranslation(KEY_NONE);
         }
         return String.valueOf((int) Math.floor(headroom / offer.unitPrice()));
     }
@@ -353,7 +358,7 @@ public class TradeDialog {
         for (Material material : catalog) {
             Optional<Double> price = addon.getMarketService().playerBuysAt(spec, material);
             price.ifPresent(unit -> {
-                String name = MarketService.pretty(material);
+                String name = ItemNames.label(User.getInstance(player), material);
                 Component each = ui(player, "market.buy-tooltip-each", VAR_PRICE, Money.format(addon, unit));
                 buttons.add(button(ui(player, "market.buy-one", VAR_MATERIAL, name, VAR_PRICE,
                         Money.format(addon, unit)), each,
@@ -371,7 +376,7 @@ public class TradeDialog {
             openMain(player, spec);
             return;
         }
-        show(player, ui(player, "market." + page + "-title", "[name]", spec.name()),
+        show(player, ui(player, "market." + page + "-title", "[name]", portName(player, spec)),
                 List.of(ui(player, "market." + page + "-body", NO_VARS), statusLine(player)), buttons,
                 backButton(player, spec), 3);
     }
@@ -391,7 +396,7 @@ public class TradeDialog {
         List<ActionButton> buttons = new ArrayList<>();
         for (Material material : addon.getMarketService().outfitterCatalog(spec)) {
             addon.getMarketService().playerBuysAt(spec, material).ifPresent(unit -> {
-                String name = MarketService.pretty(material);
+                String name = ItemNames.label(User.getInstance(player), material);
                 Component each = ui(player, "market.outfit-tooltip", VAR_PRICE, Money.format(addon, unit));
                 buttons.add(button(ui(player, "market.outfit-one", VAR_MATERIAL, name, VAR_PRICE,
                         Money.format(addon, unit)), each,
@@ -413,7 +418,7 @@ public class TradeDialog {
             openMain(player, spec);
             return;
         }
-        show(player, ui(player, "market.outfitter-title", "[name]", spec.name()),
+        show(player, ui(player, "market.outfitter-title", "[name]", portName(player, spec)),
                 List.of(ui(player, "market.outfitter-body", NO_VARS), statusLine(player)), buttons,
                 backButton(player, spec), 2);
     }
@@ -436,7 +441,7 @@ public class TradeDialog {
                 .shopListing(current, spec.techLevel())) {
             double price = addon.getBoatRanks().price(rank);
             buttons.add(button(
-                    ui(player, "market.hull", VAR_MATERIAL, MarketService.pretty(rank.material()), VAR_PRICE,
+                    ui(player, "market.hull", VAR_MATERIAL, ItemNames.label(User.getInstance(player), rank.material()), VAR_PRICE,
                             Money.format(addon, price)),
                     ui(player, "market.hull-tooltip", "[slots]", String.valueOf(rank.slots())),
                     () -> {
@@ -444,8 +449,8 @@ public class TradeDialog {
                         // lies - that gets the same confirmation a capture
                         // does, because it is the same decision
                         if (addon.getMarketService().wouldReplaceCurrent(player, spec, rank)) {
-                            confirmBoatCapture(player, MarketService.pretty(rank.material()),
-                                    MarketService.pretty(current), () -> {
+                            confirmBoatCapture(player, ItemNames.label(User.getInstance(player), rank.material()),
+                                    ItemNames.label(User.getInstance(player), current), () -> {
                                         addon.getMarketService().buyBoat(player, spec, rank);
                                         openShipwright(player, spec);
                                     });
@@ -485,7 +490,7 @@ public class TradeDialog {
                         openShipwright(player, spec);
                     }));
         }
-        show(player, ui(player, "market.shipwright-title", "[name]", spec.name()), body, buttons,
+        show(player, ui(player, "market.shipwright-title", "[name]", portName(player, spec)), body, buttons,
                 backButton(player, spec), 1);
     }
 
@@ -605,6 +610,10 @@ public class TradeDialog {
      * A translated UI component. All dialog text goes through the locale so it
      * can be translated - never build player-facing strings in code.
      */
+    private String portName(Player player, IslandSpec spec) {
+        return PortNames.display(addon, User.getInstance(player), spec);
+    }
+
     private Component ui(Player player, String key, String... variables) {
         return User.getInstance(player).getTranslationAsComponent("tradewinds.ui." + key, variables);
     }

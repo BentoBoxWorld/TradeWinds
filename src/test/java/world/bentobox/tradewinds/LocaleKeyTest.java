@@ -17,6 +17,14 @@ import java.util.stream.Stream;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.junit.jupiter.api.Test;
 
+import org.bukkit.Material;
+
+import world.bentobox.tradewinds.economy.TradeCategory;
+import world.bentobox.tradewinds.economy.TypeEconomy;
+import world.bentobox.tradewinds.ocean.IslandType;
+import world.bentobox.tradewinds.ocean.NameGenerator;
+import world.bentobox.tradewinds.ocean.SecurityBand;
+
 /**
  * Every locale key the code asks for must exist in {@code en-US.yml}.
  * <p>
@@ -91,6 +99,71 @@ class LocaleKeyTest {
         List<String> missing = RUNTIME_BUILT.stream().filter(key -> !(locale.get(key) instanceof String))
                 .sorted().toList();
         assertTrue(missing.isEmpty(), "Runtime-built locale keys missing: " + missing);
+    }
+
+    /**
+     * Keys built from an enum name at runtime - {@code getLocaleKey()} on the
+     * band, island type and trade category. The source scan cannot see them,
+     * so every constant is checked here; a new enum value without a locale
+     * line would otherwise render as its key.
+     */
+    @Test
+    void testEnumLocaleKeysExist() {
+        YamlConfiguration locale = YamlConfiguration.loadConfiguration(new InputStreamReader(
+                getClass().getClassLoader().getResourceAsStream("locales/en-US.yml")));
+        List<String> keys = new ArrayList<>();
+        for (SecurityBand band : SecurityBand.values()) {
+            keys.add(band.getLocaleKey());
+        }
+        for (IslandType type : IslandType.values()) {
+            keys.add(type.getLocaleKey());
+        }
+        for (TradeCategory category : TradeCategory.values()) {
+            keys.add(category.getLocaleKey());
+        }
+        List<String> missing = keys.stream().filter(key -> !(locale.get(key) instanceof String)).sorted()
+                .toList();
+        assertTrue(missing.isEmpty(), "Enum locale keys missing from en-US.yml: " + missing);
+    }
+
+    /**
+     * Every good, fuel and hull the ocean trades has a materials line, so a
+     * translator who copies en-US sees the whole list. A blank line is the
+     * normal state (the client translates), so only presence is checked.
+     */
+    @Test
+    void testEveryTradedMaterialHasALocaleLine() {
+        YamlConfiguration locale = YamlConfiguration.loadConfiguration(new InputStreamReader(
+                getClass().getClassLoader().getResourceAsStream("locales/en-US.yml")));
+        Settings settings = new Settings();
+        Set<String> materials = new TreeSet<>();
+        materials.addAll(settings.getBasePrices().keySet());
+        materials.addAll(settings.getFuelValues().keySet());
+        materials.addAll(settings.getBoatRanks().keySet());
+        // The outfitter's shelf is code, not config
+        materials.add(Material.BREAD.name());
+        materials.add(Material.CHARCOAL.name());
+        for (IslandType type : IslandType.values()) {
+            TypeEconomy.outfitterExtras(type).forEach(material -> materials.add(material.name()));
+        }
+        List<String> missing = materials.stream()
+                .map(name -> "tradewinds.materials." + name.toLowerCase(java.util.Locale.ENGLISH))
+                .filter(key -> !(locale.get(key) instanceof String)).sorted().toList();
+        assertTrue(missing.isEmpty(), "Traded materials without a locale line: " + missing);
+    }
+
+    /**
+     * Every syllable the name generator can produce has a token line, so a
+     * translator sees the full table to transliterate.
+     */
+    @Test
+    void testEveryNameTokenHasALocaleLine() {
+        YamlConfiguration locale = YamlConfiguration.loadConfiguration(new InputStreamReader(
+                getClass().getClassLoader().getResourceAsStream("locales/en-US.yml")));
+        List<String> missing = NameGenerator.vocabulary().stream()
+                .map(token -> "tradewinds.name-token." + token.toLowerCase(java.util.Locale.ENGLISH))
+                .filter(key -> !(locale.get(key) instanceof String)).sorted().toList();
+        assertTrue(missing.isEmpty(), "Name tokens without a locale line: " + missing);
     }
 
     private void collect(Matcher matcher, Set<String> into, String prefix) {

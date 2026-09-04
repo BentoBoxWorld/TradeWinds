@@ -179,3 +179,12 @@ call is ambiguous between overloads, so pass `new String[0]`.
 Locale strings can also carry `[actionbar]`, `[title]`, `[subtitle]` and
 `[sound:...]` markers — BentoBox routes and formats those itself, so prefer
 them over calling `sendActionBar`/`playSound` around a message.
+**Never name an item or a port by hand** (GitHub #7): `[material]` values
+come from `economy.ItemNames.label(user, material)` — the locale's
+`tradewinds.materials.<key>` line if written, else a `<lang_or>` tag the
+client translates itself — and `[name]` for a port from
+`PortNames.display(addon, user, spec)`, which transliterates the name's
+syllables through `tradewinds.name-token.*`. `IslandSpec.name()` is the
+island's identity (registry, PDC, logs, admin arguments), never its label.
+`PriceEngine.prettify` is for logs and admin audits only. Enum names reach a
+player only through `getLocaleKey()`.

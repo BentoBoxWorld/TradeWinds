@@ -54,7 +54,8 @@ public class TWRankCommand extends CompositeCommand {
                 String name = addon.getPlayers().getName(entry.playerId());
                 user.sendMessage("tradewinds.rank.board-entry",
                         "[place]", String.valueOf(place),
-                        TextVariables.NAME, name.isEmpty() ? "?" : name,
+                        TextVariables.NAME,
+                        name.isEmpty() ? user.getTranslation("tradewinds.general.unknown") : name,
                         TextVariables.NUMBER, String.valueOf(entry.charted()),
                         RANK_PLACEHOLDER, user.getTranslation(ranks.rankFor(entry.charted()).localeKey()));
             }
