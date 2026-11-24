@@ -1,5 +1,8 @@
 # TradeWinds
 
+<!-- BentoBox stats badges: https://download.bentobox.world/admin (Badges tab) -->
+[![Servers](https://download.bentobox.world/badge/TradeWinds/servers.svg)](https://download.bentobox.world/) [![Downloads](https://download.bentobox.world/badge/TradeWinds/downloads.svg)](https://download.bentobox.world/) [![Minecraft](https://download.bentobox.world/badge/TradeWinds/mc.svg)](https://download.bentobox.world/)
+
 A BentoBox game mode of sea trading, smuggling, and piracy: an endless
 procedurally generated ocean dotted with NPC trading islands. You start with a
 rowing boat — **the boat is your cargo hold** — and get rich buying low and
